@@ -112,12 +112,12 @@ Non-programmers can contribute by:
  - improving the readme and documentation
 
 Programmer contributions are very welcome:
- - adapting THOIPApy for more diverse input files and datatypes. Currently accepted are A) excel, B) BMG FluoStar, and C) Molecular Devices SoftMax(VersaMax) files.
+ - adapting THOIPApy for more diverse input files and datatypes. Currently accepted are only excel.
  - adding your own desired features
  - improving code, or fixing known issues.
 
 # License#
-THOIPApy is free software distributed under the GNU General Public License version 3.
+THOIPApy is free software distributed under the MIT License.
 
 # Citation#
 Currently there in no scientific article associated with this module. If you use THOIPApy in your research, please cite as follows:
