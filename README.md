@@ -11,23 +11,20 @@ the dynamic interfaces identified with ToxR-based assays in live cells.
 # Features#
 <h3>Robust data analysis.</h3>
  - fully automated:
-  - fitting of sigmoidal curves to dose-response data
-  - calculation of EC50, LD50 or IC50 values.
-  - high-throughput analysis
-  - comparison of EC50 values from different experiments
-  - calculation of EC25 or EC75 values
- - accepts REAL biological data
-  - pre-filtering excludes nonsense data
-  - judgefit module identifies low-quality EC50 values
+  - transmembrane protein homologous download with BLAST against NCBI nr.
+  - evolution and co-evolutionary feature calculation.
+  - interface prediction with random forest classifier
+  - prediction output be fitted with sine curve
+  - prediciton output analysis
+ - send result through email
 
 <h3>Designed for humans.</h3>
  - easy-to-use excel files:
   - excel settings file
-  - excel input file with dose and response data
-  - excel output file with EC50 values
+  - excel input file with setting data
+  - excel output file with interface prediction output data
  - simple graphical output:
-  - sigmoidal curves with EC50 shown on graph
-  - daily summary barcharts and curves
+  - sine curve with predicted interface residue mark
 
 <h3>Customisable.</h3>
  - simple python syntax
@@ -36,7 +33,7 @@ the dynamic interfaces identified with ToxR-based assays in live cells.
 
 # Development status#
 
-THOIPApy has been used extensively for the analysis of LD50 assays (Z-shaped curves) by bachelor, master and PhD students within the lab of Dieter Langosch at the Technical University of Munich in Germany.
+THOIPApy has been used extensively for the analysis of ToxR datasets from the lab of Dieter Langosch at the Technical University of Munich in Germany.
 
 The code has been extensively updated and annotated for public release.
 
@@ -76,32 +73,6 @@ Using THOIPApy requires only the following:
 import THOIPApy
 settings = r"D:\data\THOIPApy_settings.xlsx"
 THOIPApy.run_curvefit(settings)
-THOIPApy.run_gatherer(settings)
-```
-
-# Test#
- - try the example excel files in the THOIPApy/examples folder before switching to your own data.
-
-# THOIPApy output#
-
-<h3>run_curvefit program</h3>
- - individual dose-response curves
- - automatic judging of data quality
- - daily summary curves, barchart and more!
-![curve_fit_output_sample3](docs/images/curve_fit_output_sample3.png)
-![generated_data_0EC50_analysis_fig](docs/images/generated_data_0EC50_analysis_fig.png)
-
-<h3>run_gatherer program</h3>
- - combines data from multiple experiments
- - excludes EC50 values that are not of sufficient quality, according to user-defined thresholds
- - bar charts with mean and SEM over all selected experiments
- - scatter plots showing individual datapoints for each day/experiment, and more!
-![analysis_output_figures](docs/images/analysis_output_figures.png)
-
-<h3>compare_rawdata program</h3>
- - collects raw data and dose-response curves from multiple experiments
- - compares datapoints and fitted curves between the selected samples
-![20160527_0_compare_raw](docs/images/20160527_0_compare_raw.png)
 
 # Contribute#
 If you encounter a bug or THOIPApy doesn't work for any reason, please send an email to mark.teese /at/ tum.de or initiate an issue in Github.
@@ -120,5 +91,6 @@ Programmer contributions are very welcome:
 THOIPApy is free software distributed under the MIT License.
 
 # Citation#
-Currently there in no scientific article associated with this module. If you use THOIPApy in your research, please cite as follows:
-"EC50 values were calculated using the open-source THOIPApy module in python (Mark Teese, Technical University of Munich)."
+If you use THOIPApy in your research, please cite as follows:
+"Determination and prediction of interface residues from transmembrane helix dimers. Yao Xiao?, Bo Zeng?, Dmitrij Frishman, Dieter Langosch, Mark George Teese*
+."
