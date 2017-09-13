@@ -75,7 +75,7 @@ settings = r"D:\data\THOIPApy_settings.xlsx"
 THOIPApy.run_curvefit(settings)
 
 # Contribute#
-If you encounter a bug or THOIPApy doesn't work for any reason, please send an email to mark.teese /at/ tum.de or initiate an issue in Github.
+If you encounter a bug or THOIPApy doesn't work for any reason, please send an email to ***REMOVED*** or initiate an issue in Github.
 
 Non-programmers can contribute by:
  - testing THOIPApy with your particular datasets
