@@ -1,6 +1,6 @@
 import pandas as pd
 import numpy as np
-def parse_Predicted_Output(pathdict,set_,out_put_file_loc,output_parse_file,logging):
+def parse_Predicted_Output(thoipapyset_,out_put_file_loc,output_parse_file,logging):
     logging.info('starting to parsing prediction output file')
     orig_csv = out_put_file_loc
     test_out_csv = output_parse_file

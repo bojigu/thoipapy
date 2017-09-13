@@ -10,8 +10,89 @@ import psutil
 import signal
 import sys
 import re
+from Bio import SeqIO
+from Bio.SeqUtils.ProtParam import ProteinAnalysis
+import numpy as np
 
-def tmd_positions_match_fasta(pathdict,set_,logging):
+
+def calculate_fasta_file_length(set_):
+    """
+    :param set_:
+    :return: sequence length
+    """
+    seqLen=int()
+    FastaFile = open(set_["input_fasta_file"], 'r')
+    for rec in SeqIO.parse(FastaFile, 'fasta'):
+        name = rec.id
+        seq = rec.seq
+        seqLen = len(rec)
+    FastaFile.close()
+    return seqLen
+
+def create_TMD_surround20_fasta_file(set_):
+    """
+    :param set_:
+    :return: tmp surround residue number
+    """
+    tmp_list_loc = set_["list_of_tmd_start_end"]
+
+    with open(tmp_list_loc, 'r+') as tmp_file_handle:
+        lines=tmp_file_handle.readlines()
+        tmp_file_handle.seek(0)
+        tmp_file_handle.truncate()
+        for row in lines:
+            if re.search("^Protein",row):
+                if len(row.strip().split(",")) == 4:
+                    line = row.strip() + "," + "TMD_Sur_Left" + "," + "TMD_Sur_Right"+"\n"
+                    tmp_file_handle.write(line)
+                else:
+                    tmp_file_handle.write(row)
+                continue
+            tmp_protein_name = row.strip().split(",")[0]
+            tmp_length = int(row.strip().split(",")[1])
+            tmp_start = int(row.strip().split(",")[2])
+            tmp_end = int(row.strip().split(",")[3])
+            tmp_protein_fasta = os.path.join(set_["Protein_folder"], "%s.fasta") % tmp_protein_name
+            line=""
+            if os.path.isfile(tmp_protein_fasta):
+                fasta_text = ""
+                with open(tmp_protein_fasta) as f:
+                    for line in f.readlines():
+                        if re.search("^>", line):
+                             pass
+                        else:
+                            fasta_text = fasta_text + line.rstrip()
+                fasta_text=re.sub('[\s+]', '', fasta_text)
+                f.close()
+                if tmp_start>20:
+                    set_["tmp_surr_left"]=20
+                else:
+                    set_["tmp_surr_left"] = tmp_start-1
+                if tmp_length-tmp_end>20:
+                    set_["tmp_surr_right"]=20
+                else:
+                    set_["tmp_surr_right"]=tmp_length-tmp_end
+                tmp_surr_string=fasta_text[(tmp_start-set_["tmp_surr_left"]-1):(tmp_end+set_["tmp_surr_right"])]
+                tmp_surr_fasta_file=os.path.join(set_["Protein_folder"], "%s.surr20.fasta") % tmp_protein_name
+                tmp_surr_fasta_file_handle=open(tmp_surr_fasta_file,"w")
+                tmp_surr_fasta_file_handle.write("> %s TMD add surround 20 residues\n" % tmp_protein_name)
+                tmp_surr_fasta_file_handle.write(tmp_surr_string)
+                tmp_surr_fasta_file_handle.close()
+            if len(row.strip().split(","))==4:
+                line=row.strip()+","+str(set_["tmp_surr_left"])+","+str(set_["tmp_surr_right"])+"\n"
+                tmp_file_handle.write(line)
+            else:
+                tmp_file_handle.write(row)
+    tmp_file_handle.close()
+    #return set_["tmp_surr_left"],set_["tmp_surr_right"]
+
+def tmd_positions_match_fasta(set_):
+    """
+    :param thoipapy:
+    :param set_:
+    :param logging:
+    :return: tmd start and end positions
+    """
     fasta_file_loc=set_["input_fasta_file"]
     tmd_file_loc=set_["input_tmd_file"]
     fasta_text=""
@@ -35,8 +116,24 @@ def tmd_positions_match_fasta(pathdict,set_,logging):
 
 
 
-
-
+def calc_lipophilicity(seq, method = "mean"):
+    """ Calculates the average hydrophobicity of a sequence according to the Hessa biological scale.
+    """
+    # hydrophobicity scale
+    hessa_scale = np.array([0.11, -0.13, 3.49, 2.68, -0.32, 0.74, 2.06, -0.6, 2.71,
+                            -0.55, -0.1, 2.05, 2.23, 2.36, 2.58, 0.84, 0.52, -0.31,
+                            0.3, 0.68])
+    # convert to biopython analysis object
+    analysed_seq = ProteinAnalysis(seq)
+    # biopython count_amino_acids returns a dictionary.
+    aa_counts_dict = analysed_seq.count_amino_acids()
+    # convert dictionary to array, sorted by aa
+    aa_counts_arr = np.array([value for (key, value) in sorted(aa_counts_dict.items())])
+    multiplied = aa_counts_arr * hessa_scale
+    if method == "mean":
+        return multiplied.mean()
+    if method == "sum":
+        return multiplied.sum()
 
 
 
@@ -57,12 +154,16 @@ def create_settingdict(excel_file_with_settings):
         # join dictionaries together
         set_.update(sheet_as_dict)
 
-    list_paths_to_normalise = ["protein_folder", "Train_proteins", "Experimental_proteins", "list_of_tmd_start_end", "homologous_folder",
-                               "xml_file_folder", "filtered_homo_folder", "RF_features","feature_entropy","feature_pssm","feature_cumulative_coevolution","feature_relative_position","feature_lips_score","feature_physical_parameters","logging_file"]
+    list_paths_to_normalise = ["data_harddirve","Protein_folder", "Train_proteins", "Experimental_proteins","homologous_folder",
+                               "output_oa3m_homologous","xml_file_folder", "filtered_homo_folder", "RF_features","feature_entropy",
+                               "feature_pssm","feature_cumulative_coevolution","feature_relative_position","feature_lips_score","feature_physical_parameters",
+                               "structure_bind","RF_loc","logfile_dir"]
     # normalise the paths for selected columns, so that they are appropriate for the operating system
     for path in list_paths_to_normalise:
         if path in set_:
             set_[path] = os.path.normpath(set_[path])
+            if not os.path.exists(set_[path]):
+                os.makedirs(set_[path])
     return set_
 
 def setup_keyboard_interrupt_and_error_logging(set_, list_number):
@@ -186,36 +287,3 @@ def setup_error_logging(logfile, level_console="DEBUG", level_logfile="DEBUG"):
     #    logging.error('Failed to open file', exc_info=True)
     logging.warning('LOGGING SETUP IS SUCCESSFUL (logging levels: console={}, logfile={}). \n'.format(level_console, level_logfile))
     return logging
-
-def create_pathdict(base_filename_summaries):
-    pathdict = {}
-    pathdict["base_filename_summaries"] = base_filename_summaries
-    # currently the protein list summary (each row is a protein, from uniprot etc) is a csv file
-    pathdict["list_summary_csv"] = '%s_summary.csv' % base_filename_summaries
-    # for SIMAP or BLAST downloads, gives a list of accessions that failed
-    pathdict["failed_downloads_txt"] = '%s_failed_downloads.txt' % base_filename_summaries
-    # add the base path for the sub-sequences (SE01, SE02, etc) added by the user
-    pathdict["list_user_subseqs_csv"] = '%s_user_subseqs.csv' % base_filename_summaries
-    pathdict["list_user_subseqs_xlsx"] = '%s_user_subseqs.xlsx' % base_filename_summaries
-
-    pathdict["dfout01_uniprotcsv"] = '%s_uniprot.csv' % base_filename_summaries
-    pathdict["dfout02_uniprotTcsv"] = '%s_uniprotT.csv' % base_filename_summaries
-    pathdict["dfout03_uniprotxlsx"] = '%s_uniprot.xlsx' % base_filename_summaries
-    pathdict["dfout04_uniprotcsv_incl_paths"] = '%s_uniprot_incl_paths.csv' % base_filename_summaries
-    #pathdict["dfout05_simapcsv"] = '%s_simap.csv' % base_filename_summaries
-    pathdict["dfout06_simapxlsx"] = '%s_simap.xlsx' % base_filename_summaries
-    pathdict["dfout07_simapnonred"] = '%s_simapnonred.csv' % base_filename_summaries
-    pathdict["dfout08_simap_AAIMON"] = '%s_simap_AAIMON.csv' % base_filename_summaries
-    pathdict["dfout09_simap_AAIMON_02"] = '%s_simap_AAIMON_02.csv' % base_filename_summaries
-    pathdict["dfout10_uniprot_gaps"] = '%s_gap_densities.csv' % base_filename_summaries
-    pathdict["dfout11_gap_test_out_png"] = '%s_gap_test_out.png' % base_filename_summaries
-    pathdict["dfout12"] = 0
-    pathdict["dfout13"] = 0
-    pathdict["csv_file_with_histogram_data"] = '%s_histogram.csv' % base_filename_summaries
-    pathdict["csv_file_with_histogram_data_normalised"] = '%s_histogram_normalised.csv' % base_filename_summaries
-    pathdict["csv_file_with_histogram_data_normalised_redundant_removed"] = '%s_histogram_normalised_redundant_removed.csv' % base_filename_summaries
-    pathdict["csv_file_with_md5_for_each_query_sequence"] = '%s_query_md5_checksums.csv' % base_filename_summaries
-    pathdict["csv_av_cons_ratio_all_proteins"] = '%s_cons_ratios_nonred_av.csv' % base_filename_summaries
-    pathdict["csv_std_cons_ratio_all_proteins"] = '%s_cons_ratios_nonred_std.csv' % base_filename_summaries
-    pathdict["create_graph_of_gap_density_png"] = '%s_create_graph_of_gap_density.png' % base_filename_summaries
-    return pathdict

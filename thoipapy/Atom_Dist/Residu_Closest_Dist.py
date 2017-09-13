@@ -3,7 +3,7 @@ import os
 import math
 ###in homotypic_data/daba/Bind/pdb  ZhelixPair gives interacting TMP homodimers
 
-def homodimer_residue_closedist_calculate_from_complex(pathdict,set_,logging):
+def homodimer_residue_closedist_calculate_from_complex(thoipapyset_,logging):
     helixpair_file=set_["homodimer_structure_helix_pair_infor"]
     #helixpair_file=r"/scratch2/zeng/homotypic_data/data/Bind/pdb/zHelixPair"
     helixpair_file_handle=open(helixpair_file,"r")

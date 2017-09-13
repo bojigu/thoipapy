@@ -4,12 +4,12 @@ from scipy import interp
 import matplotlib.pyplot as plt
 from sklearn.ensemble import RandomForestClassifier
 from sklearn.metrics import roc_curve, auc
-from sklearn.cross_validation import StratifiedKFold
+from sklearn.model_selection import StratifiedKFold
 import os
 import subprocess, threading
 
 
-def run_Rscipt_random_forest(tmplist,pathdict,set_,out_put_file_loc,logging):
+def run_Rscipt_random_forest(tmplist,thoipapyset_,out_put_file_loc,logging):
     logging.info('begining to run random forest R code')
     Rscript_loc = set_["Rscript_dir"]
     Random_Forest_R_code_file=set_["Rcode"]
@@ -63,7 +63,7 @@ def run_Rscipt_random_forest(tmplist,pathdict,set_,out_put_file_loc,logging):
 
 
 
-def RF_10flod_cross_validation(tmplist,pathdict,set_,logging):
+def RF_10flod_cross_validation(tmplist,thoipapyset_,logging):
     logging.info('10-fold cross validatation is running')
     data = pd.read_csv('/scratch2/zeng/homotypic_data/data/RandomForest/PsEnCo/TrainData2',delimiter="\s",engine='python')
     del data["Residue_id"]

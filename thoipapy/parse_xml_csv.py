@@ -6,7 +6,7 @@ import tarfile
 import xml.etree.ElementTree as ET
 import zipfile
 
-def parse_SIMAP_to_csv(pathdict, set_, logging):
+def parse_SIMAP_to_csv(thoipapy set_, logging):
     # @BO: you don't need to look at this stuff. skip to the next # @BO: comment :)
     counter_XML_to_CSV = 0
     logging.info('~~~~~~~~~~~~  starting parse_SIMAP_to_csv   ~~~~~~~~~~~~')

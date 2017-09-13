@@ -1453,32 +1453,6 @@ class Log_Only_To_Console(object):
     def critical(self, message):
         print(message)
 
-def convert_summary_csv_to_input_list(s, pathdict, logging, list_excluded_acc=None):
-    # open dataframe with list of proteins
-    df = pd.read_csv(pathdict["list_summary_csv"], sep=",", quoting=csv.QUOTE_NONNUMERIC, index_col=0)
-    # exclude any proteins where there is no list_of_TMDs
-    df = df.loc[df['list_of_TMDs'].notnull()].loc[df['list_of_TMDs'] != 'nan']
-    # add the accession
-    df["acc"] = df.index
-
-    if list_excluded_acc != None:
-        # remove any excluded acc from index
-        non_excluded = set(df.index) - set(list_excluded_acc)
-        # redefine df, skipping excluded acc
-        df = df.loc[non_excluded, :]
-
-    # convert to dict
-    df_as_dict = df.to_dict(orient="index")
-    # convert values to list
-    list_p = list(df_as_dict.values())
-
-    for p in list_p:
-        # print("in for loop", p["acc"])
-        p["s"] = s
-        p["pathdict"] = pathdict
-        p["logging"] = logging
-
-    return list_p
 
 
 def get_list_not_in_homol_db(pathdict):
@@ -1500,3 +1474,14 @@ def get_list_failed_downloads(pathdict):
                 line = line.strip()
                 acc_list_failed_downloads.append(line)
     return acc_list_failed_downloads
+
+
+def normalise_0_1(arraylike):
+    """ Normalise an array to values between 0 and 1.
+    """
+    array_min = np.min(arraylike)
+    array_max = np.max(arraylike)
+    normalised = (arraylike - array_min)/(array_max - array_min)
+    # convert to float
+    normalised = np.array(normalised).astype(float)
+    return normalised
