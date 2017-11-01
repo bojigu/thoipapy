@@ -40,7 +40,7 @@ parser.add_argument("-te",  # "-setting tm end ",
                     help=r'integer tm end value.'
                          r'E.g. "231"')
 parser.add_argument("-of",  # "-setting output file path",
-                    help=r'Full path to your output file.'
+                    help=r'Full path to your prediction output file.'
                          r'E.g. "C:\Path\to\your output_file\"')
 parser.add_argument("-email_to",  # "-setting output file location",
                     help=r'user email given on web server'
