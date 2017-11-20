@@ -78,14 +78,14 @@ THOIPApy.run(settings)
 If you encounter a bug or THOIPApy doesn't work for any reason, please send an email to zeng /at/ wzw.tum.de or initiate an issue in Github.
 
 Non-programmers can contribute by:
- * testing THOIPApy with your particular datasets
- * suggesting features
- * improving the readme and documentation
+* testing THOIPApy with your particular datasets
+* suggesting features
+* improving the readme and documentation
 
 Programmer contributions are very welcome:
- * adapting THOIPApy for more diverse input files and datatypes. Currently accepted are only excel.
- * adding your own desired features
- * improving code, or fixing known issues.
+* adapting THOIPApy for more diverse input files and datatypes. Currently accepted are only excel.
+* adding your own desired features
+* improving code, or fixing known issues.
 
 # License
 THOIPApy is free software distributed under the MIT License.
