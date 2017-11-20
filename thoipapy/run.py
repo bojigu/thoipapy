@@ -72,10 +72,26 @@ if __name__ == "__main__":
     set_["tm_start"]=args.ts
     set_["tm_end"]=args.te
     set_["email_to"]=args.email_to
-    set_["tm_len"]=thoipapy.common.calculate_fasta_file_length(set_)
+    if args.i:
+        set_["tm_len"]=thoipapy.common.calculate_fasta_file_length(set_)
 
     if args.tmd is not None:
        set_["tm_start"],set_["tm_end"] = common.tmd_positions_match_fasta(set_)
+
+
+    list_number=int(set_["list_number"])
+
+    if list_number == 42:
+        set_["db"] = "Etra"
+    elif list_number == 43:
+        set_["db"]  = "Nmr"
+    elif list_number == 44:
+        set_["db"] = "Crystal"
+    elif list_number == 45:
+        set_["db"] = "All"
+
+    set_["list_of_tmd_start_end"] = os.path.join(set_["data_harddrive"], "Input_data",
+                                                 "Tmd_Start_End_List_Uniq_New_{}.csv".format(set_["db"]))
 
     if not set_["multiple_tmp_simultaneous"]:
         query_protein_tmd_file = os.path.join(set_["Protein_folder"], "Query_Protein_Tmd.csv")
@@ -87,6 +103,8 @@ if __name__ == "__main__":
         set_["list_of_tmd_start_end"]=query_protein_tmd_file
 
     thoipapy.common.create_TMD_surround20_fasta_file(set_)
+
+
 
     ###################################################################################################
     #                                                                                                 #
@@ -139,13 +157,21 @@ if __name__ == "__main__":
         if set_["pssm_feature_calculation"]:
             thoipapy.RF_features.feature_calculate.pssm_calculation(set_,logging)
 
+        if set_["calc_lipo_from_pssm"]:
+            thoipapy.RF_features.feature_calculate.calc_lipo_from_pssm(set_,logging)
+
+
+
         if set_["entropy_feature_calculation"]:
             thoipapy.RF_features.feature_calculate.entropy_calculation(set_, logging)
 
         if set_["cumulative_coevolution_feature_calculation"]:
-            #thoipapy.RF_features.feature_calculate.coevoluton_calculation_with_freecontact(set_, logging)
+            thoipapy.RF_features.feature_calculate.coevoluton_calculation_with_freecontact(set_, logging)
             thoipapy.RF_features.feature_calculate.cumulative_co_evolutionary_strength_parser(tmp_lists, tm_protein_name,thoipapy ,set_, logging)
 
+        if set_["clac_relative_position" \
+                ""]:
+            thoipapy.RF_features.feature_calculate.relative_position_calculation(set_,logging)
 
         if set_["lips_score_feature_calculation"]:
             thoipapy.RF_features.feature_calculate.Lips_score_calculation(tmp_lists,tm_protein_name, thoipapy, set_, logging)
@@ -154,10 +180,12 @@ if __name__ == "__main__":
         #thoipapy.RF_features.feature_calculate.convert_bind_data_to_csv(set_, logging)
 
         if set_["combine_feature_into_train_data"]:
-            #thoipapy.RF_features.feature_calculate.features_combine_to_traindata( set_, logging)
-            #thoipapy.RF_features.feature_calculate.adding_physical_parameters_to_train_data( set_, logging)
-            #thoipapy.RF_features.feature_calculate.features_combine_to_testdata( set_, logging)
-            #thoipapy.RF_features.feature_calculate.adding_physical_parameters_to_test_data(set_, logging)
+            if set_["db"] == "Crystal" or set_["db"] == "Nmr":
+                thoipapy.RF_features.feature_calculate.features_combine_to_traindata( set_, logging)
+                thoipapy.RF_features.feature_calculate.adding_physical_parameters_to_train_data( set_, logging)
+            if set_["db"] == "Etra":
+                thoipapy.RF_features.feature_calculate.features_combine_to_testdata( set_, logging)
+                thoipapy.RF_features.feature_calculate.adding_physical_parameters_to_test_data(set_, logging)
             thoipapy.RF_features.feature_calculate.combine_all_train_data_for_random_forest(set_,logging)
 
     if set_["run_random_forest"]:

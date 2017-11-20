@@ -41,7 +41,7 @@ However the module is still under development and is released "as is" with some 
 
 # Installation
 
-THOIPApy requires python 3.x (currently written for 3.5). We recommend the Anaconda python distribution, which contains all the required python modules (numpy, scipy, pandas and matplotlib).
+THOIPApy requires python 3.x (currently written for 3.5). We recommend the Anaconda python distribution, which contains all the required python modules (numpy, scipy, pandas,biopython and matplotlib).
 https://www.continuum.io/downloads
 
 To install THOIPApy:
@@ -71,25 +71,26 @@ Using THOIPApy requires only the following:
 ```
 import THOIPApy
 settings = r"D:\data\THOIPApy_settings.xlsx"
-THOIPApy.run_curvefit(settings)
+THOIPApy.run(settings)
+```
 
-# Contribute#
+# Contribute
 If you encounter a bug or THOIPApy doesn't work for any reason, please send an email to zeng /at/ wzw.tum.de or initiate an issue in Github.
 
 Non-programmers can contribute by:
- - testing THOIPApy with your particular datasets
- - suggesting features
- - improving the readme and documentation
+ * testing THOIPApy with your particular datasets
+ * suggesting features
+ * improving the readme and documentation
 
 Programmer contributions are very welcome:
- - adapting THOIPApy for more diverse input files and datatypes. Currently accepted are only excel.
- - adding your own desired features
- - improving code, or fixing known issues.
+ * adapting THOIPApy for more diverse input files and datatypes. Currently accepted are only excel.
+ * adding your own desired features
+ * improving code, or fixing known issues.
 
-# License#
+# License
 THOIPApy is free software distributed under the MIT License.
 
-# Citation#
+# Citation
 If you use THOIPApy in your research, please cite as follows:
 "Determination and prediction of interface residues from transmembrane helix dimers. Yao Xiao?, Bo Zeng?, Dmitrij Frishman, Dieter Langosch, Mark George Teese*
 ."

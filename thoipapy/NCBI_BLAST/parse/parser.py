@@ -7,6 +7,7 @@ from difflib import SequenceMatcher
 import thoipapy
 
 def parse_NCBI_xml_to_csv(set_,logging):
+    """"""
     counter_xml_to_csv=0
     logging.info('~~~~~~~~~~starting parse_NCBI_xml_to_csv')
 
@@ -24,16 +25,29 @@ def parse_NCBI_xml_to_csv(set_,logging):
     # skip header
     next(tmp_file_handle)
     for row in tmp_file_handle:
-        tmp_protein_name = row.strip().split(",")[0]
+        tmp_protein_name = row.strip().split(",")[0][0:6]
+        #if tmp_protein_name=="4cbj_E":
         tm_start=int(row.strip().split(",")[4])+1
-        tm_end = int(row.strip().split(",")[4])+(int(row.strip().split(",")[3])-int(row.strip().split(",")[2])+1)
-        xml_file = os.path.join(set_["xml_file_folder"], "%s.xml") %tmp_protein_name
+        tm_start=int(row.strip().split(",")[4])+1-5 ###for surr20
+        if set_["surres"] == "_surr0":
+            tm_start = int(row.strip().split(",")[2])
+            tm_end = int(row.strip().split(",")[3])
+        elif set_["surres"] == "_surr5":
+            tm_start = int(row.strip().split(",")[2]) -5 ###for fullseq
+            if(tm_start<=0):
+                tm_start=1
+            tm_end = int(row.strip().split(",")[4])+(int(row.strip().split(",")[3])-int(row.strip().split(",")[2])+1)
+            #tm_end = int(row.strip().split(",")[4])+(int(row.strip().split(",")[3])-int(row.strip().split(",")[2])+1)+5 ##for surr20
+            tm_end = int(row.strip().split(",")[3])  + 5  ###for fullseq
+            if tm_end>int(row.strip().split(",")[1]):
+                tm_end=int(row.strip().split(",")[1])
+        xml_file = os.path.join(set_["xml_file_folder"], set_["db"], "%s.xml") %tmp_protein_name
         match_details_dict = {}
-
+        print(tmp_protein_name,tm_start,tm_end)
         if os.path.isfile(xml_file):
             #homo_out_csv_file=os.path.join(set_["homologous_folder"],"NoRedundPro/%s_homo.csv") %tmp_protein_name
-            homo_out_csv_file = os.path.join(set_["homologous_folder"],
-                                             "%s_homo.csv") % tmp_protein_name
+            homo_out_csv_file = os.path.join(set_["homologous_folder"], "a3m",set_["db"],
+                                             "%s_homo%s.csv") % (tmp_protein_name,set_["surres"])
             with open(homo_out_csv_file,'w') as homo_out_csv_file_handle:
                 xml_result_handle=open(xml_file)
                 xml_record=NCBIXML.read(xml_result_handle)
@@ -118,54 +132,58 @@ def extract_filtered_csv_homologous_to_alignments(set_,logging):
     # skip header
     next(tmp_file_handle)
     for line in tmp_file_handle:
-        tm_protein = line.strip().split(",")[0]
+        tm_protein = line.strip().split(",")[0][0:6]
+        #if tm_protein == "2j58_C":
         alignment_dict={}
         alignment_dict1 = {}
         alignment_dict2 = {}
         #homo_csv_file_loc = os.path.join(set_["homologous_folder"], "NoRedundPro/%s_homo.csv") % tm_protein
-        homo_csv_file_loc = os.path.join(set_["homologous_folder"], "%s_homo.csv") % tm_protein
-        if (os.path.isfile(homo_csv_file_loc)):  # whether protein homologous csv file exists
+        homo_csv_file_loc = os.path.join(set_["homologous_folder"],"a3m",set_["db"], "%s_homo%s.csv") % (tm_protein,set_["surres"])
+        if (os.path.isfile(homo_csv_file_loc) and os.path.getsize(homo_csv_file_loc) > 0):  # whether protein homologous csv file exists
             #homo_filtered_out_csv_file = os.path.join(set_["homologous_folder"], "NoRedundPro/%s_homo_filtered_aln.fasta") % tm_protein
-            homo_filtered_out_csv_file = os.path.join(set_["homologous_folder"],
-                                                      "%s_homo_filtered_aln.fasta") %tm_protein
+            homo_filtered_out_csv_file = os.path.join(set_["homologous_folder"],"a3m",set_["db"],
+                                                      "%s_homo_filtered_aln%s.fasta") % (tm_protein,set_["surres"])
             homo_filtered_out_csv_file_handle=open(homo_filtered_out_csv_file, 'w')
             #homo_filter_file = os.path.join(set_["homologous_folder"], "a3m/NoRedundPro/%s.a3m.mem.uniq.2gaps") % tm_protein
-            homo_filter_file = os.path.join(set_["homologous_folder"], "a3m/%s.a3m.mem.uniq.2gaps") % tm_protein
+            homo_filter_file = os.path.join(set_["homologous_folder"],"a3m",set_["db"], "%s.a3m.mem.uniq.2gaps%s") % (tm_protein,set_["surres"])
             homo_filter_file_handle = open(homo_filter_file, "w")
             #homo_mem_lips_input_file = os.path.join(set_["homologous_folder"],"a3m/NoRedundPro/%s.mem.lips.input") % tm_protein
-            homo_mem_lips_input_file = os.path.join(set_["homologous_folder"],"a3m/%s.mem.lips.input") %tm_protein
+            homo_mem_lips_input_file = os.path.join(set_["homologous_folder"],"a3m",set_["db"],"%s.mem.lips.input%s") % (tm_protein,set_["surres"])
             homo_mem_lips_input_file_handle = open(homo_mem_lips_input_file, "w")
             #with open(homo_filtered_out_csv_file, 'w') as homo_filtered_out_csv_file_handle:
             df=pd.read_csv(homo_csv_file_loc,sep=",",quoting=csv.QUOTE_NONNUMERIC, index_col=0)
             i=0
-            for index, row in df.iterrows():
-                if i==0:
-                    homo_filtered_out_csv_file_handle.write(">" + row["description"] + "\n")
-                    homo_filtered_out_csv_file_handle.write(row["tm_query_seq"] + "\n")
-                    print("{}".format(row["tm_query_seq"]), file=homo_mem_lips_input_file_handle)
-                    print("{}".format(row["tm_query_seq"]), file=homo_filter_file_handle)
-                    alignment_dict[row["tm_query_seq"]] = 1
-                    i=1
-                    continue
-                tm_query_seq_len = len(row["tm_query_seq"])
-                tm_sbjt_seq_gap_num = row["tm_sbjt_seq"].count('-')
-                query_sbjt_identity_num = [x == y for (x, y) in zip(row["tm_query_seq"], row["tm_sbjt_seq"])].count(True)
-                mean_hydrophobicity=thoipapy.common.calc_lipophilicity(row["tm_sbjt_seq"])
-                ratio = SequenceMatcher(None, row["tm_query_seq"], row["tm_sbjt_seq"]).ratio()
-                gap_num = row["tm_sbjt_seq"].count("-")
-                if not re.search("-", row["tm_sbjt_seq"]) and not re.search("X",row["tm_sbjt_seq"]) and ratio >= set_["min_identity_of_TMD_seq"] and ratio < set_["max_identity_of_TMD_seq"] and mean_hydrophobicity < set_["max_hydrophilicity_Hessa"]:  ##No X and gap in each alignment
-                    if not row["tm_sbjt_seq"] in alignment_dict:
-                        alignment_dict[row["tm_sbjt_seq"]]=1
+            try:
+                for index, row in df.iterrows():
+                    if i==0:
                         homo_filtered_out_csv_file_handle.write(">" + row["description"] + "\n")
-                        print("{}".format(row["tm_sbjt_seq"]), file=homo_filtered_out_csv_file_handle)
-                if not re.search("-", row["tm_sbjt_seq"]) and not re.search("X",row["tm_sbjt_seq"]) and ratio >= set_["min_identity_of_TMD_seq"] and ratio < set_["max_identity_of_TMD_seq"] and mean_hydrophobicity < set_["max_hydrophilicity_Hessa"]:  ##No X and gap in each alignment
-                    if not row["tm_sbjt_seq"] in alignment_dict1:
-                        alignment_dict1[row["tm_sbjt_seq"]]=1
-                        print("{}".format(row["tm_sbjt_seq"]), file=homo_mem_lips_input_file_handle)
-                if (gap_num <= 2 and not re.search("X",row["tm_sbjt_seq"]) and ratio >= set_["min_identity_of_TMD_seq"] and ratio < set_["max_identity_of_TMD_seq"] and mean_hydrophobicity < set_["max_hydrophilicity_Hessa"]):  # gap number le 3 and no X in each alignment
-                    if not row["tm_sbjt_seq"] in alignment_dict2:
-                        alignment_dict2[row["tm_sbjt_seq"]]=1
-                        print("{}".format(row["tm_sbjt_seq"]), file=homo_filter_file_handle)
+                        homo_filtered_out_csv_file_handle.write(row["tm_query_seq"] + "\n")
+                        print("{}".format(row["tm_query_seq"]), file=homo_mem_lips_input_file_handle)
+                        print("{}".format(row["tm_query_seq"]), file=homo_filter_file_handle)
+                        alignment_dict[row["tm_query_seq"]] = 1
+                        i=1
+                        continue
+                    tm_query_seq_len = len(row["tm_query_seq"])
+                    tm_sbjt_seq_gap_num = row["tm_sbjt_seq"].count('-')
+                    query_sbjt_identity_num = [x == y for (x, y) in zip(row["tm_query_seq"], row["tm_sbjt_seq"])].count(True)
+                    mean_hydrophobicity=thoipapy.common.calc_lipophilicity(row["tm_sbjt_seq"])
+                    ratio = SequenceMatcher(None, row["tm_query_seq"], row["tm_sbjt_seq"]).ratio()
+                    gap_num = row["tm_sbjt_seq"].count("-")
+                    if not re.search("-", row["tm_sbjt_seq"]) and not re.search("X",row["tm_sbjt_seq"]) and ratio >= set_["min_identity_of_TMD_seq"] and ratio < set_["max_identity_of_TMD_seq"] :  ##No X and gap in each alignment
+                        if not row["tm_sbjt_seq"] in alignment_dict:
+                            alignment_dict[row["tm_sbjt_seq"]]=1
+                            homo_filtered_out_csv_file_handle.write(">" + row["description"] + "\n")
+                            print("{}".format(row["tm_sbjt_seq"]), file=homo_filtered_out_csv_file_handle)
+                    if not re.search("-", row["tm_sbjt_seq"]) and not re.search("X",row["tm_sbjt_seq"]) and ratio >= set_["min_identity_of_TMD_seq"] and ratio < set_["max_identity_of_TMD_seq"] :  ##No X and gap in each alignment
+                        if not row["tm_sbjt_seq"] in alignment_dict1:
+                            alignment_dict1[row["tm_sbjt_seq"]]=1
+                            print("{}".format(row["tm_sbjt_seq"]), file=homo_mem_lips_input_file_handle)
+                    if (gap_num <= 2 and not re.search("X",row["tm_sbjt_seq"]) and ratio >= set_["min_identity_of_TMD_seq"] and ratio < set_["max_identity_of_TMD_seq"] ):  # gap number le 3 and no X in each alignment
+                        if not row["tm_sbjt_seq"] in alignment_dict2:
+                            alignment_dict2[row["tm_sbjt_seq"]]=1
+                            print("{}".format(row["tm_sbjt_seq"]), file=homo_filter_file_handle)
+            except:
+                print("parsing error for protein %s" %tm_protein)
             homo_filter_file_handle.close()
             homo_mem_lips_input_file_handle.close()
             homo_filtered_out_csv_file_handle.close()
