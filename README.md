@@ -84,6 +84,7 @@ Non-programmers can contribute by:
    * improving the readme and documentation
 
 Programmer contributions are very welcome:
+
    * adapting THOIPApy for more diverse input files and datatypes. Currently accepted are only excel.
    * adding your own desired features
    * improving code, or fixing known issues.
