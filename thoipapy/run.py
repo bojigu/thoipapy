@@ -26,13 +26,13 @@ parser = argparse.ArgumentParser()
 # add only a single argument, the path to the settings file.
 parser.add_argument("-s",  # "-settingsfile",
                     help=r'Full path to your excel settings file.'
-                         r'E.g. "C:\Path\to\your\settingsfile.xlsx"')
+                         r'E.g. "\Path\to\your\settingsfile.xlsx"')
 parser.add_argument("-i",  # "-setting input fasta file location",
                     help=r'Full path to your input file.'
-                         r'E.g. "C:\Path\to\your\input.fasta"')
+                         r'E.g. "\Path\to\your\input.fasta"')
 parser.add_argument("-tmd",  # "-setting input fasta file location",
                     help=r'Full path to your input file contain the tmd sequence.'
-                         r'E.g. "C:\Path\to\your\P01908_tmd.txt"')
+                         r'E.g. "\Path\to\your\P01908_tmd.txt"')
 parser.add_argument("-ts",  # "-setting tm start",
                     help=r'integere tm start value'
                          r'E.g. "219"')
@@ -40,15 +40,15 @@ parser.add_argument("-te",  # "-setting tm end ",
                     help=r'integer tm end value.'
                          r'E.g. "231"')
 parser.add_argument("-of",  # "-setting output file path",
-                    help=r'Full path to your output file.'
-                         r'E.g. "C:\Path\to\your output_file\"')
+                    help=r'Full path to your prediction output file.'
+                         r'E.g. "\Path\to\your output_file\"')
 parser.add_argument("-email_to",  # "-setting output file location",
                     help=r'user email given on web server'
                          r'E.g. "***REMOVED***"')
 if __name__ == "__main__":
 
     print('\nRun thoipapy as follows:')
-    print(r'python C:\Path\to\run.py -s C:\Path\to\your\settingsfile.xlsx -i C:\Path\to\your\input.fasta -tmd C:\Path\to\your\input_tmd.txt '
+    print(r'python \Path\to\run.py -s \Path\to\your\settingsfile.xlsx -i \Path\to\your\input.fasta -tmd \Path\to\your\input_tmd.txt '
           r'-ts tm_start_position -te tm_end_position -of C:\Path\to\your output_file\ -email_to email_address')
 
     # get the command-line arguments
