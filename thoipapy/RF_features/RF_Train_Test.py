@@ -9,7 +9,7 @@ import os
 import subprocess, threading
 
 
-def run_Rscipt_random_forest(tmplist,thoipapyset_,out_put_file_loc,logging):
+def run_Rscipt_random_forest(tmplist,thoipapyset_, set_, out_put_file_loc,logging):
     logging.info('begining to run random forest R code')
     Rscript_loc = set_["Rscript_dir"]
     Random_Forest_R_code_file=set_["Rcode"]
