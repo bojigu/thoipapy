@@ -1,12 +1,11 @@
 from Bio.Blast import NCBIWWW
 from thoipapy import mtutiles as utils
 import os
+import sys
 
 
 def download_homologous_from_ncbi(set_, logging):
     """Download homologous with NCBI qblast
-
-
     :param set_:
     :param logging:
     :return: save homologous into xml files
@@ -32,7 +31,7 @@ def download_homologous_from_ncbi(set_, logging):
 
         ##############################################################################################
         #                                                                                            #
-        #      download multiple homologous from tmp lists                                           #
+        #      download homologous from protein lists file                                           #
         #                                                                                            #
         ##############################################################################################
 
@@ -41,16 +40,15 @@ def download_homologous_from_ncbi(set_, logging):
         # skip header
         next(tmp_file_handle)
         for row in tmp_file_handle:
-            tmp_protein_name = row.strip().split(",")[0][0:6]
+            tmp_protein_name = row.strip().split(",")[0]
 
             tmp_protein_fasta = os.path.join(set_["Protein_folder"], set_["db"], "%s.fasta") % tmp_protein_name
 
             if os.path.isfile(tmp_protein_fasta):  # whether fasta file in folder
                 with open(tmp_protein_fasta, 'r') as f:
                     tmp_protein_fasta_string = f.read()
-                    # tmp_protein_fasta_string = open(tmp_protein_fasta).read()
                     # run online server NCBI blastp with biopython module
-                    # logging.info('~~~~~~~~~~starting downloading homologous for protein %s') %tmp_protein_name
+                    sys.stdout.write('~~~~~~~~~~starting downloading homologous for protein %s') %tmp_protein_name
                     tmp_protein_xml_file = os.path.join(set_["xml_file_folder"], set_["db"], "%s.xml") % tmp_protein_name
                     if not os.path.isfile(tmp_protein_xml_file):
                         try:
@@ -62,7 +60,7 @@ def download_homologous_from_ncbi(set_, logging):
                             save_tmp_xml_file.close()
                             tmp_protein_homologous_xml_handle.close()
                         except:
-                            print("Query string not found in the CGI context in qblast")
+                            sys.stdout.write("Query string not found in the CGI context in qblast")
                     f.close()
         logging.info("Output file: %s\n" % tmp_protein_xml_file)
         tmp_file_handle.close()

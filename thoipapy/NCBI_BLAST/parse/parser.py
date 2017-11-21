@@ -7,28 +7,37 @@ from difflib import SequenceMatcher
 import thoipapy
 
 def parse_NCBI_xml_to_csv(set_,logging):
-    """"""
-    counter_xml_to_csv=0
+    """
+    extract multiple sequence alignment and useful informations from xml homologous file
+    Parameters
+    ----------
+    set_
+    logging
+
+    Returns
+    -------
+    csv file of query protein alignment information
+
+    """
     logging.info('~~~~~~~~~~starting parse_NCBI_xml_to_csv')
 
 
-    ##############################################################################################
-    #                                                                                            #
-    #     parse multiple csv files simultaneously                                                #
-    #                                                                                            #
-    ##############################################################################################
+                        ##############################################################################################
+                        #                                                                                            #
+                        #     parse multiple csv files simultaneously                                                #
+                        #                                                                                            #
+                        ##############################################################################################
 
 
-    #if (set_["multiple_tmp_simultaneous"]):
     tmp_list_loc = set_["list_of_tmd_start_end"]
     tmp_file_handle = open(tmp_list_loc, 'r')
     # skip header
     next(tmp_file_handle)
     for row in tmp_file_handle:
-        tmp_protein_name = row.strip().split(",")[0][0:6]
-        #if tmp_protein_name=="4cbj_E":
-        tm_start=int(row.strip().split(",")[4])+1
-        tm_start=int(row.strip().split(",")[4])+1-5 ###for surr20
+        tmp_protein_name = row.strip().split(",")[0]
+        #tm_start=int(row.strip().split(",")[4])+1
+        #tm_start=int(row.strip().split(",")[4])+1-5 ###for surr20
+        # set_["surres"] set how many residues on each sides of tmd sequence
         if set_["surres"] == "_surr0":
             tm_start = int(row.strip().split(",")[2])
             tm_end = int(row.strip().split(",")[3])
@@ -36,14 +45,14 @@ def parse_NCBI_xml_to_csv(set_,logging):
             tm_start = int(row.strip().split(",")[2]) -5 ###for fullseq
             if(tm_start<=0):
                 tm_start=1
-            tm_end = int(row.strip().split(",")[4])+(int(row.strip().split(",")[3])-int(row.strip().split(",")[2])+1)
+            #tm_end = int(row.strip().split(",")[4])+(int(row.strip().split(",")[3])-int(row.strip().split(",")[2])+1)
             #tm_end = int(row.strip().split(",")[4])+(int(row.strip().split(",")[3])-int(row.strip().split(",")[2])+1)+5 ##for surr20
             tm_end = int(row.strip().split(",")[3])  + 5  ###for fullseq
             if tm_end>int(row.strip().split(",")[1]):
-                tm_end=int(row.strip().split(",")[1])
+                tm_end=int(row.strip().split(",")[1]) # quals to the full sequence length
         xml_file = os.path.join(set_["xml_file_folder"], set_["db"], "%s.xml") %tmp_protein_name
         match_details_dict = {}
-        print(tmp_protein_name,tm_start,tm_end)
+
         if os.path.isfile(xml_file):
             #homo_out_csv_file=os.path.join(set_["homologous_folder"],"NoRedundPro/%s_homo.csv") %tmp_protein_name
             homo_out_csv_file = os.path.join(set_["homologous_folder"], "a3m",set_["db"],
@@ -132,7 +141,7 @@ def extract_filtered_csv_homologous_to_alignments(set_,logging):
     # skip header
     next(tmp_file_handle)
     for line in tmp_file_handle:
-        tm_protein = line.strip().split(",")[0][0:6]
+        tm_protein = line.strip().split(",")[0]
         #if tm_protein == "2j58_C":
         alignment_dict={}
         alignment_dict1 = {}

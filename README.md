@@ -10,7 +10,7 @@ the dynamic interfaces identified with ToxR-based assays in live cells.
 
 ## Features
 ### Robust data analysis
- * fully automated:
+ * fully automated.
   * transmembrane protein homologous download with BLAST against NCBI nr.
   * evolution and co-evolutionary feature calculation.
   * interface prediction with random forest classifier
@@ -45,6 +45,7 @@ THOIPApy requires python 3.x (currently written for 3.5). We recommend the Anaco
 https://www.continuum.io/downloads
 
 To install THOIPApy:
+
  * download and unpack the module from Github
  * open the command console. Navigate to the THOIPApy folder that contains setup.py
  * run the following command:

@@ -25,11 +25,53 @@ plt.rcParams["savefig.dpi"] = 240
 pd.set_option('expand_frame_repr', False)
 
 
-
-
-
 def calc_lipophilicity(seq, method = "mean"):
     """ Calculates the average hydrophobicity of a sequence according to the Hessa biological scale.
+
+    Hessa T, Kim H, Bihlmaier K, Lundin C, Boekel J, Andersson H, Nilsson I, White SH, von Heijne G. Nature. 2005 Jan 27;433(7024):377-81
+
+    The Hessa scale has been calculated empirically, using the glycosylation assay of TMD insertion.
+    Negative values indicate hydrophobic amino acids with favourable membrane insertion.
+
+    Other hydrophobicity scales are in the settings folder. They can be generated as follows.
+    hydrophob_scale_path = r"D:\korbinian\korbinian\settings\hydrophobicity_scales.xlsx"
+    df_hs = pd.read_excel(hydrophob_scale_path, skiprows=2)
+    df_hs.set_index("1aa", inplace=True)
+    dict_hs = df_hs.Hessa.to_dict()
+    hessa_scale = np.array([value for (key, value) in sorted(dict_hs.items())])
+    ['A', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'K',
+     'L', 'M', 'N', 'P', 'Q', 'R', 'S', 'T', 'V',
+     'W', 'Y']
+
+    Parameters:
+    -----------
+    seq : string
+        Sequence to be analysed. Gaps (-) and unknown amino acids (x) should be ignored.
+    method : string
+        Method to be used to average the hydrophobicity values over the whole sequence.
+        The hydrophobicity score is positive for polar/charged aa, negative for hydrophobic aa.
+            "sum" will return the sum of the hydrophobicity scores over the sequence
+            "mean" will return the mean of the hydrophobicity scores over the sequence
+
+    Returns:
+    --------
+    mean hydrophobicity value for the sequence entered
+
+    Usage:
+    ------
+    from korbinian.utils import calc_lipophilicity
+    # for a single sequence
+    s = "SAESVGEVYIKSTETGQYLAG"
+    calc_lipophilicity(s)
+    # for a series of sequences
+    TMD_ser = df2.TM01_SW_match_seq.dropna()
+    hydro = TMD_ser.apply(lambda x : calc_lipophilicity(x))
+
+    Notes:
+    ------
+    %timeit results:
+    for a 20aa seq: 136 µs per loop
+    for a pandas series with 852 tmds: 118 ms per loop
     """
     # hydrophobicity scale
     hessa_scale = np.array([0.11, -0.13, 3.49, 2.68, -0.32, 0.74, 2.06, -0.6, 2.71,
@@ -39,13 +81,21 @@ def calc_lipophilicity(seq, method = "mean"):
     analysed_seq = ProteinAnalysis(seq)
     # biopython count_amino_acids returns a dictionary.
     aa_counts_dict = analysed_seq.count_amino_acids()
+    # get the number of AA residues used to calculated the hydrophobicity
+    # this is not simply the sequence length, as the sequence could include gaps or non-natural AA
+    aa_counts_excluding_gaps = np.array(list(aa_counts_dict.values()))
+    number_of_residues = aa_counts_excluding_gaps.sum()
+    # if there are no residues, don't attempt to calculate a mean. Return np.nan.
+    if number_of_residues == 0:
+        return np.nan
     # convert dictionary to array, sorted by aa
     aa_counts_arr = np.array([value for (key, value) in sorted(aa_counts_dict.items())])
     multiplied = aa_counts_arr * hessa_scale
+    sum_of_multiplied = multiplied.sum()
     if method == "mean":
-        return multiplied.mean()
+        return sum_of_multiplied / number_of_residues
     if method == "sum":
-        return multiplied.sum()
+        return sum_of_multiplied
 
 
 def mem_a3m_homologous_filter(set_,logging):
@@ -1043,12 +1093,12 @@ def convert_bind_data_to_csv(set_,logging):
     next(tmp_file_handle)
     for row in tmp_file_handle:
         tm_protein = row.strip().split(",")[0][0:6]
-        bind_file = os.path.join(set_["structure_bind"], "SinglePassTmd/%s.4.0closedist") %tm_protein
+        bind_file = os.path.join(set_["structure_bind"], "%s.4.0closedist") %tm_protein
         if os.path.isfile(bind_file):
             try:
                 bind_file_handle=open(bind_file,"r")
                 #csv_output_file=os.path.join(set_["structure_bind"],"NoRedundPro/%s.csv") %tm_protein
-                csv_output_file = os.path.join(set_["structure_bind"], "SinglePassTmd/%s.4.0closedist.csv") %tm_protein
+                csv_output_file = os.path.join(set_["structure_bind"], "%s.4.0closedist.csv") %tm_protein
                 csv_output_file_handle=open(csv_output_file,"w")
                 writer = csv.writer(csv_output_file_handle, delimiter=',', lineterminator='\n')
                 writer.writerow(["residue_num", "residue_name", "bind","closedist"])
@@ -1079,7 +1129,7 @@ def features_combine_to_traindata(set_,logging):
     # skip header
     next(tmp_file_handle)
     for row in tmp_file_handle:
-        tm_protein = row.strip().split(",")[0][0:6]
+        tm_protein = row.strip().split(",")[0]
         entropy_file = os.path.join(set_["feature_entropy"],set_["db"], "%s.mem.2gap.entropy%s.csv") %(tm_protein,set_["surres"])
         pssm_file = os.path.join(set_["feature_pssm"],set_["db"], "%s.mem.2gap.pssm%s.csv") %(tm_protein,set_["surres"])
         lipophilicity_file=os.path.join(set_["feature_lipophilicity"],set_["db"],"%s_Hessa_lipo.csv") %tm_protein

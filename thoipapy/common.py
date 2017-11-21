@@ -16,23 +16,41 @@ import numpy as np
 
 
 def calculate_fasta_file_length(set_):
-    """
-    :param set_:
-    :return: sequence length
+    """calculate the protein sequence length
+
+    :param
+    set_: dict
+    set_["input_fasta_file"] : str
+        Path to the input fasta sequence file
+
+    :return:
+    SeqLen : int
+            protein sequence length
     """
     seqLen=int()
     FastaFile = open(set_["input_fasta_file"], 'r')
     for rec in SeqIO.parse(FastaFile, 'fasta'):
-        name = rec.id
-        seq = rec.seq
         seqLen = len(rec)
     FastaFile.close()
     return seqLen
 
 def create_TMD_surround20_fasta_file(set_):
-    """
+    """create fasta file with tmd and surround 20 residues as new sequence for further blastp.
+    also the input protein list file will be updated by adding "TMD_Sur_Left" and "TMD_Sur_Right"
+
+    original set_["list_of_tmd_start_end"] looks like this:
+    Protein,TMD_Length,TMD_Start,TMD_End
+    O15455,904,705,722
+    P07174,425,253,273
+
+    after, set_["list_of_tmd_start_end"] will looks like this:
+    Protein,TMD_Length,TMD_Start,TMD_End,TMD_Sur_Left,TMD_Sur_Right
+    O15455,904,705,722,20,20
+    P07174,425,253,273,20,20
+    P04629,796,424,439,20,20
+
     :param set_:
-    :return: tmp surround residue number
+    :return: updated surr20.fasta files and the inputed protein list file.
     """
     tmp_list_loc = set_["list_of_tmd_start_end"]
 
@@ -42,18 +60,19 @@ def create_TMD_surround20_fasta_file(set_):
         tmp_file_handle.truncate()
         for row in lines:
             if re.search("^Protein",row):
+                # make sure in the input protein list file only contain four columns as shown in the example file
                 if len(row.strip().split(",")) == 4:
                     line = row.strip() + "," + "TMD_Sur_Left" + "," + "TMD_Sur_Right"+"\n"
                     tmp_file_handle.write(line)
                 else:
                     tmp_file_handle.write(row)
                 continue
-            tmp_protein_name = row.strip().split(",")[0][0:5]
-            tmp_protein_name1 = row.strip().split(",")[0][0:6]
+
+            tmp_protein_name = row.strip().split(",")[0]
             tmp_length = int(row.strip().split(",")[1])
             tmp_start = int(row.strip().split(",")[2])
             tmp_end = int(row.strip().split(",")[3])
-            tmp_protein_fasta = os.path.join(set_["Protein_folder"], set_["db"],"%s.fasta") % tmp_protein_name1
+            tmp_protein_fasta = os.path.join(set_["Protein_folder"], set_["db"],"%s.fasta") % tmp_protein_name
             line=""
             if os.path.isfile(tmp_protein_fasta):
                 fasta_text = ""
@@ -74,9 +93,9 @@ def create_TMD_surround20_fasta_file(set_):
                 else:
                     set_["tmp_surr_right"]=tmp_length-tmp_end
                 tmp_surr_string=fasta_text[(tmp_start-set_["tmp_surr_left"]-1):(tmp_end+set_["tmp_surr_right"])]
-                tmp_surr_fasta_file=os.path.join(set_["Protein_folder"], set_["db"], "%s.surr20.fasta") % tmp_protein_name1
+                tmp_surr_fasta_file=os.path.join(set_["Protein_folder"], set_["db"], "%s.surr20.fasta") % tmp_protein_name
                 tmp_surr_fasta_file_handle=open(tmp_surr_fasta_file,"w")
-                tmp_surr_fasta_file_handle.write("> %s TMD add surround 20 residues\n" % tmp_protein_name1)
+                tmp_surr_fasta_file_handle.write("> %s TMD add surround 20 residues\n" % tmp_protein_name)
                 tmp_surr_fasta_file_handle.write(tmp_surr_string)
                 tmp_surr_fasta_file_handle.close()
             if len(row.strip().split(","))==4:
@@ -88,11 +107,12 @@ def create_TMD_surround20_fasta_file(set_):
     #return set_["tmp_surr_left"],set_["tmp_surr_right"]
 
 def tmd_positions_match_fasta(set_):
-    """
-    :param thoipapy:
-    :param set_:
-    :param logging:
-    :return: tmd start and end positions
+    """ calculate the tmd start and end positions in the protein sequence,
+    the input tmd sequence will be matched with the full protein sequence.
+
+    :param set_: set the input tm sequence, and the full protein sequence
+
+    :return: tmd start and end positions in the full sequence
     """
     fasta_file_loc=set_["input_fasta_file"]
     tmd_file_loc=set_["input_tmd_file"]
@@ -116,9 +136,53 @@ def tmd_positions_match_fasta(set_):
     return tmd_start, tmd_end
 
 
-
 def calc_lipophilicity(seq, method = "mean"):
     """ Calculates the average hydrophobicity of a sequence according to the Hessa biological scale.
+
+    Hessa T, Kim H, Bihlmaier K, Lundin C, Boekel J, Andersson H, Nilsson I, White SH, von Heijne G. Nature. 2005 Jan 27;433(7024):377-81
+
+    The Hessa scale has been calculated empirically, using the glycosylation assay of TMD insertion.
+    Negative values indicate hydrophobic amino acids with favourable membrane insertion.
+
+    Other hydrophobicity scales are in the settings folder. They can be generated as follows.
+    hydrophob_scale_path = r"D:\korbinian\korbinian\settings\hydrophobicity_scales.xlsx"
+    df_hs = pd.read_excel(hydrophob_scale_path, skiprows=2)
+    df_hs.set_index("1aa", inplace=True)
+    dict_hs = df_hs.Hessa.to_dict()
+    hessa_scale = np.array([value for (key, value) in sorted(dict_hs.items())])
+    ['A', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'K',
+     'L', 'M', 'N', 'P', 'Q', 'R', 'S', 'T', 'V',
+     'W', 'Y']
+
+    Parameters:
+    -----------
+    seq : string
+        Sequence to be analysed. Gaps (-) and unknown amino acids (x) should be ignored.
+    method : string
+        Method to be used to average the hydrophobicity values over the whole sequence.
+        The hydrophobicity score is positive for polar/charged aa, negative for hydrophobic aa.
+            "sum" will return the sum of the hydrophobicity scores over the sequence
+            "mean" will return the mean of the hydrophobicity scores over the sequence
+
+    Returns:
+    --------
+    mean hydrophobicity value for the sequence entered
+
+    Usage:
+    ------
+    from korbinian.utils import calc_lipophilicity
+    # for a single sequence
+    s = "SAESVGEVYIKSTETGQYLAG"
+    calc_lipophilicity(s)
+    # for a series of sequences
+    TMD_ser = df2.TM01_SW_match_seq.dropna()
+    hydro = TMD_ser.apply(lambda x : calc_lipophilicity(x))
+
+    Notes:
+    ------
+    %timeit results:
+    for a 20aa seq: 136 µs per loop
+    for a pandas series with 852 tmds: 118 ms per loop
     """
     # hydrophobicity scale
     hessa_scale = np.array([0.11, -0.13, 3.49, 2.68, -0.32, 0.74, 2.06, -0.6, 2.71,
@@ -128,13 +192,21 @@ def calc_lipophilicity(seq, method = "mean"):
     analysed_seq = ProteinAnalysis(seq)
     # biopython count_amino_acids returns a dictionary.
     aa_counts_dict = analysed_seq.count_amino_acids()
+    # get the number of AA residues used to calculated the hydrophobicity
+    # this is not simply the sequence length, as the sequence could include gaps or non-natural AA
+    aa_counts_excluding_gaps = np.array(list(aa_counts_dict.values()))
+    number_of_residues = aa_counts_excluding_gaps.sum()
+    # if there are no residues, don't attempt to calculate a mean. Return np.nan.
+    if number_of_residues == 0:
+        return np.nan
     # convert dictionary to array, sorted by aa
     aa_counts_arr = np.array([value for (key, value) in sorted(aa_counts_dict.items())])
     multiplied = aa_counts_arr * hessa_scale
+    sum_of_multiplied = multiplied.sum()
     if method == "mean":
-        return multiplied.mean()
+        return sum_of_multiplied / number_of_residues
     if method == "sum":
-        return multiplied.sum()
+        return sum_of_multiplied
 
 
 

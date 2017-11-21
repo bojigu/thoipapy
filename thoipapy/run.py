@@ -2,7 +2,7 @@
 # -*- coding: utf-8 -*-
 """
 Author:         BO ZENG
-Created:        Monday December 12 12:33:08 2016
+Created:        Monday November 20 12:33:08 2017
 Operation system required: Linux (currently not available for windows)
 Dependencies:   Python 3.5
                 numpy
@@ -10,12 +10,11 @@ Dependencies:   Python 3.5
                 freecontact (currently only availble in linux)
                 pandas
 Purpose:        Self-interacting single-pass membrane protein interface residues prediction
-Credits:        All sections by Bo Zeng.
-Further Details:
 
 """
 
 import argparse
+import sys
 import os
 import thoipapy
 from thoipapy import common
@@ -23,7 +22,7 @@ import csv
 
 # read the command line arguments
 parser = argparse.ArgumentParser()
-# add only a single argument, the path to the settings file.
+
 parser.add_argument("-s",  # "-settingsfile",
                     help=r'Full path to your excel settings file.'
                          r'E.g. "\Path\to\your\settingsfile.xlsx"')
@@ -42,23 +41,27 @@ parser.add_argument("-te",  # "-setting tm end ",
 parser.add_argument("-of",  # "-setting output file path",
                     help=r'Full path to your prediction output file.'
                          r'E.g. "\Path\to\your output_file\"')
-parser.add_argument("-email_to",  # "-setting output file location",
+parser.add_argument("-email_to",  # "-setting output email address",
                     help=r'user email given on web server'
                          r'E.g. "***REMOVED***"')
+
 if __name__ == "__main__":
 
-    print('\nRun thoipapy as follows:')
-    print(r'python \Path\to\run.py -s \Path\to\your\settingsfile.xlsx -i \Path\to\your\input.fasta -tmd \Path\to\your\input_tmd.txt '
+    sys.stdout.write('\nRun thoipapy as follows:')
+    sys.stdout.write(r'python \Path\to\run.py -s \Path\to\your\settingsfile.xlsx -i \Path\to\your\input.fasta -tmd \Path\to\your\input_tmd.txt '
           r'-ts tm_start_position -te tm_end_position -of C:\Path\to\your output_file\ -email_to email_address')
 
     # get the command-line arguments
     args = parser.parse_args()
     # args.s is the excel_settings_file input by the user
     set_=common.create_settingdict(args.s)
+
+    # create output file, parsed file, and the output figure file names.
     if args.of:
         output_file_loc=os.path.join(args.of,"output.csv")
         output_parse_file=os.path.join(args.of,"output_parse.csv")
-        output_png_loc=os.path.join(args.of,"outp.png")
+        output_png_loc=os.path.join(args.of,"output.png")
+
     tm_protein_name=set_["tm_protein_name"]
     Data_type=set_["Datatype"]
 
@@ -66,17 +69,20 @@ if __name__ == "__main__":
 
     tmp_lists=thoipapy.proteins.get_tmp_lists.extract_tmps_from_input_file(set_)
     test_tmp_lists=thoipapy.proteins.get_tmp_lists.extract_test_tmps_from_input_file(set_)
-    set_["tm_protein_name"]='input'
-    set_["input_fasta_file"]=args.i
-    set_["input_tmd_file"]=args.tmd
-    set_["tm_start"]=args.ts
-    set_["tm_end"]=args.te
-    set_["email_to"]=args.email_to
-    if args.i:
-        set_["tm_len"]=thoipapy.common.calculate_fasta_file_length(set_)
 
+    set_["tm_protein_name"]='input'
+    if args.i is not None:
+        set_["input_fasta_file"]=args.i
+        set_["tm_len"] = thoipapy.common.calculate_fasta_file_length(set_)
+    if args.ts is not None:
+        set_["tm_start"]=args.ts
+    if args.tm_end is not None:
+        set_["tm_end"]=args.te
     if args.tmd is not None:
-       set_["tm_start"],set_["tm_end"] = common.tmd_positions_match_fasta(set_)
+        set_["input_tmd_file"]=args.tmd
+        set_["tm_start"], set_["tm_end"] = common.tmd_positions_match_fasta(set_)
+    if args.email_to is not None:
+        set_["email_to"]=args.email_to
 
 
     list_number=int(set_["list_number"])
@@ -90,9 +96,16 @@ if __name__ == "__main__":
     elif list_number == 45:
         set_["db"] = "All"
 
+    # this is important, if user want to run multiple proteins simultaneously, user has to set the tmd start and end list file by themselves
+    # example of the tmd input file would look like this:
+    # Protein,TMD_Length,TMD_Start,TMD_End
+    # O15455,904,705,722
+    # P07174,425,253,273
     set_["list_of_tmd_start_end"] = os.path.join(set_["data_harddrive"], "Input_data",
                                                  "Tmd_Start_End_List_Uniq_New_{}.csv".format(set_["db"]))
 
+    # when only run one protein each time, set_["multiple_tmp_simultaneous"] is false, and create the query protein information file
+    # according to the arguments inputed by user
     if not set_["multiple_tmp_simultaneous"]:
         query_protein_tmd_file = os.path.join(set_["Protein_folder"], "Query_Protein_Tmd.csv")
         query_protein_tmd_file_handle=open(query_protein_tmd_file,"w")
@@ -102,38 +115,40 @@ if __name__ == "__main__":
         query_protein_tmd_file_handle.close()
         set_["list_of_tmd_start_end"]=query_protein_tmd_file
 
+    #create new fasta file by only keep tmd and surrounded 20 residues for future blastp work
+    #this function works for both one query protein or multiple protiens simultaneously
     thoipapy.common.create_TMD_surround20_fasta_file(set_)
 
 
 
-    ###################################################################################################
-    #                                                                                                 #
-    #                   homologous download with hhblits                                              #
-    #                                                                                                 #
-    ###################################################################################################
+                    ###################################################################################################
+                    #                                                                                                 #
+                    #                   homologous download with hhblits                                              #
+                    #                                                                                                 #
+                    ###################################################################################################
 
-
+    # this is not used, since we used NCBI blast instead
     if set_["run_retrieve_homologous_with_hhblits"]:
-        #thoipapy.hhblits.download.download_homologous_with_hhblits(set_, logging)
+        thoipapy.hhblits.download.download_homologous_with_hhblits(set_, logging)
 
         thoipapy.hhblits.download.parse_a3m_alignment( set_, logging)
 
-        ###################################################################################################
-        #                                                                                                 #
-        #                   homologous download from NCBI                                                 #
-        #                                                                                                 #
-        ###################################################################################################
+                    ###################################################################################################
+                    #                                                                                                 #
+                    #                   homologous download from NCBI                                                 #
+                    #                                                                                                 #
+                    ###################################################################################################
 
 
     if set_["run_retrieve_NCBI_homologous_with_blastp"]:
         thoipapy.NCBI_BLAST.download.download.download_homologous_from_ncbi(set_, logging)
 
 
-        ###################################################################################################
-        #                                                                                                 #
-        #                   convert homologous xml file to csv                                            #
-        #                                                                                                 #
-        ###################################################################################################
+                    ###################################################################################################
+                    #                                                                                                 #
+                    #                   convert homologous xml file to csv                                            #
+                    #                                                                                                 #
+                    ###################################################################################################
 
 
     if set_["run_parse_homologous_xml_into_csv"]:
@@ -143,11 +158,11 @@ if __name__ == "__main__":
         thoipapy.NCBI_BLAST.parse.parser.extract_filtered_csv_homologous_to_alignments(set_,logging)
 
 
-        ###################################################################################################
-        #                                                                                                 #
-        #                   Random Forest feature calculation                                             #
-        #                                                                                                 #
-        ###################################################################################################
+                    ###################################################################################################
+                    #                                                                                                 #
+                    #                   Random Forest feature calculation                                             #
+                    #                                                                                                 #
+                    ###################################################################################################
 
 
     if set_["RandomForest_feature_calculation"]:
@@ -161,7 +176,6 @@ if __name__ == "__main__":
             thoipapy.RF_features.feature_calculate.calc_lipo_from_pssm(set_,logging)
 
 
-
         if set_["entropy_feature_calculation"]:
             thoipapy.RF_features.feature_calculate.entropy_calculation(set_, logging)
 
@@ -169,7 +183,7 @@ if __name__ == "__main__":
             thoipapy.RF_features.feature_calculate.coevoluton_calculation_with_freecontact(set_, logging)
             thoipapy.RF_features.feature_calculate.cumulative_co_evolutionary_strength_parser(tmp_lists, tm_protein_name,thoipapy ,set_, logging)
 
-        if set_["clac_relative_position" \
+        if set_["clac_relative_position" 
                 ""]:
             thoipapy.RF_features.feature_calculate.relative_position_calculation(set_,logging)
 
@@ -200,16 +214,22 @@ if __name__ == "__main__":
         thoipapy.Sine_Curve.SineCurveFit.Save_Sine_Curve_Result(set_,output_file_loc,output_png_loc)
         logging.info('the fitting of sine curve is done')
 
-            ###################################################################################################
-            #                                                                                                 #
-            #                  Bind residues calculation for train data                                       #
-            #                                                                                                 #
-            ###################################################################################################
+                    ###################################################################################################
+                    #                                                                                                 #
+                    #                  Bind residues calculation for train data                                       #
+                    #                                                                                                 #
+                    ###################################################################################################
 
 
     if set_["Atom_Close_Dist"]:
         infor=thoipapy.Atom_Dist.Residu_Closest_Dist.homodimer_residue_closedist_calculate_from_complex(thoipapy, set_, logging)
         print(infor)
+
+                    ###################################################################################################
+                    #                                                                                                 #
+                    #                  Bind residues calculation for train data                                       #
+                    #                                                                                                 #
+                    ###################################################################################################
 
     if set_["Send_email_finished"]:
         thoipapy.Send_Email.Send_Email_Smtp.send_email_when_finished(set_, thoipapy,output_parse_file,output_png_loc)
