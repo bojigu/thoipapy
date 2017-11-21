@@ -19,6 +19,7 @@ import os
 import thoipapy
 from thoipapy import common
 import csv
+import platform
 
 # read the command line arguments
 parser = argparse.ArgumentParser()
@@ -76,7 +77,7 @@ if __name__ == "__main__":
         set_["tm_len"] = thoipapy.common.calculate_fasta_file_length(set_)
     if args.ts is not None:
         set_["tm_start"]=args.ts
-    if args.tm_end is not None:
+    if args.te is not None:
         set_["tm_end"]=args.te
     if args.tmd is not None:
         set_["input_tmd_file"]=args.tmd
@@ -96,13 +97,23 @@ if __name__ == "__main__":
     elif list_number == 45:
         set_["db"] = "All"
 
+
+    if list_number == 99:
+        set_["db"] = "Etra"
+        set_["list_of_tmd_start_end"] = os.path.join(os.path.dirname(args.s), "Tmd_Start_End_List_Uniq_New_{}.csv".format("MT1"))
+    else:
+        set_["list_of_tmd_start_end"] = os.path.join(os.path.dirname(args.s), "Tmd_Start_End_List_Uniq_New_{}.csv".format(set_["db"]))
+
     # this is important, if user want to run multiple proteins simultaneously, user has to set the tmd start and end list file by themselves
     # example of the tmd input file would look like this:
     # Protein,TMD_Length,TMD_Start,TMD_End
     # O15455,904,705,722
     # P07174,425,253,273
-    set_["list_of_tmd_start_end"] = os.path.join(set_["data_harddrive"], "Input_data",
-                                                 "Tmd_Start_End_List_Uniq_New_{}.csv".format(set_["db"]))
+
+
+    #set_["list_of_tmd_start_end"] = os.path.join(os.path.dirname(args.s), "Tmd_Start_End_List_Uniq_New_{}.csv".format(set_["db"]))
+    # set_["list_of_tmd_start_end"] = os.path.join(set_["data_harddrive"], "Input_data",
+    #                                              "Tmd_Start_End_List_Uniq_New_{}.csv".format(set_["db"]))
 
     # when only run one protein each time, set_["multiple_tmp_simultaneous"] is false, and create the query protein information file
     # according to the arguments inputed by user
@@ -164,13 +175,12 @@ if __name__ == "__main__":
                     #                                                                                                 #
                     ###################################################################################################
 
-
     if set_["RandomForest_feature_calculation"]:
 
         #thoipapy.RF_features.feature_calculate.mem_a3m_homologous_filter(set_, logging)
 
         if set_["pssm_feature_calculation"]:
-            thoipapy.RF_features.feature_calculate.pssm_calculation(set_,logging)
+            thoipapy.RF_features.feature_calculate.create_PSSM_from_MSA_mult_prot(set_, logging)
 
         if set_["calc_lipo_from_pssm"]:
             thoipapy.RF_features.feature_calculate.calc_lipo_from_pssm(set_,logging)
@@ -180,11 +190,14 @@ if __name__ == "__main__":
             thoipapy.RF_features.feature_calculate.entropy_calculation(set_, logging)
 
         if set_["cumulative_coevolution_feature_calculation"]:
-            thoipapy.RF_features.feature_calculate.coevoluton_calculation_with_freecontact(set_, logging)
-            thoipapy.RF_features.feature_calculate.cumulative_co_evolutionary_strength_parser(tmp_lists, tm_protein_name,thoipapy ,set_, logging)
+            if "Windows" in platform.system():
+                sys.stdout.write("\n Freecontact cannot be run in Windows! Skipping coevoluton_calculation_with_freecontact function.")
+                thoipapy.RF_features.feature_calculate.cumulative_co_evolutionary_strength_parser(tmp_lists, tm_protein_name, thoipapy, set_, logging)
+            else:
+                thoipapy.RF_features.feature_calculate.coevoluton_calculation_with_freecontact(set_, logging)
+                thoipapy.RF_features.feature_calculate.cumulative_co_evolutionary_strength_parser(tmp_lists, tm_protein_name,thoipapy ,set_, logging)
 
-        if set_["clac_relative_position" 
-                ""]:
+        if set_["clac_relative_position"]:
             thoipapy.RF_features.feature_calculate.relative_position_calculation(set_,logging)
 
         if set_["lips_score_feature_calculation"]:

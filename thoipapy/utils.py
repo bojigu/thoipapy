@@ -1444,16 +1444,22 @@ def save_figure(s, fig, Fig_Nr, base_filepath, dpi = 400):
     plt.close('all')
 
 class Log_Only_To_Console(object):
+    """ Replace the Logging object with a function to print only to console.
+
+    Usage:
+    ------
+    # if multiprocessing is used, log only to the console
+    hijacked_logging = logging if s["use_multiprocessing"] != True else utils.Log_Only_To_Console()
+    your_function(in=in, out=out, logging=hijacked_logging)
+    """
     def __init__(self):
         pass
     def info(self, message):
-        print(message)
+        sys.stdout.write("\n{}".format(message))
     def warning(self, message):
-        print(message)
+        sys.stdout.write("\n{}".format(message))
     def critical(self, message):
-        print(message)
-
-
+        sys.stdout.write("\n{}".format(message))
 
 def get_list_not_in_homol_db(pathdict):
     not_in_homol_db = []

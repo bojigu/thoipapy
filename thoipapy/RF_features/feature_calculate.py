@@ -146,7 +146,7 @@ def mem_a3m_homologous_filter(set_,logging):
 
 
 
-def pssm_calculation(set_,logging):
+def create_PSSM_from_MSA_mult_prot(set_, logging):
     logging.info('start pssm calculation')
 
     tmp_list_loc = set_["list_of_tmd_start_end"]
@@ -154,53 +154,65 @@ def pssm_calculation(set_,logging):
     # skip header
     next(tmp_file_handle)
     for row in tmp_file_handle:
-        tmp_protein_name = row.strip().split(",")[0][0:6]
-        # if tmp_protein_name=="4cbj_E":
+        protein_name = row.strip().split(",")[0][0:6]
+        print(protein_name)
+        # if protein_name=="4cbj_E":
         tm_start = int(row.strip().split(",")[2]) - 5  ###for fullseq
         if (tm_start <= 0):
             tm_start = 1
         tm_end = int(row.strip().split(",")[3]) + 5  ###for fullseq
         if tm_end > int(row.strip().split(",")[1]):
             tm_end = int(row.strip().split(",")[1])
-        pssm_file = os.path.join(set_["feature_pssm"],set_["db"], "%s.mem.2gap.pssm%s.csv") % (tmp_protein_name,set_["surres"])
-        homo_filter_fasta_file = os.path.join(set_["output_oa3m_homologous"],set_["db"],"%s.a3m.mem.uniq.2gaps%s") % (tmp_protein_name,set_["surres"])
-        if os.path.isfile(homo_filter_fasta_file):
-            try:
-                pssm_file_handle = open(pssm_file, 'w')
-                mat=[]
-                writer = csv.writer(pssm_file_handle, delimiter=',', quotechar='"',
-                                    lineterminator='\n',
-                                    quoting=csv.QUOTE_NONNUMERIC, doublequote=True)
-                writer.writerow(['residue_num','residue_name','A','I','L','V','F','W','Y','N','C','Q','M','S','T' ,'D','E','R','H','K','G','P'])
-                #if os.path.isfile(homo_filter_fasta_file):
-                #for line in open(homo_filter_fasta_file).readlines():
-                with open(homo_filter_fasta_file) as f:
-                    for line in f.readlines():
-                        if not re.search("^>", line):
-                            mat.append(list(line))
-                    rowlen = len(mat[0])
-                    collen = len(mat)
-                    column = []
-                f.close()
-                #write 20 amino acids as the header of pssm output file
-                #pssm_file_handle.write(
-                    #'residue'+' '+'A' + ' ' + 'I' + ' ' + 'L' + ' ' + 'V' + ' ' + 'F' + ' ' + 'W' + ' ' + 'Y' + ' ' + 'N' + ' ' + 'C' + ' ' + 'Q' + ' ' + 'M' + ' ' + 'S' + ' ' + 'T' + ' ' + 'D' + ' ' + 'E' + ' ' + 'R' + ' ' + 'H' + ' ' + 'K' + ' ' + 'G' + ' ' + 'P' + '\n')
-                for j in range(0, rowlen - 1):
-                    for i in range(0, collen):
-                        column.append(mat[i][j])
-                    aa_num = [column.count('A')/collen, column.count('I')/collen, column.count('L')/collen, column.count('V')/collen, column.count('F')/collen,
-                              column.count('W')/collen, column.count('Y')/collen, column.count('N')/collen, column.count('C')/collen, column.count('Q')/collen,
-                              column.count('M')/collen, column.count('S')/collen, column.count('T')/collen, column.count('D')/collen, column.count('E')/collen,
-                              column.count('R')/collen, column.count('H')/collen, column.count('K')/collen, column.count('G')/collen, column.count('P')/collen]
-                    aa_num.insert(0,mat[0][j])     ###adding the residue name to the second column
-                    aa_num.insert(0,j+1)           ##adding the residue number to the first column
-                    writer.writerow(aa_num)
-                    column = []
-                pssm_file_handle.close()
-                logging.info('finished pssm calculation:%s' %pssm_file)
-            except:
-                print("pssm calculation occures error")
+        create_PSSM_from_MSA(set_, protein_name, logging)
+
     tmp_file_handle.close()
+
+def create_PSSM_from_MSA(set_, protein_name, logging):
+
+    pssm_file = os.path.join(set_["feature_pssm"], set_["db"], "%s.mem.2gap.pssm%s.csv") % (protein_name, set_["surres"])
+    homo_filter_fasta_file = os.path.join(set_["output_oa3m_homologous"], set_["db"], "%s.a3m.mem.uniq.2gaps%s") % (protein_name, set_["surres"])
+
+    if os.path.isfile(homo_filter_fasta_file):
+        try:
+            pssm_file_handle = open(pssm_file, 'w')
+            mat = []
+            writer = csv.writer(pssm_file_handle, delimiter=',', quotechar='"',
+                                lineterminator='\n',
+                                quoting=csv.QUOTE_NONNUMERIC, doublequote=True)
+            writer.writerow(['residue_num', 'residue_name', 'A', 'I', 'L', 'V', 'F', 'W', 'Y', 'N', 'C', 'Q', 'M', 'S', 'T', 'D', 'E', 'R', 'H', 'K', 'G', 'P'])
+            # if os.path.isfile(homo_filter_fasta_file):
+            # for line in open(homo_filter_fasta_file).readlines():
+            with open(homo_filter_fasta_file) as f:
+                for line in f.readlines():
+                    if not re.search("^>", line):
+                        mat.append(list(line))
+                rowlen = len(mat[0])
+                collen = len(mat)
+                column = []
+            f.close()
+            # write 20 amino acids as the header of pssm output file
+            # pssm_file_handle.write(
+            # 'residue'+' '+'A' + ' ' + 'I' + ' ' + 'L' + ' ' + 'V' + ' ' + 'F' + ' ' + 'W' + ' ' + 'Y' + ' ' + 'N' + ' ' + 'C' + ' ' + 'Q' + ' ' + 'M' + ' ' + 'S' + ' ' + 'T' + ' ' + 'D' + ' ' + 'E' + ' ' + 'R' + ' ' + 'H' + ' ' + 'K' + ' ' + 'G' + ' ' + 'P' + '\n')
+            for j in range(0, rowlen - 1):
+                for i in range(0, collen):
+                    column.append(mat[i][j])
+                aa_num = [column.count('A') / collen, column.count('I') / collen, column.count('L') / collen, column.count('V') / collen, column.count('F') / collen,
+                          column.count('W') / collen, column.count('Y') / collen, column.count('N') / collen, column.count('C') / collen, column.count('Q') / collen,
+                          column.count('M') / collen, column.count('S') / collen, column.count('T') / collen, column.count('D') / collen, column.count('E') / collen,
+                          column.count('R') / collen, column.count('H') / collen, column.count('K') / collen, column.count('G') / collen, column.count('P') / collen]
+                aa_num.insert(0, mat[0][j])  ###adding the residue name to the second column
+                aa_num.insert(0, j + 1)  ##adding the residue number to the first column
+                writer.writerow(aa_num)
+                column = []
+            pssm_file_handle.close()
+            logging.info('finished pssm calculation: %s' % pssm_file)
+
+        except:
+            print("\npssm calculation occures error")
+    else:
+        print("\nnot existing", homo_filter_fasta_file)
+
+
 
 
 def calc_lipo_from_pssm(set_,logging):
@@ -249,7 +261,7 @@ def calc_lipo_from_pssm(set_,logging):
         else:
             tm_surr_right=int(row.strip().split(",")[5])
 
-        result_tuple = lipo_from_pssm(set_, tmp_protein_name,tm_surr_left,tm_surr_right, scalename, hydrophob_scale_path, plot_linechart)
+        result_tuple = lipo_from_pssm(set_, tmp_protein_name, tm_surr_left, tm_surr_right, scalename, hydrophob_scale_path, plot_linechart)
         if result_tuple[1] is False:
             failed_acc_list.append(tmp_protein_name)
     tmp_file_handle.close()
@@ -1057,7 +1069,6 @@ def Lips_score_parsing(set_, logging):
                         array = row.split()
                         if not int(array[0]) in dict1:
                             dict1[int(array[0])] = " ".join([array[1], array[2], array[3]])
-                        print(row)
                     else:
                         surface_find = 0
                 Lips_outnput_file_handle.close()
@@ -1354,7 +1365,13 @@ def combine_all_train_data_for_random_forest(set_,logging):
     crystal_train_data_after_delete_files = [item for item in crystal_train_data_files if item not in delete_crystal_traindata_files]
     train_data_after_delete_files = [item for item in train_data_add_physical_parameter_files if item not in delete_crystal_traindata_files]
 
-    with open('/scratch/zeng/thoipapy/RandomForest/Crystal_Traindata.csv' , 'w')   as fout :
+    RF_dir = set_["RF_loc"]
+    Crystal_Traindata_csv = os.path.join(RF_dir, 'Crystal_Traindata.csv')
+    Nmr_Traindata_csv = os.path.join(RF_dir, 'Nmr_Traindata.csv')
+    Crystal_Nmr_Traindata_csv = os.path.join(RF_dir, 'Crystal_Nmr_Traindata.csv')
+    Etra_Testdata_csv = os.path.join(RF_dir, 'Etra_Testdata.csv')
+
+    with open(Crystal_Traindata_csv , 'w')   as fout :
 
         for filename in crystal_train_data_after_delete_files:
             with open(filename) as fin:
@@ -1366,7 +1383,8 @@ def combine_all_train_data_for_random_forest(set_,logging):
                     fout.write(line)
 
     header_saved = False
-    with open('/scratch/zeng/thoipapy/RandomForest/Nmr_Traindata.csv' , 'w')   as fout :
+    #with open('/scratch/zeng/thoipapy/RandomForest/Nmr_Traindata.csv' , 'w')   as fout :
+    with open(Nmr_Traindata_csv, 'w')   as fout :
 
         for filename in nmr_train_data_files:
             with open(filename) as fin:
@@ -1378,7 +1396,7 @@ def combine_all_train_data_for_random_forest(set_,logging):
                     fout.write(line)
 
     header_saved = False
-    with open('/scratch/zeng/thoipapy/RandomForest/Crystal_Nmr_Traindata.csv' , 'w')   as fout :
+    with open(Crystal_Nmr_Traindata_csv, 'w')   as fout :
 
         for filename in train_data_after_delete_files:
             with open(filename) as fin:
@@ -1390,7 +1408,7 @@ def combine_all_train_data_for_random_forest(set_,logging):
                     fout.write(line)
 
     header_saved = False
-    with open('/scratch/zeng/thoipapy/RandomForest/Etra_Testdata.csv' , 'w')   as fout :
+    with open(Etra_Testdata_csv, 'w')   as fout :
 
         for filename in etra_test_data_files:
             with open(filename) as fin:
