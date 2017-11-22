@@ -1491,3 +1491,27 @@ def normalise_0_1(arraylike):
     # convert to float
     normalised = np.array(normalised).astype(float)
     return normalised
+
+
+def set_column_sequence(dataframe, seq, front=True):
+    '''Takes a dataframe and a subsequence of its columns,
+       returns dataframe with seq as first columns if "front" is True,
+       and seq as last columns if "front" is False.
+       taken from https://stackoverflow.com/questions/12329853/how-to-rearrange-pandas-column-sequence
+
+    Usage
+    -----
+    df = set_column_sequence(df, ["TMD_start", "database", "whatever other col I want first"])
+    '''
+    cols = seq[:] # copy so we don't mutate seq
+    for x in dataframe.columns:
+        if x not in cols:
+            if front: #we want "seq" to be in the front
+                #so append current column to the end of the list
+                cols.append(x)
+            else:
+                #we want "seq" to be last, so insert this
+                #column in the front of the new column list
+                #"cols" we are building:
+                cols.insert(0, x)
+    return dataframe[cols]

@@ -239,7 +239,7 @@ def create_settingdict(excel_file_with_settings):
                 os.makedirs(set_[path])
     return set_
 
-def setup_keyboard_interrupt_and_error_logging(set_, list_number):
+def setup_keyboard_interrupt_and_error_logging(set_, setname):
     ''' -------Setup keyboard interrupt----------
     '''
     # import arcgisscripting
@@ -251,7 +251,7 @@ def setup_keyboard_interrupt_and_error_logging(set_, list_number):
     date_string = strftime("%Y%m%d_%H_%M_%S")
 
     # designate the output logfile
-    logfile = os.path.join(set_["logfile_dir"],'List%s_%s_logfile.log' % (list_number, date_string))
+    logfile = os.path.join(set_["logfile_dir"],'%s_%s_logfile.log' % (setname, date_string))
 
     # # if multiprocessing is used, disable logging except for critical messages.
     # if set_["use_multiprocessing"]:

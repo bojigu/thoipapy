@@ -6,7 +6,7 @@ import pandas as pd
 from difflib import SequenceMatcher
 import thoipapy
 
-def parse_NCBI_xml_to_csv(set_,logging):
+def parse_NCBI_xml_to_csv(set_, df_set, logging):
     """
     extract multiple sequence alignment and useful informations from xml homologous file
     Parameters
@@ -19,22 +19,22 @@ def parse_NCBI_xml_to_csv(set_,logging):
     csv file of query protein alignment information
 
     """
-    logging.info('~~~~~~~~~~starting parse_NCBI_xml_to_csv')
+    logging.info('~~~~~~~~~~~~                 starting parse_NCBI_xml_to_csv              ~~~~~~~~~~~~')
 
-
-                        ##############################################################################################
-                        #                                                                                            #
-                        #     parse multiple csv files simultaneously                                                #
-                        #                                                                                            #
-                        ##############################################################################################
+    ##############################################################################################
+    #                                                                                            #
+    #     parse multiple csv files simultaneously                                                #
+    #                                                                                            #
+    ##############################################################################################
 
 
     tmp_list_loc = set_["list_of_tmd_start_end"]
+
     tmp_file_handle = open(tmp_list_loc, 'r')
     # skip header
     next(tmp_file_handle)
     for row in tmp_file_handle:
-        tmp_protein_name = row.strip().split(",")[0]
+        acc = row.strip().split(",")[0]
         #tm_start=int(row.strip().split(",")[4])+1
         #tm_start=int(row.strip().split(",")[4])+1-5 ###for surr20
         # set_["surres"] set how many residues on each sides of tmd sequence
@@ -50,13 +50,13 @@ def parse_NCBI_xml_to_csv(set_,logging):
             tm_end = int(row.strip().split(",")[3])  + 5  ###for fullseq
             if tm_end>int(row.strip().split(",")[1]):
                 tm_end=int(row.strip().split(",")[1]) # quals to the full sequence length
-        xml_file = os.path.join(set_["xml_file_folder"], set_["db"], "%s.xml") %tmp_protein_name
+        xml_file = os.path.join(set_["xml_file_folder"], set_["db"], "%s.xml") % acc
         match_details_dict = {}
 
         if os.path.isfile(xml_file):
-            #homo_out_csv_file=os.path.join(set_["homologous_folder"],"NoRedundPro/%s_homo.csv") %tmp_protein_name
+            #homo_out_csv_file=os.path.join(set_["homologous_folder"],"NoRedundPro/%s_homo.csv") %acc
             homo_out_csv_file = os.path.join(set_["homologous_folder"], "a3m",set_["db"],
-                                             "%s_homo%s.csv") % (tmp_protein_name,set_["surres"])
+                                             "%s_homo%s.csv") % (acc,set_["surres"])
             with open(homo_out_csv_file,'w') as homo_out_csv_file_handle:
                 xml_result_handle=open(xml_file)
                 xml_record=NCBIXML.read(xml_result_handle)
@@ -87,7 +87,7 @@ def parse_NCBI_xml_to_csv(set_,logging):
                                 match_details_dict["tm_match_seq"] = tm_match_str
                                 match_details_dict["tm_sbjt_seq"] = tm_sbjt_str
                             if(hit_num)==0:
-                                description="%s_NCBI_query_sequence" %tmp_protein_name
+                                description="%s_NCBI_query_sequence" % acc
                             else:
                                 description=alignment.title
                             match_details_dict["description"]=description
@@ -120,18 +120,14 @@ def parse_NCBI_xml_to_csv(set_,logging):
                             hit_num+=1
                 xml_result_handle.close()
             homo_out_csv_file_handle.close()
-            logging.info("parsing xml file finished: %s\n" % homo_out_csv_file)
+            logging.info("{} parse_NCBI_xml_to_csv finished ({})".format(acc, homo_out_csv_file))
     tmp_file_handle.close()
-
-
-
-
-
+    logging.info('~~~~~~~~~~~~                 finished parse_NCBI_xml_to_csv              ~~~~~~~~~~~~')
 
 
 def extract_filtered_csv_homologous_to_alignments(set_,logging):
 
-    logging.info('start extract filterd csv homologous')
+    logging.info('start extract filtered csv homologues to alignments')
     min_identity_of_TMD_seq=set_["min_identity_of_TMD_seq"]
     max_identity_of_TMD_seq=set_["max_identity_of_TMD_seq"]
     max_n_gaps_in_TMD_seq=set_["max_n_gaps_in_TMD_seq"]
@@ -160,9 +156,23 @@ def extract_filtered_csv_homologous_to_alignments(set_,logging):
             homo_mem_lips_input_file = os.path.join(set_["homologous_folder"],"a3m",set_["db"],"%s.mem.lips.input%s") % (tm_protein,set_["surres"])
             homo_mem_lips_input_file_handle = open(homo_mem_lips_input_file, "w")
             #with open(homo_filtered_out_csv_file, 'w') as homo_filtered_out_csv_file_handle:
-            df=pd.read_csv(homo_csv_file_loc,sep=",",quoting=csv.QUOTE_NONNUMERIC, index_col=0)
+            df=pd.read_csv(homo_csv_file_loc)
             i=0
             try:
+                """WARNING : CURRENTLY Q12983 (BNIP3) for ETRA gives an error here
+                 - need to re-organise script so the sequences are simply saved based on a filtered dataframe
+                
+                KeyError: 'tm_query_seq'
+                Exception ignored in: <_io.FileIO name='D:\\\\data_thoipapy\\\\Input_data\\set12_BNIP3_ETRA_processed.csv' mode='rb' closefd=True>
+                ResourceWarning: unclosed file <_io.TextIOWrapper name='D:\\\\data_thoipapy\\\\Input_data\\set12_BNIP3_ETRA_processed.csv' mode='r' encoding='cp1252'>
+                Exception ignored in: <_io.FileIO name='D:\\data_thoipapy\\homologous\\a3m\\ETRA\\Q12983_homo_filtered_aln_surr0.fasta' mode='wb' closefd=True>
+                ResourceWarning: unclosed file <_io.TextIOWrapper name='D:\\data_thoipapy\\homologous\\a3m\\ETRA\\Q12983_homo_filtered_aln_surr0.fasta' mode='w' encoding='cp1252'>
+                Exception ignored in: <_io.FileIO name='D:\\data_thoipapy\\homologous\\a3m\\ETRA\\Q12983.a3m.mem.uniq.2gaps_surr0' mode='wb' closefd=True>
+                ResourceWarning: unclosed file <_io.TextIOWrapper name='D:\\data_thoipapy\\homologous\\a3m\\ETRA\\Q12983.a3m.mem.uniq.2gaps_surr0' mode='w' encoding='cp1252'>
+                Exception ignored in: <_io.FileIO name='D:\\data_thoipapy\\homologous\\a3m\\ETRA\\Q12983.mem.lips.input_surr0' mode='wb' closefd=True>
+                ResourceWarning: unclosed file <_io.TextIOWrapper name='D:\\data_thoipapy\\homologous\\a3m\\ETRA\\Q12983.mem.lips.input_surr0' mode='w' encoding='cp1252'>
+                """
+
                 for index, row in df.iterrows():
                     if i==0:
                         homo_filtered_out_csv_file_handle.write(">" + row["description"] + "\n")
@@ -192,10 +202,20 @@ def extract_filtered_csv_homologous_to_alignments(set_,logging):
                             alignment_dict2[row["tm_sbjt_seq"]]=1
                             print("{}".format(row["tm_sbjt_seq"]), file=homo_filter_file_handle)
             except:
-                print("parsing error for protein %s" %tm_protein)
+                logging.warning("\n------------------\n{} parsing error in extract_filtered_csv_homologous_to_alignments\n{} could not be created. Files will be deleted.\n------------------\n".format(tm_protein, homo_filter_file))
+                homo_filter_file_handle.close()
+                homo_mem_lips_input_file_handle.close()
+                homo_filtered_out_csv_file_handle.close()
+                if os.path.isfile(homo_filtered_out_csv_file):
+                    os.remove(homo_filtered_out_csv_file)
+                    os.remove(homo_filter_file)
+                    os.remove(homo_mem_lips_input_file)
+
             homo_filter_file_handle.close()
             homo_mem_lips_input_file_handle.close()
             homo_filtered_out_csv_file_handle.close()
-            logging.info("filtering csv file to alignment finished: %s\n" % homo_filter_file)
+            logging.info("{} extract_filtered_csv_homologous_to_alignments finished ({})".format(tm_protein, homo_filter_file))
+        else:
+            print("{} not found".format(homo_csv_file_loc))
     tmp_file_handle.close()
 

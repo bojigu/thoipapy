@@ -155,7 +155,6 @@ def create_PSSM_from_MSA_mult_prot(set_, logging):
     next(tmp_file_handle)
     for row in tmp_file_handle:
         protein_name = row.strip().split(",")[0][0:6]
-        print(protein_name)
         # if protein_name=="4cbj_E":
         tm_start = int(row.strip().split(",")[2]) - 5  ###for fullseq
         if (tm_start <= 0):
@@ -173,49 +172,47 @@ def create_PSSM_from_MSA(set_, protein_name, logging):
     homo_filter_fasta_file = os.path.join(set_["output_oa3m_homologous"], set_["db"], "%s.a3m.mem.uniq.2gaps%s") % (protein_name, set_["surres"])
 
     if os.path.isfile(homo_filter_fasta_file):
-        try:
-            pssm_file_handle = open(pssm_file, 'w')
-            mat = []
-            writer = csv.writer(pssm_file_handle, delimiter=',', quotechar='"',
-                                lineterminator='\n',
-                                quoting=csv.QUOTE_NONNUMERIC, doublequote=True)
-            writer.writerow(['residue_num', 'residue_name', 'A', 'I', 'L', 'V', 'F', 'W', 'Y', 'N', 'C', 'Q', 'M', 'S', 'T', 'D', 'E', 'R', 'H', 'K', 'G', 'P'])
-            # if os.path.isfile(homo_filter_fasta_file):
-            # for line in open(homo_filter_fasta_file).readlines():
-            with open(homo_filter_fasta_file) as f:
-                for line in f.readlines():
-                    if not re.search("^>", line):
-                        mat.append(list(line))
-                rowlen = len(mat[0])
-                collen = len(mat)
-                column = []
-            f.close()
-            # write 20 amino acids as the header of pssm output file
-            # pssm_file_handle.write(
-            # 'residue'+' '+'A' + ' ' + 'I' + ' ' + 'L' + ' ' + 'V' + ' ' + 'F' + ' ' + 'W' + ' ' + 'Y' + ' ' + 'N' + ' ' + 'C' + ' ' + 'Q' + ' ' + 'M' + ' ' + 'S' + ' ' + 'T' + ' ' + 'D' + ' ' + 'E' + ' ' + 'R' + ' ' + 'H' + ' ' + 'K' + ' ' + 'G' + ' ' + 'P' + '\n')
-            for j in range(0, rowlen - 1):
-                for i in range(0, collen):
-                    column.append(mat[i][j])
-                aa_num = [column.count('A') / collen, column.count('I') / collen, column.count('L') / collen, column.count('V') / collen, column.count('F') / collen,
-                          column.count('W') / collen, column.count('Y') / collen, column.count('N') / collen, column.count('C') / collen, column.count('Q') / collen,
-                          column.count('M') / collen, column.count('S') / collen, column.count('T') / collen, column.count('D') / collen, column.count('E') / collen,
-                          column.count('R') / collen, column.count('H') / collen, column.count('K') / collen, column.count('G') / collen, column.count('P') / collen]
-                aa_num.insert(0, mat[0][j])  ###adding the residue name to the second column
-                aa_num.insert(0, j + 1)  ##adding the residue number to the first column
-                writer.writerow(aa_num)
-                column = []
-            pssm_file_handle.close()
-            logging.info('finished pssm calculation: %s' % pssm_file)
+        #try:
+        pssm_file_handle = open(pssm_file, 'w')
+        mat = []
+        writer = csv.writer(pssm_file_handle, delimiter=',', quotechar='"',
+                            lineterminator='\n',
+                            quoting=csv.QUOTE_NONNUMERIC, doublequote=True)
+        writer.writerow(['residue_num', 'residue_name', 'A', 'I', 'L', 'V', 'F', 'W', 'Y', 'N', 'C', 'Q', 'M', 'S', 'T', 'D', 'E', 'R', 'H', 'K', 'G', 'P'])
+        # if os.path.isfile(homo_filter_fasta_file):
+        # for line in open(homo_filter_fasta_file).readlines():
+        with open(homo_filter_fasta_file) as f:
+            for line in f.readlines():
+                if not re.search("^>", line):
+                    mat.append(list(line))
+            rowlen = len(mat[0])
+            collen = len(mat)
+            column = []
+        f.close()
+        # write 20 amino acids as the header of pssm output file
+        # pssm_file_handle.write(
+        # 'residue'+' '+'A' + ' ' + 'I' + ' ' + 'L' + ' ' + 'V' + ' ' + 'F' + ' ' + 'W' + ' ' + 'Y' + ' ' + 'N' + ' ' + 'C' + ' ' + 'Q' + ' ' + 'M' + ' ' + 'S' + ' ' + 'T' + ' ' + 'D' + ' ' + 'E' + ' ' + 'R' + ' ' + 'H' + ' ' + 'K' + ' ' + 'G' + ' ' + 'P' + '\n')
+        for j in range(0, rowlen - 1):
+            for i in range(0, collen):
+                column.append(mat[i][j])
+            aa_num = [column.count('A') / collen, column.count('I') / collen, column.count('L') / collen, column.count('V') / collen, column.count('F') / collen,
+                      column.count('W') / collen, column.count('Y') / collen, column.count('N') / collen, column.count('C') / collen, column.count('Q') / collen,
+                      column.count('M') / collen, column.count('S') / collen, column.count('T') / collen, column.count('D') / collen, column.count('E') / collen,
+                      column.count('R') / collen, column.count('H') / collen, column.count('K') / collen, column.count('G') / collen, column.count('P') / collen]
+            aa_num.insert(0, mat[0][j])  ###adding the residue name to the second column
+            aa_num.insert(0, j + 1)  ##adding the residue number to the first column
+            writer.writerow(aa_num)
+            column = []
+        pssm_file_handle.close()
+        logging.info('{} pssm calculation finished ({})'.format(protein_name, pssm_file))
 
-        except:
-            print("\npssm calculation occures error")
+        # except:
+        #     print("\npssm calculation occures error")
     else:
-        print("\nnot existing", homo_filter_fasta_file)
+        logging.warning("{} homo_filter_fasta_file does not exist({})".format(protein_name, homo_filter_fasta_file))
 
 
-
-
-def calc_lipo_from_pssm(set_,logging):
+def calc_lipo_from_pssm(set_, df_set, logging):
     """Calculates lipophilicity from a PSSM for a list of proteins.
 
     This function executes lipo_from_pssm for an input list of proteins.
@@ -231,8 +228,7 @@ def calc_lipo_from_pssm(set_,logging):
     database : str
         Database name, e.g. "crystal", "NMR" or "ETRA".
     """
-    sys.stdout.write('\n~~~~~~~~~~~~                 starting calc_lipo_from_pssm              ~~~~~~~~~~~~\n')
-    sys.stdout.flush()
+    logging.info('~~~~~~~~~~~~                 starting calc_lipo_from_pssm              ~~~~~~~~~~~~')
 
     set_["lipo_out_dir"] = os.path.join(set_["feature_lipophilicity"],  set_["db"])
     set_["pssm_dir"] = os.path.join(set_["feature_pssm"], set_["db"])
@@ -251,7 +247,11 @@ def calc_lipo_from_pssm(set_,logging):
     # skip header
     next(tmp_file_handle)
     for row in tmp_file_handle:
-        tmp_protein_name = row.strip().split(",")[0][0:6]
+        acc_orig = row.strip().split(",")[0]
+        if len(acc_orig) > 6:
+            print("{} shows an acc longer than 6 and will be truncated in further filenames".format(acc_orig))
+
+        acc = acc_orig[0:6]
         if int(row.strip().split(",")[4])>=5:
             tm_surr_left=5
         else:
@@ -261,17 +261,16 @@ def calc_lipo_from_pssm(set_,logging):
         else:
             tm_surr_right=int(row.strip().split(",")[5])
 
-        result_tuple = lipo_from_pssm(set_, tmp_protein_name, tm_surr_left, tm_surr_right, scalename, hydrophob_scale_path, plot_linechart)
+        result_tuple = lipo_from_pssm(set_, acc, tm_surr_left, tm_surr_right, scalename, hydrophob_scale_path, logging, plot_linechart)
         if result_tuple[1] is False:
-            failed_acc_list.append(tmp_protein_name)
+            failed_acc_list.append(acc)
     tmp_file_handle.close()
     if len(failed_acc_list) > 0:
         sys.stdout.write("\n\ncalc_lipo_from_pssm failed for the following : {}".format(failed_acc_list))
-    sys.stdout.write('\n~~~~~~~~~~~~                 finished calc_lipo_from_pssm              ~~~~~~~~~~~~\n')
-    sys.stdout.flush()
+    logging.info('~~~~~~~~~~~~                 finished calc_lipo_from_pssm              ~~~~~~~~~~~~')
 
 
-def lipo_from_pssm(s, acc,tm_surr_left,tm_surr_right, scalename, hydrophob_scale_path, plot_linechart=False):
+def lipo_from_pssm(s, acc, tm_surr_left,tm_surr_right, scalename, hydrophob_scale_path, logging, plot_linechart=False):
     """Calculates lipophilicity from a PSSM for a single protein.
 
     Takes a PSSM as an input. The PSSM should have the fractions of each residue at each position.
@@ -495,7 +494,7 @@ def lipo_from_pssm(s, acc,tm_surr_left,tm_surr_right, scalename, hydrophob_scale
         fig.savefig(lipo_linechart, dpi=200)
         plt.close("all")
 
-    sys.stdout.write("\n{} calc_lipo_from_pssm finished. ({} scale)".format(acc, scalename))
+    logging.info("{} calc_lipo_from_pssm finished using {} scale ({})".format(acc, scalename, lipo_csv))
     return acc, True, ""
 
 
@@ -539,7 +538,7 @@ def entropy_calculation(set_,logging):
                     #entropy_file_handle.write(mat[0][j]+' '+ str(entropy)+'\n')
                     column = []
                 entropy_file_handle.close()
-                logging.info('finished entropy calculation:%s' % entropy_file)
+                logging.info('{} entropy_calculation finished ({})'.format(tm_protein, entropy_file))
             except:
                 print("entropy calculation occures errors")
     tmp_file_handle.close()
@@ -577,12 +576,11 @@ def coevoluton_calculation_with_freecontact(set_,logging):
 
 
 
-def cumulative_co_evolutionary_strength_parser(tmp_lists,test_protein,thoipapy,set_,logging):
+def cumulative_co_evolutionary_strength_parser(thoipapy, set_, logging):
     """
 
     Parameters
     ----------
-    tmp_lists : list
 
     pathdict : dict
 
@@ -755,13 +753,13 @@ def relative_position_calculation(set_,logging):
                     rp2=(i+tm_start-1)/seq_len
                     writer.writerow([i,tm_seq[i-1],rp1,rp2])
             relative_position_file_handle.close()
-            logging.info('finished relative positions calculation:%s' % relative_position_file)
+            logging.info('{} relative position calculation finished ({})'.format(tmp_protein_name, relative_position_file))
 
     tmp_file_handle.close()
 
 
 
-def Lips_score_calculation(tmp_lists,tm_protein_name, thoipapy, set_, logging):
+def Lips_score_calculation(thoipapy, set_, logging):
     logging.info('start lips score calculation')
 
     tmp_list_loc = set_["list_of_tmd_start_end"]
@@ -1034,64 +1032,64 @@ def Lips_score_parsing(set_, logging):
         tm_protein = row.strip().split(",")[0][0:6]
         Lips_output_file = os.path.join(set_["feature_lips_score"],set_["db"],"%s.mem.lips.output%s") % (tm_protein,set_["surres"])
         if os.path.isfile(Lips_output_file):
-            try:
-                surface_num = 0
-                surface_lips = 100  ##100 is an initialized big number assuming lips score will not bigger than this number
-                Lips_outnput_file_handle = open(Lips_output_file, "r")
-                #conslips_output_file = os.path.join(set_["feature_lips_score"], "zpro/NoRedundPro/%s.mem.lips.output.conslips.csv") % tm_protein
-                conslips_output_file = os.path.join(set_["feature_lips_score"],set_["db"],"%s.mem.lips.output.conslips%s.csv") % (tm_protein,set_["surres"])
-                conslips_output_file_handle = open(conslips_output_file, "w")
-                i = 0
-                array = []
-                dict = {}
-                for row in Lips_outnput_file_handle:
-                    if re.search("^\s+\d+\s+[A-Z]", row):
-                        array = row.split()
-                        if not int(array[0]) in dict:
-                            dict[int(array[0])] = " ".join([array[1], array[2], array[3]])
+            #try:
+            surface_num = 0
+            surface_lips = 100  ##100 is an initialized big number assuming lips score will not bigger than this number
+            Lips_outnput_file_handle = open(Lips_output_file, "r")
+            #conslips_output_file = os.path.join(set_["feature_lips_score"], "zpro/NoRedundPro/%s.mem.lips.output.conslips.csv") % tm_protein
+            conslips_output_file = os.path.join(set_["feature_lips_score"],set_["db"],"%s.mem.lips.output.conslips%s.csv") % (tm_protein,set_["surres"])
+            conslips_output_file_handle = open(conslips_output_file, "w")
+            i = 0
+            array = []
+            dict = {}
+            for row in Lips_outnput_file_handle:
+                if re.search("^\s+\d+\s+[A-Z]", row):
+                    array = row.split()
+                    if not int(array[0]) in dict:
+                        dict[int(array[0])] = " ".join([array[1], array[2], array[3]])
 
-                    if re.search("^\d{1}\s+", row):
-                        surface_num1 = row.split()[0]
-                        surface_lips1 = row.split()[3]
-                        if (float(surface_lips1) < float(surface_lips)):
-                            surface_lips = surface_lips1
-                            surface_num = surface_num1
-                Lips_outnput_file_handle.close()
+                if re.search("^\d{1}\s+", row):
+                    surface_num1 = row.split()[0]
+                    surface_lips1 = row.split()[3]
+                    if (float(surface_lips1) < float(surface_lips)):
+                        surface_lips = surface_lips1
+                        surface_num = surface_num1
+            Lips_outnput_file_handle.close()
 
-                surface_find = 0
-                dict1 = {}
-                Lips_outnput_file_handle = open(Lips_output_file, "r")
-                for row in Lips_outnput_file_handle:
-                    if re.search("^SURFACE\s" + surface_num, row):
-                        surface_find = 1
-                        continue
-                    if surface_find == 1 and re.search("^\s+\d+\s+[A-Z]", row):
-                        array = row.split()
-                        if not int(array[0]) in dict1:
-                            dict1[int(array[0])] = " ".join([array[1], array[2], array[3]])
-                    else:
-                        surface_find = 0
-                Lips_outnput_file_handle.close()
+            surface_find = 0
+            dict1 = {}
+            Lips_outnput_file_handle = open(Lips_output_file, "r")
+            for row in Lips_outnput_file_handle:
+                if re.search("^SURFACE\s" + surface_num, row):
+                    surface_find = 1
+                    continue
+                if surface_find == 1 and re.search("^\s+\d+\s+[A-Z]", row):
+                    array = row.split()
+                    if not int(array[0]) in dict1:
+                        dict1[int(array[0])] = " ".join([array[1], array[2], array[3]])
+                else:
+                    surface_find = 0
+            Lips_outnput_file_handle.close()
 
 
-                #Lips_outnput_file_handle.close()
+            #Lips_outnput_file_handle.close()
 
-                writer = csv.writer(conslips_output_file_handle, delimiter=',', quotechar='"', lineterminator='\n',
-                                    quoting=csv.QUOTE_NONNUMERIC, doublequote=True)
-                writer.writerow(["residue_num", "residue_name", "lipophilicity", "entropy2","Lips_surface"])
-                for k, v in sorted(dict.items()):
-                    v1 = v.split()
-                    v1.insert(0, k)
-                    if k in dict1:
-                        v1.insert(4, 1)
-                    else:
-                        v1.insert(4, 0)
-                    csv_header_for_cons_lips_score_file = v1
-                    writer.writerow(csv_header_for_cons_lips_score_file)
-                conslips_output_file_handle.close()
-                logging.info('lips score parse finished for protein: %s' %conslips_output_file)
-            except:
-                print("LIPS parsing occures errors")
+            writer = csv.writer(conslips_output_file_handle, delimiter=',', quotechar='"', lineterminator='\n',
+                                quoting=csv.QUOTE_NONNUMERIC, doublequote=True)
+            writer.writerow(["residue_num", "residue_name", "lipophilicity", "entropy2","Lips_surface"])
+            for k, v in sorted(dict.items()):
+                v1 = v.split()
+                v1.insert(0, k)
+                if k in dict1:
+                    v1.insert(4, 1)
+                else:
+                    v1.insert(4, 0)
+                csv_header_for_cons_lips_score_file = v1
+                writer.writerow(csv_header_for_cons_lips_score_file)
+            conslips_output_file_handle.close()
+            logging.info('{} lips score parse finished ({})'.format(tm_protein, conslips_output_file))
+            #except:
+            #    print("LIPS parsing occures errors")
     tmp_file_handle.close()
 
 
