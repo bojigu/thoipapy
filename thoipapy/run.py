@@ -120,8 +120,6 @@ if __name__ == "__main__":
 
     # create list of uniprot accessions to run
     acc_list = df_set.index.tolist()
-    # create list of databases (e.g. ["ETRA","ETRA","NMR","crystal"])
-    database_list = df_set.database.tolist()
     sys.stdout.write("settings file : {}\nsettings : {}\nlist number {}, acc_list : {}\n".format(os.path.basename(args.s), set_, set_["set_number"], acc_list))
     sys.stdout.flush()
 
@@ -145,10 +143,10 @@ if __name__ == "__main__":
             df_set.loc[acc, "TMD_end"] = m.end()
         else:
             raise IndexError("TMD seq not found in full_seq.\nacc = {}\nTMD_seq = {}\nfull_seq = {}".format(acc, TMD_seq, full_seq))
-    n_surr_res = 20
-    df_set["TMD_start_pl_surr"] = df_set.TMD_start - 20
+    num_of_sur_residues = set_["num_of_sur_residues"]
+    df_set["TMD_start_pl_surr"] = df_set.TMD_start - num_of_sur_residues
     df_set.loc[df_set["TMD_start_pl_surr"] < 1, "TMD_start_pl_surr"] = 1
-    df_set["TMD_end_pl_surr"] = df_set.TMD_end + 20
+    df_set["TMD_end_pl_surr"] = df_set.TMD_end + num_of_sur_residues
     for acc in df_set.index:
         if df_set.loc[acc, "TMD_end_pl_surr"] > df_set.loc[acc, "seqlen"]:
             df_set.loc[acc, "TMD_end_pl_surr"] = df_set.loc[acc, "seqlen"]
@@ -169,7 +167,7 @@ if __name__ == "__main__":
     updated file = ['acc', 'seqlen', 'TMD_start', 'TMD_end', ....]
     """
     # reorder columns
-    df_set = thoipapy.utils.set_column_sequence(df_set, ['seqlen', 'TMD_start', 'TMD_end', "tm_surr_left", "tm_surr_right"])
+    df_set = thoipapy.utils.set_column_sequence(df_set, ['seqlen', 'TMD_start', 'TMD_end', "tm_surr_left", "tm_surr_right", "database"])
 
     # save to csv, which is opened by other functions
     list_of_tmd_start_end = os.path.join(set_["data_harddrive"], "Input_data", os.path.basename(set_path)[:-5] + "_processed.csv")
@@ -184,26 +182,25 @@ if __name__ == "__main__":
         database = "mixed"
 
     # add the database of the protein set to the settings dictionary
-    set_["db"] = database
-
+    database = database
 
     # list_number=int(set_["list_number"])
     #
     # if list_number == 42:
-    #     set_["db"] = "Etra"
+    #     database = "Etra"
     # elif list_number == 43:
-    #     set_["db"] = "Nmr"
+    #     database = "Nmr"
     # elif list_number == 44:
-    #     set_["db"] = "Crystal"
+    #     database = "Crystal"
     # elif list_number == 45:
-    #     set_["db"] = "All"
+    #     database = "All"
 
 
     # if list_number == 99:
-    #     set_["db"] = "Etra"
+    #     database = "Etra"
     #     set_["list_of_tmd_start_end"] = os.path.join(os.path.dirname(args.s), "Tmd_Start_End_List_Uniq_New_{}.csv".format("MT1"))
     # else:
-    #     set_["list_of_tmd_start_end"] = os.path.join(os.path.dirname(args.s), "Tmd_Start_End_List_Uniq_New_{}.csv".format(set_["db"]))
+    #     set_["list_of_tmd_start_end"] = os.path.join(os.path.dirname(args.s), "Tmd_Start_End_List_Uniq_New_{}.csv".format(database))
 
     # this is important, if user want to run multiple proteins simultaneously, user has to set the tmd start and end list file by themselves
     # example of the tmd input file would look like this:
@@ -212,9 +209,9 @@ if __name__ == "__main__":
     # P07174,425,253,273
 
 
-    #set_["list_of_tmd_start_end"] = os.path.join(os.path.dirname(args.s), "Tmd_Start_End_List_Uniq_New_{}.csv".format(set_["db"]))
+    #set_["list_of_tmd_start_end"] = os.path.join(os.path.dirname(args.s), "Tmd_Start_End_List_Uniq_New_{}.csv".format(database))
     # set_["list_of_tmd_start_end"] = os.path.join(set_["data_harddrive"], "Input_data",
-    #                                              "Tmd_Start_End_List_Uniq_New_{}.csv".format(set_["db"]))
+    #                                              "Tmd_Start_End_List_Uniq_New_{}.csv".format(database))
 
     # when only run one protein each time, set_["multiple_tmp_simultaneous"] is false, and create the query protein information file
     # according to the arguments inputed by user
@@ -244,7 +241,7 @@ if __name__ == "__main__":
     if set_["run_retrieve_homologous_with_hhblits"]:
         thoipapy.hhblits.download.download_homologous_with_hhblits(set_, logging)
 
-        thoipapy.hhblits.download.parse_a3m_alignment( set_, logging)
+        thoipapy.hhblits.download.parse_a3m_alignment(set_, logging)
 
                     ###################################################################################################
                     #                                                                                                 #
@@ -254,7 +251,7 @@ if __name__ == "__main__":
 
 
     if set_["run_retrieve_NCBI_homologous_with_blastp"]:
-        thoipapy.NCBI_BLAST.download.download.download_homologous_from_ncbi(set_, logging)
+        thoipapy.NCBI_BLAST.download.download.download_homologous_from_ncbi(set_, df_set, logging)
 
 
                     ###################################################################################################
@@ -309,10 +306,10 @@ if __name__ == "__main__":
         #thoipapy.RF_features.feature_calculate.convert_bind_data_to_csv(set_, logging)
 
         if set_["combine_feature_into_train_data"]:
-            if set_["db"] == "Crystal" or set_["db"] == "Nmr":
+            if database == "Crystal" or database == "Nmr":
                 thoipapy.RF_features.feature_calculate.features_combine_to_traindata( set_, logging)
                 thoipapy.RF_features.feature_calculate.adding_physical_parameters_to_train_data(set_, logging)
-            if set_["db"] == "Etra":
+            if database == "Etra":
                 thoipapy.RF_features.feature_calculate.features_combine_to_testdata( set_, logging)
                 thoipapy.RF_features.feature_calculate.adding_physical_parameters_to_test_data(set_, logging)
             thoipapy.RF_features.feature_calculate.combine_all_train_data_for_random_forest(set_,logging)

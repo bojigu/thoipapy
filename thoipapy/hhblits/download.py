@@ -33,7 +33,7 @@ def parse_a3m_alignment(set_, logging):
 def download_homologous_with_hhblits(set_,logging):
     logging.info('start downloading protein homologous with hhblits')
     hhblits_loc = set_["hhblits_dir"]
-    uniprot_database_loc=set_["uniprot_database_dir"]
+    uniprot_database_loc = set_["uniprot_database_dir"]
 
     tmp_list_loc = set_["list_of_tmd_start_end"]
     tmp_file_handle = open(tmp_list_loc, 'r')
@@ -41,9 +41,10 @@ def download_homologous_with_hhblits(set_,logging):
     next(tmp_file_handle)
     for row in tmp_file_handle:
         tmp_protein_name = row.strip().split(",")[0]
-        tmp_protein_fasta = os.path.join(set_["Protein_folder"], "%s.surr20.fasta") % tmp_protein_name
+        database = row.strip().split(",")[6]
+        tmp_protein_fasta = os.path.join(set_["Protein_folder"], "hhblits", database, "%s.surr20.fasta") % tmp_protein_name
         if os.path.isfile(tmp_protein_fasta):
-            output_oa3m_homologous_file = os.path.join(set_["Protein_folder"], "%s.fasta.surr20.a3m") % tmp_protein_name
+            output_oa3m_homologous_file = os.path.join(set_["Protein_folder"], "hhblits", database,  "%s.fasta.surr20.a3m") % tmp_protein_name
             if tmp_protein_name=="QuePro" and os.path.isfile(output_oa3m_homologous_file):
                 os.system("rm %s" % output_oa3m_homologous_file)          ###remove QuePro.fasta.a3m that is the previous queried protein
 
@@ -58,4 +59,7 @@ def download_homologous_with_hhblits(set_,logging):
             while not os.path.exists(output_oa3m_homologous_file):
                 time.sleep(1)
             logging.info("Output file: %s\n" % output_oa3m_homologous_file)
-    tmp_file_handle .close()
+        else:
+            logging.warning("hhblits failed, input file not found: %s\n" % tmp_protein_fasta)
+
+    tmp_file_handle.close()

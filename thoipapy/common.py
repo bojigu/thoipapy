@@ -72,7 +72,7 @@ def create_TMD_surround20_fasta_file(set_):
             tmp_length = int(row.strip().split(",")[1])
             tmp_start = int(row.strip().split(",")[2])
             tmp_end = int(row.strip().split(",")[3])
-            tmp_protein_fasta = os.path.join(set_["Protein_folder"], set_["db"],"%s.fasta") % tmp_protein_name
+            tmp_protein_fasta = os.path.join(set_["Protein_folder"], database,"%s.fasta") % tmp_protein_name
             line=""
             if os.path.isfile(tmp_protein_fasta):
                 fasta_text = ""
@@ -93,7 +93,7 @@ def create_TMD_surround20_fasta_file(set_):
                 else:
                     set_["tmp_surr_right"]=tmp_length-tmp_end
                 tmp_surr_string=fasta_text[(tmp_start-set_["tmp_surr_left"]-1):(tmp_end+set_["tmp_surr_right"])]
-                tmp_surr_fasta_file=os.path.join(set_["Protein_folder"], set_["db"], "%s.surr20.fasta") % tmp_protein_name
+                tmp_surr_fasta_file=os.path.join(set_["Protein_folder"], database, "%s.surr20.fasta") % tmp_protein_name
                 tmp_surr_fasta_file_handle=open(tmp_surr_fasta_file,"w")
                 tmp_surr_fasta_file_handle.write("> %s TMD add surround 20 residues\n" % tmp_protein_name)
                 tmp_surr_fasta_file_handle.write(tmp_surr_string)

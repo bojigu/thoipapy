@@ -35,6 +35,7 @@ def parse_NCBI_xml_to_csv(set_, df_set, logging):
     next(tmp_file_handle)
     for row in tmp_file_handle:
         acc = row.strip().split(",")[0]
+        database = row.strip().split(",")[6]
         #tm_start=int(row.strip().split(",")[4])+1
         #tm_start=int(row.strip().split(",")[4])+1-5 ###for surr20
         # set_["surres"] set how many residues on each sides of tmd sequence
@@ -50,15 +51,16 @@ def parse_NCBI_xml_to_csv(set_, df_set, logging):
             tm_end = int(row.strip().split(",")[3])  + 5  ###for fullseq
             if tm_end>int(row.strip().split(",")[1]):
                 tm_end=int(row.strip().split(",")[1]) # quals to the full sequence length
-        xml_file = os.path.join(set_["xml_file_folder"], set_["db"], "%s.xml") % acc
+        #xml_file = os.path.join(set_["xml_file_folder"], database, "%s.xml") % acc
+        blast_xml_file = os.path.join(set_["xml_file_folder"], database, "{}.surr{}.xml".format(acc,set_["num_of_sur_residues"]))
         match_details_dict = {}
 
-        if os.path.isfile(xml_file):
+        if os.path.isfile(blast_xml_file):
             #homo_out_csv_file=os.path.join(set_["homologous_folder"],"NoRedundPro/%s_homo.csv") %acc
-            homo_out_csv_file = os.path.join(set_["homologous_folder"], "a3m",set_["db"],
+            homo_out_csv_file = os.path.join(set_["homologous_folder"], "a3m",database,
                                              "%s_homo%s.csv") % (acc,set_["surres"])
             with open(homo_out_csv_file,'w') as homo_out_csv_file_handle:
-                xml_result_handle=open(xml_file)
+                xml_result_handle=open(blast_xml_file)
                 xml_record=NCBIXML.read(xml_result_handle)
                 E_VALUE_THRESH=set_["e_value_cutoff"]
                 hit_num=0
@@ -138,22 +140,23 @@ def extract_filtered_csv_homologous_to_alignments(set_,logging):
     next(tmp_file_handle)
     for line in tmp_file_handle:
         tm_protein = line.strip().split(",")[0]
+        database = line.strip().split(",")[6]
         #if tm_protein == "2j58_C":
         alignment_dict={}
         alignment_dict1 = {}
         alignment_dict2 = {}
         #homo_csv_file_loc = os.path.join(set_["homologous_folder"], "NoRedundPro/%s_homo.csv") % tm_protein
-        homo_csv_file_loc = os.path.join(set_["homologous_folder"],"a3m",set_["db"], "%s_homo%s.csv") % (tm_protein,set_["surres"])
+        homo_csv_file_loc = os.path.join(set_["homologous_folder"],"a3m",database, "%s_homo%s.csv") % (tm_protein,set_["surres"])
         if (os.path.isfile(homo_csv_file_loc) and os.path.getsize(homo_csv_file_loc) > 0):  # whether protein homologous csv file exists
             #homo_filtered_out_csv_file = os.path.join(set_["homologous_folder"], "NoRedundPro/%s_homo_filtered_aln.fasta") % tm_protein
-            homo_filtered_out_csv_file = os.path.join(set_["homologous_folder"],"a3m",set_["db"],
+            homo_filtered_out_csv_file = os.path.join(set_["homologous_folder"],"a3m",database,
                                                       "%s_homo_filtered_aln%s.fasta") % (tm_protein,set_["surres"])
             homo_filtered_out_csv_file_handle=open(homo_filtered_out_csv_file, 'w')
             #homo_filter_file = os.path.join(set_["homologous_folder"], "a3m/NoRedundPro/%s.a3m.mem.uniq.2gaps") % tm_protein
-            homo_filter_file = os.path.join(set_["homologous_folder"],"a3m",set_["db"], "%s.a3m.mem.uniq.2gaps%s") % (tm_protein,set_["surres"])
+            homo_filter_file = os.path.join(set_["homologous_folder"],"a3m",database, "%s.a3m.mem.uniq.2gaps%s") % (tm_protein,set_["surres"])
             homo_filter_file_handle = open(homo_filter_file, "w")
             #homo_mem_lips_input_file = os.path.join(set_["homologous_folder"],"a3m/NoRedundPro/%s.mem.lips.input") % tm_protein
-            homo_mem_lips_input_file = os.path.join(set_["homologous_folder"],"a3m",set_["db"],"%s.mem.lips.input%s") % (tm_protein,set_["surres"])
+            homo_mem_lips_input_file = os.path.join(set_["homologous_folder"],"a3m",database,"%s.mem.lips.input%s") % (tm_protein,set_["surres"])
             homo_mem_lips_input_file_handle = open(homo_mem_lips_input_file, "w")
             #with open(homo_filtered_out_csv_file, 'w') as homo_filtered_out_csv_file_handle:
             df=pd.read_csv(homo_csv_file_loc)
