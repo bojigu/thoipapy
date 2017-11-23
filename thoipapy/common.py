@@ -227,8 +227,8 @@ def create_settingdict(excel_file_with_settings):
         # join dictionaries together
         set_.update(sheet_as_dict)
 
-    list_paths_to_normalise = ["data_harddirve","Protein_folder", "Train_proteins", "Experimental_proteins","homologous_folder",
-                               "output_oa3m_homologous","xml_file_folder", "filtered_homo_folder", "RF_features","feature_entropy",
+    list_paths_to_normalise = ["data_harddirve","Protein_folder", "Train_proteins", "Experimental_proteins","homologues_folder",
+                               "output_oa3m_homologues","xml_file_folder", "filtered_homo_folder", "RF_features","feature_entropy",
                                "feature_pssm","feature_cumulative_coevolution","feature_relative_position","feature_lips_score","feature_physical_parameters",
                                "structure_bind","RF_loc","logfile_dir"]
     # normalise the paths for selected columns, so that they are appropriate for the operating system

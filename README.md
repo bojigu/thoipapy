@@ -11,7 +11,7 @@ the dynamic interfaces identified with ToxR-based assays in live cells.
 ## Features
 ### Robust data analysis
  * fully automated.
-  * transmembrane protein homologous download with BLAST against NCBI nr.
+  * transmembrane protein homologues download with BLAST against NCBI nr.
   * evolution and co-evolutionary feature calculation.
   * interface prediction with random forest classifier
   * prediction output be fitted with sine curve

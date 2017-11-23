@@ -164,10 +164,14 @@ if __name__ == "__main__":
 
     """  Rearrange the dataframe columns so that the order is as follows.
     orig Bo file : ['acc', 'TMD_Length', 'TMD_Start', 'TMD_End', 'TMD_Sur_Left', 'TMD_Sur_Right']
-    updated file = ['acc', 'seqlen', 'TMD_start', 'TMD_end', ....]
+    updated file = ['acc', 'seqlen', 'TMD_start', 'TMD_end', 'tm_surr_left', 'tm_surr_right', 'database',  ....]
+
     """
     # reorder columns
     df_set = thoipapy.utils.set_column_sequence(df_set, ['seqlen', 'TMD_start', 'TMD_end', "tm_surr_left", "tm_surr_right", "database"])
+
+    # convert the floats to integers
+    df_set.iloc[:, 1:5] = df_set.iloc[:, 1:5].astype(int)
 
     # save to csv, which is opened by other functions
     list_of_tmd_start_end = os.path.join(set_["data_harddrive"], "Input_data", os.path.basename(set_path)[:-5] + "_processed.csv")
@@ -233,39 +237,39 @@ if __name__ == "__main__":
 
                     ###################################################################################################
                     #                                                                                                 #
-                    #                   homologous download with hhblits                                              #
+                    #                   homologues download with hhblits                                              #
                     #                                                                                                 #
                     ###################################################################################################
 
     # this is not used, since we used NCBI blast instead
-    if set_["run_retrieve_homologous_with_hhblits"]:
-        thoipapy.hhblits.download.download_homologous_with_hhblits(set_, logging)
+    if set_["run_retrieve_homologues_with_hhblits"]:
+        thoipapy.hhblits.download.download_homologues_with_hhblits(set_, logging)
 
         thoipapy.hhblits.download.parse_a3m_alignment(set_, logging)
 
                     ###################################################################################################
                     #                                                                                                 #
-                    #                   homologous download from NCBI                                                 #
+                    #                   homologues download from NCBI                                                 #
                     #                                                                                                 #
                     ###################################################################################################
 
 
-    if set_["run_retrieve_NCBI_homologous_with_blastp"]:
-        thoipapy.NCBI_BLAST.download.download.download_homologous_from_ncbi(set_, df_set, logging)
+    if set_["run_retrieve_NCBI_homologues_with_blastp"]:
+        thoipapy.NCBI_BLAST.download.download.download_homologues_from_ncbi(set_, df_set, logging)
 
 
                     ###################################################################################################
                     #                                                                                                 #
-                    #                   convert homologous xml file to csv                                            #
+                    #                   convert homologues xml file to csv                                            #
                     #                                                                                                 #
                     ###################################################################################################
 
 
-    if set_["run_parse_homologous_xml_into_csv"]:
+    if set_["run_parse_homologues_xml_into_csv"]:
         thoipapy.NCBI_BLAST.parse.parser.parse_NCBI_xml_to_csv(set_, df_set, logging)
 
-    if set_["parse_csv_homologous_to_alignment"]:
-        thoipapy.NCBI_BLAST.parse.parser.extract_filtered_csv_homologous_to_alignments(set_,logging)
+    if set_["parse_csv_homologues_to_alignment"]:
+        thoipapy.NCBI_BLAST.parse.parser.extract_filtered_csv_homologues_to_alignments(set_, df_set, logging)
 
 
                     ###################################################################################################
@@ -276,10 +280,10 @@ if __name__ == "__main__":
 
     if set_["RandomForest_feature_calculation"]:
 
-        #thoipapy.RF_features.feature_calculate.mem_a3m_homologous_filter(set_, logging)
+        #thoipapy.RF_features.feature_calculate.mem_a3m_homologues_filter(set_, logging)
 
         if set_["pssm_feature_calculation"]:
-            thoipapy.RF_features.feature_calculate.create_PSSM_from_MSA_mult_prot(set_, logging)
+            thoipapy.RF_features.feature_calculate.create_PSSM_from_MSA_mult_prot(set_, df_set, logging)
 
         if set_["calc_lipo_from_pssm"]:
             thoipapy.RF_features.feature_calculate.calc_lipo_from_pssm(set_,df_set, logging)

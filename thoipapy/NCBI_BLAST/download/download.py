@@ -6,11 +6,11 @@ import platform
 import time
 
 
-def download_homologous_from_ncbi(set_, df_set, logging):
-    """Download homologous with NCBI qblast
+def download_homologues_from_ncbi(set_, df_set, logging):
+    """Download homologues with NCBI qblast
     :param set_:
     :param logging:
-    :return: save homologous into xml files
+    :return: save homologues into xml files
     """
     evalue_score = set_["e_value"]
     hit_list_size = int(set_["hit_list_size"])
@@ -40,7 +40,7 @@ def download_homologous_from_ncbi(set_, df_set, logging):
 
     ##############################################################################################
     #                                                                                            #
-    #      download homologous from protein lists file                                           #
+    #      download homologues from protein lists file                                           #
     #                                                                                            #
     ##############################################################################################
 
@@ -69,14 +69,14 @@ def download_homologous_from_ncbi(set_, df_set, logging):
 
         if not os.path.isfile(blast_xml_file):
             run_download = True
-            logging.info('{} starting download_homologous_from_ncbi'.format(tmp_protein_name))
+            logging.info('{} starting download_homologues_from_ncbi'.format(tmp_protein_name))
         else:
             if set_["rerun_existing_blast_results"]:
                 run_download = True
-                logging.info('{} starting download_homologous_from_ncbi (EXISTING XML FILE WILL BE OVERWRITTEN)'.format(tmp_protein_name))
+                logging.info('{} starting download_homologues_from_ncbi (EXISTING XML FILE WILL BE OVERWRITTEN)'.format(tmp_protein_name))
             elif set_["rerun_existing_blast_results"] in [False, 0]:
                 run_download = False
-                logging.info('{} download_homologous_from_ncbi skipped (EXISTING XML FILE)'.format(tmp_protein_name))
+                logging.info('{} download_homologues_from_ncbi skipped (EXISTING XML FILE)'.format(tmp_protein_name))
                 # skip protein
                 continue
             else:
@@ -85,19 +85,19 @@ def download_homologous_from_ncbi(set_, df_set, logging):
         if run_download:
             try:
                 start = time.clock()
-                tmp_protein_homologous_xml_handle = NCBIWWW.qblast("blastp", "nr", tmp_protein_fasta_string,
+                tmp_protein_homologues_xml_handle = NCBIWWW.qblast("blastp", "nr", tmp_protein_fasta_string,
                                                                    expect=evalue_score,
                                                                    hitlist_size=hit_list_size)
                 with open(blast_xml_file, "w") as save_tmp_xml_file:
-                    save_tmp_xml_file.write(tmp_protein_homologous_xml_handle.read())
+                    save_tmp_xml_file.write(tmp_protein_homologues_xml_handle.read())
 
                 #save_tmp_xml_file = open(blast_xml_file, "w")
-                # save_tmp_xml_file.write(tmp_protein_homologous_xml_handle.read())
+                # save_tmp_xml_file.write(tmp_protein_homologues_xml_handle.read())
                 # save_tmp_xml_file.close()
-                tmp_protein_homologous_xml_handle.close()
+                tmp_protein_homologues_xml_handle.close()
                 duration = time.clock() - start
                 logging.info("Output file: {}. (time taken = {:0.3f} min)".format(blast_xml_file, duration/60))
             except:
                 logging.warning("{} Query string not found in the CGI context in qblast".format(tmp_protein_name))
 
-    logging.info('Homologous download was finished')
+    logging.info('homologues download was finished')

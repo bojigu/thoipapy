@@ -98,7 +98,7 @@ def calc_lipophilicity(seq, method = "mean"):
         return sum_of_multiplied
 
 
-def mem_a3m_homologous_filter(set_,logging):
+def mem_a3m_homologues_filter(set_,logging):
 
     tmp_list_loc = set_["list_of_tmd_start_end"]
     tmp_file_handle = open(tmp_list_loc, 'r')
@@ -109,13 +109,13 @@ def mem_a3m_homologous_filter(set_,logging):
         tm_start = int(row.strip().split(",")[4]) + 1
         tm_end = int(row.strip().split(",")[4]) + (int(row.strip().split(",")[3]) - int(row.strip().split(",")[2]) + 1)
         #return tm_end
-        homo_a3m_file = os.path.join(set_["output_oa3m_homologous"], "SinglePassTmd/%s.surr20.parse.a3m") % tmp_protein_name
+        homo_a3m_file = os.path.join(set_["output_oa3m_homologues"], "SinglePassTmd/%s.surr20.parse.a3m") % tmp_protein_name
         if os.path.isfile(homo_a3m_file):
 
             homo_a3m_file_handle=open(homo_a3m_file,"r")
-            homo_filter_file=os.path.join(set_["output_oa3m_homologous"], "SinglePassTmd/%s.surr20.a3m.mem.uniq.2gaps") %tmp_protein_name
+            homo_filter_file=os.path.join(set_["output_oa3m_homologues"], "SinglePassTmd/%s.surr20.a3m.mem.uniq.2gaps") %tmp_protein_name
             homo_filter_file_handle = open(homo_filter_file,"w")
-            homo_mem_lips_input_file = os.path.join(set_["output_oa3m_homologous"], "SinglePassTmd/%s.surr20.mem.lips.input") %tmp_protein_name
+            homo_mem_lips_input_file = os.path.join(set_["output_oa3m_homologues"], "SinglePassTmd/%s.surr20.mem.lips.input") %tmp_protein_name
             homo_mem_lips_input_file_handle = open(homo_mem_lips_input_file, "w")
             logging.info("starting parsing a3m file: %s\n" %homo_filter_file)
             i = 0
@@ -146,71 +146,80 @@ def mem_a3m_homologous_filter(set_,logging):
 
 
 
-def create_PSSM_from_MSA_mult_prot(set_, logging):
+def create_PSSM_from_MSA_mult_prot(set_, df_set, logging):
     logging.info('start pssm calculation')
+    #
+    # tmp_list_loc = set_["list_of_tmd_start_end"]
+    # tmp_file_handle = open(tmp_list_loc, 'r')
+    # # skip header
+    # next(tmp_file_handle)
+    # for row in tmp_file_handle:
+    #     protein_name = row.strip().split(",")[0][0:6]
+    #     database = row.strip().split(",")[6]
+    #     # if protein_name=="4cbj_E":
+    #     tm_start = int(row.strip().split(",")[2]) - 5  ###for fullseq
+    #     if (tm_start <= 0):
+    #         tm_start = 1
+    #     tm_end = int(row.strip().split(",")[3]) + 5  ###for fullseq
+    #     if tm_end > int(row.strip().split(",")[1]):
+    #         tm_end = int(row.strip().split(",")[1])
 
-    tmp_list_loc = set_["list_of_tmd_start_end"]
-    tmp_file_handle = open(tmp_list_loc, 'r')
-    # skip header
-    next(tmp_file_handle)
-    for row in tmp_file_handle:
-        protein_name = row.strip().split(",")[0][0:6]
-        database = row.strip().split(",")[6]
-        # if protein_name=="4cbj_E":
-        tm_start = int(row.strip().split(",")[2]) - 5  ###for fullseq
-        if (tm_start <= 0):
-            tm_start = 1
-        tm_end = int(row.strip().split(",")[3]) + 5  ###for fullseq
-        if tm_end > int(row.strip().split(",")[1]):
-            tm_end = int(row.strip().split(",")[1])
-        create_PSSM_from_MSA(set_, protein_name, database, logging)
+    for acc in df_set.index:
+        database = df_set.loc[acc, "database"]
+        alignments_dir = alignments_dir = os.path.join(set_["homologues_folder"], "alignments", database)
+        path_unique_seqs_with_gaps = os.path.join(alignments_dir, "{}.uniq.{}gaps{}.txt".format(acc, set_["max_n_gaps_in_TMD_seq"], set_["surres"]))
+        pssm_csv = os.path.join(set_["feature_pssm"], database, "{}.{}gap.pssm{}.csv".format(acc, set_["max_n_gaps_in_TMD_seq"], set_["surres"]))
+        create_PSSM_from_MSA(path_unique_seqs_with_gaps, pssm_csv, set_, acc, database, logging)
 
-    tmp_file_handle.close()
+        path_unique_seqs_with_gaps_surr5 = os.path.join(alignments_dir, "{}.uniq.{}gaps{}.txt".format(acc, set_["max_n_gaps_in_TMD_seq"], set_["surres"]))
+        pssm_csv_surr5 = os.path.join(set_["feature_pssm"], database, "{}.{}gap.pssm_surr5.csv".format(acc, set_["max_n_gaps_in_TMD_seq"]))
+        create_PSSM_from_MSA(path_unique_seqs_with_gaps_surr5, pssm_csv_surr5, set_, acc, database, logging)
 
-def create_PSSM_from_MSA(set_, protein_name, database, logging):
+    #tmp_file_handle.close()
 
-    pssm_file = os.path.join(set_["feature_pssm"], database, "%s.mem.2gap.pssm%s.csv") % (protein_name, set_["surres"])
-    homo_filter_fasta_file = os.path.join(set_["output_oa3m_homologous"], database, "%s.a3m.mem.uniq.2gaps%s") % (protein_name, set_["surres"])
+def create_PSSM_from_MSA(path_unique_seqs_with_gaps, pssm_csv, set_, acc, database, logging):
 
-    if os.path.isfile(homo_filter_fasta_file):
+    #homo_filter_fasta_file = os.path.join(set_["output_oa3m_homologues"], database, "%s.a3m.mem.uniq.2gaps%s") % (acc, set_["surres"])
+
+    if os.path.isfile(path_unique_seqs_with_gaps):
         #try:
-        pssm_file_handle = open(pssm_file, 'w')
-        mat = []
-        writer = csv.writer(pssm_file_handle, delimiter=',', quotechar='"',
-                            lineterminator='\n',
-                            quoting=csv.QUOTE_NONNUMERIC, doublequote=True)
-        writer.writerow(['residue_num', 'residue_name', 'A', 'I', 'L', 'V', 'F', 'W', 'Y', 'N', 'C', 'Q', 'M', 'S', 'T', 'D', 'E', 'R', 'H', 'K', 'G', 'P'])
-        # if os.path.isfile(homo_filter_fasta_file):
-        # for line in open(homo_filter_fasta_file).readlines():
-        with open(homo_filter_fasta_file) as f:
-            for line in f.readlines():
-                if not re.search("^>", line):
-                    mat.append(list(line))
+        with open(pssm_csv, 'w') as pssm_file_handle:
+            mat = []
+            # with csv.writer(pssm_file_handle, delimiter=',', quotechar='"',
+            #                     lineterminator='\n',
+            #                     quoting=csv.QUOTE_NONNUMERIC, doublequote=True) as writer:
+            writer = csv.writer(pssm_file_handle)
+            writer.writerow(['residue_num', 'residue_name', 'A', 'I', 'L', 'V', 'F', 'W', 'Y', 'N', 'C', 'Q', 'M', 'S', 'T', 'D', 'E', 'R', 'H', 'K', 'G', 'P'])
+            # if os.path.isfile(homo_filter_fasta_file):
+            # for line in open(homo_filter_fasta_file).readlines():
+            with open(path_unique_seqs_with_gaps, "r") as f:
+                for line in f.readlines():
+                    if not re.search("^>", line):
+                        mat.append(list(line))
             rowlen = len(mat[0])
             collen = len(mat)
             column = []
-        f.close()
-        # write 20 amino acids as the header of pssm output file
-        # pssm_file_handle.write(
-        # 'residue'+' '+'A' + ' ' + 'I' + ' ' + 'L' + ' ' + 'V' + ' ' + 'F' + ' ' + 'W' + ' ' + 'Y' + ' ' + 'N' + ' ' + 'C' + ' ' + 'Q' + ' ' + 'M' + ' ' + 'S' + ' ' + 'T' + ' ' + 'D' + ' ' + 'E' + ' ' + 'R' + ' ' + 'H' + ' ' + 'K' + ' ' + 'G' + ' ' + 'P' + '\n')
-        for j in range(0, rowlen - 1):
-            for i in range(0, collen):
-                column.append(mat[i][j])
-            aa_num = [column.count('A') / collen, column.count('I') / collen, column.count('L') / collen, column.count('V') / collen, column.count('F') / collen,
-                      column.count('W') / collen, column.count('Y') / collen, column.count('N') / collen, column.count('C') / collen, column.count('Q') / collen,
-                      column.count('M') / collen, column.count('S') / collen, column.count('T') / collen, column.count('D') / collen, column.count('E') / collen,
-                      column.count('R') / collen, column.count('H') / collen, column.count('K') / collen, column.count('G') / collen, column.count('P') / collen]
-            aa_num.insert(0, mat[0][j])  ###adding the residue name to the second column
-            aa_num.insert(0, j + 1)  ##adding the residue number to the first column
-            writer.writerow(aa_num)
-            column = []
-        pssm_file_handle.close()
-        logging.info('{} pssm calculation finished ({})'.format(protein_name, pssm_file))
+            # write 20 amino acids as the header of pssm output file
+            # pssm_file_handle.write(
+            # 'residue'+' '+'A' + ' ' + 'I' + ' ' + 'L' + ' ' + 'V' + ' ' + 'F' + ' ' + 'W' + ' ' + 'Y' + ' ' + 'N' + ' ' + 'C' + ' ' + 'Q' + ' ' + 'M' + ' ' + 'S' + ' ' + 'T' + ' ' + 'D' + ' ' + 'E' + ' ' + 'R' + ' ' + 'H' + ' ' + 'K' + ' ' + 'G' + ' ' + 'P' + '\n')
+            for j in range(0, rowlen - 1):
+                for i in range(0, collen):
+                    column.append(mat[i][j])
+                aa_num = [column.count('A') / collen, column.count('I') / collen, column.count('L') / collen, column.count('V') / collen, column.count('F') / collen,
+                          column.count('W') / collen, column.count('Y') / collen, column.count('N') / collen, column.count('C') / collen, column.count('Q') / collen,
+                          column.count('M') / collen, column.count('S') / collen, column.count('T') / collen, column.count('D') / collen, column.count('E') / collen,
+                          column.count('R') / collen, column.count('H') / collen, column.count('K') / collen, column.count('G') / collen, column.count('P') / collen]
+                aa_num.insert(0, mat[0][j])  ###adding the residue name to the second column
+                aa_num.insert(0, j + 1)  ##adding the residue number to the first column
+                writer.writerow(aa_num)
+                column = []
+            #pssm_file_handle.close()
+            logging.info('{} pssm calculation finished ({})'.format(acc, pssm_csv))
 
-        # except:
-        #     print("\npssm calculation occures error")
+            # except:
+            #     print("\npssm calculation occures error")
     else:
-        logging.warning("{} homo_filter_fasta_file does not exist({})".format(protein_name, homo_filter_fasta_file))
+        logging.warning("{} homo_filter_fasta_file does not exist({})".format(acc, path_unique_seqs_with_gaps))
 
 
 def calc_lipo_from_pssm(set_, df_set, logging):
@@ -311,17 +320,19 @@ def lipo_from_pssm(set_, acc, database, tm_surr_left, tm_surr_right, scalename, 
         or if an error occurred,
         acc, False, "pssm_csv not found"
     """
-    pssm_csv = os.path.join(set_["feature_pssm"], database, "{}.mem.2gap.pssm_surr5.csv".format(acc))
-    if not os.path.isfile(pssm_csv):
+    #pssm_csv = os.path.join(set_["feature_pssm"], database, "{}.mem.2gap.pssm_surr5.csv".format(acc))
+    pssm_csv_surr5 = os.path.join(set_["feature_pssm"], database, "{}.{}gap.pssm_surr5.csv".format(acc, set_["max_n_gaps_in_TMD_seq"]))
+
+    if not os.path.isfile(pssm_csv_surr5):
         sys.stdout.write("\n{} skipped for lipo_from_pssm, pssm_csv not found. ".format(acc))
-        sys.stdout.write("pssm_csv : {}".format(pssm_csv))
+        sys.stdout.write("pssm_csv : {}".format(pssm_csv_surr5))
         sys.stdout.flush()
         return acc, False, "pssm_csv not found"
     lipo_excel = os.path.join(set_["feature_lipophilicity"], database, "{}_{}_lipo.xlsx".format(acc, scalename))
     lipo_csv = os.path.join(set_["feature_lipophilicity"], database, "{}_{}_lipo.csv".format(acc, scalename))
     lipo_linechart = os.path.join(set_["feature_lipophilicity"], database,"{}_{}_lipo_linechart.png".format(acc, scalename))
 
-    df = pd.read_csv(pssm_csv, index_col=0)
+    df = pd.read_csv(pssm_csv_surr5, index_col=0)
     # print(df.head(3))
 
     """
@@ -510,16 +521,19 @@ def entropy_calculation(set_,logging):
     for row in tmp_file_handle:
         tm_protein = row.strip().split(",")[0][0:6]
         database = row.strip().split(",")[6]
-        homo_filter_fasta_file = os.path.join(set_["output_oa3m_homologous"],database,"%s.a3m.mem.uniq.2gaps%s") % (tm_protein,set_["surres"])
-        if os.path.isfile(homo_filter_fasta_file):
+        #homo_filter_fasta_file = os.path.join(set_["output_oa3m_homologues"],database,"%s.a3m.mem.uniq.2gaps%s") % (tm_protein,set_["surres"])
+        alignments_dir = os.path.join(set_["homologues_folder"], "alignments", database)
+        path_unique_seqs_with_gaps = os.path.join(alignments_dir, "{}.uniq.{}gaps{}.txt".format(tm_protein, set_["max_n_gaps_in_TMD_seq"], set_["surres"]))
+
+        if os.path.isfile(path_unique_seqs_with_gaps):
             try:
                 #entropy_file = os.path.join(set_["feature_entropy"], "NoRedundPro/%s.mem.2gap.entropy.csv") % tm_protein
                 entropy_file = os.path.join(set_["feature_entropy"],database, "%s.mem.2gap.entropy%s.csv") % (tm_protein,set_["surres"])
                 entropy_file_handle = open(entropy_file, 'w')
                 mat = []
-                with open(homo_filter_fasta_file) as f:
+                with open(path_unique_seqs_with_gaps) as f:
                     for line in f.readlines():
-                #for line in open(homo_filter_fasta_file).readlines():
+                #for line in open(path_unique_seqs_with_gaps).readlines():
                         if not re.search("^>", line):
                             mat.append(list(line))
                     rowlen = len(mat[0])
@@ -534,10 +548,10 @@ def entropy_calculation(set_,logging):
                     column_serie = Series(column)
                     p_data = column_serie.value_counts() / len(column_serie)  # calculates the probabilities
                     entropy = sc.stats.entropy(p_data)  # input probabilities to get the entropy
-                    csv_header_for_ncbi_homologous_file = [j+1,mat[0][j],entropy]
+                    csv_header_for_ncbi_homologues_file = [j+1,mat[0][j],entropy]
                     writer = csv.writer(entropy_file_handle, delimiter=',', quotechar='"', lineterminator='\n',
                                         quoting=csv.QUOTE_NONNUMERIC, doublequote=True)
-                    writer.writerow(csv_header_for_ncbi_homologous_file)
+                    writer.writerow(csv_header_for_ncbi_homologues_file)
                     #entropy_file_handle.write(mat[0][j]+' '+ str(entropy)+'\n')
                     column = []
                 entropy_file_handle.close()
@@ -557,14 +571,17 @@ def coevoluton_calculation_with_freecontact(set_,logging):
     for row in tmp_file_handle:
         tm_protein = row.strip().split(",")[0][0:6]
         database = row.strip().split(",")[6]
-        homo_filter_fasta_file = os.path.join(set_["output_oa3m_homologous"],database,"%s.a3m.mem.uniq.2gaps%s") % (tm_protein,set_["surres"])
-        if os.path.isfile(homo_filter_fasta_file):
+        #path_unique_seqs_with_gaps = os.path.join(set_["output_oa3m_homologues"],database,"%s.a3m.mem.uniq.2gaps%s") % (tm_protein,set_["surres"])
+        alignments_dir = alignments_dir = os.path.join(set_["homologues_folder"], "alignments", database)
+        path_unique_seqs_with_gaps = os.path.join(alignments_dir, "{}.uniq.{}gaps{}.txt".format(tm_protein, set_["max_n_gaps_in_TMD_seq"], set_["surres"]))
+
+        if os.path.isfile(path_unique_seqs_with_gaps):
             try:
                 #freecontact_file = os.path.join(set_["feature_cumulative_coevolution"], "zpro/NoRedundPro/%s.mem.2gap.freecontact") % tm_protein
                 freecontact_file = os.path.join(set_["feature_cumulative_coevolution"],database,"%s.mem.2gap%s.freecontact") % (tm_protein,set_["surres"])
                 #freecontact_file_handle = open(freecontact_file, 'w')
                 exect_str = "grep -v '^>' {aln_file} |sed 's/[a-z]//g'|{freecontact} >{freecontact_output_file}".format(
-                    aln_file=homo_filter_fasta_file, freecontact=freecontact_loc,freecontact_output_file=freecontact_file)
+                    aln_file=path_unique_seqs_with_gaps, freecontact=freecontact_loc,freecontact_output_file=freecontact_file)
 
                 command = utils.Command(exect_str)
                 # command=Command(exect_str)
@@ -606,7 +623,9 @@ def cumulative_co_evolutionary_strength_parser(thoipapy, set_, logging):
     for row in tmp_file_handle:
         tm_protein = row.strip().split(",")[0][0:6]
         database = row.strip().split(",")[6]
-        freecontact_file = os.path.join(set_["feature_cumulative_coevolution"],database,"%s.mem.2gap%s.freecontact") % (tm_protein,set_["surres"])
+        #freecontact_file = os.path.join(set_["feature_cumulative_coevolution"],database,"%s.mem.2gap%s.freecontact") % (tm_protein,set_["surres"])
+        freecontact_file = os.path.join(set_["feature_cumulative_coevolution"], database, "{}.mem.{}gap{}.freecontact".format(tm_protein, set_["max_n_gaps_in_TMD_seq"], set_["surres"]))
+
         dict_di = {}
         dict_mi = {}
         dict_di_list = {}
@@ -727,16 +746,18 @@ def relative_position_calculation(set_,logging):
     # skip header
     next(tmp_file_handle)
     for row in tmp_file_handle:
-        tmp_protein_name = row.strip().split(",")[0][0:6]
+        acc = row.strip().split(",")[0][0:6]
         tm_start = int(row.strip().split(",")[2])
         seq_len= int(row.strip().split(",")[1])
         database = row.strip().split(",")[6]
-        relative_position_file = os.path.join(set_["feature_relative_position"], database, "%s.relative_position%s.csv") % (
-        tmp_protein_name, set_["surres"])
-        homo_filter_fasta_file = os.path.join(set_["output_oa3m_homologous"], database, "%s.a3m.mem.uniq.2gaps%s") % (
-        tmp_protein_name, set_["surres"])
+        relative_position_file = os.path.join(set_["feature_relative_position"], database, "%s.relative_position%s.csv") % (acc, set_["surres"])
+        #path_unique_seqs_with_gaps = os.path.join(set_["output_oa3m_homologues"], database, "%s.a3m.mem.uniq.2gaps%s") % (acc, set_["surres"])
+        alignments_dir = os.path.join(set_["homologues_folder"], "alignments", database)
+        path_unique_seqs_with_gaps = os.path.join(alignments_dir, "{}.uniq.{}gaps{}.txt".format(acc, set_["max_n_gaps_in_TMD_seq"], set_["surres"]))
 
-        if os.path.isfile(homo_filter_fasta_file):
+
+
+        if os.path.isfile(path_unique_seqs_with_gaps):
             relative_position_file_handle = open(relative_position_file, 'w')
             mat = []
             writer = csv.writer(relative_position_file_handle, delimiter=',', quotechar='"',
@@ -744,10 +765,10 @@ def relative_position_calculation(set_,logging):
                                 quoting=csv.QUOTE_NONNUMERIC, doublequote=True)
             writer.writerow(
                 ['residue_num', 'residue_name', 'Rp_tmd', 'Rp_seq'])
-            # if os.path.isfile(homo_filter_fasta_file):
-            # for line in open(homo_filter_fasta_file).readlines():
+            # if os.path.isfile(path_unique_seqs_with_gaps):
+            # for line in open(path_unique_seqs_with_gaps).readlines():
 
-            with open(homo_filter_fasta_file) as f:
+            with open(path_unique_seqs_with_gaps) as f:
                 mat = []
                 for line in f.readlines():
                     if not re.search("^>", line):
@@ -759,7 +780,7 @@ def relative_position_calculation(set_,logging):
                     rp2=(i+tm_start-1)/seq_len
                     writer.writerow([i,tm_seq[i-1],rp1,rp2])
             relative_position_file_handle.close()
-            logging.info('{} relative position calculation finished ({})'.format(tmp_protein_name, relative_position_file))
+            logging.info('{} relative position calculation finished ({})'.format(acc, relative_position_file))
 
     tmp_file_handle.close()
 
@@ -775,7 +796,7 @@ def Lips_score_calculation(thoipapy, set_, logging):
     for row in tmp_file_handle:
         tm_protein = row.strip().split(",")[0][0:6]
         database = row.strip().split(",")[6]
-        Lips_input_file = os.path.join(set_["output_oa3m_homologous"],database, "%s.mem.lips.input%s") % (tm_protein,set_["surres"])
+        Lips_input_file = os.path.join(set_["output_oa3m_homologues"],database, "%s.mem.lips.input%s") % (tm_protein,set_["surres"])
         if os.path.isfile(Lips_input_file):
             try:
                 file = open(Lips_input_file, "r")
