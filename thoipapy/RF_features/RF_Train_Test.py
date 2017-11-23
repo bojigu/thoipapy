@@ -5,8 +5,11 @@ import matplotlib.pyplot as plt
 from sklearn.ensemble import RandomForestClassifier
 from sklearn.metrics import roc_curve, auc
 from sklearn.model_selection import StratifiedKFold
+from sklearn.externals import joblib
 import os
 import subprocess, threading
+import sys
+
 
 
 def run_Rscipt_random_forest(set_, output_file_loc, logging):
@@ -105,7 +108,7 @@ def RF_10flod_cross_validation(tmplist,thoipapyset_,logging):
 
 def RF_variable_importance_calculate(tmplist,pathdic,set_,logging):
     data = pd.read_csv('/scratch2/zeng/homotypic_data/data/RandomForest/PsEnCo/TrainData2',delimiter="\s")
-    del data["Residue_id"]
+    del data["Residue_num"]
     del data["Residue_name"]
     #print(data.as_matrix(data.columns))
     features=data.columns[0:28]
@@ -130,3 +133,57 @@ def RF_variable_importance_calculate(tmplist,pathdic,set_,logging):
     plt.xticks(range(X.shape[1]), indices)
     plt.xlim([-1, X.shape[1]])
     plt.show()
+
+def thoipa_rfmodel_create(set_,database,train_data,pkl_file):
+    """
+
+    Parameters
+    ----------
+    set_
+    database
+    train_data
+    pkl_file
+
+    Returns
+    -------
+
+    """
+    data = pd.read_csv(train_data, sep=',', engine='python', index_col=0)
+    del data["residue_num"]
+    del data["residue_name"]
+    del data["closedist"]
+    features = data.columns[0:54]
+    X = data[features]
+    y = data["bind"]
+    forest = RandomForestClassifier(n_estimators=100)
+    fit = forest.fit(X, y)
+    joblib.dump(fit, pkl_file)
+
+
+def thoipa_pred_for_query(set_,database,pkl_file,query_input,pred_output):
+    """
+
+    Parameters
+    ----------
+    set_
+    database
+    query_input
+    pred_output
+
+    Returns
+    -------
+
+    """
+    fit = joblib.load(pkl_file)
+    test_data = query_input
+    thoipa_out = pred_output
+    tdf = pd.read_csv(test_data, sep=',', engine='python', index_col=0)
+    aa = tdf.residue_name
+    del tdf["residue_num"]
+    del tdf["residue_name"]
+    tX = tdf[tdf.columns[0:54]]
+    tp = fit.predict_proba(tX)
+    odf = pd.DataFrame()
+    odf["AA"] = aa
+    odf["thoipa"] = tp[:, 1]
+    odf.to_csv(thoipa_out)

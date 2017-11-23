@@ -48,13 +48,12 @@ parser.add_argument("-of",  # "-setting output file path",
 parser.add_argument("-email_to",  # "-setting output email address",
                     help=r'user email given on web server'
                          r'E.g. "***REMOVED***"')
-
 if __name__ == "__main__":
 
     sys.stdout.write('\nRun thoipapy as follows:')
     sys.stdout.write(r'python \Path\to\run.py -s \Path\to\your\settingsfile.xlsx -i \Path\to\your\input.fasta -tmd \Path\to\your\input_tmd.txt '
           r'-ts tm_start_position -te tm_end_position -of C:\Path\to\your output_file\ -email_to email_address')
-
+    print("code get to this line")
     # get the command-line arguments
     args = parser.parse_args()
     # args.s is the excel_settings_file input by the user
