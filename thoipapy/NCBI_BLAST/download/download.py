@@ -22,8 +22,8 @@ def download_homologues_from_ncbi(set_, df_set, logging):
     if "Linux" in OS_description or "Windows" in OS_description:
         try:
             byteformat = "GB"
-            data_harddrive = set_["data_harddrive"]
-            size = utils.get_free_space(data_harddrive, byteformat)
+            thoipapy_data_folder = set_["thoipapy_data_folder"]
+            size = utils.get_free_space(thoipapy_data_folder, byteformat)
             # logging.info('Hard disk remaining space = {}'.format(size))
 
             if size[0] < 5:

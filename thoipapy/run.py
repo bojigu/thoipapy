@@ -68,8 +68,6 @@ if __name__ == "__main__":
     #tm_protein_name=set_["tm_protein_name"]
     #Data_type=set_["Datatype"]
 
-    #logging=common.setup_keyboard_interrupt_and_error_logging(set_,tm_protein_name)
-
     #tmp_lists=thoipapy.proteins.get_tmp_lists.extract_tmps_from_input_file(set_)
     #test_tmp_lists=thoipapy.proteins.get_tmp_lists.extract_test_tmps_from_input_file(set_)
 
@@ -101,8 +99,12 @@ if __name__ == "__main__":
 
     # define set name, which should be in the excel file name
     setname = "set{:02d}".format(set_["set_number"])
-    # add tothe dictionary itself
+    # add to the dictionary itself
     set_["setname"] = setname
+    # create a results folder for that set
+    set_["set_results_folder"] = os.path.join(set_["Results_folder"], setname)
+    if not os.path.isdir(set_["set_results_folder"]):
+        os.makedirs(set_["set_results_folder"])
 
     logging = common.setup_keyboard_interrupt_and_error_logging(set_, setname)
 
@@ -174,7 +176,7 @@ if __name__ == "__main__":
     df_set.iloc[:, 1:5] = df_set.iloc[:, 1:5].astype(int)
 
     # save to csv, which is opened by other functions
-    list_of_tmd_start_end = os.path.join(set_["data_harddrive"], "Input_data", os.path.basename(set_path)[:-5] + "_processed.csv")
+    list_of_tmd_start_end = os.path.join(set_["thoipapy_data_folder"], "Input_data", os.path.basename(set_path)[:-5] + "_processed.csv")
     set_["list_of_tmd_start_end"] = list_of_tmd_start_end
     df_set.to_csv(list_of_tmd_start_end)
 
@@ -184,38 +186,6 @@ if __name__ == "__main__":
         database = unique_database_labels[0]
     else:
         database = "mixed"
-
-    # add the database of the protein set to the settings dictionary
-    database = database
-
-    # list_number=int(set_["list_number"])
-    #
-    # if list_number == 42:
-    #     database = "Etra"
-    # elif list_number == 43:
-    #     database = "Nmr"
-    # elif list_number == 44:
-    #     database = "Crystal"
-    # elif list_number == 45:
-    #     database = "All"
-
-
-    # if list_number == 99:
-    #     database = "Etra"
-    #     set_["list_of_tmd_start_end"] = os.path.join(os.path.dirname(args.s), "Tmd_Start_End_List_Uniq_New_{}.csv".format("MT1"))
-    # else:
-    #     set_["list_of_tmd_start_end"] = os.path.join(os.path.dirname(args.s), "Tmd_Start_End_List_Uniq_New_{}.csv".format(database))
-
-    # this is important, if user want to run multiple proteins simultaneously, user has to set the tmd start and end list file by themselves
-    # example of the tmd input file would look like this:
-    # Protein,seqlen,TMD_Start,TMD_End
-    # O15455,904,705,722
-    # P07174,425,253,273
-
-
-    #set_["list_of_tmd_start_end"] = os.path.join(os.path.dirname(args.s), "Tmd_Start_End_List_Uniq_New_{}.csv".format(database))
-    # set_["list_of_tmd_start_end"] = os.path.join(set_["data_harddrive"], "Input_data",
-    #                                              "Tmd_Start_End_List_Uniq_New_{}.csv".format(database))
 
     # when only run one protein each time, set_["multiple_tmp_simultaneous"] is false, and create the query protein information file
     # according to the arguments inputed by user
@@ -232,7 +202,6 @@ if __name__ == "__main__":
     #this function works for both one query protein or multiple protiens simultaneously
 
     #thoipapy.common.create_TMD_surround20_fasta_file(set_)
-
 
 
                     ###################################################################################################
@@ -269,7 +238,7 @@ if __name__ == "__main__":
         thoipapy.NCBI_BLAST.parse.parser.parse_NCBI_xml_to_csv(set_, df_set, logging)
 
     if set_["parse_csv_homologues_to_alignment"]:
-        thoipapy.NCBI_BLAST.parse.parser.extract_filtered_csv_homologues_to_alignments(set_, df_set, logging)
+        thoipapy.NCBI_BLAST.parse.parser.extract_filtered_csv_homologues_to_alignments_mult_prot(set_, df_set, logging)
 
 
                     ###################################################################################################
@@ -304,7 +273,7 @@ if __name__ == "__main__":
             thoipapy.RF_features.feature_calculate.relative_position_calculation(set_,logging)
 
         if set_["lips_score_feature_calculation"]:
-            thoipapy.RF_features.feature_calculate.Lips_score_calculation(thoipapy, set_, logging)
+            thoipapy.RF_features.feature_calculate.LIPS_score_calculation_mult_prot(thoipapy, set_, logging)
             thoipapy.RF_features.feature_calculate.Lips_score_parsing( set_, logging)
 
         #thoipapy.RF_features.feature_calculate.convert_bind_data_to_csv(set_, logging)

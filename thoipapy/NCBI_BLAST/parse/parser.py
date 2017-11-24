@@ -154,14 +154,33 @@ def slice_match_TMD_seq(x):
 def slice_match_TMD_seq_surr5(x):
     return x['subject_align_seq'][int(x["start_min_5"]) : int(x["end"]) + 5]
 
-def extract_filtered_csv_homologues_to_alignments(set_, df_set, logging):
+def save_fasta(df, col_with_seqs, filepath, acc):
+    with open(filepath, "w") as f:
+        for n in df.index:
+            seq = df.loc[n, col_with_seqs]
+            if n == 0:
+                f.write(">{}_orig_seq\n{}\n".format(acc, seq))
+            else:
+                description = df.loc[n, "description"]
+                f.write(">{}\n{}\n".format(description, seq))
 
+def save_fasta_from_array(array_of_seqs, filepath):
+    with open(filepath, "w") as f:
+        for n, seq in enumerate(array_of_seqs):
+            f.write(">{}\n{}\n".format(n, seq))
+
+
+def save_seqs(array_of_seqs, filepath):
+    with open(filepath, "w") as f:
+        for seq in array_of_seqs:
+            f.write("{}\n".format(seq))
+
+def extract_filtered_csv_homologues_to_alignments_mult_prot(set_, df_set, logging):
 
     logging.info('start extract filtered csv homologues to alignments')
     min_identity_of_TMD_seq = set_["min_identity_of_TMD_seq"]
-    #max_identity_of_TMD_seq = set_["max_identity_of_TMD_seq"]
-    max_n_gaps_in_TMD_seq = set_["max_n_gaps_in_TMD_seq"]
 
+    out_dict = {}
 
     for acc in df_set.index:
         database = df_set.loc[acc, "database"]
@@ -172,141 +191,125 @@ def extract_filtered_csv_homologues_to_alignments(set_, df_set, logging):
         alignments_dir = os.path.join(set_["homologues_folder"], "alignments", database)
         if not os.path.isdir(alignments_dir):
             os.makedirs(alignments_dir)
-        fasta_all_TMD_seqs = os.path.join(alignments_dir, "{}.{}gaps{}.fas".format(acc, max_n_gaps_in_TMD_seq, set_["surres"]))
-        path_unique_seqs_with_gaps = os.path.join(alignments_dir, "{}.uniq.{}gaps{}.txt".format(acc, max_n_gaps_in_TMD_seq, set_["surres"]))
-        fasta_unique_seqs_with_gaps = os.path.join(alignments_dir, "{}.uniq.{}gaps{}.fas".format(acc, max_n_gaps_in_TMD_seq, set_["surres"]))
-        path_unique_seqs_no_gaps = os.path.join(alignments_dir, "{}.uniq.0gaps{}.txt".format(acc, set_["surres"]))
-        fasta_unique_seqs_no_gaps = os.path.join(alignments_dir, "{}.uniq.0gaps{}.fas".format(acc, set_["surres"]))
-        path_unique_seqs_with_gaps_surr5 = os.path.join(alignments_dir, "{}.uniq.{}gaps_surr5.txt".format(acc, max_n_gaps_in_TMD_seq, set_["surres"]))
-        fasta_unique_seqs_with_gaps_surr5 = os.path.join(alignments_dir, "{}.uniq.{}gaps_surr5.fas".format(acc, max_n_gaps_in_TMD_seq, set_["surres"]))
 
-        if (os.path.isfile(homo_csv_file_loc) and os.path.getsize(homo_csv_file_loc) > 0):  # whether protein homologues csv file exists
-            df = pd.read_csv(homo_csv_file_loc)
-            # create regex search string, e.g. V-*L-*L-*G-*A-*V-*G-*G-*A-*G-*A-*T-*A-*L-*V-*F-*L-*S-*F-*C
-            # (finds sequence regardless of gaps)
-            TMD_regex_ss = thoipapy.utils.create_regex_string(query_TMD_sequence)
+        single_prot_dict = extract_filtered_csv_homologues_to_alignments(set_, acc, TMD_len, alignments_dir, homo_csv_file_loc, query_TMD_sequence, logging)
+        out_dict[acc] = single_prot_dict
 
-            # obtain the bool, start, end of TMD seqs in the match sequences. Add to the new TMD-specific dataframe.
-            start_end_list_in_alignment_ser = df.query_align_seq.apply(get_start_and_end_of_TMD_in_query, args=(TMD_regex_ss,)).dropna()
-            df['start'] = start_end_list_in_alignment_ser.apply(lambda x: x[1])
-            df['end'] = start_end_list_in_alignment_ser.apply(lambda x: x[2])
+    df_align_results = pd.DataFrame(out_dict).T
+    df_align_results.index.name = "acc"
+    align_results_csv = os.path.join(set_["set_results_folder"], "{}_alignment_summary.csv".format(set_["setname"]))
+    df_align_results.to_csv(align_results_csv)
+
+    logging.info('finished extract filtered csv homologues to alignments for {} proteins. Output = {}'.format(df_align_results.shape[0], align_results_csv))
 
 
-            # slice TMDs out of dfs_sel, and save them in the new df_TMD
-            df.dropna(subset=["start", "end"], inplace=True)
-            df["start"] = df["start"].astype(int)
-            df["end"] = df["end"].astype(int)
-            df['query_TMD_align_seq'] = df.apply(slice_query_TMD_seq, axis=1)
-            df['markup_TMD_align_seq'] = df.apply(slice_markup_TMD_seq, axis=1)
-            df['subject_TMD_align_seq'] = df.apply(slice_match_TMD_seq, axis=1)
+def extract_filtered_csv_homologues_to_alignments(set_, acc, TMD_len, alignments_dir, homo_csv_file_loc, query_TMD_sequence, logging):
+    fasta_all_TMD_seqs = os.path.join(alignments_dir, "{}.{}gaps{}_redundant.fas".format(acc, set_["max_n_gaps_in_TMD_subject_seq"], set_["surres"]))
+    path_uniq_TMD_seqs_for_PSSM_FREECONTACT = os.path.join(alignments_dir, "{}.uniq.{}gaps{}_for_PSSM_FREECONTACT.txt".format(acc, set_["max_n_gaps_in_TMD_subject_seq"], set_["surres"]))
+    fasta_uniq_TMD_seqs_for_PSSM_FREECONTACT = os.path.join(alignments_dir, "{}.uniq.{}gaps{}_for_PSSM_FREECONTACT.fas".format(acc, set_["max_n_gaps_in_TMD_subject_seq"], set_["surres"]))
+    path_uniq_TMD_seqs_no_gaps_for_LIPS = os.path.join(alignments_dir, "{}.uniq.0gaps{}_for_LIPS.txt".format(acc, set_["surres"]))
+    fasta_uniq_TMD_seqs_no_gaps_for_LIPS = os.path.join(alignments_dir, "{}.uniq.0gaps{}_for_LIPS.fas".format(acc, set_["surres"]))
+    path_uniq_TMD_seqs_surr5_for_LIPO = os.path.join(alignments_dir, "{}.uniq.{}gaps_surr5_for_LIPO.txt".format(acc, set_["max_n_gaps_in_TMD_subject_seq"], set_["surres"]))
+    pasta_uniq_TMD_seqs_surr5_for_LIPO = os.path.join(alignments_dir, "{}.uniq.{}gaps_surr5_for_LIPO.fas".format(acc, set_["max_n_gaps_in_TMD_subject_seq"], set_["surres"]))
 
-            # slice out the TMD plus surrounding 5 residues
-            # the start index needs to be adjusted as necessary
-            # (as far as I understand, indexing "12345"[0:10] is allowed
-            start_min_5 = df["start"] - 5
-            start_min_5[start_min_5 < 0] = 0
-            df['start_min_5'] = start_min_5
-            df['subject_TMD_align_seq_surr5'] = df.apply(slice_match_TMD_seq_surr5, axis=1)
+    if (os.path.isfile(homo_csv_file_loc) and os.path.getsize(homo_csv_file_loc) > 0):  # whether protein homologues csv file exists
+        df = pd.read_csv(homo_csv_file_loc)
+        # create regex search string, e.g. V-*L-*L-*G-*A-*V-*G-*G-*A-*G-*A-*T-*A-*L-*V-*F-*L-*S-*F-*C
+        # (finds sequence regardless of gaps)
+        TMD_regex_ss = thoipapy.utils.create_regex_string(query_TMD_sequence)
 
-            df['X_in_subject_TMD_align_seq_surr5'] = df['subject_TMD_align_seq_surr5'].str.contains("X")
+        # obtain the bool, start, end of TMD seqs in the match sequences. Add to the new TMD-specific dataframe.
+        start_end_list_in_alignment_ser = df.query_align_seq.apply(get_start_and_end_of_TMD_in_query, args=(TMD_regex_ss,)).dropna()
+        df['start'] = start_end_list_in_alignment_ser.apply(lambda x: x[1])
+        df['end'] = start_end_list_in_alignment_ser.apply(lambda x: x[2])
 
-            # calculate fraction identity of TMD region only
-            df["frac_ident_TMD"] = (df.markup_TMD_align_seq.str.len() - df.markup_TMD_align_seq.str.replace("+", " ").str.count(" ")) / TMD_len
+        # slice TMDs out of dfs_sel, and save them in the new df_TMD
+        df.dropna(subset=["start", "end"], inplace=True)
+        df["start"] = df["start"].astype(int)
+        df["end"] = df["end"].astype(int)
+        df['query_TMD_align_seq'] = df.apply(slice_query_TMD_seq, axis=1)
+        df['markup_TMD_align_seq'] = df.apply(slice_markup_TMD_seq, axis=1)
+        df['subject_TMD_align_seq'] = df.apply(slice_match_TMD_seq, axis=1)
 
-            # count gaps
-            df["query_align_seq_contains_gaps"] = df.query_TMD_align_seq.str.contains("-")
-            df["n_gaps_subject_align_seq"] = df.subject_TMD_align_seq.str.count("-")
+        # slice out the TMD plus surrounding 5 residues
+        # the start index needs to be adjusted as necessary
+        # (as far as I understand, indexing "12345"[0:10] is allowed
+        start_min_5 = df["start"] - 5
+        start_min_5[start_min_5 < 0] = 0
+        df['start_min_5'] = start_min_5
+        df['subject_TMD_align_seq_surr5'] = df.apply(slice_match_TMD_seq_surr5, axis=1)
 
-            # filter by gaps in query, gaps in subject, and fraction identity of TMD
-            df.query("query_align_seq_contains_gaps == False & "
-                     "X_in_subject_TMD_align_seq_surr5 == False &"
-                     "n_gaps_subject_align_seq <= {} & "
-                     "frac_ident_TMD > {}".format(max_n_gaps_in_TMD_seq, min_identity_of_TMD_seq), inplace=True)
+        df['X_in_subject_TMD_align_seq_surr5'] = df['subject_TMD_align_seq_surr5'].str.contains("X")
 
-            # save all TMD sequences (NON-UNIQUE) for manual inspection of alignments only
-            total_n_non_unique_seqs = df.shape[0]
+        # calculate fraction identity of TMD region only
+        df["frac_ident_TMD"] = (df.markup_TMD_align_seq.str.len() - df.markup_TMD_align_seq.str.replace("+", " ").str.count(" ")) / TMD_len
 
-            def save_fasta(df, col_with_seqs, filepath, acc):
-                with open(filepath, "w") as f:
-                    for n in df.index:
-                        seq = df.loc[n, col_with_seqs]
-                        if n == 0:
-                            f.write(">{}_orig_seq\n{}\n".format(acc, seq))
-                        else:
-                            description = df.loc[n, "description"]
-                            f.write(">{}\n{}\n".format(description, seq))
+        # count gaps
+        df["n_gaps_query_align_seq"] = df.query_TMD_align_seq.str.count("-")
+        df["n_gaps_subject_align_seq"] = df.subject_TMD_align_seq.str.count("-")
 
-            def save_fasta_from_array(array_of_seqs, filepath):
-                with open(filepath, "w") as f:
-                    for n, seq in enumerate(array_of_seqs):
-                        f.write(">{}\n{}\n".format(n, seq))
+        # filter by gaps in query, gaps in subject, and fraction identity of TMD
+        df.query("n_gaps_query_align_seq <= {} & X_in_subject_TMD_align_seq_surr5 == False & "
+                 "n_gaps_subject_align_seq <= {} & frac_ident_TMD > {}".format(
+            set_["max_n_gaps_in_TMD_query_seq"], set_["max_n_gaps_in_TMD_subject_seq"],set_["min_identity_of_TMD_seq"], inplace=True))
 
-            def save_seqs(array_of_seqs, filepath):
-                with open(filepath, "w") as f:
-                    for seq in array_of_seqs:
-                        f.write("{}\n".format(seq))
+        # save all TMD sequences (NON-UNIQUE) for manual inspection of alignments only
+        n_total_filtered_seqs = df.shape[0]
+
+        save_fasta(df, "subject_TMD_align_seq", fasta_all_TMD_seqs, acc)
+
+        # save unique sequences WITH gaps (FOR COEVOLUTION WITH FREECONTACT, ETC)
+        uniq_TMD_seqs_for_PSSM_FREECONTACT = df.subject_TMD_align_seq.unique()
+        save_seqs(uniq_TMD_seqs_for_PSSM_FREECONTACT, path_uniq_TMD_seqs_for_PSSM_FREECONTACT)
+        save_fasta_from_array(uniq_TMD_seqs_for_PSSM_FREECONTACT, fasta_uniq_TMD_seqs_for_PSSM_FREECONTACT)
+
+        # save unique sequences WITHOUT gaps (FOR LIPS)
+        uniq_TMD_seqs_no_gaps_for_LIPS = [seq for seq in uniq_TMD_seqs_for_PSSM_FREECONTACT if "-" not in seq]
+        save_seqs(uniq_TMD_seqs_no_gaps_for_LIPS, path_uniq_TMD_seqs_no_gaps_for_LIPS)
+        save_fasta_from_array(uniq_TMD_seqs_no_gaps_for_LIPS, fasta_uniq_TMD_seqs_no_gaps_for_LIPS)
+
+        # save unique sequences WITH gaps with 5 surrounding residues (FOR PSSM and Hessa LIPO)
+        # delete any longer sequences, where the query had gaps
+        # assume the first sequence has no gaps
+        TMD_plus_5_len = len(df.iloc[0, :]["subject_TMD_align_seq_surr5"])
+        # only keep the sequs that have the same length as the first one
+        df_no_gaps_in_q_plus5 = df.loc[df['subject_TMD_align_seq_surr5'].str.len() == TMD_plus_5_len]
+        uniq_TMD_seqs_surr5_for_LIPO = df_no_gaps_in_q_plus5['subject_TMD_align_seq_surr5'].unique()
+        save_seqs(uniq_TMD_seqs_surr5_for_LIPO, path_uniq_TMD_seqs_surr5_for_LIPO)
+        save_fasta_from_array(uniq_TMD_seqs_surr5_for_LIPO, pasta_uniq_TMD_seqs_surr5_for_LIPO)
+
+        min_frac_ident_TMD = df["frac_ident_TMD"].min()
+        # print("min_frac_ident_TMD AFTER FILTER", min_frac_ident_TMD)
+
+        single_prot_dict = {}
+        single_prot_dict["n_total_filtered_seqs"] = n_total_filtered_seqs
+        single_prot_dict["n_uniq_TMD_seqs"] = len(uniq_TMD_seqs_for_PSSM_FREECONTACT)
+        single_prot_dict["n_uniq_TMD_seqs_no_gaps"] = len(uniq_TMD_seqs_no_gaps_for_LIPS)
+        single_prot_dict["n_uniq_TMD_seqs_surr5"] = len(uniq_TMD_seqs_surr5_for_LIPO)
+
+        logging.info("{} extract_filtered_csv_homologues_to_alignments finished ({}). {}, {}, and {} valid seqs "
+                     "from {} total".format(acc, path_uniq_TMD_seqs_for_PSSM_FREECONTACT, len(uniq_TMD_seqs_for_PSSM_FREECONTACT), len(uniq_TMD_seqs_no_gaps_for_LIPS),
+                                            len(uniq_TMD_seqs_surr5_for_LIPO), n_total_filtered_seqs))
+    else:
+        print("{} not found".format(homo_csv_file_loc))
+
+    return single_prot_dict
 
 
 
-            # with open(fasta_all_TMD_seqs, "w") as f:
-            #     for n in df.index:
-            #         if n == 0:
-            #             f.write(">{}_orig_seq\n{}\n".format(acc, df_set.loc[acc, "TMD_seq"]))
-            #         else:
-            #             seq = df.loc[n, "subject_TMD_align_seq"]
-            #             description = df.loc[n, "description"]
-            #             f.write(">{}\n{}\n".format(description, seq))
-
-            save_fasta(df, "subject_TMD_align_seq", fasta_all_TMD_seqs, acc)
-
-            # save unique sequences WITH gaps (FOR COEVOLUTION WITH FREECONTACT, ETC)
-            unique_subject_seqs = df.subject_TMD_align_seq.unique()
-            save_seqs(unique_subject_seqs, path_unique_seqs_with_gaps)
-            save_fasta_from_array(unique_subject_seqs, fasta_unique_seqs_with_gaps)
-
-            # with open(path_unique_seqs_with_gaps, "w") as f:
-            #     for seq in unique_subject_seqs:
-            #         f.write("{}\n".format(seq))
-
-            # save unique sequences WITHOUT gaps (FOR LIPS)
-            unique_subject_seqs_no_gaps = [seq for seq in unique_subject_seqs if "-" not in seq]
-            save_seqs(unique_subject_seqs_no_gaps, path_unique_seqs_no_gaps)
-            save_fasta_from_array(unique_subject_seqs_no_gaps, fasta_unique_seqs_no_gaps)
 
 
-            # with open(path_unique_seqs_no_gaps, "w") as f:
-            #     for seq in unique_subject_seqs_no_gaps:
-            #         f.write("{}\n".format(seq))
 
-            # save unique sequences WITH gaps with 5 surrounding residues (FOR PSSM and Hessa LIPO)
-            # delete any longer sequences, where the query had gaps
-            # assume the first sequence has no gaps
-            TMD_plus_5_len = len(df.iloc[0,:]["subject_TMD_align_seq_surr5"])
-            # only keep the sequs that have the same length as the first one
-            df_no_gaps_in_q_plus5 = df.loc[df['subject_TMD_align_seq_surr5'].str.len() == TMD_plus_5_len]
-            unique_seqs_with_gaps_plus_5_surr = df_no_gaps_in_q_plus5['subject_TMD_align_seq_surr5'].unique()
-            save_seqs(unique_seqs_with_gaps_plus_5_surr, path_unique_seqs_with_gaps_surr5)
-            save_fasta_from_array(unique_seqs_with_gaps_plus_5_surr, fasta_unique_seqs_with_gaps_surr5)
 
-            # with open(path_unique_seqs_with_gaps_surr5, "w") as f:
-            #     for seq in unique_seqs_with_gaps_plus_5_surr:
-            #         f.write("{}\n".format(seq))
 
-            min_frac_ident_TMD = df["frac_ident_TMD"].min()
-            #print("min_frac_ident_TMD AFTER FILTER", min_frac_ident_TMD)
-            logging.info("{} extract_filtered_csv_homologues_to_alignments finished ({}). {}, {}, and {} valid seqs "
-                         "from {} total".format(acc, path_unique_seqs_with_gaps, len(unique_subject_seqs), len(unique_subject_seqs_no_gaps),
-                                          len(unique_seqs_with_gaps_plus_5_surr), total_n_non_unique_seqs))
-        else:
-            print("{} not found".format(homo_csv_file_loc))
+
 
 def extract_filtered_csv_homologues_to_alignments_orig_handle_method(set_,logging):
 
     logging.info('start extract filtered csv homologues to alignments')
     min_identity_of_TMD_seq=set_["min_identity_of_TMD_seq"]
     max_identity_of_TMD_seq=set_["max_identity_of_TMD_seq"]
-    max_n_gaps_in_TMD_seq=set_["max_n_gaps_in_TMD_seq"]
-    max_n_gaps_in_TMD_seq = 1
+    max_n_gaps_in_TMD_subject_seq=set_["max_n_gaps_in_TMD_subject_seq"]
     tmp_list_loc = set_["list_of_tmd_start_end"]
     tmp_file_handle = open(tmp_list_loc, 'r')
     # skip header
@@ -385,7 +388,7 @@ def extract_filtered_csv_homologues_to_alignments_orig_handle_method(set_,loggin
                             alignment_dict2[row["tm_sbjt_seq"]]=1
                             print("{}".format(row["tm_sbjt_seq"]), file=homo_filter_file_handle)
             except:
-                logging.warning("\n------------------\n{} parsing error in extract_filtered_csv_homologues_to_alignments\n{} could not be created. Files will be deleted.\n------------------\n".format(tm_protein, homo_filter_file))
+                logging.warning("\n------------------\n{} parsing error in extract_filtered_csv_homologues_to_alignments_mult_prot\n{} could not be created. Files will be deleted.\n------------------\n".format(tm_protein, homo_filter_file))
                 homo_filter_file_handle.close()
                 homo_mem_lips_input_file_handle.close()
                 homo_filtered_out_csv_file_handle.close()
@@ -397,7 +400,7 @@ def extract_filtered_csv_homologues_to_alignments_orig_handle_method(set_,loggin
             homo_filter_file_handle.close()
             homo_mem_lips_input_file_handle.close()
             homo_filtered_out_csv_file_handle.close()
-            logging.info("{} extract_filtered_csv_homologues_to_alignments finished ({})".format(tm_protein, homo_filter_file))
+            logging.info("{} extract_filtered_csv_homologues_to_alignments_mult_prot finished ({})".format(tm_protein, homo_filter_file))
         else:
             print("{} not found".format(homo_csv_file_loc))
     tmp_file_handle.close()

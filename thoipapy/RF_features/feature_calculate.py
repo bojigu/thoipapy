@@ -167,21 +167,21 @@ def create_PSSM_from_MSA_mult_prot(set_, df_set, logging):
     for acc in df_set.index:
         database = df_set.loc[acc, "database"]
         alignments_dir = alignments_dir = os.path.join(set_["homologues_folder"], "alignments", database)
-        path_unique_seqs_with_gaps = os.path.join(alignments_dir, "{}.uniq.{}gaps{}.txt".format(acc, set_["max_n_gaps_in_TMD_seq"], set_["surres"]))
-        pssm_csv = os.path.join(set_["feature_pssm"], database, "{}.{}gap.pssm{}.csv".format(acc, set_["max_n_gaps_in_TMD_seq"], set_["surres"]))
-        create_PSSM_from_MSA(path_unique_seqs_with_gaps, pssm_csv, set_, acc, database, logging)
+        path_uniq_TMD_seqs_for_PSSM_FREECONTACT = os.path.join(alignments_dir, "{}.uniq.{}gaps{}_for_PSSM_FREECONTACT.txt".format(acc, set_["max_n_gaps_in_TMD_subject_seq"], set_["surres"]))
+        pssm_csv = os.path.join(set_["feature_pssm"], database, "{}.{}gap.pssm{}.csv".format(acc, set_["max_n_gaps_in_TMD_subject_seq"], set_["surres"]))
+        create_PSSM_from_MSA(path_uniq_TMD_seqs_for_PSSM_FREECONTACT, pssm_csv, set_, acc, database, logging)
 
-        path_unique_seqs_with_gaps_surr5 = os.path.join(alignments_dir, "{}.uniq.{}gaps{}.txt".format(acc, set_["max_n_gaps_in_TMD_seq"], set_["surres"]))
-        pssm_csv_surr5 = os.path.join(set_["feature_pssm"], database, "{}.{}gap.pssm_surr5.csv".format(acc, set_["max_n_gaps_in_TMD_seq"]))
-        create_PSSM_from_MSA(path_unique_seqs_with_gaps_surr5, pssm_csv_surr5, set_, acc, database, logging)
+        path_uniq_TMD_seqs_surr5_for_LIPO = os.path.join(alignments_dir, "{}.uniq.{}gaps{}.txt".format(acc, set_["max_n_gaps_in_TMD_subject_seq"], set_["surres"]))
+        pssm_csv_surr5 = os.path.join(set_["feature_pssm"], database, "{}.{}gap.pssm_surr5.csv".format(acc, set_["max_n_gaps_in_TMD_subject_seq"]))
+        create_PSSM_from_MSA(path_uniq_TMD_seqs_surr5_for_LIPO, pssm_csv_surr5, set_, acc, database, logging)
 
     #tmp_file_handle.close()
 
-def create_PSSM_from_MSA(path_unique_seqs_with_gaps, pssm_csv, set_, acc, database, logging):
+def create_PSSM_from_MSA(path_uniq_TMD_seqs_for_PSSM_FREECONTACT, pssm_csv, set_, acc, database, logging):
 
     #homo_filter_fasta_file = os.path.join(set_["output_oa3m_homologues"], database, "%s.a3m.mem.uniq.2gaps%s") % (acc, set_["surres"])
 
-    if os.path.isfile(path_unique_seqs_with_gaps):
+    if os.path.isfile(path_uniq_TMD_seqs_for_PSSM_FREECONTACT):
         #try:
         with open(pssm_csv, 'w') as pssm_file_handle:
             mat = []
@@ -192,7 +192,7 @@ def create_PSSM_from_MSA(path_unique_seqs_with_gaps, pssm_csv, set_, acc, databa
             writer.writerow(['residue_num', 'residue_name', 'A', 'I', 'L', 'V', 'F', 'W', 'Y', 'N', 'C', 'Q', 'M', 'S', 'T', 'D', 'E', 'R', 'H', 'K', 'G', 'P'])
             # if os.path.isfile(homo_filter_fasta_file):
             # for line in open(homo_filter_fasta_file).readlines():
-            with open(path_unique_seqs_with_gaps, "r") as f:
+            with open(path_uniq_TMD_seqs_for_PSSM_FREECONTACT, "r") as f:
                 for line in f.readlines():
                     if not re.search("^>", line):
                         mat.append(list(line))
@@ -219,7 +219,7 @@ def create_PSSM_from_MSA(path_unique_seqs_with_gaps, pssm_csv, set_, acc, databa
             # except:
             #     print("\npssm calculation occures error")
     else:
-        logging.warning("{} homo_filter_fasta_file does not exist({})".format(acc, path_unique_seqs_with_gaps))
+        logging.warning("{} homo_filter_fasta_file does not exist({})".format(acc, path_uniq_TMD_seqs_for_PSSM_FREECONTACT))
 
 
 def calc_lipo_from_pssm(set_, df_set, logging):
@@ -244,7 +244,7 @@ def calc_lipo_from_pssm(set_, df_set, logging):
     # set_["pssm_dir"] = os.path.join(set_["feature_pssm"], database)
 
     # hydrophob_scale_path = r"H:\nirry\mark\cloud\drive\TMD_homodimer\data_xy\Raw_data\hydrophobicity_scales.xlsx"
-    hydrophob_scale_path = os.path.join(set_["data_harddrive"], "Input_data", "hydrophobicity_scales.xlsx")
+    hydrophob_scale_path = os.path.join(set_["thoipapy_data_folder"], "Input_data", "hydrophobicity_scales.xlsx")
 
     # set name of hydrophobicity scale
     # current options are KyteDoolittle, Wimley, Hessa, Elazar, Hopp-Woods, Cornette, Eisenberg, Rose, Janin, Engelman(GES)
@@ -321,7 +321,7 @@ def lipo_from_pssm(set_, acc, database, tm_surr_left, tm_surr_right, scalename, 
         acc, False, "pssm_csv not found"
     """
     #pssm_csv = os.path.join(set_["feature_pssm"], database, "{}.mem.2gap.pssm_surr5.csv".format(acc))
-    pssm_csv_surr5 = os.path.join(set_["feature_pssm"], database, "{}.{}gap.pssm_surr5.csv".format(acc, set_["max_n_gaps_in_TMD_seq"]))
+    pssm_csv_surr5 = os.path.join(set_["feature_pssm"], database, "{}.{}gap.pssm_surr5.csv".format(acc, set_["max_n_gaps_in_TMD_subject_seq"]))
 
     if not os.path.isfile(pssm_csv_surr5):
         sys.stdout.write("\n{} skipped for lipo_from_pssm, pssm_csv not found. ".format(acc))
@@ -523,17 +523,17 @@ def entropy_calculation(set_,logging):
         database = row.strip().split(",")[6]
         #homo_filter_fasta_file = os.path.join(set_["output_oa3m_homologues"],database,"%s.a3m.mem.uniq.2gaps%s") % (tm_protein,set_["surres"])
         alignments_dir = os.path.join(set_["homologues_folder"], "alignments", database)
-        path_unique_seqs_with_gaps = os.path.join(alignments_dir, "{}.uniq.{}gaps{}.txt".format(tm_protein, set_["max_n_gaps_in_TMD_seq"], set_["surres"]))
+        path_uniq_TMD_seqs_for_PSSM_FREECONTACT = os.path.join(alignments_dir, "{}.uniq.{}gaps{}_for_PSSM_FREECONTACT.txt".format(tm_protein, set_["max_n_gaps_in_TMD_subject_seq"], set_["surres"]))
 
-        if os.path.isfile(path_unique_seqs_with_gaps):
+        if os.path.isfile(path_uniq_TMD_seqs_for_PSSM_FREECONTACT):
             try:
                 #entropy_file = os.path.join(set_["feature_entropy"], "NoRedundPro/%s.mem.2gap.entropy.csv") % tm_protein
                 entropy_file = os.path.join(set_["feature_entropy"],database, "%s.mem.2gap.entropy%s.csv") % (tm_protein,set_["surres"])
                 entropy_file_handle = open(entropy_file, 'w')
                 mat = []
-                with open(path_unique_seqs_with_gaps) as f:
+                with open(path_uniq_TMD_seqs_for_PSSM_FREECONTACT) as f:
                     for line in f.readlines():
-                #for line in open(path_unique_seqs_with_gaps).readlines():
+                #for line in open(path_uniq_TMD_seqs_for_PSSM_FREECONTACT).readlines():
                         if not re.search("^>", line):
                             mat.append(list(line))
                     rowlen = len(mat[0])
@@ -571,17 +571,16 @@ def coevoluton_calculation_with_freecontact(set_,logging):
     for row in tmp_file_handle:
         tm_protein = row.strip().split(",")[0][0:6]
         database = row.strip().split(",")[6]
-        #path_unique_seqs_with_gaps = os.path.join(set_["output_oa3m_homologues"],database,"%s.a3m.mem.uniq.2gaps%s") % (tm_protein,set_["surres"])
         alignments_dir = alignments_dir = os.path.join(set_["homologues_folder"], "alignments", database)
-        path_unique_seqs_with_gaps = os.path.join(alignments_dir, "{}.uniq.{}gaps{}.txt".format(tm_protein, set_["max_n_gaps_in_TMD_seq"], set_["surres"]))
+        path_uniq_TMD_seqs_for_PSSM_FREECONTACT = os.path.join(alignments_dir, "{}.uniq.{}gaps{}_for_PSSM_FREECONTACT.txt".format(tm_protein, set_["max_n_gaps_in_TMD_subject_seq"], set_["surres"]))
 
-        if os.path.isfile(path_unique_seqs_with_gaps):
+        if os.path.isfile(path_uniq_TMD_seqs_for_PSSM_FREECONTACT):
             try:
                 #freecontact_file = os.path.join(set_["feature_cumulative_coevolution"], "zpro/NoRedundPro/%s.mem.2gap.freecontact") % tm_protein
                 freecontact_file = os.path.join(set_["feature_cumulative_coevolution"],database,"%s.mem.2gap%s.freecontact") % (tm_protein,set_["surres"])
                 #freecontact_file_handle = open(freecontact_file, 'w')
                 exect_str = "grep -v '^>' {aln_file} |sed 's/[a-z]//g'|{freecontact} >{freecontact_output_file}".format(
-                    aln_file=path_unique_seqs_with_gaps, freecontact=freecontact_loc,freecontact_output_file=freecontact_file)
+                    aln_file=path_uniq_TMD_seqs_for_PSSM_FREECONTACT, freecontact=freecontact_loc,freecontact_output_file=freecontact_file)
 
                 command = utils.Command(exect_str)
                 # command=Command(exect_str)
@@ -624,7 +623,7 @@ def cumulative_co_evolutionary_strength_parser(thoipapy, set_, logging):
         tm_protein = row.strip().split(",")[0][0:6]
         database = row.strip().split(",")[6]
         #freecontact_file = os.path.join(set_["feature_cumulative_coevolution"],database,"%s.mem.2gap%s.freecontact") % (tm_protein,set_["surres"])
-        freecontact_file = os.path.join(set_["feature_cumulative_coevolution"], database, "{}.mem.{}gap{}.freecontact".format(tm_protein, set_["max_n_gaps_in_TMD_seq"], set_["surres"]))
+        freecontact_file = os.path.join(set_["feature_cumulative_coevolution"], database, "{}.mem.{}gap{}.freecontact".format(tm_protein, set_["max_n_gaps_in_TMD_subject_seq"], set_["surres"]))
 
         dict_di = {}
         dict_mi = {}
@@ -742,384 +741,391 @@ def relative_position_calculation(set_,logging):
     logging.info('start to calculate the relative positions')
 
     tmp_list_loc = set_["list_of_tmd_start_end"]
-    tmp_file_handle = open(tmp_list_loc, 'r')
-    # skip header
-    next(tmp_file_handle)
-    for row in tmp_file_handle:
-        acc = row.strip().split(",")[0][0:6]
-        tm_start = int(row.strip().split(",")[2])
-        seq_len= int(row.strip().split(",")[1])
-        database = row.strip().split(",")[6]
-        relative_position_file = os.path.join(set_["feature_relative_position"], database, "%s.relative_position%s.csv") % (acc, set_["surres"])
-        #path_unique_seqs_with_gaps = os.path.join(set_["output_oa3m_homologues"], database, "%s.a3m.mem.uniq.2gaps%s") % (acc, set_["surres"])
-        alignments_dir = os.path.join(set_["homologues_folder"], "alignments", database)
-        path_unique_seqs_with_gaps = os.path.join(alignments_dir, "{}.uniq.{}gaps{}.txt".format(acc, set_["max_n_gaps_in_TMD_seq"], set_["surres"]))
+    with open(tmp_list_loc, 'r') as tmp_file_handle:
+        # skip header
+        next(tmp_file_handle)
+        for row in tmp_file_handle:
+            acc = row.strip().split(",")[0][0:6]
+            tm_start = int(row.strip().split(",")[2])
+            seq_len= int(row.strip().split(",")[1])
+            database = row.strip().split(",")[6]
+            relative_position_file = os.path.join(set_["feature_relative_position"], database, "%s.relative_position%s.csv") % (acc, set_["surres"])
+            alignments_dir = os.path.join(set_["homologues_folder"], "alignments", database)
+            path_uniq_TMD_seqs_for_PSSM_FREECONTACT = os.path.join(alignments_dir, "{}.uniq.{}gaps{}_for_PSSM_FREECONTACT.txt".format(acc, set_["max_n_gaps_in_TMD_subject_seq"], set_["surres"]))
 
-
-
-        if os.path.isfile(path_unique_seqs_with_gaps):
-            relative_position_file_handle = open(relative_position_file, 'w')
-            mat = []
-            writer = csv.writer(relative_position_file_handle, delimiter=',', quotechar='"',
-                                lineterminator='\n',
-                                quoting=csv.QUOTE_NONNUMERIC, doublequote=True)
-            writer.writerow(
-                ['residue_num', 'residue_name', 'Rp_tmd', 'Rp_seq'])
-            # if os.path.isfile(path_unique_seqs_with_gaps):
-            # for line in open(path_unique_seqs_with_gaps).readlines():
-
-            with open(path_unique_seqs_with_gaps) as f:
+            if os.path.isfile(path_uniq_TMD_seqs_for_PSSM_FREECONTACT):
+                relative_position_file_handle = open(relative_position_file, 'w')
                 mat = []
-                for line in f.readlines():
-                    if not re.search("^>", line):
-                        mat.append(list(line))
-                tm_seq = mat[0]
-                tm_len=len(tm_seq)
-                for i in range(1,tm_len):
-                    rp1=i/tm_len
-                    rp2=(i+tm_start-1)/seq_len
-                    writer.writerow([i,tm_seq[i-1],rp1,rp2])
-            relative_position_file_handle.close()
-            logging.info('{} relative position calculation finished ({})'.format(acc, relative_position_file))
+                writer = csv.writer(relative_position_file_handle, delimiter=',', quotechar='"',
+                                    lineterminator='\n',
+                                    quoting=csv.QUOTE_NONNUMERIC, doublequote=True)
+                writer.writerow(
+                    ['residue_num', 'residue_name', 'Rp_tmd', 'Rp_seq'])
+                # if os.path.isfile(path_uniq_TMD_seqs_for_PSSM_FREECONTACT):
+                # for line in open(path_uniq_TMD_seqs_for_PSSM_FREECONTACT).readlines():
 
-    tmp_file_handle.close()
+                with open(path_uniq_TMD_seqs_for_PSSM_FREECONTACT) as f:
+                    mat = []
+                    for line in f.readlines():
+                        if not re.search("^>", line):
+                            mat.append(list(line))
+                    tm_seq = mat[0]
+                    tm_len=len(tm_seq)
+                    for i in range(1,tm_len):
+                        rp1=i/tm_len
+                        rp2=(i+tm_start-1)/seq_len
+                        writer.writerow([i,tm_seq[i-1],rp1,rp2])
+                relative_position_file_handle.close()
+                logging.info('{} relative position calculation finished ({})'.format(acc, relative_position_file))
+
+    #tmp_file_handle.close()
 
 
 
-def Lips_score_calculation(thoipapy, set_, logging):
+def LIPS_score_calculation_mult_prot(thoipapy, set_, logging):
     logging.info('start lips score calculation')
 
     tmp_list_loc = set_["list_of_tmd_start_end"]
-    tmp_file_handle = open(tmp_list_loc, 'r')
-    # skip header
-    next(tmp_file_handle)
-    for row in tmp_file_handle:
-        tm_protein = row.strip().split(",")[0][0:6]
-        database = row.strip().split(",")[6]
-        Lips_input_file = os.path.join(set_["output_oa3m_homologues"],database, "%s.mem.lips.input%s") % (tm_protein,set_["surres"])
-        if os.path.isfile(Lips_input_file):
-            try:
-                file = open(Lips_input_file, "r")
-                #Lips_output_file = os.path.join(set_["feature_lips_score"], "zpro/NoRedundPro/%s.mem.lips.output") % tm_protein
-                Lips_output_file = os.path.join(set_["feature_lips_score"],database,"%s.mem.lips.output%s") % (tm_protein,set_["surres"])
-                Lips_output_file_handle = open(Lips_output_file, "w")
-                sequence = ' '.join(line.strip() for line in file)
 
-                n = 0
-                sump = 0
-                sumlip = 0
-                sume = {}  # the sum of entropy for each one of the seven surfaces
-                sumf = 0
-                sumim = {}  # the sum of lipophilicity for each surfaces
-                aanum = {}  # the number of residues for each one of seven surfaces
-                resnum = 1
-                amino = ["A", "R", "N", "D", "C", "Q", "E", "G", "H", "I", "L", "K", "M", "F", "P", "S", "T", "W", "Y", "V"]
+    with open(tmp_list_loc, 'r') as tmp_file_handle:
+        # skip header
+        next(tmp_file_handle)
+        for row in tmp_file_handle:
+            tm_protein = row.strip().split(",")[0][0:6]
+            database = row.strip().split(",")[6]
+            #LIPS_input_file = os.path.join(set_["output_oa3m_homologues"],database, "%s.mem.lips.input%s") % (tm_protein,set_["surres"])
+            alignments_dir = os.path.join(set_["homologues_folder"], "alignments", database)
+            path_uniq_TMD_seqs_no_gaps_for_LIPS = os.path.join(alignments_dir, "{}.uniq.0gaps{}_for_LIPS.txt".format(tm_protein, set_["surres"]))
 
-                ###propi and propm are both from TMLIP scale, propi means the residue lipophilicity propensity in membrane headgroup region
-                ##and propm is the residue lipophilicity propensity in hydrophobic core region
-                ##in TMLIP scale paper, the membrane headgroup regions is defined as the first (tmlen/5) and (tmlen-tmlen/5) residues which
-                ##more likely the membrane bilayer
-                ##while the other residues are defined as hydrophobic core region
+            if os.path.isfile(path_uniq_TMD_seqs_no_gaps_for_LIPS):
+                # LIPS_output_file = os.path.join(set_["feature_lips_score"], "zpro/NoRedundPro/%s.mem.lips.output") % tm_protein
+                path_uniq_TMD_seqs_no_gaps_for_LIPS = os.path.join(alignments_dir, "{}.uniq.0gaps{}_for_LIPS.txt".format(tm_protein, set_["surres"]))
+                LIPS_output_file = os.path.join(set_["feature_lips_score"], database, "%s.mem.lips.output%s") % (tm_protein, set_["surres"])
+
+                LIPS_score_calculation(path_uniq_TMD_seqs_no_gaps_for_LIPS, LIPS_output_file)
+            else:
+                logging.warning("{} path_uniq_TMD_seqs_no_gaps_for_LIPS not found".format(tm_protein))
 
 
-                propi = {
-                    'A': 0.71,
-                    'R': 1.47,
-                    'N': 0.96,
-                    'D': 1.20,
-                    'C': 1.16,
-                    'Q': 0.61,
-                    'E': 0.90,
-                    'G': 0.48,
-                    'H': 0.82,
-                    'I': 1.11,
-                    'L': 1.18,
-                    'K': 2.38,
-                    'M': 1.38,
-                    'F': 1.57,
-                    'P': 0.99,
-                    'S': 0.69,
-                    'T': 0.72,
-                    'W': 2.45,
-                    'Y': 1.23,
-                    'V': 0.98
-                }
+def LIPS_score_calculation(input_seq_file, LIPS_output_file):
+    with open(input_seq_file, "r") as file:
+        sequence = ' '.join(line.strip() for line in file)
 
-                propm = dict(
-                    A=0.82,
-                    R=0.18,
-                    N=0.19,
-                    D=0.29,
-                    C=1.01,
-                    Q=0.26,
-                    E=0.19,
-                    G=0.35,
-                    H=0.12,
-                    I=1.88,
-                    L=1.71,
-                    K=0.42,
-                    M=1.02,
-                    F=1.97,
-                    P=0.65,
-                    S=0.55,
-                    T=0.66,
-                    W=1.65,
-                    Y=0.94,
-                    V=1.77
-                )
+    with open(LIPS_output_file, "w") as LIPS_output_file_handle:
+        n = 0
+        sump = 0
+        sumlip = 0
+        sume = {}  # the sum of entropy for each one of the seven surfaces
+        sumf = 0
+        sumim = {}  # the sum of lipophilicity for each surfaces
+        aanum = {}  # the number of residues for each one of seven surfaces
+        resnum = 1
+        amino = ["A", "R", "N", "D", "C", "Q", "E", "G", "H", "I", "L", "K", "M", "F", "P", "S", "T", "W", "Y", "V"]
 
-                tmp = sequence.split(' ')
-                nrow = len(tmp)
-                ncol = len(tmp[0])
-                bnum = ncol / 5
-                oc = {}
-                prob = {}
-                entropy = {}  ##residue entropy
-                exp_entropy = {}  # the final exponential entropy
-                lips = {}  ##the lipophilicity score
+        ###propi and propm are both from TMLIP scale, propi means the residue lipophilicity propensity in membrane headgroup region
+        ##and propm is the residue lipophilicity propensity in hydrophobic core region
+        ##in TMLIP scale paper, the membrane headgroup regions is defined as the first (tmlen/5) and (tmlen-tmlen/5) residues which
+        ##more likely the membrane bilayer
+        ##while the other residues are defined as hydrophobic core region
 
-                for i in range(nrow):
-                    for j in range(ncol):
-                        residue = tmp[i][j]
-                        res_j = ' '.join((residue, str(j)))
-                        if (res_j in oc.keys()):
-                            oc[res_j] = oc[res_j] + 1
+
+        propi = {
+            'A': 0.71,
+            'R': 1.47,
+            'N': 0.96,
+            'D': 1.20,
+            'C': 1.16,
+            'Q': 0.61,
+            'E': 0.90,
+            'G': 0.48,
+            'H': 0.82,
+            'I': 1.11,
+            'L': 1.18,
+            'K': 2.38,
+            'M': 1.38,
+            'F': 1.57,
+            'P': 0.99,
+            'S': 0.69,
+            'T': 0.72,
+            'W': 2.45,
+            'Y': 1.23,
+            'V': 0.98
+        }
+
+        propm = dict(
+            A=0.82,
+            R=0.18,
+            N=0.19,
+            D=0.29,
+            C=1.01,
+            Q=0.26,
+            E=0.19,
+            G=0.35,
+            H=0.12,
+            I=1.88,
+            L=1.71,
+            K=0.42,
+            M=1.02,
+            F=1.97,
+            P=0.65,
+            S=0.55,
+            T=0.66,
+            W=1.65,
+            Y=0.94,
+            V=1.77
+        )
+
+        tmp = sequence.split(' ')
+        nrow = len(tmp)
+        ncol = len(tmp[0])
+        bnum = ncol / 5
+        oc = {}
+        prob = {}
+        entropy = {}  ##residue entropy
+        exp_entropy = {}  # the final exponential entropy
+        lips = {}  ##the lipophilicity score
+
+        for i in range(nrow):
+            for j in range(ncol):
+                residue = tmp[i][j]
+                res_j = ' '.join((residue, str(j)))
+                if (res_j in oc.keys()):
+                    oc[res_j] = oc[res_j] + 1
+                else:
+                    oc[res_j] = 1
+
+        for j in range(ncol):
+            for res in amino:
+                if (' '.join((res, str(j))) in oc):
+                    prob[res] = oc[' '.join((res, str(j)))] / nrow
+                    if (j in entropy.keys()):
+                        entropy[j] = entropy[j] + prob[res] * math.log(prob[res])  # the entropy calculation
+                    else:
+                        entropy[j] = prob[res] * math.log(prob[res])
+                    if ((j <= bnum) or (j > ncol - bnum)):  ###here is the membrane headgroup residues
+                        if (j in lips.keys()):
+                            lips[j] = lips[j] + prob[res] * propi[res]
                         else:
-                            oc[res_j] = 1
-
-                for j in range(ncol):
-                    for res in amino:
-                        if (' '.join((res, str(j))) in oc):
-                            prob[res] = oc[' '.join((res, str(j)))] / nrow
-                            if (j in entropy.keys()):
-                                entropy[j] = entropy[j] + prob[res] * math.log(prob[res])  # the entropy calculation
-                            else:
-                                entropy[j] = prob[res] * math.log(prob[res])
-                            if ((j <= bnum) or (j > ncol - bnum)):  ###here is the membrane headgroup residues
-                                if (j in lips.keys()):
-                                    lips[j] = lips[j] + prob[res] * propi[res]
-                                else:
-                                    lips[j] = prob[res] * propi[res]
-                            else:  ###here is the hydrophobic region residues
-                                if (j in lips.keys()):
-                                    lips[j] = lips[j] + prob[res] * propm[res]
-                                else:
-                                    lips[j] = prob[res] * propm[res]
-                    exp_entropy[j] = 2.718 ** ((-1) * entropy[j])  # expontional entropy
-
-                for j in sorted(exp_entropy):
-                    res = tmp[0][j]
-                    m = resnum + j
-                    sump = sump + exp_entropy[j]
-                    sumlip = sumlip + lips[j]
-
-                for i in range(4):  # for the first 4 surfaces
-                    print("SURFACE", "%s" % i, ":", file=Lips_output_file_handle)
-                    # Lips_output_file_handle.write("SURFACE", "%s" % i, ":")
-                    j = i
-                    while j < ncol:
-                        res = tmp[0][j]
-                        if (i in sumim.keys()):
-                            sumim[i] = sumim[i] + lips[j]  # the sum of lipophilicity for surface i
+                            lips[j] = prob[res] * propi[res]
+                    else:  ###here is the hydrophobic region residues
+                        if (j in lips.keys()):
+                            lips[j] = lips[j] + prob[res] * propm[res]
                         else:
-                            sumim[i] = lips[j]
-                        prop = lips[j]
-                        if (i in sume.keys()):
-                            sume[i] = sume[i] + exp_entropy[j]  # the sum of entropy for surface i
-                        else:
-                            sume[i] = exp_entropy[j]
-                        if (i in aanum.keys()):
-                            aanum[i] = aanum[i] + 1  # the sum of the residue numbers for surface i
-                        else:
-                            aanum[i] = 1
-                        rn = j + resnum
+                            lips[j] = prob[res] * propm[res]
+            exp_entropy[j] = 2.718 ** ((-1) * entropy[j])  # expontional entropy
+
+        for j in sorted(exp_entropy):
+            res = tmp[0][j]
+            m = resnum + j
+            sump = sump + exp_entropy[j]
+            sumlip = sumlip + lips[j]
+
+        for i in range(4):  # for the first 4 surfaces
+            print("SURFACE", "%s" % i, ":", file=LIPS_output_file_handle)
+            # LIPS_output_file_handle.write("SURFACE", "%s" % i, ":")
+            j = i
+            while j < ncol:
+                res = tmp[0][j]
+                if (i in sumim.keys()):
+                    sumim[i] = sumim[i] + lips[j]  # the sum of lipophilicity for surface i
+                else:
+                    sumim[i] = lips[j]
+                prop = lips[j]
+                if (i in sume.keys()):
+                    sume[i] = sume[i] + exp_entropy[j]  # the sum of entropy for surface i
+                else:
+                    sume[i] = exp_entropy[j]
+                if (i in aanum.keys()):
+                    aanum[i] = aanum[i] + 1  # the sum of the residue numbers for surface i
+                else:
+                    aanum[i] = 1
+                rn = j + resnum
+                # r3=residuename123(res)
+                print("%3s" % rn, res, "%6.3f" % prop,
+                      "%6.3f" % exp_entropy[j],
+                      file=LIPS_output_file_handle)  # print residue information which is in surface i
+                # LIPS_output_file_handle.write("%3s" % rn, res, "%6.3f" % prop,"%6.3f" % exp_entropy[j])
+                k = j + 3
+                while (k <= j + 4):  # here add the the residues of i+3 and i+4 into surface i to form heptad repeat
+                    if (k < ncol):
+                        res = tmp[0][k]
                         # r3=residuename123(res)
-                        print("%3s" % rn, res, "%6.3f" % prop,
-                              "%6.3f" % exp_entropy[j],
-                              file=Lips_output_file_handle)  # print residue information which is in surface i
-                        # Lips_output_file_handle.write("%3s" % rn, res, "%6.3f" % prop,"%6.3f" % exp_entropy[j])
-                        k = j + 3
-                        while (k <= j + 4):  # here add the the residues of i+3 and i+4 into surface i to form heptad repeat
-                            if (k < ncol):
-                                res = tmp[0][k]
-                                # r3=residuename123(res)
-                                if (i in sumim.keys()):
-                                    sumim[i] = sumim[i] + lips[k]
-                                else:
-                                    sumim[i] = lips[k]
-                                prob = lips[k]
-                                if (i in sume.keys()):
-                                    sume[i] = sume[i] + exp_entropy[k]
-                                else:
-                                    sume[i] = exp_entropy[k]
-                                if (i in aanum.keys()):
-                                    aanum[i] = aanum[i] + 1
-                                else:
-                                    aanum[i] = 1
-                                rn = k + resnum
-                                print("%3s" % rn, res, "%6.3f" % prob, "%6.3f" % exp_entropy[k],
-                                      file=Lips_output_file_handle)
-                                # Lips_output_file_handle.write("%3s" % rn, res, "%6.3f" % prob, "%6.3f" % exp_entropy[k])
-                            k = k + 1
-                        j = j + 7
-                for i in range(4, 7):  # for surfaces from 4 to 6
-                    print("SURFACE", "%s" % i, ":", file=Lips_output_file_handle)
-                    # Lips_output_file_handle.write("SURFACE", "%s" % i, ":")
-                    j = i
-                    while j < ncol:
-                        res = tmp[0][j]
                         if (i in sumim.keys()):
-                            sumim[i] = sumim[i] + lips[j]
+                            sumim[i] = sumim[i] + lips[k]
                         else:
-                            sumim[i] = lips[j]
-                        prob = lips[j]
+                            sumim[i] = lips[k]
+                        prob = lips[k]
                         if (i in sume.keys()):
-                            sume[i] = sume[i] + exp_entropy[j]
+                            sume[i] = sume[i] + exp_entropy[k]
                         else:
-                            sume[i] = exp_entropy[j]
+                            sume[i] = exp_entropy[k]
                         if (i in aanum.keys()):
                             aanum[i] = aanum[i] + 1
                         else:
                             aanum[i] = 1
-                        rn = j + resnum
+                        rn = k + resnum
+                        print("%3s" % rn, res, "%6.3f" % prob, "%6.3f" % exp_entropy[k],
+                              file=LIPS_output_file_handle)
+                        # LIPS_output_file_handle.write("%3s" % rn, res, "%6.3f" % prob, "%6.3f" % exp_entropy[k])
+                    k = k + 1
+                j = j + 7
+        for i in range(4, 7):  # for surfaces from 4 to 6
+            print("SURFACE", "%s" % i, ":", file=LIPS_output_file_handle)
+            # LIPS_output_file_handle.write("SURFACE", "%s" % i, ":")
+            j = i
+            while j < ncol:
+                res = tmp[0][j]
+                if (i in sumim.keys()):
+                    sumim[i] = sumim[i] + lips[j]
+                else:
+                    sumim[i] = lips[j]
+                prob = lips[j]
+                if (i in sume.keys()):
+                    sume[i] = sume[i] + exp_entropy[j]
+                else:
+                    sume[i] = exp_entropy[j]
+                if (i in aanum.keys()):
+                    aanum[i] = aanum[i] + 1
+                else:
+                    aanum[i] = 1
+                rn = j + resnum
+                # r3=residuename123(res)
+                print("%3s" % rn, res, "%6.3f" % prob, "%6.3f" % exp_entropy[j], file=LIPS_output_file_handle)
+                # LIPS_output_file_handle.write("%3s" % rn, res, "%6.3f" % prob, "%6.3f" % exp_entropy[j])
+                k = j + 3
+                while (k <= j + 4):
+                    if (k < ncol):
+                        res = tmp[0][k]
                         # r3=residuename123(res)
-                        print("%3s" % rn, res, "%6.3f" % prob, "%6.3f" % exp_entropy[j], file=Lips_output_file_handle)
-                        # Lips_output_file_handle.write("%3s" % rn, res, "%6.3f" % prob, "%6.3f" % exp_entropy[j])
-                        k = j + 3
-                        while (k <= j + 4):
-                            if (k < ncol):
-                                res = tmp[0][k]
-                                # r3=residuename123(res)
-                                if (i in sumim.keys()):
-                                    sumim[i] = sumim[i] + lips[k]
-                                else:
-                                    sumim[i] = lips[k]
-                                prob = lips[k]
-                                if (i in sume.keys()):
-                                    sume[i] = sume[i] + exp_entropy[k]
-                                else:
-                                    sume[i] = exp_entropy[k]
-                                if (i in aanum.keys()):
-                                    aanum[i] = aanum[i] + 1
-                                else:
-                                    aanum[i] = 1
-                                rn = k + resnum
-                                print("%3s" % rn, res, "%6.3f" % prob, "%6.3f" % exp_entropy[k],
-                                      file=Lips_output_file_handle)
-                                # Lips_output_file_handle.write("%3s" % rn, res, "%6.3f" % prob, "%6.3f" % exp_entropy[k])
-                            k = k + 1
-                        j = j + 7
-                    k = i - 4
-                    while (k <= i - 3):  # here adding residues at the first 7 positions
-                        if (k < ncol):
-                            res = tmp[0][k]
-                            # r3=residuename123(res)
-                            if (i in sumim.keys()):
-                                sumim[i] = sumim[i] + lips[k]
-                            else:
-                                sumim[i] = lips[k]
-                            prob = lips[k]
-                            if (i in sume.keys()):
-                                sume[i] = sume[i] + exp_entropy[k]
-                            else:
-                                sume[i] = exp_entropy[k]
-                            if (i in aanum.keys()):
-                                aanum[i] = aanum[i] + 1
-                            else:
-                                aanum[i] = 1
-                            rn = k + resnum
-                            print("%3s" % rn, res, "%6.3f" % prob, "%6.3f" % exp_entropy[k], file=Lips_output_file_handle)
-                            # Lips_output_file_handle.write("%3s" % rn, res, "%6.3f" % prob, "%6.3f" % exp_entropy[k])
-                        k = k + 1
-                print("SURFACE LIPOPHILICITY ENTROPY   LIPS", file=Lips_output_file_handle)
-                # Lips_output_file_handle.write("SURFACE LIPOPHILICITY ENTROPY   LIPS")
-                for i in sumim.keys():
-                    avpim = sumim[i] / aanum[i]  # average lipophilicity for surface i
-                    avpim = avpim * 2
-                    ave = sume[i] / aanum[i]  # average entropy for surface i
-                    peim = avpim * ave  # average entropy*lipophilicity for surface i which is LIPS score
-                    print("%s" % i, "%10.3f" % avpim, "%8.3f" % ave,
-                          "%8.3f" % peim,
-                          file=Lips_output_file_handle)  # print seven surfaces and see which surface with lowewst LIPS score
-                    # Lips_output_file_handle.write("%s" % i, "%10.3f" % avpim, "%8.3f" % ave, "%8.3f" % peim)
-                Lips_output_file_handle.close()
-                file.close()
-            except:
-                print("LIPS calculation occures errors")
-    tmp_file_handle.close()
+                        if (i in sumim.keys()):
+                            sumim[i] = sumim[i] + lips[k]
+                        else:
+                            sumim[i] = lips[k]
+                        prob = lips[k]
+                        if (i in sume.keys()):
+                            sume[i] = sume[i] + exp_entropy[k]
+                        else:
+                            sume[i] = exp_entropy[k]
+                        if (i in aanum.keys()):
+                            aanum[i] = aanum[i] + 1
+                        else:
+                            aanum[i] = 1
+                        rn = k + resnum
+                        print("%3s" % rn, res, "%6.3f" % prob, "%6.3f" % exp_entropy[k],
+                              file=LIPS_output_file_handle)
+                        # LIPS_output_file_handle.write("%3s" % rn, res, "%6.3f" % prob, "%6.3f" % exp_entropy[k])
+                    k = k + 1
+                j = j + 7
+            k = i - 4
+            while (k <= i - 3):  # here adding residues at the first 7 positions
+                if (k < ncol):
+                    res = tmp[0][k]
+                    # r3=residuename123(res)
+                    if (i in sumim.keys()):
+                        sumim[i] = sumim[i] + lips[k]
+                    else:
+                        sumim[i] = lips[k]
+                    prob = lips[k]
+                    if (i in sume.keys()):
+                        sume[i] = sume[i] + exp_entropy[k]
+                    else:
+                        sume[i] = exp_entropy[k]
+                    if (i in aanum.keys()):
+                        aanum[i] = aanum[i] + 1
+                    else:
+                        aanum[i] = 1
+                    rn = k + resnum
+                    print("%3s" % rn, res, "%6.3f" % prob, "%6.3f" % exp_entropy[k], file=LIPS_output_file_handle)
+                    # LIPS_output_file_handle.write("%3s" % rn, res, "%6.3f" % prob, "%6.3f" % exp_entropy[k])
+                k = k + 1
+        print("SURFACE LIPOPHILICITY ENTROPY   LIPS", file=LIPS_output_file_handle)
+        # LIPS_output_file_handle.write("SURFACE LIPOPHILICITY ENTROPY   LIPS")
+        for i in sumim.keys():
+            avpim = sumim[i] / aanum[i]  # average lipophilicity for surface i
+            avpim = avpim * 2
+            ave = sume[i] / aanum[i]  # average entropy for surface i
+            peim = avpim * ave  # average entropy*lipophilicity for surface i which is LIPS score
+            print("%s" % i, "%10.3f" % avpim, "%8.3f" % ave,
+                  "%8.3f" % peim,
+                  file=LIPS_output_file_handle)  # print seven surfaces and see which surface with lowewst LIPS score
+            # LIPS_output_file_handle.write("%s" % i, "%10.3f" % avpim, "%8.3f" % ave, "%8.3f" % peim)
+    # LIPS_output_file_handle.close()
+    # file.close()
+
 
 
 def Lips_score_parsing(set_, logging):
     logging.info('start parsing lips output to cons and lips scores')
 
     tmp_list_loc = set_["list_of_tmd_start_end"]
-    tmp_file_handle = open(tmp_list_loc, 'r')
-    # skip header
-    next(tmp_file_handle)
-    for row in tmp_file_handle:
-        tm_protein = row.strip().split(",")[0][0:6]
-        database = row.strip().split(",")[6]
-        Lips_output_file = os.path.join(set_["feature_lips_score"],database,"%s.mem.lips.output%s") % (tm_protein,set_["surres"])
-        if os.path.isfile(Lips_output_file):
-            #try:
-            surface_num = 0
-            surface_lips = 100  ##100 is an initialized big number assuming lips score will not bigger than this number
-            Lips_outnput_file_handle = open(Lips_output_file, "r")
-            #conslips_output_file = os.path.join(set_["feature_lips_score"], "zpro/NoRedundPro/%s.mem.lips.output.conslips.csv") % tm_protein
-            conslips_output_file = os.path.join(set_["feature_lips_score"],database,"%s.mem.lips.output.conslips%s.csv") % (tm_protein,set_["surres"])
-            conslips_output_file_handle = open(conslips_output_file, "w")
-            i = 0
-            array = []
-            dict = {}
-            for row in Lips_outnput_file_handle:
-                if re.search("^\s+\d+\s+[A-Z]", row):
-                    array = row.split()
-                    if not int(array[0]) in dict:
-                        dict[int(array[0])] = " ".join([array[1], array[2], array[3]])
+    with open(tmp_list_loc, 'r') as tmp_file_handle:
+        # skip header
+        next(tmp_file_handle)
+        for row in tmp_file_handle:
+            tm_protein = row.strip().split(",")[0][0:6]
+            database = row.strip().split(",")[6]
+            LIPS_output_file = os.path.join(set_["feature_lips_score"],database,"%s.mem.lips.output%s") % (tm_protein,set_["surres"])
+            if os.path.isfile(LIPS_output_file):
+                #try:
+                surface_num = 0
+                surface_lips = 100  ##100 is an initialized big number assuming lips score will not bigger than this number
+                with open(LIPS_output_file, "r") as Lips_outnput_file_handle:
+                    #conslips_output_file = os.path.join(set_["feature_lips_score"], "zpro/NoRedundPro/%s.mem.lips.output.conslips.csv") % tm_protein
+                    conslips_output_file = os.path.join(set_["feature_lips_score"],database,"%s.mem.lips.output.conslips%s.csv") % (tm_protein,set_["surres"])
+                    conslips_output_file_handle = open(conslips_output_file, "w")
+                    i = 0
+                    array = []
+                    dict = {}
+                    for row in Lips_outnput_file_handle:
+                        if re.search("^\s+\d+\s+[A-Z]", row):
+                            array = row.split()
+                            if not int(array[0]) in dict:
+                                dict[int(array[0])] = " ".join([array[1], array[2], array[3]])
 
-                if re.search("^\d{1}\s+", row):
-                    surface_num1 = row.split()[0]
-                    surface_lips1 = row.split()[3]
-                    if (float(surface_lips1) < float(surface_lips)):
-                        surface_lips = surface_lips1
-                        surface_num = surface_num1
-            Lips_outnput_file_handle.close()
+                        if re.search("^\d{1}\s+", row):
+                            surface_num1 = row.split()[0]
+                            surface_lips1 = row.split()[3]
+                            if (float(surface_lips1) < float(surface_lips)):
+                                surface_lips = surface_lips1
+                                surface_num = surface_num1
+                    Lips_outnput_file_handle.close()
 
-            surface_find = 0
-            dict1 = {}
-            Lips_outnput_file_handle = open(Lips_output_file, "r")
-            for row in Lips_outnput_file_handle:
-                if re.search("^SURFACE\s" + surface_num, row):
-                    surface_find = 1
-                    continue
-                if surface_find == 1 and re.search("^\s+\d+\s+[A-Z]", row):
-                    array = row.split()
-                    if not int(array[0]) in dict1:
-                        dict1[int(array[0])] = " ".join([array[1], array[2], array[3]])
-                else:
                     surface_find = 0
-            Lips_outnput_file_handle.close()
+                    dict1 = {}
+                    Lips_outnput_file_handle = open(LIPS_output_file, "r")
+                    for row in Lips_outnput_file_handle:
+                        if re.search("^SURFACE\s" + surface_num, row):
+                            surface_find = 1
+                            continue
+                        if surface_find == 1 and re.search("^\s+\d+\s+[A-Z]", row):
+                            array = row.split()
+                            if not int(array[0]) in dict1:
+                                dict1[int(array[0])] = " ".join([array[1], array[2], array[3]])
+                        else:
+                            surface_find = 0
+                    Lips_outnput_file_handle.close()
 
 
-            #Lips_outnput_file_handle.close()
+                    #Lips_outnput_file_handle.close()
 
-            writer = csv.writer(conslips_output_file_handle, delimiter=',', quotechar='"', lineterminator='\n',
-                                quoting=csv.QUOTE_NONNUMERIC, doublequote=True)
-            writer.writerow(["residue_num", "residue_name", "lipophilicity", "entropy2","Lips_surface"])
-            for k, v in sorted(dict.items()):
-                v1 = v.split()
-                v1.insert(0, k)
-                if k in dict1:
-                    v1.insert(4, 1)
-                else:
-                    v1.insert(4, 0)
-                csv_header_for_cons_lips_score_file = v1
-                writer.writerow(csv_header_for_cons_lips_score_file)
-            conslips_output_file_handle.close()
-            logging.info('{} lips score parse finished ({})'.format(tm_protein, conslips_output_file))
-            #except:
-            #    print("LIPS parsing occures errors")
-    tmp_file_handle.close()
+                    writer = csv.writer(conslips_output_file_handle, delimiter=',', quotechar='"', lineterminator='\n',
+                                        quoting=csv.QUOTE_NONNUMERIC, doublequote=True)
+                    writer.writerow(["residue_num", "residue_name", "lipophilicity", "entropy2","Lips_surface"])
+                    for k, v in sorted(dict.items()):
+                        v1 = v.split()
+                        v1.insert(0, k)
+                        if k in dict1:
+                            v1.insert(4, 1)
+                        else:
+                            v1.insert(4, 0)
+                        csv_header_for_cons_lips_score_file = v1
+                        writer.writerow(csv_header_for_cons_lips_score_file)
+                    conslips_output_file_handle.close()
+                    logging.info('{} lips score parse finished ({})'.format(tm_protein, conslips_output_file))
+                    #except:
+                    #    print("LIPS parsing occures errors")
+            else:
+                logging.warning("{} LIPS_output_file not found.")
 
 
 
