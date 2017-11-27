@@ -5,10 +5,67 @@ import matplotlib.pyplot as plt
 from sklearn.ensemble import RandomForestClassifier
 from sklearn.metrics import roc_curve, auc
 from sklearn.model_selection import StratifiedKFold
-from sklearn.externals import joblib
 import os
 import subprocess, threading
 import sys
+import glob
+import numpy as np
+import tlabtools as tools
+from sklearn.externals import joblib
+
+# intersect function
+def intersect(a, b):
+     return list(set(a) & set(b))
+
+def thoipa_rfmodel_create(set_,logging):
+    """
+
+    Parameters
+    ----------
+    set_
+    logging
+
+    Returns
+    -------
+
+    """
+    train_data = os.path.join(set_["data_harddrive"],"RandomForest",r"Crystal_Nmr_Traindata.csv")
+    data = pd.read_csv(train_data, sep=',', engine='python', index_col=0)
+    del data["residue_num"]
+    del data["residue_name"]
+    del data["closedist"]
+    features = data.columns[0:54]
+    X = data[features]
+    y = data["bind"]
+    forest = RandomForestClassifier(n_estimators=200)
+    # save random forest model into local driver
+    # pkl_file = r'D:\thoipapy\RandomForest\rfmodel.pkl'
+    fit = forest.fit(X, y)
+    # joblib.dump(fit, pkl_file)
+    # fit = joblib.load(pkl_file)
+
+    # test etra data
+    testdata_list = glob.glob(os.path.join(set_["data_harddrive"],"Features", "Etra", "*.mem.2gap.physipara.testdata_surr0.csv"))
+    i = 0
+    for test_data in testdata_list:
+        acc = test_data.split('\\')[4][0:6]
+        # if acc == "O75460":
+        dirupt_path = os.path.join(set_["base_dir"],"data_xy","Figure","Show_interface","Interface_xlsx", "{}.xlsx".format(acc))
+        ddf = pd.read_excel(dirupt_path, index_col=0)
+        disruption = ddf.Disruption
+        thoipa_out = os.path.join(set_["data_harddrive"],"Features","Etra", "{}.thoipa_pred.csv".format(acc))
+        tdf = pd.read_csv(test_data, sep=',', engine='python', index_col=0)
+        tdf.index = tdf.index.astype(int) + 1
+        aa = tdf.residue_name
+        del tdf["residue_num"]
+        del tdf["residue_name"]
+        tX = tdf[tdf.columns[0:54]]
+        tp = fit.predict_proba(tX)
+        odf = pd.DataFrame()
+        odf["AA"] = aa
+        odf["thoipa"] = tools.normalise_0_1(tp[:, 1])[0]
+        odf["disruption"] = tools.normalise_0_1(disruption)[0]
+        odf.to_csv(thoipa_out)
 
 
 
@@ -134,56 +191,4 @@ def RF_variable_importance_calculate(tmplist,pathdic,set_,logging):
     plt.xlim([-1, X.shape[1]])
     plt.show()
 
-def thoipa_rfmodel_create(set_,database,train_data,pkl_file):
-    """
 
-    Parameters
-    ----------
-    set_
-    database
-    train_data
-    pkl_file
-
-    Returns
-    -------
-
-    """
-    data = pd.read_csv(train_data, sep=',', engine='python', index_col=0)
-    del data["residue_num"]
-    del data["residue_name"]
-    del data["closedist"]
-    features = data.columns[0:54]
-    X = data[features]
-    y = data["bind"]
-    forest = RandomForestClassifier(n_estimators=100)
-    fit = forest.fit(X, y)
-    joblib.dump(fit, pkl_file)
-
-
-def thoipa_pred_for_query(set_,database,pkl_file,query_input,pred_output):
-    """
-
-    Parameters
-    ----------
-    set_
-    database
-    query_input
-    pred_output
-
-    Returns
-    -------
-
-    """
-    fit = joblib.load(pkl_file)
-    test_data = query_input
-    thoipa_out = pred_output
-    tdf = pd.read_csv(test_data, sep=',', engine='python', index_col=0)
-    aa = tdf.residue_name
-    del tdf["residue_num"]
-    del tdf["residue_name"]
-    tX = tdf[tdf.columns[0:54]]
-    tp = fit.predict_proba(tX)
-    odf = pd.DataFrame()
-    odf["AA"] = aa
-    odf["thoipa"] = tp[:, 1]
-    odf.to_csv(thoipa_out)

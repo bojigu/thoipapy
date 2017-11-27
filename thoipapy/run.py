@@ -211,7 +211,7 @@ if __name__ == "__main__":
                     ###################################################################################################
 
     # this is not used, since we used NCBI blast instead
-    if set_["run_retrieve_homologues_with_hhblits"]:
+    if set_["run_retrieve_homologous_with_hhblits"]:
         thoipapy.hhblits.download.download_homologues_with_hhblits(set_, logging)
 
         thoipapy.hhblits.download.parse_a3m_alignment(set_, logging)
@@ -288,8 +288,11 @@ if __name__ == "__main__":
             thoipapy.RF_features.feature_calculate.combine_all_train_data_for_random_forest(set_,logging)
 
     if set_["run_random_forest"]:
+        thoipapy.RF_features.RF_Train_Test.thoipa_rfmodel_create(set_,logging)
         #thoipapy.RF_features.RF_Train_Test.RF_10flod_cross_validation(thoipapy,set_,logging)
-        thoipapy.RF_features.RF_Train_Test.run_Rscipt_random_forest(set_, output_file_loc, logging)
+        #thoipapy.RF_features.RF_Train_Test.run_Rscipt_random_forest(set_, output_file_loc, logging)
+
+
 
     if set_["parse_prediciton_output"]:
         thoipapy.RF_features.Output_Parse.parse_Predicted_Output(thoipapy,set_,output_file_loc,output_parse_file,logging)
