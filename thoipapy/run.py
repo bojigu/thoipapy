@@ -93,7 +93,11 @@ if __name__ == "__main__":
     set_["data_dir"] = os.path.join(set_["base_dir"], "data_xy")
     set_["figs_dir"] = os.path.join(set_["base_dir"], "figs")
     # get list of all excel files in sets folder
-    xlsx_list = glob.glob(os.path.join(set_["base_dir"], "sets", "*.xlsx"))
+    #D:\\Dropbox\\tm_homodimer_dropbox\\sets
+    #sets_folder = os.path.join(set_["base_dir"], "sets")
+    sets_folder = set_["sets_folder"]
+    xlsx_list = glob.glob(os.path.join(sets_folder, "*.xlsx"))
+
     # remove temporary open excel files from the list (hidden files that start with ~$)
     xlsx_list = [path for path in xlsx_list if r"~$" not in path]
 
@@ -235,7 +239,7 @@ if __name__ == "__main__":
 
 
     if set_["run_parse_homologues_xml_into_csv"]:
-        thoipapy.NCBI_BLAST.parse.parser.parse_NCBI_xml_to_csv(set_, df_set, logging)
+        thoipapy.NCBI_BLAST.parse.parser.parse_NCBI_xml_to_csv_mult_prot(set_, df_set, logging)
 
     if set_["parse_csv_homologues_to_alignment"]:
         thoipapy.NCBI_BLAST.parse.parser.extract_filtered_csv_homologues_to_alignments_mult_prot(set_, df_set, logging)

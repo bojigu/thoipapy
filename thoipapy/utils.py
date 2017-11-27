@@ -10,6 +10,7 @@ import ast
 import csv
 import ctypes
 import errno
+import glob
 import logging
 import os
 import pickle
@@ -25,6 +26,8 @@ import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
 from Bio.SeqUtils.ProtParam import ProteinAnalysis
+from shutil import copyfile
+from time import strftime
 
 def aaa(df_or_series):
     """ Function for use in debugging.
@@ -1515,3 +1518,66 @@ def set_column_sequence(dataframe, seq, front=True):
                 #"cols" we are building:
                 cols.insert(0, x)
     return dataframe[cols]
+
+def create_tarballs_from_xml_files_in_folder(xml_dir, download_date="2017.11.02"):
+    """script to create .tar.gz compressed files from a folder of xml files
+
+    COPY SECTIONS INTO JUPYTER NOTEBOOK AND MODIFY AS NEEDED
+
+    to add today's date
+    date = strftime("%Y.%m.%d")
+
+    THIS SCRIPT DOES NOT DELETE THE ORIGINAL XML FILES
+
+    """
+
+    xml_list = glob.glob(os.path.join(xml_dir, "*.xml"))
+
+    for xml in xml_list:
+        xml_renamed = xml[:-4] + ".BLAST.xml"
+        xml_tar_gz = xml[:-4] + ".BLAST.xml.tar.gz"
+        xml_txt = xml[:-4] + ".BLAST_details.txt"
+
+        if not os.path.isfile(xml_tar_gz):
+            copyfile(xml, xml_renamed)
+            acc = os.path.basename(xml).split(".")[0]
+            sys.stdout.write("{}, ".format(acc))
+            sys.stdout.flush()
+            # create an empty text file with the download date
+            date = strftime("%Y%m%d")
+            with open(xml_txt, "w") as f:
+                f.write("acc\t{}\ndownload_date\t{}\ndatabase\tncbi_nr\ne_value\t1\n".format(acc, download_date))
+
+            with tarfile.open(xml_tar_gz, mode='w:gz') as tar:
+                # add the files to the compressed tarfile
+                tar.add(xml_renamed, arcname=os.path.basename(xml_renamed))
+                tar.add(xml_txt, arcname=os.path.basename(xml_txt))
+
+            # delete the original files
+            try:
+                os.remove(xml_renamed)
+                os.remove(xml_txt)
+            except:
+                print("{} could not be deleted".format(xml_renamed))
+
+def delete_BLAST_xml(blast_xml_file):
+    """Small function to remove files that are already compressed in a tarball.
+
+    Also deletes the associated text file with the date.
+
+    Parameters
+    ----------
+    blast_xml_file : str
+        Path to BLAST xml file
+    """
+    xml_txt = blast_xml_file[:-10] + ".BLAST_details.txt"
+
+    # delete the original files
+    try:
+        os.remove(blast_xml_file)
+    except:
+        print("{} could not be deleted".format(blast_xml_file))
+    try:
+        os.remove(xml_txt)
+    except:
+        print("{} could not be deleted".format(xml_txt))

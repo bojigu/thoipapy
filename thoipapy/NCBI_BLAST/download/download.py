@@ -1,9 +1,11 @@
 from Bio.Blast import NCBIWWW
 from thoipapy import mtutiles as utils
 import os
-import sys
+import tarfile
 import platform
 import time
+from time import strftime
+from thoipapy.utils import delete_BLAST_xml
 
 
 def download_homologues_from_ncbi(set_, df_set, logging):
@@ -12,7 +14,7 @@ def download_homologues_from_ncbi(set_, df_set, logging):
     :param logging:
     :return: save homologues into xml files
     """
-    evalue_score = set_["e_value"]
+    evalue_score = set_["expect_value"]
     hit_list_size = int(set_["hit_list_size"])
 
     OS_description = platform.system()
@@ -65,18 +67,20 @@ def download_homologues_from_ncbi(set_, df_set, logging):
         tmp_protein_fasta_string = ">{} TMD add surround 20 residues\n{}".format(tmp_protein_name, TMD_seq_pl_surr)
 
         # run online server NCBI blastp with biopython module
-        blast_xml_file = os.path.join(set_["xml_file_folder"], database, "{}.surr{}.xml".format(tmp_protein_name, set_["num_of_sur_residues"]))
+        blast_xml_file = os.path.join(set_["xml_file_folder"], database, "{}.surr{}.BLAST.xml".format(tmp_protein_name, set_["num_of_sur_residues"]))
+        xml_tar_gz = blast_xml_file[:-4] + ".xml.tar.gz"
+        xml_txt = blast_xml_file[:-4] + ".BLAST_details.txt"
 
-        if not os.path.isfile(blast_xml_file):
+        if not os.path.isfile(xml_tar_gz):
             run_download = True
             logging.info('{} starting download_homologues_from_ncbi'.format(tmp_protein_name))
         else:
             if set_["rerun_existing_blast_results"]:
                 run_download = True
-                logging.info('{} starting download_homologues_from_ncbi (EXISTING XML FILE WILL BE OVERWRITTEN)'.format(tmp_protein_name))
+                logging.info('{} starting download_homologues_from_ncbi (EXISTING xml.tar.gz FILE WILL BE OVERWRITTEN)'.format(tmp_protein_name))
             elif set_["rerun_existing_blast_results"] in [False, 0]:
                 run_download = False
-                logging.info('{} download_homologues_from_ncbi skipped (EXISTING XML FILE)'.format(tmp_protein_name))
+                logging.info('{} download_homologues_from_ncbi skipped (EXISTING xml.tar.gz FILE)'.format(tmp_protein_name))
                 # skip protein
                 continue
             else:
@@ -96,8 +100,23 @@ def download_homologues_from_ncbi(set_, df_set, logging):
                 # save_tmp_xml_file.close()
                 tmp_protein_homologues_xml_handle.close()
                 duration = time.clock() - start
-                logging.info("Output file: {}. (time taken = {:0.3f} min)".format(blast_xml_file, duration/60))
+
             except:
                 logging.warning("{} Query string not found in the CGI context in qblast".format(tmp_protein_name))
+
+            # create an empty text file with the download date
+            date = strftime("%Y%m%d")
+            with open(xml_txt, "w") as f:
+                f.write("acc\t{}\ndownload_date\t{}\ndatabase\tncbi_nr\ne_value\t1\n".format(tmp_protein_name, date))
+
+            with tarfile.open(xml_tar_gz, mode='w:gz') as tar:
+                # add the files to the compressed tarfile
+                tar.add(blast_xml_file, arcname=os.path.basename(blast_xml_file))
+                tar.add(xml_txt, arcname=os.path.basename(xml_txt))
+
+            delete_BLAST_xml(blast_xml_file)
+
+            logging.info("Output file: {}. (time taken = {:0.3f} min)".format(xml_tar_gz, duration / 60))
+
 
     logging.info('homologues download was finished')
