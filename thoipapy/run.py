@@ -215,7 +215,7 @@ if __name__ == "__main__":
                     ###################################################################################################
 
     # this is not used, since we used NCBI blast instead
-    if set_["run_retrieve_homologous_with_hhblits"]:
+    if set_["run_retrieve_homologues_with_hhblits"]:
         thoipapy.hhblits.download.download_homologues_with_hhblits(set_, logging)
 
         thoipapy.hhblits.download.parse_a3m_alignment(set_, logging)
