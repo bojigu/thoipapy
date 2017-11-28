@@ -10,7 +10,7 @@ import subprocess, threading
 import sys
 import glob
 import numpy as np
-import tlabtools as tools
+import eccpy.tools as tools
 from sklearn.externals import joblib
 
 # intersect function

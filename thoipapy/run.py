@@ -126,7 +126,7 @@ if __name__ == "__main__":
 
     # create list of uniprot accessions to run
     acc_list = df_set.index.tolist()
-    sys.stdout.write("settings file : {}\nsettings : {}\nlist number {}, acc_list : {}\n".format(os.path.basename(args.s), set_, set_["set_number"], acc_list))
+    sys.stdout.write("settings file : {}\nsettings : {}\nprotein set number {}, acc_list : {}\n".format(os.path.basename(args.s), set_, set_["set_number"], acc_list))
     sys.stdout.flush()
 
     ##############################################################################################
@@ -182,6 +182,7 @@ if __name__ == "__main__":
     # save to csv, which is opened by other functions
     list_of_tmd_start_end = os.path.join(set_["thoipapy_data_folder"], "Input_data", os.path.basename(set_path)[:-5] + "_processed.csv")
     set_["list_of_tmd_start_end"] = list_of_tmd_start_end
+    thoipapy.utils.make_sure_path_exists(list_of_tmd_start_end, isfile=True)
     df_set.to_csv(list_of_tmd_start_end)
 
     # create a database label. Either crystal, NMR, ETRA or "mixed"
@@ -215,7 +216,7 @@ if __name__ == "__main__":
                     ###################################################################################################
 
     # this is not used, since we used NCBI blast instead
-    if set_["run_retrieve_homologous_with_hhblits"]:
+    if set_["run_retrieve_homologues_with_hhblits"]:
         thoipapy.hhblits.download.download_homologues_with_hhblits(set_, logging)
 
         thoipapy.hhblits.download.parse_a3m_alignment(set_, logging)
@@ -263,14 +264,14 @@ if __name__ == "__main__":
 
 
         if set_["entropy_feature_calculation"]:
-            thoipapy.RF_features.feature_calculate.entropy_calculation(set_, logging)
+            thoipapy.RF_features.feature_calculate.entropy_calculation(set_, df_set, logging)
 
         if set_["cumulative_coevolution_feature_calculation"]:
             if "Windows" in platform.system():
-                sys.stdout.write("\n Freecontact cannot be run in Windows! Skipping coevoluton_calculation_with_freecontact function.")
+                sys.stdout.write("\n Freecontact cannot be run in Windows! Skipping coevolution_calculation_with_freecontact function.")
                 thoipapy.RF_features.feature_calculate.cumulative_co_evolutionary_strength_parser(thoipapy, set_, logging)
             else:
-                thoipapy.RF_features.feature_calculate.coevoluton_calculation_with_freecontact(set_, logging)
+                thoipapy.RF_features.feature_calculate.coevolution_calculation_with_freecontact(set_, logging)
                 thoipapy.RF_features.feature_calculate.cumulative_co_evolutionary_strength_parser(thoipapy ,set_, logging)
 
         if set_["clac_relative_position"]:

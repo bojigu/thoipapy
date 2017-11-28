@@ -77,100 +77,112 @@ def parse_NCBI_xml_to_csv(set_, acc, blast_xml_tar, tm_start, tm_end, database, 
     # remove the final ".tar.gz" to get the csv filename
     BLAST_xml_file = blast_xml_tar[:-7]
 
-    if os.path.isfile(blast_xml_tar):
-        # unpack all files in the tarball to the same folder
-        # opening as a handle currently doesn't work, as not recognised by NCBIXML.read
-        with tarfile.open(blast_xml_tar, 'r:gz') as tar:
-            tar.extractall(os.path.dirname(blast_xml_tar))
-        BLAST_xml_file_basename = os.path.basename(BLAST_xml_file)
-        #with tar.extractfile(BLAST_xml_file_basename) as BLAST_xml_extracted:
+    if not os.path.isfile(blast_xml_tar):
+        warning = "{} parse_NCBI_xml_to_csv_mult_prot failed, blast_xml_tar not found = {}".format(acc, blast_xml_tar)
+        logging.warning(warning)
+        return acc, False, warning
 
-        #if os.path.isfile(BLAST_csv_tar):
-        with open(BLAST_csv_file, 'w') as homo_out_csv_file_handle:
-            with open(BLAST_xml_file) as xml_result_handle:
-            #print(type(BLAST_xml_extracted))
-            #print(BLAST_xml_extracted[0:50])
-            #xml_result_handle = BLAST_xml_extracted
+    tar_size = os.path.getsize(blast_xml_tar)
+    if tar_size < 100:
+        warning = "{} parse_NCBI_xml_to_csv_mult_prot failed, blast_xml_tar seems to be empty, and will be removed".format(acc)
+        logging.warning(warning)
+        os.remove(blast_xml_tar)
+        return acc, False, warning
 
-                xml_record = NCBIXML.read(xml_result_handle)
-                E_VALUE_THRESH = set_["e_value_cutoff"]
-                hit_num = 0
-                for alignment in xml_record.alignments:
-                    for hsp in alignment.hsps:
-                        if hsp.expect <= E_VALUE_THRESH:  # set homologues evalue cutoff
-                            match_details_dict['hit_num'] = hit_num
-                            query_seq_no_gap = re.sub('-', '', hsp.query)
-                            if hsp.query_start <= tm_start and hsp.query_end >= tm_end:
-                                tm_str_start = tm_start - hsp.query_start
-                                tm_str_end = tm_end - hsp.query_start + 1
-                                k = 0
-                                j = 0
-                                tm_query_str = ''
-                                tm_sbjt_str = ''
-                                tm_match_str = ""
-                                for char in hsp.query:
-                                    if char != '-':
-                                        if j >= tm_str_start and j < tm_str_end:
-                                            tm_query_str += query_seq_no_gap[j]
-                                            tm_sbjt_str += hsp.sbjct[k]
-                                            tm_match_str += hsp.match[k]
-                                        j = j + 1
-                                    k = k + 1
-                                match_details_dict["tm_query_seq"] = tm_query_str
-                                match_details_dict["tm_match_seq"] = tm_match_str
-                                match_details_dict["tm_sbjt_seq"] = tm_sbjt_str
-                            if (hit_num) == 0:
-                                description = "%s_NCBI_query_sequence" % acc
-                            else:
-                                description = alignment.title
-                            match_details_dict["description"] = description
-                            taxonomy = re.search('\[(.*?)\]', alignment.title)
-                            if taxonomy:
-                                taxonomyNode = taxonomy.group(1)
-                                match_details_dict["organism"] = taxonomyNode
-                            # sequence has no organism in the database
-                            match_details_dict["organism"] = "no_organism"
-                            # e_value for hit
-                            match_details_dict["FASTA_expectation"] = hsp.expect
-                            # convert identity from e.g. 80 (80%) to 0.8
-                            match_details_dict["FASTA_identity"] = hsp.identities / 100
-                            match_details_dict["query_align_seq"] = hsp.query
-                            match_details_dict["subject_align_seq"] = hsp.sbjct
-                            match_details_dict["match_markup_seq"] = hsp.match
-                            match_details_dict["query_start"] = hsp.query_start
-                            match_details_dict["query_end"] = hsp.query_end
-                            match_details_dict["subject_start"] = hsp.sbjct_start
-                            match_details_dict["subject_end"] = hsp.sbjct_end
+    # unpack all files in the tarball to the same folder
+    # opening as a handle currently doesn't work, as not recognised by NCBIXML.read
+    with tarfile.open(blast_xml_tar, 'r:gz') as tar:
+        tar.extractall(os.path.dirname(blast_xml_tar))
+    BLAST_xml_file_basename = os.path.basename(BLAST_xml_file)
+    #with tar.extractfile(BLAST_xml_file_basename) as BLAST_xml_extracted:
 
-                            # write the header to the header of the csv file
-                            if hit_num == 0:
-                                csv_header_for_ncbi_homologues_file = sorted(list(match_details_dict.keys()))
-                                writer = csv.writer(homo_out_csv_file_handle, delimiter=',', quotechar='"', lineterminator='\n', quoting=csv.QUOTE_NONNUMERIC, doublequote=True)
-                                writer.writerow(csv_header_for_ncbi_homologues_file)
-                            # save the math_details_dict into the csv file
-                            writer = csv.DictWriter(homo_out_csv_file_handle, fieldnames=csv_header_for_ncbi_homologues_file, extrasaction='ignore', delimiter=',', quotechar='"', lineterminator='\n',
-                                                    quoting=csv.QUOTE_MINIMAL, doublequote=True)
-                            writer.writerow(match_details_dict)
-                            hit_num += 1
+    #if os.path.isfile(BLAST_csv_tar):
+    with open(BLAST_csv_file, 'w') as homo_out_csv_file_handle:
+        with open(BLAST_xml_file) as xml_result_handle:
+        #print(type(BLAST_xml_extracted))
+        #print(BLAST_xml_extracted[0:50])
+        #xml_result_handle = BLAST_xml_extracted
+
+            xml_record = NCBIXML.read(xml_result_handle)
+            E_VALUE_THRESH = set_["e_value_cutoff"]
+            hit_num = 0
+            for alignment in xml_record.alignments:
+                for hsp in alignment.hsps:
+                    if hsp.expect <= E_VALUE_THRESH:  # set homologues evalue cutoff
+                        match_details_dict['hit_num'] = hit_num
+                        query_seq_no_gap = re.sub('-', '', hsp.query)
+                        if hsp.query_start <= tm_start and hsp.query_end >= tm_end:
+                            tm_str_start = tm_start - hsp.query_start
+                            tm_str_end = tm_end - hsp.query_start + 1
+                            k = 0
+                            j = 0
+                            tm_query_str = ''
+                            tm_sbjt_str = ''
+                            tm_match_str = ""
+                            for char in hsp.query:
+                                if char != '-':
+                                    if j >= tm_str_start and j < tm_str_end:
+                                        tm_query_str += query_seq_no_gap[j]
+                                        tm_sbjt_str += hsp.sbjct[k]
+                                        tm_match_str += hsp.match[k]
+                                    j = j + 1
+                                k = k + 1
+                            match_details_dict["tm_query_seq"] = tm_query_str
+                            match_details_dict["tm_match_seq"] = tm_match_str
+                            match_details_dict["tm_sbjt_seq"] = tm_sbjt_str
+                        if (hit_num) == 0:
+                            description = "%s_NCBI_query_sequence" % acc
                         else:
-                            sys.stdout.write("|")
+                            description = alignment.title
+                        match_details_dict["description"] = description
+                        taxonomy = re.search('\[(.*?)\]', alignment.title)
+                        if taxonomy:
+                            taxonomyNode = taxonomy.group(1)
+                            match_details_dict["organism"] = taxonomyNode
+                        # sequence has no organism in the database
+                        match_details_dict["organism"] = "no_organism"
+                        # e_value for hit
+                        match_details_dict["FASTA_expectation"] = hsp.expect
+                        # convert identity from e.g. 80 (80%) to 0.8
+                        match_details_dict["FASTA_identity"] = hsp.identities / 100
+                        match_details_dict["query_align_seq"] = hsp.query
+                        match_details_dict["subject_align_seq"] = hsp.sbjct
+                        match_details_dict["match_markup_seq"] = hsp.match
+                        match_details_dict["query_start"] = hsp.query_start
+                        match_details_dict["query_end"] = hsp.query_end
+                        match_details_dict["subject_start"] = hsp.sbjct_start
+                        match_details_dict["subject_end"] = hsp.sbjct_end
+
+                        # write the header to the header of the csv file
+                        if hit_num == 0:
+                            csv_header_for_ncbi_homologues_file = sorted(list(match_details_dict.keys()))
+                            writer = csv.writer(homo_out_csv_file_handle, delimiter=',', quotechar='"', lineterminator='\n', quoting=csv.QUOTE_NONNUMERIC, doublequote=True)
+                            writer.writerow(csv_header_for_ncbi_homologues_file)
+                        # save the math_details_dict into the csv file
+                        writer = csv.DictWriter(homo_out_csv_file_handle, fieldnames=csv_header_for_ncbi_homologues_file, extrasaction='ignore', delimiter=',', quotechar='"', lineterminator='\n',
+                                                quoting=csv.QUOTE_MINIMAL, doublequote=True)
+                        writer.writerow(match_details_dict)
+                        hit_num += 1
+                    else:
+                        sys.stdout.write("|")
 
 
-        # delete the extracted xml file
-        thoipapy.utils.delete_BLAST_xml(BLAST_xml_file)
+    # delete the extracted xml file
+    thoipapy.utils.delete_BLAST_xml(BLAST_xml_file)
 
-        with tarfile.open(BLAST_csv_tar, mode='w:gz') as tar:
-            # add the files to the compressed tarfile
-            tar.add(BLAST_csv_file, arcname=os.path.basename(BLAST_csv_file))
+    with tarfile.open(BLAST_csv_tar, mode='w:gz') as tar:
+        # add the files to the compressed tarfile
+        tar.add(BLAST_csv_file, arcname=os.path.basename(BLAST_csv_file))
 
-        # delete the original homologue csv files
-        try:
-            os.remove(BLAST_csv_file)
-        except:
-            logging.warning("{} could not be deleted".format(BLAST_csv_file))
-        logging.info("{} parse_NCBI_xml_to_csv_mult_prot finished ({})".format(acc, BLAST_csv_tar))
-    else:
-        logging.warning("{} parse_NCBI_xml_to_csv_mult_prot failed, blast_xml_tar not found = {}".format(acc, blast_xml_tar))
+    # delete the original homologue csv files
+    try:
+        os.remove(BLAST_csv_file)
+    except:
+        logging.warning("{} could not be deleted".format(BLAST_csv_file))
+    logging.info("{} parse_NCBI_xml_to_csv_mult_prot finished ({})".format(acc, BLAST_csv_tar))
+
+
+    return acc, True, "no errors"
 
 
 
@@ -231,8 +243,8 @@ def extract_filtered_csv_homologues_to_alignments_mult_prot(set_, df_set, loggin
         TMD_len = df_set.loc[acc, "TMD_len"]
 
         homo_out_dir = os.path.join(set_["homologues_folder"], "ncbi", database)
-        BLAST_csv_file = os.path.join(homo_out_dir, "{}_BLAST{}.csv".format(acc, set_["surres"]))
-        BLAST_csv_tar = os.path.join(homo_out_dir, "{}_BLAST{}.csv.tar.gz".format(acc, set_["surres"]))
+        BLAST_csv_file = os.path.join(homo_out_dir, "{}.surr{}.BLAST.csv".format(acc, set_["num_of_sur_residues"]))
+        BLAST_csv_tar = os.path.join(homo_out_dir, "{}.surr{}.BLAST.csv.tar.gz".format(acc, set_["num_of_sur_residues"]))
 
         #homo_csv_file_loc = os.path.join(set_["homologues_folder"], "ncbi", database, "%s_homo%s.csv") % (acc, set_["surres"])
         alignments_dir = os.path.join(set_["homologues_folder"], "alignments", database)
@@ -251,13 +263,13 @@ def extract_filtered_csv_homologues_to_alignments_mult_prot(set_, df_set, loggin
 
 
 def extract_filtered_csv_homologues_to_alignments(set_, acc, TMD_len, alignments_dir, BLAST_csv_tar, query_TMD_sequence, logging):
-    fasta_all_TMD_seqs = os.path.join(alignments_dir, "{}.{}gaps{}_redundant.fas".format(acc, set_["max_n_gaps_in_TMD_subject_seq"], set_["surres"]))
-    path_uniq_TMD_seqs_for_PSSM_FREECONTACT = os.path.join(alignments_dir, "{}.uniq.{}gaps{}_for_PSSM_FREECONTACT.txt".format(acc, set_["max_n_gaps_in_TMD_subject_seq"], set_["surres"]))
-    fasta_uniq_TMD_seqs_for_PSSM_FREECONTACT = os.path.join(alignments_dir, "{}.uniq.{}gaps{}_for_PSSM_FREECONTACT.fas".format(acc, set_["max_n_gaps_in_TMD_subject_seq"], set_["surres"]))
-    path_uniq_TMD_seqs_no_gaps_for_LIPS = os.path.join(alignments_dir, "{}.uniq.0gaps{}_for_LIPS.txt".format(acc, set_["surres"]))
-    fasta_uniq_TMD_seqs_no_gaps_for_LIPS = os.path.join(alignments_dir, "{}.uniq.0gaps{}_for_LIPS.fas".format(acc, set_["surres"]))
-    path_uniq_TMD_seqs_surr5_for_LIPO = os.path.join(alignments_dir, "{}.uniq.{}gaps_surr5_for_LIPO.txt".format(acc, set_["max_n_gaps_in_TMD_subject_seq"], set_["surres"]))
-    pasta_uniq_TMD_seqs_surr5_for_LIPO = os.path.join(alignments_dir, "{}.uniq.{}gaps_surr5_for_LIPO.fas".format(acc, set_["max_n_gaps_in_TMD_subject_seq"], set_["surres"]))
+    fasta_all_TMD_seqs = os.path.join(alignments_dir, "{}.surr{}.gaps{}.redundant.fas".format(acc, set_["num_of_sur_residues"], set_["max_n_gaps_in_TMD_subject_seq"]))
+    path_uniq_TMD_seqs_for_PSSM_FREECONTACT = os.path.join(alignments_dir, "{}.surr{}.gaps{}.uniq.for_PSSM_FREECONTACT.txt".format(acc, set_["num_of_sur_residues"], set_["max_n_gaps_in_TMD_subject_seq"]))
+    fasta_uniq_TMD_seqs_for_PSSM_FREECONTACT = os.path.join(alignments_dir, "{}.surr{}.gaps{}.uniq.for_PSSM_FREECONTACT.fas".format(acc, set_["num_of_sur_residues"], set_["max_n_gaps_in_TMD_subject_seq"]))
+    path_uniq_TMD_seqs_no_gaps_for_LIPS = os.path.join(alignments_dir, "{}.surr{}.gaps0.uniq.for_LIPS.txt".format(acc, set_["num_of_sur_residues"]))
+    fasta_uniq_TMD_seqs_no_gaps_for_LIPS = os.path.join(alignments_dir, "{}.surr{}.gaps0.uniq.for_LIPS.fas".format(acc, set_["num_of_sur_residues"]))
+    path_uniq_TMD_seqs_surr5_for_LIPO = os.path.join(alignments_dir, "{}.surr5.gaps{}.uniq.for_LIPO.txt".format(acc, set_["max_n_gaps_in_TMD_subject_seq"]))
+    pasta_uniq_TMD_seqs_surr5_for_LIPO = os.path.join(alignments_dir, "{}.surr5.gaps{}.uniq.for_LIPO.fas".format(acc, set_["max_n_gaps_in_TMD_subject_seq"]))
 
     single_prot_dict = {}
 
@@ -308,9 +320,9 @@ def extract_filtered_csv_homologues_to_alignments(set_, acc, TMD_len, alignments
                 df["n_gaps_subject_align_seq"] = df.subject_TMD_align_seq.str.count("-")
 
                 # filter by gaps in query, gaps in subject, and fraction identity of TMD
-                df.query("n_gaps_query_align_seq <= {} & X_in_subject_TMD_align_seq_surr5 == False & "
-                         "n_gaps_subject_align_seq <= {} & frac_ident_TMD > {}".format(
-                    set_["max_n_gaps_in_TMD_query_seq"], set_["max_n_gaps_in_TMD_subject_seq"],set_["min_identity_of_TMD_seq"], inplace=True))
+                df.query("n_gaps_query_align_seq <= {} & n_gaps_subject_align_seq <= {} & X_in_subject_TMD_align_seq_surr5 == False & "
+                         "frac_ident_TMD > {}".format(int(set_["max_n_gaps_in_TMD_query_seq"]), int(set_["max_n_gaps_in_TMD_subject_seq"]),
+                                                      float(set_["min_identity_of_TMD_seq"])), inplace=True)
 
                 # save all TMD sequences (NON-UNIQUE) for manual inspection of alignments only
                 n_total_filtered_seqs = df.shape[0]
@@ -366,29 +378,29 @@ def extract_filtered_csv_homologues_to_alignments_orig_handle_method(set_,loggin
     # skip header
     next(tmp_file_handle)
     for line in tmp_file_handle:
-        tm_protein = line.strip().split(",")[0]
+        acc = line.strip().split(",")[0]
         database = line.strip().split(",")[6]
-        #if tm_protein == "2j58_C":
+        #if acc == "2j58_C":
         alignment_dict={}
         alignment_dict1 = {}
         alignment_dict2 = {}
-        #homo_csv_file_loc = os.path.join(set_["homologues_folder"], "NoRedundPro/%s_homo.csv") % tm_protein
-        homo_csv_file_loc = os.path.join(set_["homologues_folder"],"a3m",database, "%s_homo%s.csv") % (tm_protein,set_["surres"])
+        #homo_csv_file_loc = os.path.join(set_["homologues_folder"], "NoRedundPro/%s_homo.csv") % acc
+        homo_csv_file_loc = os.path.join(set_["homologues_folder"],"a3m",database, "%s_homo%s.csv") % (acc,set_["surres"])
         print(homo_csv_file_loc)
         if (os.path.isfile(homo_csv_file_loc) and os.path.getsize(homo_csv_file_loc) > 0):  # whether protein homologues csv file exists
             df = pd.read_csv(homo_csv_file_loc)
             print(df["tm_sbjt_seq"])
             from thoipapy.utils import aaa
             aaa(df)
-            #homo_filtered_out_csv_file = os.path.join(set_["homologues_folder"], "NoRedundPro/%s_homo_filtered_aln.fasta") % tm_protein
+            #homo_filtered_out_csv_file = os.path.join(set_["homologues_folder"], "NoRedundPro/%s_homo_filtered_aln.fasta") % acc
             homo_filtered_out_csv_file = os.path.join(set_["homologues_folder"],"a3m",database,
-                                                      "%s_homo_filtered_aln%s.fasta") % (tm_protein,set_["surres"])
+                                                      "%s_homo_filtered_aln%s.fasta") % (acc,set_["surres"])
             homo_filtered_out_csv_file_handle=open(homo_filtered_out_csv_file, 'w')
-            #homo_filter_file = os.path.join(set_["homologues_folder"], "a3m/NoRedundPro/%s.a3m.mem.uniq.2gaps") % tm_protein
-            homo_filter_file = os.path.join(set_["homologues_folder"],"a3m",database, "%s.a3m.mem.uniq.2gaps%s") % (tm_protein,set_["surres"])
+            #homo_filter_file = os.path.join(set_["homologues_folder"], "a3m/NoRedundPro/%s.a3m.mem.uniq.2gaps") % acc
+            homo_filter_file = os.path.join(set_["homologues_folder"],"a3m",database, "%s.a3m.mem.uniq.2gaps%s") % (acc,set_["surres"])
             homo_filter_file_handle = open(homo_filter_file, "w")
-            #homo_mem_lips_input_file = os.path.join(set_["homologues_folder"],"a3m/NoRedundPro/%s.mem.lips.input") % tm_protein
-            homo_mem_lips_input_file = os.path.join(set_["homologues_folder"],"a3m",database,"%s.mem.lips.input%s") % (tm_protein,set_["surres"])
+            #homo_mem_lips_input_file = os.path.join(set_["homologues_folder"],"a3m/NoRedundPro/%s.mem.lips.input") % acc
+            homo_mem_lips_input_file = os.path.join(set_["homologues_folder"],"a3m",database,"%s.mem.lips.input%s") % (acc,set_["surres"])
             homo_mem_lips_input_file_handle = open(homo_mem_lips_input_file, "w")
             #with open(homo_filtered_out_csv_file, 'w') as homo_filtered_out_csv_file_handle:
 
@@ -439,7 +451,7 @@ def extract_filtered_csv_homologues_to_alignments_orig_handle_method(set_,loggin
                             alignment_dict2[row["tm_sbjt_seq"]]=1
                             print("{}".format(row["tm_sbjt_seq"]), file=homo_filter_file_handle)
             except:
-                logging.warning("\n------------------\n{} parsing error in extract_filtered_csv_homologues_to_alignments_mult_prot\n{} could not be created. Files will be deleted.\n------------------\n".format(tm_protein, homo_filter_file))
+                logging.warning("\n------------------\n{} parsing error in extract_filtered_csv_homologues_to_alignments_mult_prot\n{} could not be created. Files will be deleted.\n------------------\n".format(acc, homo_filter_file))
                 homo_filter_file_handle.close()
                 homo_mem_lips_input_file_handle.close()
                 homo_filtered_out_csv_file_handle.close()
@@ -451,7 +463,7 @@ def extract_filtered_csv_homologues_to_alignments_orig_handle_method(set_,loggin
             homo_filter_file_handle.close()
             homo_mem_lips_input_file_handle.close()
             homo_filtered_out_csv_file_handle.close()
-            logging.info("{} extract_filtered_csv_homologues_to_alignments_mult_prot finished ({})".format(tm_protein, homo_filter_file))
+            logging.info("{} extract_filtered_csv_homologues_to_alignments_mult_prot finished ({})".format(acc, homo_filter_file))
         else:
             print("{} not found".format(homo_csv_file_loc))
     tmp_file_handle.close()
