@@ -71,6 +71,7 @@ def download_homologues_from_ncbi(set_, df_set, logging):
         xml_tar_gz = blast_xml_file[:-4] + ".xml.tar.gz"
         xml_txt = blast_xml_file[:-4] + ".BLAST_details.txt"
 
+
         if not os.path.isfile(xml_tar_gz):
             run_download = True
             logging.info('{} starting download_homologues_from_ncbi'.format(tmp_protein_name))
