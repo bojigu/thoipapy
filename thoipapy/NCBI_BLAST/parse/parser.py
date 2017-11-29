@@ -30,42 +30,53 @@ def parse_NCBI_xml_to_csv_mult_prot(set_, df_set, logging):
     #                                                                                            #
     ##############################################################################################
 
+    for acc in df_set.index:
+        database = df_set.loc[acc, "database"]
+        #tm_start=int(row.strip().split(",")[4])+1
+        #tm_start=int(row.strip().split(",")[4])+1-5 ###for surr20
+        # set_["surres"] set how many residues on each sides of tmd sequence
+        # if set_["surres"] == "_surr0":
+        #     tm_start = int(row.strip().split(",")[2])
+        #     tm_end = int(row.strip().split(",")[3])
+        # elif set_["surres"] == "_surr5":
+        #     tm_start = int(row.strip().split(",")[2]) -5 ###for fullseq
+        #     if(tm_start<=0):
+        #         tm_start=1
+        #     #tm_end = int(row.strip().split(",")[4])+(int(row.strip().split(",")[3])-int(row.strip().split(",")[2])+1)
+        #     #tm_end = int(row.strip().split(",")[4])+(int(row.strip().split(",")[3])-int(row.strip().split(",")[2])+1)+5 ##for surr20
+        #     tm_end = int(row.strip().split(",")[3])  + 5  ###for fullseq
+        #     if tm_end>int(row.strip().split(",")[1]):
+        #         tm_end=int(row.strip().split(",")[1]) # quals to the full sequence length
+        # else:
+        #     raise ValueError('set_["surres"] does not seem to be correct')
 
-    tmp_list_loc = set_["list_of_tmd_start_end"]
+        tm_start = df_set.loc[acc, "TMD_start"]
+        tm_end = df_set.loc[acc, "TMD_end"]
+        seqlen = df_set.loc[acc, "seqlen"]
+        if set_["surres"] == "_surr0":
+            pass
+        elif set_["surres"] == "_surr5":
+            # start 5 residues earlier
+            tm_start = tm_start - 5 ###for fullseq
+            if tm_start <= 0:
+                tm_start = 1
+            # end 5 residues later
+            tm_end = tm_end  + 5  ###for fullseq
+            if tm_end > seqlen:
+                tm_end = seqlen # quals to the full sequence length
+        else:
+            raise ValueError('set_["surres"] does not seem to be correct')
 
-    with open(tmp_list_loc, 'r') as tmp_file_handle:
-        # skip header
-        next(tmp_file_handle)
-        for row in tmp_file_handle:
-            acc = row.strip().split(",")[0]
-            database = row.strip().split(",")[6]
-            #tm_start=int(row.strip().split(",")[4])+1
-            #tm_start=int(row.strip().split(",")[4])+1-5 ###for surr20
-            # set_["surres"] set how many residues on each sides of tmd sequence
-            if set_["surres"] == "_surr0":
-                tm_start = int(row.strip().split(",")[2])
-                tm_end = int(row.strip().split(",")[3])
-            elif set_["surres"] == "_surr5":
-                tm_start = int(row.strip().split(",")[2]) -5 ###for fullseq
-                if(tm_start<=0):
-                    tm_start=1
-                #tm_end = int(row.strip().split(",")[4])+(int(row.strip().split(",")[3])-int(row.strip().split(",")[2])+1)
-                #tm_end = int(row.strip().split(",")[4])+(int(row.strip().split(",")[3])-int(row.strip().split(",")[2])+1)+5 ##for surr20
-                tm_end = int(row.strip().split(",")[3])  + 5  ###for fullseq
-                if tm_end>int(row.strip().split(",")[1]):
-                    tm_end=int(row.strip().split(",")[1]) # quals to the full sequence length
-            else:
-                raise ValueError('set_["surres"] does not seem to be correct')
-            #xml_file = os.path.join(set_["xml_file_folder"], database, "%s.xml") % acc
-            #blast_xml_file = os.path.join(set_["xml_file_folder"], database, "{}.surr{}.BLAST.xml".format(acc,set_["num_of_sur_residues"]))
-            BLAST_xml_tar = os.path.join(set_["xml_file_folder"], database, "{}.surr{}.BLAST.xml.tar.gz".format(acc, set_["num_of_sur_residues"]))
-            # BLAST_csv_file=os.path.join(set_["homologues_folder"],"NoRedundPro/%s_homo.csv") %acc
-            homo_out_dir = os.path.join(set_["homologues_folder"], "ncbi", database)
-            if not os.path.isdir(homo_out_dir):
-                os.makedirs(homo_out_dir)
-            BLAST_csv_tar = os.path.join(homo_out_dir, "{}.surr{}.BLAST.csv.tar.gz".format(acc, set_["num_of_sur_residues"]))
+        #xml_file = os.path.join(set_["xml_file_folder"], database, "%s.xml") % acc
+        #blast_xml_file = os.path.join(set_["xml_file_folder"], database, "{}.surr{}.BLAST.xml".format(acc,set_["num_of_sur_residues"]))
+        BLAST_xml_tar = os.path.join(set_["xml_file_folder"], database, "{}.surr{}.BLAST.xml.tar.gz".format(acc, set_["num_of_sur_residues"]))
+        # BLAST_csv_file=os.path.join(set_["homologues_folder"],"NoRedundPro/%s_homo.csv") %acc
+        homo_out_dir = os.path.join(set_["homologues_folder"], "ncbi", database)
+        if not os.path.isdir(homo_out_dir):
+            os.makedirs(homo_out_dir)
+        BLAST_csv_tar = os.path.join(homo_out_dir, "{}.surr{}.BLAST.csv.tar.gz".format(acc, set_["num_of_sur_residues"]))
 
-            parse_NCBI_xml_to_csv(set_, acc, BLAST_xml_tar, BLAST_csv_tar, tm_start, tm_end, logging)
+        parse_NCBI_xml_to_csv(set_, acc, BLAST_xml_tar, BLAST_csv_tar, tm_start, tm_end, logging)
 
     logging.info('~~~~~~~~~~~~                 finished parse_NCBI_xml_to_csv_mult_prot              ~~~~~~~~~~~~')
 

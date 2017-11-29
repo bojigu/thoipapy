@@ -154,6 +154,7 @@ if __name__ == "__main__":
     df_set["seqlen"] = df_set.full_seq.str.len()
     df_set["TMD_len"] = df_set.TMD_seq.str.len()
     # df_set.loc["O75460", "TMD_seq"] = df_set.loc["O75460", "TMD_seq"] + "A"
+
     for acc in df_set.index:
         TMD_seq = df_set.loc[acc, "TMD_seq"]
         full_seq = df_set.loc[acc, "full_seq"]
@@ -298,16 +299,20 @@ if __name__ == "__main__":
         #thoipapy.RF_features.feature_calculate.convert_bind_data_to_csv(set_, logging)
 
         if set_["combine_feature_into_train_data"]:
-            if database_for_full_set == "crystal" or database_for_full_set == "NMR":
-                thoipapy.RF_features.feature_calculate.combine_csv_files_with_features(set_, df_set, logging)
-                thoipapy.RF_features.feature_calculate.add_bind_data_to_combined_features(set_, df_set, logging)
-                #thoipapy.RF_features.feature_calculate.adding_physical_parameters_to_train_data(set_, df_set, logging)
-            if database_for_full_set == "ETRA":
-                #thoipapy.RF_features.feature_calculate.features_combine_to_testdata( set_, logging)
-                thoipapy.RF_features.feature_calculate.combine_csv_files_with_features(set_, df_set, logging)
-                #thoipapy.RF_features.feature_calculate.adding_physical_parameters_to_test_data(set_, logging)
+            # if database_for_full_set == "crystal" or database_for_full_set == "NMR":
+            #     thoipapy.RF_features.feature_calculate.combine_csv_files_with_features(set_, df_set, logging)
+            #     thoipapy.RF_features.feature_calculate.add_bind_data_to_combined_features(set_, df_set, logging)
+            #     #thoipapy.RF_features.feature_calculate.adding_physical_parameters_to_train_data(set_, df_set, logging)
+            # if database_for_full_set == "ETRA":
+            #     #thoipapy.RF_features.feature_calculate.features_combine_to_testdata( set_, logging)
+            #     thoipapy.RF_features.feature_calculate.combine_csv_files_with_features(set_, df_set, logging)
+            #     #thoipapy.RF_features.feature_calculate.adding_physical_parameters_to_test_data(set_, logging)
+            thoipapy.RF_features.feature_calculate.combine_csv_files_with_features(set_, df_set, logging)
             thoipapy.RF_features.feature_calculate.adding_physical_parameters_to_train_data(set_, df_set, logging)
+            if set_["add_bind_data_to_combined_features"]:
+                thoipapy.RF_features.feature_calculate.add_bind_data_to_combined_features(set_, df_set, logging)
             thoipapy.RF_features.feature_calculate.combine_all_train_data_for_random_forest(set_,logging)
+
 
     if set_["run_random_forest"]:
         thoipapy.RF_features.RF_Train_Test.thoipa_rfmodel_create(set_,logging)
