@@ -30,52 +30,62 @@ def parse_NCBI_xml_to_csv_mult_prot(set_, df_set, logging):
     #                                                                                            #
     ##############################################################################################
 
+    for acc in df_set.index:
+        database = df_set.loc[acc, "database"]
+        #tm_start=int(row.strip().split(",")[4])+1
+        #tm_start=int(row.strip().split(",")[4])+1-5 ###for surr20
+        # set_["surres"] set how many residues on each sides of tmd sequence
+        # if set_["surres"] == "_surr0":
+        #     tm_start = int(row.strip().split(",")[2])
+        #     tm_end = int(row.strip().split(",")[3])
+        # elif set_["surres"] == "_surr5":
+        #     tm_start = int(row.strip().split(",")[2]) -5 ###for fullseq
+        #     if(tm_start<=0):
+        #         tm_start=1
+        #     #tm_end = int(row.strip().split(",")[4])+(int(row.strip().split(",")[3])-int(row.strip().split(",")[2])+1)
+        #     #tm_end = int(row.strip().split(",")[4])+(int(row.strip().split(",")[3])-int(row.strip().split(",")[2])+1)+5 ##for surr20
+        #     tm_end = int(row.strip().split(",")[3])  + 5  ###for fullseq
+        #     if tm_end>int(row.strip().split(",")[1]):
+        #         tm_end=int(row.strip().split(",")[1]) # quals to the full sequence length
+        # else:
+        #     raise ValueError('set_["surres"] does not seem to be correct')
 
-    tmp_list_loc = set_["list_of_tmd_start_end"]
+        tm_start = df_set.loc[acc, "TMD_start"]
+        tm_end = df_set.loc[acc, "TMD_end"]
+        seqlen = df_set.loc[acc, "seqlen"]
+        if set_["surres"] == "_surr0":
+            pass
+        elif set_["surres"] == "_surr5":
+            # start 5 residues earlier
+            tm_start = tm_start - 5 ###for fullseq
+            if tm_start <= 0:
+                tm_start = 1
+            # end 5 residues later
+            tm_end = tm_end  + 5  ###for fullseq
+            if tm_end > seqlen:
+                tm_end = seqlen # quals to the full sequence length
+        else:
+            raise ValueError('set_["surres"] does not seem to be correct')
 
-    with open(tmp_list_loc, 'r') as tmp_file_handle:
-        # skip header
-        next(tmp_file_handle)
-        for row in tmp_file_handle:
-            acc = row.strip().split(",")[0]
-            database = row.strip().split(",")[6]
-            #tm_start=int(row.strip().split(",")[4])+1
-            #tm_start=int(row.strip().split(",")[4])+1-5 ###for surr20
-            # set_["surres"] set how many residues on each sides of tmd sequence
-            if set_["surres"] == "_surr0":
-                tm_start = int(row.strip().split(",")[2])
-                tm_end = int(row.strip().split(",")[3])
-            elif set_["surres"] == "_surr5":
-                tm_start = int(row.strip().split(",")[2]) -5 ###for fullseq
-                if(tm_start<=0):
-                    tm_start=1
-                #tm_end = int(row.strip().split(",")[4])+(int(row.strip().split(",")[3])-int(row.strip().split(",")[2])+1)
-                #tm_end = int(row.strip().split(",")[4])+(int(row.strip().split(",")[3])-int(row.strip().split(",")[2])+1)+5 ##for surr20
-                tm_end = int(row.strip().split(",")[3])  + 5  ###for fullseq
-                if tm_end>int(row.strip().split(",")[1]):
-                    tm_end=int(row.strip().split(",")[1]) # quals to the full sequence length
-            else:
-                raise ValueError('set_["surres"] does not seem to be correct')
-            #xml_file = os.path.join(set_["xml_file_folder"], database, "%s.xml") % acc
-            #blast_xml_file = os.path.join(set_["xml_file_folder"], database, "{}.surr{}.BLAST.xml".format(acc,set_["num_of_sur_residues"]))
-            BLAST_xml_tar = os.path.join(set_["xml_file_folder"], database, "{}.surr{}.BLAST.xml.tar.gz".format(acc, set_["num_of_sur_residues"]))
+        #xml_file = os.path.join(set_["xml_file_folder"], database, "%s.xml") % acc
+        #blast_xml_file = os.path.join(set_["xml_file_folder"], database, "{}.surr{}.BLAST.xml".format(acc,set_["num_of_sur_residues"]))
+        BLAST_xml_tar = os.path.join(set_["xml_file_folder"], database, "{}.surr{}.BLAST.xml.tar.gz".format(acc, set_["num_of_sur_residues"]))
+        # BLAST_csv_file=os.path.join(set_["homologues_folder"],"NoRedundPro/%s_homo.csv") %acc
+        homo_out_dir = os.path.join(set_["homologues_folder"], "ncbi", database)
+        if not os.path.isdir(homo_out_dir):
+            os.makedirs(homo_out_dir)
+        BLAST_csv_tar = os.path.join(homo_out_dir, "{}.surr{}.BLAST.csv.tar.gz".format(acc, set_["num_of_sur_residues"]))
 
-            parse_NCBI_xml_to_csv(set_, acc, BLAST_xml_tar, tm_start, tm_end, database, logging)
+        parse_NCBI_xml_to_csv(set_, acc, BLAST_xml_tar, BLAST_csv_tar, tm_start, tm_end, logging)
 
     logging.info('~~~~~~~~~~~~                 finished parse_NCBI_xml_to_csv_mult_prot              ~~~~~~~~~~~~')
 
-def parse_NCBI_xml_to_csv(set_, acc, blast_xml_tar, tm_start, tm_end, database, logging):
+def parse_NCBI_xml_to_csv(set_, acc, blast_xml_tar, BLAST_csv_tar, tm_start, tm_end, logging):
+    # remove the final ".tar.gz" to get the xml and csv filename
+    BLAST_xml_file = blast_xml_tar[:-7]
+    BLAST_csv_file = BLAST_csv_tar[:-7]
 
     match_details_dict = {}
-    # BLAST_csv_file=os.path.join(set_["homologues_folder"],"NoRedundPro/%s_homo.csv") %acc
-    homo_out_dir = os.path.join(set_["homologues_folder"], "ncbi", database)
-    if not os.path.isdir(homo_out_dir):
-        os.makedirs(homo_out_dir)
-    BLAST_csv_file = os.path.join(homo_out_dir, "{}.surr{}.BLAST.csv".format(acc, set_["num_of_sur_residues"]))
-    BLAST_csv_tar = os.path.join(homo_out_dir, "{}.surr{}.BLAST.csv.tar.gz".format(acc, set_["num_of_sur_residues"]))
-
-    # remove the final ".tar.gz" to get the csv filename
-    BLAST_xml_file = blast_xml_tar[:-7]
 
     if not os.path.isfile(blast_xml_tar):
         warning = "{} parse_NCBI_xml_to_csv_mult_prot failed, blast_xml_tar not found = {}".format(acc, blast_xml_tar)
@@ -209,26 +219,43 @@ def slice_match_TMD_seq(x):
 def slice_match_TMD_seq_surr5(x):
     return x['subject_align_seq'][int(x["start_min_5"]) : int(x["end"]) + 5]
 
-def save_fasta(df, col_with_seqs, filepath, acc):
+def save_fasta(df, col_with_seqs, filepath, acc, query_TMD_seq):
     with open(filepath, "w") as f:
+        # write orig seq
+        f.write(">{}_orig_seq\n{}\n".format(acc, query_TMD_seq))
         for n in df.index:
             seq = df.loc[n, col_with_seqs]
-            if n == 0:
-                f.write(">{}_orig_seq\n{}\n".format(acc, seq))
-            else:
-                description = df.loc[n, "description"]
-                f.write(">{}\n{}\n".format(description, seq))
+            if seq == query_TMD_seq:
+                # do not write the orig seq again. continue to next seq.
+                continue
+            description = df.loc[n, "description"]
+            f.write(">{}\n{}\n".format(description, seq))
 
-def save_fasta_from_array(array_of_seqs, filepath):
+def save_fasta_from_array(array_of_seqs, filepath, acc, query_TMD_seq):
     with open(filepath, "w") as f:
-        for n, seq in enumerate(array_of_seqs):
-            f.write(">{}\n{}\n".format(n, seq))
+        if query_TMD_seq is not None:
+            f.write(">{}_orig_seq\n{}\n".format(acc, query_TMD_seq))
+            for n, seq in enumerate(array_of_seqs):
+                if seq == query_TMD_seq:
+                    # do not write the orig seq again. continue to next seq.
+                    continue
+                f.write(">{}\n{}\n".format(n, seq))
+        else:
+            for n, seq in enumerate(array_of_seqs):
+                f.write(">{}\n{}\n".format(n, seq))
 
-
-def save_seqs(array_of_seqs, filepath):
+def save_seqs(array_of_seqs, filepath, query_TMD_seq):
     with open(filepath, "w") as f:
-        for seq in array_of_seqs:
-            f.write("{}\n".format(seq))
+        if query_TMD_seq is not None:
+            f.write("{}\n".format(query_TMD_seq))
+            for seq in array_of_seqs:
+                if seq == query_TMD_seq:
+                    # do not write the orig seq again. continue to next seq.
+                    continue
+                f.write("{}\n".format(seq))
+        else:
+            for seq in array_of_seqs:
+                f.write("{}\n".format(seq))
 
 def extract_filtered_csv_homologues_to_alignments_mult_prot(set_, df_set, logging):
 
@@ -239,8 +266,10 @@ def extract_filtered_csv_homologues_to_alignments_mult_prot(set_, df_set, loggin
 
     for acc in df_set.index:
         database = df_set.loc[acc, "database"]
-        query_TMD_sequence = df_set.loc[acc, "TMD_seq"]
+        query_TMD_seq = df_set.loc[acc, "TMD_seq"]
+        query_full_seq = df_set.loc[acc, "full_seq"]
         TMD_len = df_set.loc[acc, "TMD_len"]
+        query_TMD_seq_surr5 = df_set.loc[acc, "TMD_seq_pl_surr5"]
 
         homo_out_dir = os.path.join(set_["homologues_folder"], "ncbi", database)
         BLAST_csv_file = os.path.join(homo_out_dir, "{}.surr{}.BLAST.csv".format(acc, set_["num_of_sur_residues"]))
@@ -251,8 +280,19 @@ def extract_filtered_csv_homologues_to_alignments_mult_prot(set_, df_set, loggin
         if not os.path.isdir(alignments_dir):
             os.makedirs(alignments_dir)
 
-        single_prot_dict = extract_filtered_csv_homologues_to_alignments(set_, acc, TMD_len, alignments_dir, BLAST_csv_tar, query_TMD_sequence, logging)
+        fasta_all_TMD_seqs = os.path.join(alignments_dir, "{}.surr{}.gaps{}.redundant.fas".format(acc, set_["num_of_sur_residues"], set_["max_n_gaps_in_TMD_subject_seq"]))
+        path_uniq_TMD_seqs_for_PSSM_FREECONTACT = os.path.join(alignments_dir, "{}.surr{}.gaps{}.uniq.for_PSSM_FREECONTACT.txt".format(acc, set_["num_of_sur_residues"], set_["max_n_gaps_in_TMD_subject_seq"]))
+        path_uniq_TMD_seqs_no_gaps_for_LIPS = os.path.join(alignments_dir, "{}.surr{}.gaps0.uniq.for_LIPS.txt".format(acc, set_["num_of_sur_residues"]))
+        path_uniq_TMD_seqs_surr5_for_LIPO = os.path.join(alignments_dir, "{}.surr5.gaps{}.uniq.for_LIPO.txt".format(acc, set_["max_n_gaps_in_TMD_subject_seq"]))
+
+
+        single_prot_dict = extract_filtered_csv_homologues_to_alignments(set_, acc, TMD_len, fasta_all_TMD_seqs, path_uniq_TMD_seqs_for_PSSM_FREECONTACT,
+                                                                         path_uniq_TMD_seqs_no_gaps_for_LIPS, path_uniq_TMD_seqs_surr5_for_LIPO, BLAST_csv_tar,
+                                                                         query_TMD_seq, query_TMD_seq_surr5, logging)
         out_dict[acc] = single_prot_dict
+
+
+
 
     df_align_results = pd.DataFrame(out_dict).T
     df_align_results.index.name = "acc"
@@ -262,14 +302,12 @@ def extract_filtered_csv_homologues_to_alignments_mult_prot(set_, df_set, loggin
     logging.info('finished extract filtered csv homologues to alignments for {} proteins. Output = {}'.format(df_align_results.shape[0], align_results_csv))
 
 
-def extract_filtered_csv_homologues_to_alignments(set_, acc, TMD_len, alignments_dir, BLAST_csv_tar, query_TMD_sequence, logging):
-    fasta_all_TMD_seqs = os.path.join(alignments_dir, "{}.surr{}.gaps{}.redundant.fas".format(acc, set_["num_of_sur_residues"], set_["max_n_gaps_in_TMD_subject_seq"]))
-    path_uniq_TMD_seqs_for_PSSM_FREECONTACT = os.path.join(alignments_dir, "{}.surr{}.gaps{}.uniq.for_PSSM_FREECONTACT.txt".format(acc, set_["num_of_sur_residues"], set_["max_n_gaps_in_TMD_subject_seq"]))
-    fasta_uniq_TMD_seqs_for_PSSM_FREECONTACT = os.path.join(alignments_dir, "{}.surr{}.gaps{}.uniq.for_PSSM_FREECONTACT.fas".format(acc, set_["num_of_sur_residues"], set_["max_n_gaps_in_TMD_subject_seq"]))
-    path_uniq_TMD_seqs_no_gaps_for_LIPS = os.path.join(alignments_dir, "{}.surr{}.gaps0.uniq.for_LIPS.txt".format(acc, set_["num_of_sur_residues"]))
-    fasta_uniq_TMD_seqs_no_gaps_for_LIPS = os.path.join(alignments_dir, "{}.surr{}.gaps0.uniq.for_LIPS.fas".format(acc, set_["num_of_sur_residues"]))
-    path_uniq_TMD_seqs_surr5_for_LIPO = os.path.join(alignments_dir, "{}.surr5.gaps{}.uniq.for_LIPO.txt".format(acc, set_["max_n_gaps_in_TMD_subject_seq"]))
-    pasta_uniq_TMD_seqs_surr5_for_LIPO = os.path.join(alignments_dir, "{}.surr5.gaps{}.uniq.for_LIPO.fas".format(acc, set_["max_n_gaps_in_TMD_subject_seq"]))
+def extract_filtered_csv_homologues_to_alignments(set_, acc, TMD_len, fasta_all_TMD_seqs, path_uniq_TMD_seqs_for_PSSM_FREECONTACT,
+                                                  path_uniq_TMD_seqs_no_gaps_for_LIPS, path_uniq_TMD_seqs_surr5_for_LIPO, BLAST_csv_tar,
+                                                  query_TMD_seq, query_TMD_seq_surr5, logging):
+    fasta_uniq_TMD_seqs_for_PSSM_FREECONTACT = path_uniq_TMD_seqs_for_PSSM_FREECONTACT[:-4] + ".fas"
+    fasta_uniq_TMD_seqs_no_gaps_for_LIPS = path_uniq_TMD_seqs_no_gaps_for_LIPS[:-4] + ".fas"
+    fasta_uniq_TMD_seqs_surr5_for_LIPO = path_uniq_TMD_seqs_surr5_for_LIPO[:-4] + ".fas"
 
     single_prot_dict = {}
 
@@ -278,6 +316,7 @@ def extract_filtered_csv_homologues_to_alignments(set_, acc, TMD_len, alignments
 
     # remove the final ".tar.gz" to get the csv filename
     BLAST_csv_file = BLAST_csv_tar[:-7]
+    print(BLAST_csv_tar)
 
     if os.path.isfile(BLAST_csv_tar):
         with tarfile.open(BLAST_csv_tar, 'r:gz') as tar:
@@ -287,7 +326,7 @@ def extract_filtered_csv_homologues_to_alignments(set_, acc, TMD_len, alignments
 
                 # create regex search string, e.g. V-*L-*L-*G-*A-*V-*G-*G-*A-*G-*A-*T-*A-*L-*V-*F-*L-*S-*F-*C
                 # (finds sequence regardless of gaps)
-                TMD_regex_ss = thoipapy.utils.create_regex_string(query_TMD_sequence)
+                TMD_regex_ss = thoipapy.utils.create_regex_string(query_TMD_seq)
 
                 # obtain the bool, start, end of TMD seqs in the match sequences. Add to the new TMD-specific dataframe.
                 start_end_list_in_alignment_ser = df.query_align_seq.apply(get_start_and_end_of_TMD_in_query, args=(TMD_regex_ss,)).dropna()
@@ -327,27 +366,28 @@ def extract_filtered_csv_homologues_to_alignments(set_, acc, TMD_len, alignments
                 # save all TMD sequences (NON-UNIQUE) for manual inspection of alignments only
                 n_total_filtered_seqs = df.shape[0]
 
-                save_fasta(df, "subject_TMD_align_seq", fasta_all_TMD_seqs, acc)
+                save_fasta(df, "subject_TMD_align_seq", fasta_all_TMD_seqs, acc, query_TMD_seq)
 
                 # save unique sequences WITH gaps (FOR COEVOLUTION WITH FREECONTACT, ETC)
                 uniq_TMD_seqs_for_PSSM_FREECONTACT = df.subject_TMD_align_seq.unique()
-                save_seqs(uniq_TMD_seqs_for_PSSM_FREECONTACT, path_uniq_TMD_seqs_for_PSSM_FREECONTACT)
-                save_fasta_from_array(uniq_TMD_seqs_for_PSSM_FREECONTACT, fasta_uniq_TMD_seqs_for_PSSM_FREECONTACT)
+                save_seqs(uniq_TMD_seqs_for_PSSM_FREECONTACT, path_uniq_TMD_seqs_for_PSSM_FREECONTACT, query_TMD_seq)
+                save_fasta_from_array(uniq_TMD_seqs_for_PSSM_FREECONTACT, fasta_uniq_TMD_seqs_for_PSSM_FREECONTACT, acc, query_TMD_seq)
 
                 # save unique sequences WITHOUT gaps (FOR LIPS)
                 uniq_TMD_seqs_no_gaps_for_LIPS = [seq for seq in uniq_TMD_seqs_for_PSSM_FREECONTACT if "-" not in seq]
-                save_seqs(uniq_TMD_seqs_no_gaps_for_LIPS, path_uniq_TMD_seqs_no_gaps_for_LIPS)
-                save_fasta_from_array(uniq_TMD_seqs_no_gaps_for_LIPS, fasta_uniq_TMD_seqs_no_gaps_for_LIPS)
+                save_seqs(uniq_TMD_seqs_no_gaps_for_LIPS, path_uniq_TMD_seqs_no_gaps_for_LIPS, query_TMD_seq)
+                save_fasta_from_array(uniq_TMD_seqs_no_gaps_for_LIPS, fasta_uniq_TMD_seqs_no_gaps_for_LIPS, acc, query_TMD_seq)
 
                 # save unique sequences WITH gaps with 5 surrounding residues (FOR PSSM and Hessa LIPO)
                 # delete any longer sequences, where the query had gaps
                 # assume the first sequence has no gaps
                 TMD_plus_5_len = len(df.iloc[0, :]["subject_TMD_align_seq_surr5"])
-                # only keep the sequs that have the same length as the first one
+
+                # only keep the seqs that have the same length as the first one
                 df_no_gaps_in_q_plus5 = df.loc[df['subject_TMD_align_seq_surr5'].str.len() == TMD_plus_5_len]
                 uniq_TMD_seqs_surr5_for_LIPO = df_no_gaps_in_q_plus5['subject_TMD_align_seq_surr5'].unique()
-                save_seqs(uniq_TMD_seqs_surr5_for_LIPO, path_uniq_TMD_seqs_surr5_for_LIPO)
-                save_fasta_from_array(uniq_TMD_seqs_surr5_for_LIPO, pasta_uniq_TMD_seqs_surr5_for_LIPO)
+                save_seqs(uniq_TMD_seqs_surr5_for_LIPO, path_uniq_TMD_seqs_surr5_for_LIPO, query_TMD_seq=query_TMD_seq_surr5)
+                save_fasta_from_array(uniq_TMD_seqs_surr5_for_LIPO, fasta_uniq_TMD_seqs_surr5_for_LIPO, acc, query_TMD_seq=query_TMD_seq_surr5)
 
                 min_frac_ident_TMD = df["frac_ident_TMD"].min()
                 # print("min_frac_ident_TMD AFTER FILTER", min_frac_ident_TMD)

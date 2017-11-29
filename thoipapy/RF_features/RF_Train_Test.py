@@ -74,12 +74,12 @@ def run_Rscipt_random_forest(set_, output_file_loc, logging):
     Rscript_loc = set_["Rscript_dir"]
     Random_Forest_R_code_file=set_["Rcode"]
     train_data_file=os.path.join(set_["RF_loc"],"NoRedundPro/TRAINDATA68.csv")
-    tmp_protein_name = set_["tm_protein_name"]
-    tmp_protein_test_data = os.path.join(set_["RF_loc"], "TestData/%s/%s.mem.2gap.physipara.testdata.csv") % (set_["Datatype"],tmp_protein_name)
+    acc = set_["tm_protein_name"]
+    tmp_protein_test_data = os.path.join(set_["RF_loc"], "TestData/%s/%s.mem.2gap.physipara.testdata.csv") % (set_["Datatype"],acc)
     #out_put_file_loc_handle=open(output_file_loc,"w")
     if os.path.isfile(tmp_protein_test_data):
-        prediction_output_file = os.path.join(set_["RF_loc"],"%s.pred.out") % tmp_protein_name
-        prediction_output_file = os.path.join("/home/students/zeng/workspace/test2/out", "%s.pred.out") % tmp_protein_name
+        prediction_output_file = os.path.join(set_["RF_loc"],"%s.pred.out") % acc
+        prediction_output_file = os.path.join("/home/students/zeng/workspace/test2/out", "%s.pred.out") % acc
         prediction_output_file_handle=open(prediction_output_file,"w")
         exect_str = "{Rscript} {Random_Forest_R_code} {train_data} {test_data} {output}".format(Rscript=Rscript_loc, Random_Forest_R_code=Random_Forest_R_code_file,train_data=train_data_file,test_data=tmp_protein_test_data,output=output_file_loc)
         print(exect_str)

@@ -1,16 +1,10 @@
+README.md
 setup.py
-thoipapy/Entropy.py
-thoipapy/PSSM.py
 thoipapy/__init__.py
-thoipapy/blastparser.py
 thoipapy/common.py
-thoipapy/homo_filter.py
 thoipapy/mtutiles.py
-thoipapy/ncbiblast.py
-thoipapy/parse_xml_csv.py
 thoipapy/run.py
-thoipapy/runblast.py
-thoipapy/test.py
+thoipapy/utils.py
 thoipapy.egg-info/PKG-INFO
 thoipapy.egg-info/SOURCES.txt
 thoipapy.egg-info/dependency_links.txt
@@ -23,7 +17,6 @@ thoipapy/NCBI_BLAST/download/__init__.py
 thoipapy/NCBI_BLAST/download/download.py
 thoipapy/NCBI_BLAST/parse/__init__.py
 thoipapy/NCBI_BLAST/parse/parser.py
-thoipapy/RF_features/LIPS.py
 thoipapy/RF_features/Output_Parse.py
 thoipapy/RF_features/RF_Train_Test.py
 thoipapy/RF_features/__init__.py

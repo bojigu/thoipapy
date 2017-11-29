@@ -24,6 +24,22 @@ import glob
 import pandas as pd
 import re
 
+
+def slice_TMD_seq_pl_surr(df_set):
+    # note that due to uniprot-like indexing, the start index = start-1
+    return df_set['full_seq'][int(df_set['TMD_start_pl_surr'] - 1):int(df_set['TMD_end_pl_surr'])]
+
+
+def create_column_with_TMD_plus_surround_seq(df_set, num_of_sur_residues):
+    df_set["TMD_start_pl_surr"] = df_set.TMD_start - num_of_sur_residues
+    df_set.loc[df_set["TMD_start_pl_surr"] < 1, "TMD_start_pl_surr"] = 1
+    df_set["TMD_end_pl_surr"] = df_set.TMD_end + num_of_sur_residues
+    for acc in df_set.index:
+        if df_set.loc[acc, "TMD_end_pl_surr"] > df_set.loc[acc, "seqlen"]:
+            df_set.loc[acc, "TMD_end_pl_surr"] = df_set.loc[acc, "seqlen"]
+    TMD_seq_pl_surr_series = df_set.apply(slice_TMD_seq_pl_surr, axis=1)
+    return df_set, TMD_seq_pl_surr_series
+
 # read the command line arguments
 parser = argparse.ArgumentParser()
 
@@ -138,6 +154,7 @@ if __name__ == "__main__":
     df_set["seqlen"] = df_set.full_seq.str.len()
     df_set["TMD_len"] = df_set.TMD_seq.str.len()
     # df_set.loc["O75460", "TMD_seq"] = df_set.loc["O75460", "TMD_seq"] + "A"
+
     for acc in df_set.index:
         TMD_seq = df_set.loc[acc, "TMD_seq"]
         full_seq = df_set.loc[acc, "full_seq"]
@@ -149,19 +166,18 @@ if __name__ == "__main__":
             df_set.loc[acc, "TMD_end"] = m.end()
         else:
             raise IndexError("TMD seq not found in full_seq.\nacc = {}\nTMD_seq = {}\nfull_seq = {}".format(acc, TMD_seq, full_seq))
+
+
+    # first get TMD plus 5 surrounding residues (for TMD_lipo script)
+    num_of_sur_residues = 5
+    df_set, TMD_seq_pl_surr_series = create_column_with_TMD_plus_surround_seq(df_set, num_of_sur_residues)
+    df_set["TMD_seq_pl_surr5"] = TMD_seq_pl_surr_series
+
+    # Repeat for the actual surrounding number of residues chosen in the settings file
+    # this overwrites the indexing columns created for the surr5 above, except for the final sequence
     num_of_sur_residues = set_["num_of_sur_residues"]
-    df_set["TMD_start_pl_surr"] = df_set.TMD_start - num_of_sur_residues
-    df_set.loc[df_set["TMD_start_pl_surr"] < 1, "TMD_start_pl_surr"] = 1
-    df_set["TMD_end_pl_surr"] = df_set.TMD_end + num_of_sur_residues
-    for acc in df_set.index:
-        if df_set.loc[acc, "TMD_end_pl_surr"] > df_set.loc[acc, "seqlen"]:
-            df_set.loc[acc, "TMD_end_pl_surr"] = df_set.loc[acc, "seqlen"]
-
-    def slice_TMD_seq_pl_surr(df_set):
-        # note that due to uniprot-like indexing, the start index = start-1
-        return df_set['full_seq'][int(df_set['TMD_start_pl_surr'] - 1):int(df_set['TMD_end_pl_surr'])]
-
-    df_set["TMD_seq_pl_surr"] = df_set.apply(slice_TMD_seq_pl_surr, axis=1)
+    df_set, TMD_seq_pl_surr_series = create_column_with_TMD_plus_surround_seq(df_set, num_of_sur_residues)
+    df_set["TMD_seq_pl_surr"] = TMD_seq_pl_surr_series
 
     # add the number of included residues in the surrounding seq to the left and right of the TMD
     # e.g. 20 where the TMD is in the centre of the protein, otherwise <20 where TMD is near start or end of full seq
@@ -188,9 +204,9 @@ if __name__ == "__main__":
     # create a database label. Either crystal, NMR, ETRA or "mixed"
     unique_database_labels = df_set["database"].unique()
     if len(unique_database_labels.shape) == 1:
-        database = unique_database_labels[0]
+        database_for_full_set = unique_database_labels[0]
     else:
-        database = "mixed"
+        database_for_full_set = "mixed"
 
     # when only run one protein each time, set_["multiple_tmp_simultaneous"] is false, and create the query protein information file
     # according to the arguments inputed by user
@@ -229,7 +245,7 @@ if __name__ == "__main__":
 
 
     if set_["run_retrieve_NCBI_homologues_with_blastp"]:
-        thoipapy.NCBI_BLAST.download.download.download_homologues_from_ncbi(set_, df_set, logging)
+        thoipapy.NCBI_BLAST.download.download.download_homologues_from_ncbi_mult_prot(set_, df_set, logging)
 
 
                     ###################################################################################################
@@ -260,44 +276,48 @@ if __name__ == "__main__":
             thoipapy.RF_features.feature_calculate.create_PSSM_from_MSA_mult_prot(set_, df_set, logging)
 
         if set_["calc_lipo_from_pssm"]:
-            thoipapy.RF_features.feature_calculate.calc_lipo_from_pssm(set_,df_set, logging)
-
+            thoipapy.RF_features.feature_calculate.lipo_from_pssm_mult_prot(set_, df_set, logging)
 
         if set_["entropy_feature_calculation"]:
-            thoipapy.RF_features.feature_calculate.entropy_calculation(set_, df_set, logging)
+            thoipapy.RF_features.feature_calculate.entropy_calculation_mult_prot(set_, df_set, logging)
 
         if set_["cumulative_coevolution_feature_calculation"]:
             if "Windows" in platform.system():
-                sys.stdout.write("\n Freecontact cannot be run in Windows! Skipping coevolution_calculation_with_freecontact function.")
-                thoipapy.RF_features.feature_calculate.cumulative_co_evolutionary_strength_parser(thoipapy, set_, logging)
+                sys.stdout.write("\n Freecontact cannot be run in Windows! Skipping coevolution_calculation_with_freecontact_mult_prot.")
+                thoipapy.RF_features.feature_calculate.parse_freecontact_coevolution_mult_prot(set_, df_set, logging)
             else:
-                thoipapy.RF_features.feature_calculate.coevolution_calculation_with_freecontact(set_, logging)
-                thoipapy.RF_features.feature_calculate.cumulative_co_evolutionary_strength_parser(thoipapy ,set_, logging)
+                thoipapy.RF_features.feature_calculate.coevolution_calculation_with_freecontact_mult_prot(set_, df_set, logging)
+                thoipapy.RF_features.feature_calculate.parse_freecontact_coevolution_mult_prot(set_, df_set, logging)
 
         if set_["clac_relative_position"]:
-            thoipapy.RF_features.feature_calculate.relative_position_calculation(set_,logging)
+            thoipapy.RF_features.feature_calculate.relative_position_calculation(set_, df_set, logging)
 
         if set_["lips_score_feature_calculation"]:
-            thoipapy.RF_features.feature_calculate.LIPS_score_calculation_mult_prot(thoipapy, set_, logging)
-            thoipapy.RF_features.feature_calculate.Lips_score_parsing( set_, logging)
+            thoipapy.RF_features.feature_calculate.LIPS_score_calculation_mult_prot(set_, df_set, logging)
+            thoipapy.RF_features.feature_calculate.parse_LIPS_score_mult_prot(set_, df_set, logging)
 
         #thoipapy.RF_features.feature_calculate.convert_bind_data_to_csv(set_, logging)
 
         if set_["combine_feature_into_train_data"]:
-            if database == "Crystal" or database == "Nmr":
-                thoipapy.RF_features.feature_calculate.features_combine_to_traindata( set_, logging)
-                thoipapy.RF_features.feature_calculate.adding_physical_parameters_to_train_data(set_, logging)
-            if database == "Etra":
-                thoipapy.RF_features.feature_calculate.features_combine_to_testdata( set_, logging)
-                thoipapy.RF_features.feature_calculate.adding_physical_parameters_to_test_data(set_, logging)
+            # if database_for_full_set == "crystal" or database_for_full_set == "NMR":
+            #     thoipapy.RF_features.feature_calculate.combine_csv_files_with_features(set_, df_set, logging)
+            #     thoipapy.RF_features.feature_calculate.add_bind_data_to_combined_features(set_, df_set, logging)
+            #     #thoipapy.RF_features.feature_calculate.adding_physical_parameters_to_train_data(set_, df_set, logging)
+            # if database_for_full_set == "ETRA":
+            #     #thoipapy.RF_features.feature_calculate.features_combine_to_testdata( set_, logging)
+            #     thoipapy.RF_features.feature_calculate.combine_csv_files_with_features(set_, df_set, logging)
+            #     #thoipapy.RF_features.feature_calculate.adding_physical_parameters_to_test_data(set_, logging)
+            thoipapy.RF_features.feature_calculate.combine_csv_files_with_features(set_, df_set, logging)
+            thoipapy.RF_features.feature_calculate.adding_physical_parameters_to_train_data(set_, df_set, logging)
+            if set_["add_bind_data_to_combined_features"]:
+                thoipapy.RF_features.feature_calculate.add_bind_data_to_combined_features(set_, df_set, logging)
             thoipapy.RF_features.feature_calculate.combine_all_train_data_for_random_forest(set_,logging)
+
 
     if set_["run_random_forest"]:
         thoipapy.RF_features.RF_Train_Test.thoipa_rfmodel_create(set_,logging)
         #thoipapy.RF_features.RF_Train_Test.RF_10flod_cross_validation(thoipapy,set_,logging)
         #thoipapy.RF_features.RF_Train_Test.run_Rscipt_random_forest(set_, output_file_loc, logging)
-
-
 
     if set_["parse_prediciton_output"]:
         thoipapy.RF_features.Output_Parse.parse_Predicted_Output(thoipapy,set_,output_file_loc,output_parse_file,logging)
