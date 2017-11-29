@@ -283,6 +283,7 @@ def lipo_from_pssm_mult_prot(set_, df_set, logging):
     for acc in df_set.index:
         database = df_set.loc[acc, "database"]
         query_TMD_sequence = df_set.loc[acc, "TMD_seq"]
+
         tm_surr_left = df_set.loc[acc, "tm_surr_left"]
         tm_surr_right = df_set.loc[acc, "tm_surr_right"]
         # reset to 5. AM NOT SURE WHY.
@@ -1238,15 +1239,13 @@ def combine_csv_files_with_features(set_, df_set, logging):
         feature_combined_file = os.path.join(set_["RF_features"], "combined", database, "{}.surr{}.gaps{}.combined_features.csv".format(acc, set_["num_of_sur_residues"], set_["max_n_gaps_in_TMD_subject_seq"]))
         thoipapy.utils.make_sure_path_exists(feature_combined_file, isfile=True)
 
-        all_files_found = True
-        for filepath in [entropy_file, pssm_csv, lipo_csv, freecontact_parsed_csv, relative_position_file, LIPS_parsed_csv]:
+
+        for n, filepath in enumerate([entropy_file, pssm_csv, lipo_csv, freecontact_parsed_csv, relative_position_file, LIPS_parsed_csv]):
             if not os.path.isfile(filepath):
-                all_files_found = False
                 raise FileNotFoundError("combine_csv_files_with_features failed. {} not found".format(filepath))
 
-
         entropy_file_df = pd.read_csv(entropy_file)
-        test_indexing = True
+        test_indexing = False
         if test_indexing:
             sys.stdout.write("{}".format(entropy_file_df))
             #entropy_file_df.loc[0, "residue_name"] = "X"
@@ -1264,10 +1263,6 @@ def combine_csv_files_with_features(set_, df_set, logging):
         #with open(feature_combined_file,'w') as feature_combined_file_handle:
         merge1=entropy_file_df.merge(pssm_csv_df,on=['residue_num','residue_name'])
         merge2=merge1.merge(lipophilicity_file_df,on=['residue_num','residue_name'])
-        if merge2.shape[0] == 0:
-            print()
-            print(lipophilicity_file_df)
-            print()
         merge3=merge2.merge(freecontact_parsed_csv_df,on=["residue_num","residue_name"])
         merge4=merge3.merge(relative_position_file_df, on=["residue_num","residue_name"])
         merge5=merge4.merge(LIPS_parsed_csv_df,on=["residue_num","residue_name"])
@@ -1277,9 +1272,18 @@ def combine_csv_files_with_features(set_, df_set, logging):
                             #lineterminator='\n',
                             #quoting=csv.QUOTE_NONNUMERIC, doublequote=True)
 
-        for df in [merge1, merge2, merge3, merge4, merge5]:
-            print(df.shape)
+        file_list = ["entropy_file", "pssm_csv", "lipo_csv", "freecontact_parsed_csv", "relative_position_file", "LIPS_parsed_csv"]
+        df_list = ["entropy_file_df", "pssm_csv_df", "lipophilicity_file_df", "freecontact_parsed_csv_df",  "relative_position_file_df", "LIPS_parsed_csv_df"]
 
+        if test_indexing:
+            for df in [merge1, merge2, merge3, merge4, merge5]:
+                print(df.shape)
+            for n, df in enumerate([entropy_file_df, pssm_csv_df, lipophilicity_file_df,freecontact_parsed_csv_df,  relative_position_file_df, LIPS_parsed_csv_df]):
+                dfname = df_list[n]
+                TMD_seq_this_df = df.residue_name.str.cat()
+                sys.stdout.write("\n{} ({})".format(TMD_seq_this_df, dfname))
+
+        # Raise an error if the TMD sequence does not match original seq in settings file
         TMD_seq_in_merged_file = merge5.residue_name.str.cat()
         if TMD_seq != TMD_seq_in_merged_file:
             sys.stdout.write("acc = {}\noriginal = {}".format(acc, TMD_seq))
@@ -1292,16 +1296,25 @@ def combine_csv_files_with_features(set_, df_set, logging):
 def add_bind_data_to_combined_features(set_, df_set, logging):
     for acc in df_set.index:
         database = df_set.loc[acc, "database"]
+        TMD_seq = df_set.loc[acc, "TMD_seq"]
         feature_combined_file = os.path.join(set_["RF_features"], "combined", database, "{}.surr{}.gaps{}.combined_features.csv".format(acc, set_["num_of_sur_residues"], set_["max_n_gaps_in_TMD_subject_seq"]))
         df_combined = pd.read_csv(feature_combined_file)
-        bind_status_file=os.path.join(set_["RF_features"],'Structure/%s.bind.closedist.csv') %acc
+        bind_status_file = os.path.join(set_["RF_features"],'Structure/%s.bind.closedist.csv') %acc
         if os.path.isfile(bind_status_file):
             df_bind = pd.read_csv(bind_status_file)
             df_combined_plus_bind = df_combined.merge(df_bind, on=["residue_num", "residue_name"])
+
+            TMD_seq_in_merged_file = df_combined_plus_bind.residue_name.str.cat()
+            if TMD_seq != TMD_seq_in_merged_file:
+                sys.stdout.write("acc = {}\noriginal = {}".format(acc, TMD_seq))
+                sys.stdout.write("\nmerged   = {}".format(TMD_seq_in_merged_file))
+                raise IndexError("TMD_seq in original settings file and final merged features dataframe does not match.")
+
             # overwrite existing combined features file
             df_combined_plus_bind.to_csv(feature_combined_file)
+
         else:
-            logging.warning("{} add_bind_data_to_combined_features failed, {} not found".format(acc, add_bind_data_to_combined_features))
+            logging.warning("{} add_bind_data_to_combined_features failed, {} not found".format(acc, bind_status_file))
 
 def adding_physical_parameters_to_train_data(set_, df_set, logging):
     logging.info('adding physical parameters into traindata')

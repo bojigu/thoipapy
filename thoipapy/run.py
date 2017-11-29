@@ -24,6 +24,22 @@ import glob
 import pandas as pd
 import re
 
+
+def slice_TMD_seq_pl_surr(df_set):
+    # note that due to uniprot-like indexing, the start index = start-1
+    return df_set['full_seq'][int(df_set['TMD_start_pl_surr'] - 1):int(df_set['TMD_end_pl_surr'])]
+
+
+def create_column_with_TMD_plus_surround_seq(df_set, num_of_sur_residues):
+    df_set["TMD_start_pl_surr"] = df_set.TMD_start - num_of_sur_residues
+    df_set.loc[df_set["TMD_start_pl_surr"] < 1, "TMD_start_pl_surr"] = 1
+    df_set["TMD_end_pl_surr"] = df_set.TMD_end + num_of_sur_residues
+    for acc in df_set.index:
+        if df_set.loc[acc, "TMD_end_pl_surr"] > df_set.loc[acc, "seqlen"]:
+            df_set.loc[acc, "TMD_end_pl_surr"] = df_set.loc[acc, "seqlen"]
+    TMD_seq_pl_surr_series = df_set.apply(slice_TMD_seq_pl_surr, axis=1)
+    return df_set, TMD_seq_pl_surr_series
+
 # read the command line arguments
 parser = argparse.ArgumentParser()
 
@@ -149,19 +165,18 @@ if __name__ == "__main__":
             df_set.loc[acc, "TMD_end"] = m.end()
         else:
             raise IndexError("TMD seq not found in full_seq.\nacc = {}\nTMD_seq = {}\nfull_seq = {}".format(acc, TMD_seq, full_seq))
+
+
+    # first get TMD plus 5 surrounding residues (for TMD_lipo script)
+    num_of_sur_residues = 5
+    df_set, TMD_seq_pl_surr_series = create_column_with_TMD_plus_surround_seq(df_set, num_of_sur_residues)
+    df_set["TMD_seq_pl_surr5"] = TMD_seq_pl_surr_series
+
+    # Repeat for the actual surrounding number of residues chosen in the settings file
+    # this overwrites the indexing columns created for the surr5 above, except for the final sequence
     num_of_sur_residues = set_["num_of_sur_residues"]
-    df_set["TMD_start_pl_surr"] = df_set.TMD_start - num_of_sur_residues
-    df_set.loc[df_set["TMD_start_pl_surr"] < 1, "TMD_start_pl_surr"] = 1
-    df_set["TMD_end_pl_surr"] = df_set.TMD_end + num_of_sur_residues
-    for acc in df_set.index:
-        if df_set.loc[acc, "TMD_end_pl_surr"] > df_set.loc[acc, "seqlen"]:
-            df_set.loc[acc, "TMD_end_pl_surr"] = df_set.loc[acc, "seqlen"]
-
-    def slice_TMD_seq_pl_surr(df_set):
-        # note that due to uniprot-like indexing, the start index = start-1
-        return df_set['full_seq'][int(df_set['TMD_start_pl_surr'] - 1):int(df_set['TMD_end_pl_surr'])]
-
-    df_set["TMD_seq_pl_surr"] = df_set.apply(slice_TMD_seq_pl_surr, axis=1)
+    df_set, TMD_seq_pl_surr_series = create_column_with_TMD_plus_surround_seq(df_set, num_of_sur_residues)
+    df_set["TMD_seq_pl_surr"] = TMD_seq_pl_surr_series
 
     # add the number of included residues in the surrounding seq to the left and right of the TMD
     # e.g. 20 where the TMD is in the centre of the protein, otherwise <20 where TMD is near start or end of full seq

@@ -256,7 +256,9 @@ def extract_filtered_csv_homologues_to_alignments_mult_prot(set_, df_set, loggin
     for acc in df_set.index:
         database = df_set.loc[acc, "database"]
         query_TMD_seq = df_set.loc[acc, "TMD_seq"]
+        query_full_seq = df_set.loc[acc, "full_seq"]
         TMD_len = df_set.loc[acc, "TMD_len"]
+        query_TMD_seq_surr5 = df_set.loc[acc, "TMD_seq_pl_surr5"]
 
         homo_out_dir = os.path.join(set_["homologues_folder"], "ncbi", database)
         BLAST_csv_file = os.path.join(homo_out_dir, "{}.surr{}.BLAST.csv".format(acc, set_["num_of_sur_residues"]))
@@ -272,9 +274,10 @@ def extract_filtered_csv_homologues_to_alignments_mult_prot(set_, df_set, loggin
         path_uniq_TMD_seqs_no_gaps_for_LIPS = os.path.join(alignments_dir, "{}.surr{}.gaps0.uniq.for_LIPS.txt".format(acc, set_["num_of_sur_residues"]))
         path_uniq_TMD_seqs_surr5_for_LIPO = os.path.join(alignments_dir, "{}.surr5.gaps{}.uniq.for_LIPO.txt".format(acc, set_["max_n_gaps_in_TMD_subject_seq"]))
 
+
         single_prot_dict = extract_filtered_csv_homologues_to_alignments(set_, acc, TMD_len, fasta_all_TMD_seqs, path_uniq_TMD_seqs_for_PSSM_FREECONTACT,
                                                                          path_uniq_TMD_seqs_no_gaps_for_LIPS, path_uniq_TMD_seqs_surr5_for_LIPO, BLAST_csv_tar,
-                                                                         query_TMD_seq, logging)
+                                                                         query_TMD_seq, query_TMD_seq_surr5, logging)
         out_dict[acc] = single_prot_dict
 
 
@@ -290,7 +293,7 @@ def extract_filtered_csv_homologues_to_alignments_mult_prot(set_, df_set, loggin
 
 def extract_filtered_csv_homologues_to_alignments(set_, acc, TMD_len, fasta_all_TMD_seqs, path_uniq_TMD_seqs_for_PSSM_FREECONTACT,
                                                   path_uniq_TMD_seqs_no_gaps_for_LIPS, path_uniq_TMD_seqs_surr5_for_LIPO, BLAST_csv_tar,
-                                                  query_TMD_seq, logging):
+                                                  query_TMD_seq, query_TMD_seq_surr5, logging):
     fasta_uniq_TMD_seqs_for_PSSM_FREECONTACT = path_uniq_TMD_seqs_for_PSSM_FREECONTACT[:-4] + ".fas"
     fasta_uniq_TMD_seqs_no_gaps_for_LIPS = path_uniq_TMD_seqs_no_gaps_for_LIPS[:-4] + ".fas"
     fasta_uniq_TMD_seqs_surr5_for_LIPO = path_uniq_TMD_seqs_surr5_for_LIPO[:-4] + ".fas"
@@ -372,8 +375,8 @@ def extract_filtered_csv_homologues_to_alignments(set_, acc, TMD_len, fasta_all_
                 # only keep the seqs that have the same length as the first one
                 df_no_gaps_in_q_plus5 = df.loc[df['subject_TMD_align_seq_surr5'].str.len() == TMD_plus_5_len]
                 uniq_TMD_seqs_surr5_for_LIPO = df_no_gaps_in_q_plus5['subject_TMD_align_seq_surr5'].unique()
-                save_seqs(uniq_TMD_seqs_surr5_for_LIPO, path_uniq_TMD_seqs_surr5_for_LIPO, query_TMD_seq=None)
-                save_fasta_from_array(uniq_TMD_seqs_surr5_for_LIPO, fasta_uniq_TMD_seqs_surr5_for_LIPO, acc, query_TMD_seq=None)
+                save_seqs(uniq_TMD_seqs_surr5_for_LIPO, path_uniq_TMD_seqs_surr5_for_LIPO, query_TMD_seq=query_TMD_seq_surr5)
+                save_fasta_from_array(uniq_TMD_seqs_surr5_for_LIPO, fasta_uniq_TMD_seqs_surr5_for_LIPO, acc, query_TMD_seq=query_TMD_seq_surr5)
 
                 min_frac_ident_TMD = df["frac_ident_TMD"].min()
                 # print("min_frac_ident_TMD AFTER FILTER", min_frac_ident_TMD)
