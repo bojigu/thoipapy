@@ -13,10 +13,10 @@ def parse_a3m_alignment(set_, logging):
     # skip header
     next(tmp_file_handle)
     for row in tmp_file_handle:
-        tmp_protein_name = row.strip().split(",")[0]
+        acc = row.strip().split(",")[0]
 
-        output_oa3m_homologues_file = os.path.join(set_["Protein_folder"], "%s.fasta.surr20.a3m") % tmp_protein_name
-        output_oa3m_homologues_processed_file = os.path.join(set_["output_oa3m_homologues"],"%s.surr20.parse.a3m") % tmp_protein_name
+        output_oa3m_homologues_file = os.path.join(set_["Protein_folder"], "%s.fasta.surr20.a3m") % acc
+        output_oa3m_homologues_processed_file = os.path.join(set_["output_oa3m_homologues"],"%s.surr20.parse.a3m") % acc
         exect_str1 = "grep -v '^>' {a3m_file} |sed 's/[a-z]//g' >{a3m_processed_file}".format(a3m_file=output_oa3m_homologues_file,
                                                                                               a3m_processed_file=output_oa3m_homologues_processed_file)
 
@@ -40,12 +40,12 @@ def download_homologues_with_hhblits(set_,logging):
     #skip header
     next(tmp_file_handle)
     for row in tmp_file_handle:
-        tmp_protein_name = row.strip().split(",")[0]
+        acc = row.strip().split(",")[0]
         database = row.strip().split(",")[6]
-        tmp_protein_fasta = os.path.join(set_["Protein_folder"], "hhblits", database, "%s.surr20.fasta") % tmp_protein_name
+        tmp_protein_fasta = os.path.join(set_["Protein_folder"], "hhblits", database, "%s.surr20.fasta") % acc
         if os.path.isfile(tmp_protein_fasta):
-            output_oa3m_homologues_file = os.path.join(set_["Protein_folder"], "hhblits", database,  "%s.fasta.surr20.a3m") % tmp_protein_name
-            if tmp_protein_name=="QuePro" and os.path.isfile(output_oa3m_homologues_file):
+            output_oa3m_homologues_file = os.path.join(set_["Protein_folder"], "hhblits", database,  "%s.fasta.surr20.a3m") % acc
+            if acc=="QuePro" and os.path.isfile(output_oa3m_homologues_file):
                 os.system("rm %s" % output_oa3m_homologues_file)          ###remove QuePro.fasta.a3m that is the previous queried protein
 
             exect_str = "qsub -b y -q all.q -N 'hhblitsjob' {hhblits} -i {fasta_input} -oa3m {a3m_output} -d {uniprot_database} -Z 999999999 " \

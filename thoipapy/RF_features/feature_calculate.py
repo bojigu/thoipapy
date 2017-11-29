@@ -106,17 +106,17 @@ def mem_a3m_homologues_filter(set_,logging):
     # skip header
     next(tmp_file_handle)
     for row in tmp_file_handle:
-        tmp_protein_name = row.strip().split(",")[0][0:5]
+        acc = row.strip().split(",")[0][0:5]
         tm_start = int(row.strip().split(",")[4]) + 1
         tm_end = int(row.strip().split(",")[4]) + (int(row.strip().split(",")[3]) - int(row.strip().split(",")[2]) + 1)
         #return tm_end
-        homo_a3m_file = os.path.join(set_["output_oa3m_homologues"], "SinglePassTmd/%s.surr20.parse.a3m") % tmp_protein_name
+        homo_a3m_file = os.path.join(set_["output_oa3m_homologues"], "SinglePassTmd/%s.surr20.parse.a3m") % acc
         if os.path.isfile(homo_a3m_file):
 
             homo_a3m_file_handle=open(homo_a3m_file,"r")
-            homo_filter_file=os.path.join(set_["output_oa3m_homologues"], "SinglePassTmd/%s.surr20.a3m.mem.uniq.2gaps") %tmp_protein_name
+            homo_filter_file=os.path.join(set_["output_oa3m_homologues"], "SinglePassTmd/%s.surr20.a3m.mem.uniq.2gaps") %acc
             homo_filter_file_handle = open(homo_filter_file,"w")
-            homo_mem_lips_input_file = os.path.join(set_["output_oa3m_homologues"], "SinglePassTmd/%s.surr20.mem.lips.input") %tmp_protein_name
+            homo_mem_lips_input_file = os.path.join(set_["output_oa3m_homologues"], "SinglePassTmd/%s.surr20.mem.lips.input") %acc
             homo_mem_lips_input_file_handle = open(homo_mem_lips_input_file, "w")
             logging.info("starting parsing a3m file: %s\n" %homo_filter_file)
             i = 0
@@ -226,7 +226,7 @@ def create_PSSM_from_MSA(path_uniq_TMD_seqs_for_PSSM_FREECONTACT, pssm_csv, set_
         logging.warning("{} homo_filter_fasta_file does not exist({})".format(acc, path_uniq_TMD_seqs_for_PSSM_FREECONTACT))
 
 
-def calc_lipo_from_pssm(set_, df_set, logging):
+def lipo_from_pssm_mult_prot(set_, df_set, logging):
     """Calculates lipophilicity from a PSSM for a list of proteins.
 
     This function executes lipo_from_pssm for an input list of proteins.
@@ -242,7 +242,7 @@ def calc_lipo_from_pssm(set_, df_set, logging):
     database : str
         Database name, e.g. "crystal", "NMR" or "ETRA".
     """
-    logging.info('~~~~~~~~~~~~                 starting calc_lipo_from_pssm              ~~~~~~~~~~~~')
+    logging.info('~~~~~~~~~~~~                 starting lipo_from_pssm_mult_prot              ~~~~~~~~~~~~')
 
     # set_["lipo_out_dir"] = os.path.join(set_["feature_lipophilicity"],  database)
     # set_["pssm_dir"] = os.path.join(set_["feature_pssm"], database)
@@ -260,36 +260,52 @@ def calc_lipo_from_pssm(set_, df_set, logging):
     failed_acc_list = []
     plot_linechart = True
 
-    tmp_list_loc = set_["list_of_tmd_start_end"]
-    tmp_file_handle = open(tmp_list_loc, 'r')
+    #tmp_list_loc = set_["list_of_tmd_start_end"]
+    #tmp_file_handle = open(tmp_list_loc, 'r')
     # skip header
-    next(tmp_file_handle)
-    for row in tmp_file_handle:
-        acc_orig = row.strip().split(",")[0]
-        database = row.strip().split(",")[6]
-        if len(acc_orig) > 6:
-            print("{} shows an acc longer than 6 and will be truncated in further filenames".format(acc_orig))
+    #next(tmp_file_handle)
+    # for row in tmp_file_handle:
+    #     acc_orig = row.strip().split(",")[0]
+    #     database = row.strip().split(",")[6]
+    #     if len(acc_orig) > 6:
+    #         print("{} shows an acc longer than 6 and will be truncated in further filenames".format(acc_orig))
+    #acc = acc_orig[0:6]
+    # if int(row.strip().split(",")[4]) >= 5:
+    #     tm_surr_left = 5
+    # else:
+    #     tm_surr_left = int(row.strip().split(",")[4])
+    # if int(row.strip().split(",")[5]) >= 5:
+    #     tm_surr_right = 5
+    # else:
+    #     tm_surr_right = int(row.strip().split(",")[5])
 
-        acc = acc_orig[0:6]
-        if int(row.strip().split(",")[4])>=5:
-            tm_surr_left=5
-        else:
-            tm_surr_left = int(row.strip().split(",")[4])
-        if int(row.strip().split(",")[5])>=5:
-            tm_surr_right=5
-        else:
-            tm_surr_right=int(row.strip().split(",")[5])
 
-        result_tuple = lipo_from_pssm(set_, acc, database, tm_surr_left, tm_surr_right, scalename, hydrophob_scale_path, logging, plot_linechart)
+    for acc in df_set.index:
+        database = df_set.loc[acc, "database"]
+        query_TMD_sequence = df_set.loc[acc, "TMD_seq"]
+        tm_surr_left = df_set.loc[acc, "tm_surr_left"]
+        tm_surr_right = df_set.loc[acc, "tm_surr_right"]
+        # reset to 5. AM NOT SURE WHY.
+        if tm_surr_left >= 5:
+            tm_surr_left = 5
+        if tm_surr_right >= 5:
+            tm_surr_right = 5
+
+        # pssm_csv = os.path.join(set_["feature_pssm"], database, "{}.mem.2gap.pssm_surr5.csv".format(acc))
+        pssm_csv_surr5 = os.path.join(set_["feature_pssm"], database, "{}.surr5.gaps{}.pssm.csv".format(acc, set_["max_n_gaps_in_TMD_subject_seq"]))
+        lipo_csv = os.path.join(set_["feature_lipophilicity"], database, "{}_{}_lipo.csv".format(acc, scalename))
+
+        result_tuple = lipo_from_pssm(acc, pssm_csv_surr5, lipo_csv, tm_surr_left, tm_surr_right, scalename, hydrophob_scale_path, logging, plot_linechart)
+
         if result_tuple[1] is False:
             failed_acc_list.append(acc)
-    tmp_file_handle.close()
+
     if len(failed_acc_list) > 0:
-        sys.stdout.write("\n\ncalc_lipo_from_pssm failed for the following : {}".format(failed_acc_list))
-    logging.info('~~~~~~~~~~~~                 finished calc_lipo_from_pssm              ~~~~~~~~~~~~')
+        sys.stdout.write("\n\nlipo_from_pssm_mult_prot failed for the following : {}".format(failed_acc_list))
+    logging.info('~~~~~~~~~~~~                 finished lipo_from_pssm_mult_prot              ~~~~~~~~~~~~')
 
 
-def lipo_from_pssm(set_, acc, database, tm_surr_left, tm_surr_right, scalename, hydrophob_scale_path, logging, plot_linechart=False):
+def lipo_from_pssm(acc, pssm_csv_surr5, lipo_csv, tm_surr_left, tm_surr_right, scalename, hydrophob_scale_path, logging, plot_linechart=False):
     """Calculates lipophilicity from a PSSM for a single protein.
 
     Takes a PSSM as an input. The PSSM should have the fractions of each residue at each position.
@@ -328,17 +344,14 @@ def lipo_from_pssm(set_, acc, database, tm_surr_left, tm_surr_right, scalename, 
         or if an error occurred,
         acc, False, "pssm_csv not found"
     """
-    #pssm_csv = os.path.join(set_["feature_pssm"], database, "{}.mem.2gap.pssm_surr5.csv".format(acc))
-    pssm_csv_surr5 = os.path.join(set_["feature_pssm"], database, "{}.surr5.gaps{}.pssm.csv".format(acc, set_["max_n_gaps_in_TMD_subject_seq"]))
+    lipo_excel = lipo_csv[:-4] + ".xlsx"
+    lipo_linechart = lipo_csv[:-4] + "_linechart.png"
 
     if not os.path.isfile(pssm_csv_surr5):
         sys.stdout.write("\n{} skipped for lipo_from_pssm, pssm_csv not found. ".format(acc))
         sys.stdout.write("pssm_csv : {}".format(pssm_csv_surr5))
         sys.stdout.flush()
         return acc, False, "pssm_csv not found"
-    lipo_excel = os.path.join(set_["feature_lipophilicity"], database, "{}_{}_lipo.xlsx".format(acc, scalename))
-    lipo_csv = os.path.join(set_["feature_lipophilicity"], database, "{}_{}_lipo.csv".format(acc, scalename))
-    lipo_linechart = os.path.join(set_["feature_lipophilicity"], database,"{}_{}_lipo_linechart.png".format(acc, scalename))
 
     if not os.path.isdir(os.path.dirname(lipo_csv)):
         os.makedirs(os.path.dirname(lipo_csv))
@@ -493,6 +506,7 @@ def lipo_from_pssm(set_, acc, database, tm_surr_left, tm_surr_right, scalename, 
     #df_lipo.index=[int(i) -tm_surr_left for i in df_lipo.index]
     df_lipo["residue_num"] = [int(i) -tm_surr_left for i in df_lipo["residue_num"]]
     df_lipo.index =df_lipo["residue_num"]
+
     df_lipo = df_lipo[["residue_name","lipo_{}".format(scalename), "lipo_{}_mean_3_N_pos".format(scalename),"lipo_{}_mean_3_C_pos".format(scalename)]]
     #df_lipo.set_index("IND", inplace=True)
     df_lipo=df_lipo[tm_surr_left:-tm_surr_right]
@@ -518,12 +532,63 @@ def lipo_from_pssm(set_, acc, database, tm_surr_left, tm_surr_right, scalename, 
         fig.savefig(lipo_linechart, dpi=200)
         plt.close("all")
 
-    logging.info("{} calc_lipo_from_pssm finished using {} scale ({})".format(acc, scalename, lipo_csv))
+    logging.info("{} lipo_from_pssm_mult_prot finished using {} scale ({})".format(acc, scalename, lipo_csv))
     return acc, True, ""
 
 
-def entropy_calculation(set_, df_set, logging):
+def entropy_calculation_mult_prot(set_, df_set, logging):
     logging.info('start entropy calculation')
+
+    for acc in df_set.index:
+        database = df_set.loc[acc, "database"]
+        #homo_filter_fasta_file = os.path.join(set_["output_oa3m_homologues"],database,"%s.a3m.mem.uniq.2gaps%s") % (acc,set_["surres"])
+        alignments_dir = os.path.join(set_["homologues_folder"], "alignments", database)
+        path_uniq_TMD_seqs_for_PSSM_FREECONTACT = os.path.join(alignments_dir, "{}.surr{}.gaps{}.uniq.for_PSSM_FREECONTACT.txt".format(acc, set_["num_of_sur_residues"], set_["max_n_gaps_in_TMD_subject_seq"]))
+        entropy_file = os.path.join(set_["feature_entropy"], database, "{}.surr{}.gaps{}.uniq.entropy.csv".format(acc, set_["num_of_sur_residues"], set_["max_n_gaps_in_TMD_subject_seq"]))
+
+        entropy_calculation(acc, path_uniq_TMD_seqs_for_PSSM_FREECONTACT, entropy_file, logging)
+
+
+def entropy_calculation(acc, path_uniq_TMD_seqs_for_PSSM_FREECONTACT, entropy_file, logging):
+    if os.path.isfile(path_uniq_TMD_seqs_for_PSSM_FREECONTACT):
+
+        if not os.path.isdir(os.path.dirname(entropy_file)):
+            os.makedirs(os.path.dirname(entropy_file))
+
+        with open(entropy_file, 'w') as entropy_file_handle:
+            mat = []
+            with open(path_uniq_TMD_seqs_for_PSSM_FREECONTACT) as f:
+                for line in f.readlines():
+                    # for line in open(path_uniq_TMD_seqs_for_PSSM_FREECONTACT).readlines():
+                    if not re.search("^>", line):
+                        mat.append(list(line))
+                rowlen = len(mat[0])
+                collen = len(mat)
+                column = []
+            writer = csv.writer(entropy_file_handle, delimiter=',', quotechar='"', lineterminator='\n',
+                                quoting=csv.QUOTE_NONNUMERIC, doublequote=True)
+            writer.writerow(["residue_num", "residue_name", "Entropy"])
+            for j in range(0, rowlen - 1):
+                for i in range(0, collen):
+                    column.append(mat[i][j])
+                column_serie = Series(column)
+                p_data = column_serie.value_counts() / len(column_serie)  # calculates the probabilities
+                entropy = sc.stats.entropy(p_data)  # input probabilities to get the entropy
+                csv_header_for_ncbi_homologues_file = [j + 1, mat[0][j], entropy]
+                writer = csv.writer(entropy_file_handle, delimiter=',', quotechar='"', lineterminator='\n',
+                                    quoting=csv.QUOTE_NONNUMERIC, doublequote=True)
+                writer.writerow(csv_header_for_ncbi_homologues_file)
+                # entropy_file_handle.write(mat[0][j]+' '+ str(entropy)+'\n')
+                column = []
+            # entropy_file_handle.close()
+            logging.info('{} entropy_calculation finished ({})'.format(acc, entropy_file))
+    else:
+        logging.warning("{} entropy_calculation failed. {} input file not found".format(acc, path_uniq_TMD_seqs_for_PSSM_FREECONTACT))
+
+
+def coevolution_calculation_with_freecontact_mult_prot(set_, df_set, logging):
+    logging.info('start coevolution calculation using freecontact')
+    freecontact_loc=set_["freecontact_dir"]
 
     # tmp_list_loc = set_["list_of_tmd_start_end"]
     # tmp_file_handle = open(tmp_list_loc, 'r')
@@ -534,91 +599,39 @@ def entropy_calculation(set_, df_set, logging):
     #     database = row.strip().split(",")[6]
     for acc in df_set.index:
         database = df_set.loc[acc, "database"]
-        #homo_filter_fasta_file = os.path.join(set_["output_oa3m_homologues"],database,"%s.a3m.mem.uniq.2gaps%s") % (acc,set_["surres"])
-        alignments_dir = os.path.join(set_["homologues_folder"], "alignments", database)
-        path_uniq_TMD_seqs_for_PSSM_FREECONTACT = os.path.join(alignments_dir, "{}.surr{}.gaps{}.uniq.for_PSSM_FREECONTACT.txt".format(acc, set_["num_of_sur_residues"], set_["max_n_gaps_in_TMD_subject_seq"]))
-
-        if os.path.isfile(path_uniq_TMD_seqs_for_PSSM_FREECONTACT):
-            #try:
-            #entropy_file = os.path.join(set_["feature_entropy"], "NoRedundPro/%s.mem.2gap.entropy.csv") % acc
-            entropy_file = os.path.join(set_["feature_entropy"], database, "%s.mem.2gap.entropy%s.csv") % (acc,set_["surres"])
-            if not os.path.isdir(os.path.dirname(entropy_file)):
-                os.makedirs(os.path.dirname(entropy_file))
-
-            with open(entropy_file, 'w') as entropy_file_handle:
-                mat = []
-                with open(path_uniq_TMD_seqs_for_PSSM_FREECONTACT) as f:
-                    for line in f.readlines():
-                #for line in open(path_uniq_TMD_seqs_for_PSSM_FREECONTACT).readlines():
-                        if not re.search("^>", line):
-                            mat.append(list(line))
-                    rowlen = len(mat[0])
-                    collen = len(mat)
-                    column = []
-                writer = csv.writer(entropy_file_handle, delimiter=',', quotechar='"', lineterminator='\n',
-                                    quoting=csv.QUOTE_NONNUMERIC, doublequote=True)
-                writer.writerow(["residue_num","residue_name","Entropy"])
-                for j in range(0, rowlen - 1):
-                    for i in range(0, collen):
-                        column.append(mat[i][j])
-                    column_serie = Series(column)
-                    p_data = column_serie.value_counts() / len(column_serie)  # calculates the probabilities
-                    entropy = sc.stats.entropy(p_data)  # input probabilities to get the entropy
-                    csv_header_for_ncbi_homologues_file = [j+1,mat[0][j],entropy]
-                    writer = csv.writer(entropy_file_handle, delimiter=',', quotechar='"', lineterminator='\n',
-                                        quoting=csv.QUOTE_NONNUMERIC, doublequote=True)
-                    writer.writerow(csv_header_for_ncbi_homologues_file)
-                    #entropy_file_handle.write(mat[0][j]+' '+ str(entropy)+'\n')
-                    column = []
-                #entropy_file_handle.close()
-                logging.info('{} entropy_calculation finished ({})'.format(acc, entropy_file))
-            #except:
-            #    print("entropy calculation occures errors")
-    #tmp_file_handle.close()
-
-def coevolution_calculation_with_freecontact(set_, logging):
-    logging.info('start coevolution calculation by using freecontact')
-    freecontact_loc=set_["freecontact_dir"]
-
-    tmp_list_loc = set_["list_of_tmd_start_end"]
-    tmp_file_handle = open(tmp_list_loc, 'r')
-    # skip header
-    next(tmp_file_handle)
-    for row in tmp_file_handle:
-        acc = row.strip().split(",")[0][0:6]
-        database = row.strip().split(",")[6]
         alignments_dir = alignments_dir = os.path.join(set_["homologues_folder"], "alignments", database)
         path_uniq_TMD_seqs_for_PSSM_FREECONTACT = os.path.join(alignments_dir, "{}.surr{}.gaps{}.uniq.for_PSSM_FREECONTACT.txt".format(acc, set_["num_of_sur_residues"], set_["max_n_gaps_in_TMD_subject_seq"]))
+        freecontact_file = os.path.join(set_["feature_cumulative_coevolution"], database, "{}.surr{}.gaps{}.freecontact.csv".format(acc, set_["num_of_sur_residues"], set_["max_n_gaps_in_TMD_subject_seq"]))
 
         print(path_uniq_TMD_seqs_for_PSSM_FREECONTACT, os.path.isfile(path_uniq_TMD_seqs_for_PSSM_FREECONTACT))
 
-        if os.path.isfile(path_uniq_TMD_seqs_for_PSSM_FREECONTACT):
-            try:
-                #freecontact_file = os.path.join(set_["feature_cumulative_coevolution"], "zpro/NoRedundPro/%s.mem.2gap.freecontact") % acc
-                freecontact_file = os.path.join(set_["feature_cumulative_coevolution"],database,"%s.mem.2gap%s.freecontact") % (acc,set_["surres"])
-                thoipapy.utils.make_sure_path_exists(freecontact_file, isfile=True)
-                #freecontact_file_handle = open(freecontact_file, 'w')
-                exect_str = "grep -v '^>' {aln_file} |sed 's/[a-z]//g'|{freecontact} >{freecontact_output_file}".format(
-                    aln_file=path_uniq_TMD_seqs_for_PSSM_FREECONTACT, freecontact=freecontact_loc,freecontact_output_file=freecontact_file)
+        coevolution_calculation_with_freecontact(path_uniq_TMD_seqs_for_PSSM_FREECONTACT, freecontact_file, freecontact_loc, logging)
 
-                print(exect_str)
-                command = utils.Command(exect_str)
-                # command=Command(exect_str)
-                command.run(timeout=400)
+def coevolution_calculation_with_freecontact(path_uniq_TMD_seqs_for_PSSM_FREECONTACT, freecontact_file, freecontact_loc, logging):
+    if os.path.isfile(path_uniq_TMD_seqs_for_PSSM_FREECONTACT):
+        try:
+            # freecontact_file = os.path.join(set_["feature_cumulative_coevolution"], "zpro/NoRedundPro/%s.mem.2gap.freecontact") % acc
+            thoipapy.utils.make_sure_path_exists(freecontact_file, isfile=True)
+            # freecontact_file_handle = open(freecontact_file, 'w')
+            exect_str = "grep -v '^>' {aln_file} |sed 's/[a-z]//g'|{freecontact} >{freecontact_output_file}".format(
+                aln_file=path_uniq_TMD_seqs_for_PSSM_FREECONTACT, freecontact=freecontact_loc, freecontact_output_file=freecontact_file)
 
-                logging.info("Output file: %s\n" % freecontact_file)
-                #freecontact_file_handle.close()
-            except:
-                print("freecontact run occures errors")
-        else:
-            logging.warning("{} does not exist".format(path_uniq_TMD_seqs_for_PSSM_FREECONTACT))
-    tmp_file_handle.close()
+            #print(exect_str)
+            command = utils.Command(exect_str)
+            # command=Command(exect_str)
+            command.run(timeout=400)
 
-
-
+            logging.info("Output file: %s\n" % freecontact_file)
+            # freecontact_file_handle.close()
+        except:
+            logging.warning("freecontact gives an error")
+    else:
+        logging.warning("{} does not exist".format(path_uniq_TMD_seqs_for_PSSM_FREECONTACT))
 
 
-def cumulative_co_evolutionary_strength_parser(thoipapy, set_, logging):
+
+
+def parse_freecontact_coevolution_mult_prot(set_, df_set, logging):
     """
 
     Parameters
@@ -637,114 +650,116 @@ def cumulative_co_evolutionary_strength_parser(thoipapy, set_, logging):
     """
     logging.info('cumulative co-evolutionary strength parsing')
 
-    tmp_list_loc = set_["list_of_tmd_start_end"]
-    tmp_file_handle = open(tmp_list_loc, 'r')
-    # skip header
-    next(tmp_file_handle)
-    for row in tmp_file_handle:
-        acc = row.strip().split(",")[0][0:6]
-        database = row.strip().split(",")[6]
+    for acc in df_set.index:
+        database = df_set.loc[acc, "database"]
         #freecontact_file = os.path.join(set_["feature_cumulative_coevolution"],database,"%s.mem.2gap%s.freecontact") % (acc,set_["surres"])
-        freecontact_file = os.path.join(set_["feature_cumulative_coevolution"], database, "{}.mem.{}gap{}.freecontact".format(acc, set_["max_n_gaps_in_TMD_subject_seq"], set_["surres"]))
+        #freecontact_file = os.path.join(set_["feature_cumulative_coevolution"], database, "{}.mem.{}gap{}.freecontact".format(acc, set_["max_n_gaps_in_TMD_subject_seq"], set_["surres"]))
+        freecontact_file = os.path.join(set_["feature_cumulative_coevolution"], database, "{}.surr{}.gaps{}.freecontact.csv".format(acc, set_["num_of_sur_residues"], set_["max_n_gaps_in_TMD_subject_seq"]))
+        # freecontact_parsed_csv = os.path.join(set_["feature_cumulative_coevolution"],"zpro/NoRedundPro/%s.mem.2gap.cumul.coevostr.csv") % acc
+        # freecontact_parsed_csv = os.path.join(set_["feature_cumulative_coevolution"], database, "%s.mem.2gap.cumul.coevostr%s.csv") % (acc, set_["surres"])
+        freecontact_parsed_csv = os.path.join(set_["feature_cumulative_coevolution"], database, "{}.surr{}.gaps{}.freecontact_parsed.csv".format(acc, set_["num_of_sur_residues"], set_["max_n_gaps_in_TMD_subject_seq"]))
 
-        dict_di = {}
-        dict_mi = {}
-        dict_di_list = {}
-        dict_mi_list = {}
-        s = "-";
-        if os.path.isfile(freecontact_file):
-            try:
-                #cumulative_coevlution_strength_file = os.path.join(set_["feature_cumulative_coevolution"],"zpro/NoRedundPro/%s.mem.2gap.cumul.coevostr.csv") % acc
-                cumulative_coevlution_strength_file = os.path.join(set_["feature_cumulative_coevolution"],database,"%s.mem.2gap.cumul.coevostr%s.csv") % (acc,set_["surres"])
-                # cumulative_coevlution_strength_file = "/scratch/zeng/Q6ZRP7.csv"
-                cumulative_coevlution_strength_file_handle = open(cumulative_coevlution_strength_file, 'w')
-                freecontact_file_handle = open(freecontact_file, 'r')
-                dict_residuenum_residuename = {}
-                for row in freecontact_file_handle:  # get the last line of the *.freecontact file which contains the tmd length infor
-                    residue_pairs = row.strip().split()
-                    dict_di[s.join([residue_pairs[0], residue_pairs[2]])] = residue_pairs[4]
-                    dict_mi[s.join([residue_pairs[0], residue_pairs[2]])] = residue_pairs[5]
-                    dict_residuenum_residuename[int(residue_pairs[0])] = residue_pairs[1]
-                    dict_residuenum_residuename[int(residue_pairs[2])] = residue_pairs[3]
-                    if not residue_pairs[0] in dict_di_list:
-                        dict_di_list[residue_pairs[0]] = []
-                        dict_di_list[residue_pairs[0]].append(residue_pairs[5])
-                    else:
-                        dict_di_list[residue_pairs[0]].append(residue_pairs[5])
-                    if not residue_pairs[2] in dict_di_list:
-                        dict_di_list[residue_pairs[2]] = []
-                        dict_di_list[residue_pairs[2]].append(residue_pairs[5])
-                    else:
-                        dict_di_list[residue_pairs[2]].append(residue_pairs[5])
-                    if not residue_pairs[0] in dict_mi_list:
-                        dict_mi_list[residue_pairs[0]] = []
-                        dict_mi_list[residue_pairs[0]].append(residue_pairs[4])
-                    else:
-                        dict_mi_list[residue_pairs[0]].append(residue_pairs[4])
-                    if not residue_pairs[2] in dict_mi_list:
-                        dict_mi_list[residue_pairs[2]] = []
-                        dict_mi_list[residue_pairs[2]].append(residue_pairs[4])
-                    else:
-                        dict_mi_list[residue_pairs[2]].append(residue_pairs[4])
+        parse_freecontact_coevolution(acc, freecontact_file, freecontact_parsed_csv, logging)
 
-                tmd_length = int(row.strip().split()[2])
-                CumDI4 = [0] * tmd_length
-                CumMI4 = [0] * tmd_length
-                CumDI8 = [0] * tmd_length
-                CumMI8 = [0] * tmd_length
-                CoevDI4 = [0] * tmd_length
-                CoevMI4 = [0] * tmd_length
-                CoevDI8 = [0] * tmd_length
-                CoevMI8 = [0] * tmd_length
-                CoevDImax = [0] * tmd_length  # the sum of the top 8
-                CoevMImax = [0] * tmd_length
-                for key in dict_di_list:
-                    CoevDI4[int(key) - 1] = sum(map(float, sorted(dict_di_list[key], reverse=True)[0:4]))/4
-                    CoevMI4[int(key) - 1] = sum(map(float, sorted(dict_mi_list[key], reverse=True)[0:4]))/4
-                    CoevDI8[int(key) - 1] = sum(map(float, sorted(dict_di_list[key], reverse=True)[0:8]))/8
-                    CoevMI8[int(key) - 1] = sum(map(float, sorted(dict_mi_list[key], reverse=True)[0:8]))/8
-                    CoevDImax[int(key) - 1] = sorted(dict_di_list[key], reverse=True)[0]
-                    CoevMImax[int(key) - 1] = sorted(dict_mi_list[key], reverse=True)[0]
-                    # print(str(key)+"corresponding to"+str(dict_di_list[key]))
-                # print(residue_di_new)
-                dict_di_value_sort = sorted(dict_di.items(), key=lambda x: x[1], reverse=True)[0:tmd_length]
-                dict_mi_value_sort = sorted(dict_mi.items(), key=lambda x: x[1], reverse=True)[0:tmd_length]
+def parse_freecontact_coevolution(acc, freecontact_file, freecontact_parsed_csv, logging):
+    if os.path.isfile(freecontact_file):
+        try:
+            dict_di = {}
+            dict_mi = {}
+            dict_di_list = {}
+            dict_mi_list = {}
+            s = "-"
+            # freecontact_parsed_csv = "/scratch/zeng/Q6ZRP7.csv"
+            freecontact_parsed_csv_handle = open(freecontact_parsed_csv, 'w')
+            freecontact_file_handle = open(freecontact_file, 'r')
+            dict_residuenum_residuename = {}
+            for row in freecontact_file_handle:  # get the last line of the *.freecontact file which contains the tmd length infor
+                residue_pairs = row.strip().split()
+                dict_di[s.join([residue_pairs[0], residue_pairs[2]])] = residue_pairs[4]
+                dict_mi[s.join([residue_pairs[0], residue_pairs[2]])] = residue_pairs[5]
+                dict_residuenum_residuename[int(residue_pairs[0])] = residue_pairs[1]
+                dict_residuenum_residuename[int(residue_pairs[2])] = residue_pairs[3]
+                if not residue_pairs[0] in dict_di_list:
+                    dict_di_list[residue_pairs[0]] = []
+                    dict_di_list[residue_pairs[0]].append(residue_pairs[5])
+                else:
+                    dict_di_list[residue_pairs[0]].append(residue_pairs[5])
+                if not residue_pairs[2] in dict_di_list:
+                    dict_di_list[residue_pairs[2]] = []
+                    dict_di_list[residue_pairs[2]].append(residue_pairs[5])
+                else:
+                    dict_di_list[residue_pairs[2]].append(residue_pairs[5])
+                if not residue_pairs[0] in dict_mi_list:
+                    dict_mi_list[residue_pairs[0]] = []
+                    dict_mi_list[residue_pairs[0]].append(residue_pairs[4])
+                else:
+                    dict_mi_list[residue_pairs[0]].append(residue_pairs[4])
+                if not residue_pairs[2] in dict_mi_list:
+                    dict_mi_list[residue_pairs[2]] = []
+                    dict_mi_list[residue_pairs[2]].append(residue_pairs[4])
+                else:
+                    dict_mi_list[residue_pairs[2]].append(residue_pairs[4])
 
-                for i in range(0, 4):
-                    res0 = int(dict_di_value_sort[i][0].strip().split('-')[0]) - 1
-                    res1 = int(dict_di_value_sort[i][0].strip().split('-')[1]) - 1
-                    CumDI4[res0] = CumDI4[res0] + float(dict_di_value_sort[i][1])
-                    CumDI4[res1] = CumDI4[res1] + float(dict_di_value_sort[i][1])
-                    CumMI4[res0] = CumMI4[res0] + float(dict_mi_value_sort[i][1])
-                    CumMI4[res1] = CumMI4[res1] + float(dict_mi_value_sort[i][1])
+            tmd_length = int(row.strip().split()[2])
+            CumDI4 = [0] * tmd_length
+            CumMI4 = [0] * tmd_length
+            CumDI8 = [0] * tmd_length
+            CumMI8 = [0] * tmd_length
+            CoevDI4 = [0] * tmd_length
+            CoevMI4 = [0] * tmd_length
+            CoevDI8 = [0] * tmd_length
+            CoevMI8 = [0] * tmd_length
+            CoevDImax = [0] * tmd_length  # the sum of the top 8
+            CoevMImax = [0] * tmd_length
+            for key in dict_di_list:
+                CoevDI4[int(key) - 1] = sum(map(float, sorted(dict_di_list[key], reverse=True)[0:4])) / 4
+                CoevMI4[int(key) - 1] = sum(map(float, sorted(dict_mi_list[key], reverse=True)[0:4])) / 4
+                CoevDI8[int(key) - 1] = sum(map(float, sorted(dict_di_list[key], reverse=True)[0:8])) / 8
+                CoevMI8[int(key) - 1] = sum(map(float, sorted(dict_mi_list[key], reverse=True)[0:8])) / 8
+                CoevDImax[int(key) - 1] = sorted(dict_di_list[key], reverse=True)[0]
+                CoevMImax[int(key) - 1] = sorted(dict_mi_list[key], reverse=True)[0]
+                # print(str(key)+"corresponding to"+str(dict_di_list[key]))
+            # print(residue_di_new)
+            dict_di_value_sort = sorted(dict_di.items(), key=lambda x: x[1], reverse=True)[0:tmd_length]
+            dict_mi_value_sort = sorted(dict_mi.items(), key=lambda x: x[1], reverse=True)[0:tmd_length]
 
-                for i in range(0, 8):
-                    res0 = int(dict_di_value_sort[i][0].strip().split('-')[0]) - 1
-                    res1 = int(dict_di_value_sort[i][0].strip().split('-')[1]) - 1
-                    CumDI8[res0] = CumDI8[res0] + float(dict_di_value_sort[i][1])
-                    CumDI8[res1] = CumDI8[res1] + float(dict_di_value_sort[i][1])
-                    CumMI8[res0] = CumMI8[res0] + float(dict_mi_value_sort[i][1])
-                    CumMI8[res1] = CumMI8[res1] + float(dict_mi_value_sort[i][1])
+            for i in range(0, 4):
+                res0 = int(dict_di_value_sort[i][0].strip().split('-')[0]) - 1
+                res1 = int(dict_di_value_sort[i][0].strip().split('-')[1]) - 1
+                CumDI4[res0] = CumDI4[res0] + float(dict_di_value_sort[i][1])
+                CumDI4[res1] = CumDI4[res1] + float(dict_di_value_sort[i][1])
+                CumMI4[res0] = CumMI4[res0] + float(dict_mi_value_sort[i][1])
+                CumMI4[res1] = CumMI4[res1] + float(dict_mi_value_sort[i][1])
 
-                writer = csv.writer(cumulative_coevlution_strength_file_handle, delimiter=',', quotechar='"',
-                                    lineterminator='\n',
-                                    quoting=csv.QUOTE_NONNUMERIC, doublequote=True)
-                writer.writerow(["residue_num", "residue_name","CoevDImax", "CoevDI4","CoevDI8","CumDI4","CumDI8","CoevMImax", "CoevMI4", "CoevMI8", "CumMI4", "CumMI8"])
-                for index in range(len(CumDI8)):
-                    csv_header_for_cumulative_strength_file = [(index + 1), dict_residuenum_residuename[(index + 1)],
-                                                               CoevDImax[index],CoevDI4[index],CoevDI8[index],CumDI4[index],CumDI8[index],CoevMImax[index],CoevMI4[index],
-                                                                CoevMI8[index],CumMI4[index],CumMI8[index]]
-                    # writer = csv.writer(cumulative_coevlution_strength_file_handle, delimiter=',', quotechar='"', lineterminator='\n',
-                    # quoting=csv.QUOTE_NONNUMERIC, doublequote=True)
-                    writer.writerow(csv_header_for_cumulative_strength_file)
-                freecontact_file_handle.close()
-                cumulative_coevlution_strength_file_handle.close()
-                # cumulative_coevlution_strength_file_handle.write(str(residue_di[index])+"\t"+str(residue_mi[index])+"\n")
-            except:
-                print("coevolution parsing gave an error")
-    tmp_file_handle.close()
+            for i in range(0, 8):
+                res0 = int(dict_di_value_sort[i][0].strip().split('-')[0]) - 1
+                res1 = int(dict_di_value_sort[i][0].strip().split('-')[1]) - 1
+                CumDI8[res0] = CumDI8[res0] + float(dict_di_value_sort[i][1])
+                CumDI8[res1] = CumDI8[res1] + float(dict_di_value_sort[i][1])
+                CumMI8[res0] = CumMI8[res0] + float(dict_mi_value_sort[i][1])
+                CumMI8[res1] = CumMI8[res1] + float(dict_mi_value_sort[i][1])
 
-def relative_position_calculation(set_,logging):
+            writer = csv.writer(freecontact_parsed_csv_handle, delimiter=',', quotechar='"',
+                                lineterminator='\n',
+                                quoting=csv.QUOTE_NONNUMERIC, doublequote=True)
+            writer.writerow(["residue_num", "residue_name", "CoevDImax", "CoevDI4", "CoevDI8", "CumDI4", "CumDI8", "CoevMImax", "CoevMI4", "CoevMI8", "CumMI4", "CumMI8"])
+            for index in range(len(CumDI8)):
+                csv_header_for_cumulative_strength_file = [(index + 1), dict_residuenum_residuename[(index + 1)],
+                                                           CoevDImax[index], CoevDI4[index], CoevDI8[index], CumDI4[index], CumDI8[index], CoevMImax[index], CoevMI4[index],
+                                                           CoevMI8[index], CumMI4[index], CumMI8[index]]
+                # writer = csv.writer(freecontact_parsed_csv_handle, delimiter=',', quotechar='"', lineterminator='\n',
+                # quoting=csv.QUOTE_NONNUMERIC, doublequote=True)
+                writer.writerow(csv_header_for_cumulative_strength_file)
+            freecontact_file_handle.close()
+            freecontact_parsed_csv_handle.close()
+            # freecontact_parsed_csv_handle.write(str(residue_di[index])+"\t"+str(residue_mi[index])+"\n")
+        except:
+            print("coevolution parsing gave an error")
+    else:
+        logging.warning("{} parse_freecontact_coevolution failed, {} not found.".format(acc, freecontact_file))
+
+
+def relative_position_calculation(set_, df_set, logging):
     """calculate the residue relative position on the TMD
 
     Parameters
@@ -762,49 +777,49 @@ def relative_position_calculation(set_,logging):
     """
     logging.info('start to calculate the relative positions')
 
-    tmp_list_loc = set_["list_of_tmd_start_end"]
-    with open(tmp_list_loc, 'r') as tmp_file_handle:
-        # skip header
-        next(tmp_file_handle)
-        for row in tmp_file_handle:
-            acc = row.strip().split(",")[0][0:6]
-            tm_start = int(row.strip().split(",")[2])
-            seq_len= int(row.strip().split(",")[1])
-            database = row.strip().split(",")[6]
-            relative_position_file = os.path.join(set_["feature_relative_position"], database, "%s.relative_position%s.csv") % (acc, set_["surres"])
-            alignments_dir = os.path.join(set_["homologues_folder"], "alignments", database)
-            path_uniq_TMD_seqs_for_PSSM_FREECONTACT = os.path.join(alignments_dir, "{}.surr{}.gaps{}.uniq.for_PSSM_FREECONTACT.txt".format(acc, set_["num_of_sur_residues"], set_["max_n_gaps_in_TMD_subject_seq"]))
+    for acc in df_set.index:
+        database = df_set.loc[acc, "database"]
+        #tm_start = int(row.strip().split(",")[2])
+        #seq_len = int(row.strip().split(",")[1])
+        tm_start = df_set.loc[acc, "TMD_start"]
+        tm_seq = df_set.loc[acc, "full_seq"]
+        seq_len = df_set.loc[acc, "seqlen"]
 
-            if os.path.isfile(path_uniq_TMD_seqs_for_PSSM_FREECONTACT):
-                relative_position_file_handle = open(relative_position_file, 'w')
+        relative_position_file = os.path.join(set_["feature_relative_position"], database, "%s.relative_position%s.csv") % (acc, set_["surres"])
+        thoipapy.utils.make_sure_path_exists(relative_position_file, isfile=True)
+        alignments_dir = os.path.join(set_["homologues_folder"], "alignments", database)
+        path_uniq_TMD_seqs_for_PSSM_FREECONTACT = os.path.join(alignments_dir, "{}.surr{}.gaps{}.uniq.for_PSSM_FREECONTACT.txt".format(acc, set_["num_of_sur_residues"], set_["max_n_gaps_in_TMD_subject_seq"]))
+
+        if os.path.isfile(path_uniq_TMD_seqs_for_PSSM_FREECONTACT):
+            relative_position_file_handle = open(relative_position_file, 'w')
+            mat = []
+            writer = csv.writer(relative_position_file_handle, delimiter=',', quotechar='"',
+                                lineterminator='\n',
+                                quoting=csv.QUOTE_NONNUMERIC, doublequote=True)
+            writer.writerow(
+                ['residue_num', 'residue_name', 'Rp_tmd', 'Rp_seq'])
+            # if os.path.isfile(path_uniq_TMD_seqs_for_PSSM_FREECONTACT):
+            # for line in open(path_uniq_TMD_seqs_for_PSSM_FREECONTACT).readlines():
+
+            with open(path_uniq_TMD_seqs_for_PSSM_FREECONTACT) as f:
                 mat = []
-                writer = csv.writer(relative_position_file_handle, delimiter=',', quotechar='"',
-                                    lineterminator='\n',
-                                    quoting=csv.QUOTE_NONNUMERIC, doublequote=True)
-                writer.writerow(
-                    ['residue_num', 'residue_name', 'Rp_tmd', 'Rp_seq'])
-                # if os.path.isfile(path_uniq_TMD_seqs_for_PSSM_FREECONTACT):
-                # for line in open(path_uniq_TMD_seqs_for_PSSM_FREECONTACT).readlines():
-
-                with open(path_uniq_TMD_seqs_for_PSSM_FREECONTACT) as f:
-                    mat = []
-                    for line in f.readlines():
-                        if not re.search("^>", line):
-                            mat.append(list(line))
-                    tm_seq = mat[0]
-                    tm_len=len(tm_seq)
-                    for i in range(1,tm_len):
-                        rp1=i/tm_len
-                        rp2=(i+tm_start-1)/seq_len
-                        writer.writerow([i,tm_seq[i-1],rp1,rp2])
-                relative_position_file_handle.close()
-                logging.info('{} relative position calculation finished ({})'.format(acc, relative_position_file))
+                for line in f.readlines():
+                    if not re.search("^>", line):
+                        mat.append(list(line))
+                tm_seq = mat[0]
+                tm_len=len(tm_seq)
+                for i in range(1,tm_len):
+                    rp1=i/tm_len
+                    rp2=(i+tm_start-1)/seq_len
+                    writer.writerow([i,tm_seq[i-1],rp1,rp2])
+            relative_position_file_handle.close()
+            logging.info('{} relative position calculation finished ({})'.format(acc, relative_position_file))
 
     #tmp_file_handle.close()
 
 
 
-def LIPS_score_calculation_mult_prot(thoipapy, set_, logging):
+def LIPS_score_calculation_mult_prot(set_, df_set, logging):
     logging.info('start lips score calculation')
 
     tmp_list_loc = set_["list_of_tmd_start_end"]
@@ -821,9 +836,11 @@ def LIPS_score_calculation_mult_prot(thoipapy, set_, logging):
 
             if os.path.isfile(path_uniq_TMD_seqs_no_gaps_for_LIPS):
                 # LIPS_output_file = os.path.join(set_["feature_lips_score"], "zpro/NoRedundPro/%s.mem.lips.output") % acc
-                path_uniq_TMD_seqs_no_gaps_for_LIPS = os.path.join(alignments_dir, "{}.surr{}.gaps0.uniq.for_LIPS.txt".format(acc, set_["num_of_sur_residues"]))
+                #path_uniq_TMD_seqs_no_gaps_for_LIPS = os.path.join(alignments_dir, "{}.surr{}.gaps0.uniq.for_LIPS.txt".format(acc, set_["num_of_sur_residues"]))
 
-                LIPS_output_file = os.path.join(set_["feature_lips_score"], database, "%s.mem.lips.output%s") % (acc, set_["surres"])
+                #LIPS_output_file = os.path.join(set_["feature_lips_score"], database, "%s.mem.lips.output%s") % (acc, set_["surres"])
+
+                LIPS_output_file = os.path.join(alignments_dir, "{}.surr{}.LIPS_output.csv".format(acc, set_["num_of_sur_residues"]))
 
                 LIPS_score_calculation(path_uniq_TMD_seqs_no_gaps_for_LIPS, LIPS_output_file)
             else:
@@ -831,6 +848,9 @@ def LIPS_score_calculation_mult_prot(thoipapy, set_, logging):
 
 
 def LIPS_score_calculation(input_seq_file, LIPS_output_file):
+
+    thoipapy.utils.make_sure_path_exists(LIPS_output_file, isfile=True)
+
     with open(input_seq_file, "r") as file:
         sequence = ' '.join(line.strip() for line in file)
 
@@ -1075,9 +1095,7 @@ def LIPS_score_calculation(input_seq_file, LIPS_output_file):
     # LIPS_output_file_handle.close()
     # file.close()
 
-
-
-def Lips_score_parsing(set_, logging):
+def parse_LIPS_score_mult_prot(set_, df_set, logging):
     logging.info('start parsing lips output to cons and lips scores')
 
     tmp_list_loc = set_["list_of_tmd_start_end"]
@@ -1087,70 +1105,76 @@ def Lips_score_parsing(set_, logging):
         for row in tmp_file_handle:
             acc = row.strip().split(",")[0][0:6]
             database = row.strip().split(",")[6]
-            LIPS_output_file = os.path.join(set_["feature_lips_score"],database,"%s.mem.lips.output%s") % (acc,set_["surres"])
-            if os.path.isfile(LIPS_output_file):
-                #try:
-                surface_num = 0
-                surface_lips = 100  ##100 is an initialized big number assuming lips score will not bigger than this number
-                with open(LIPS_output_file, "r") as Lips_outnput_file_handle:
-                    #conslips_output_file = os.path.join(set_["feature_lips_score"], "zpro/NoRedundPro/%s.mem.lips.output.conslips.csv") % acc
-                    conslips_output_file = os.path.join(set_["feature_lips_score"],database,"%s.mem.lips.output.conslips%s.csv") % (acc,set_["surres"])
-                    conslips_output_file_handle = open(conslips_output_file, "w")
-                    i = 0
-                    array = []
-                    dict = {}
-                    for row in Lips_outnput_file_handle:
-                        if re.search("^\s+\d+\s+[A-Z]", row):
-                            array = row.split()
-                            if not int(array[0]) in dict:
-                                dict[int(array[0])] = " ".join([array[1], array[2], array[3]])
+            #LIPS_output_file = os.path.join(set_["feature_lips_score"],database,"%s.mem.lips.output%s") % (acc,set_["surres"])
+            alignments_dir = os.path.join(set_["homologues_folder"], "alignments", database)
+            LIPS_output_file = os.path.join(alignments_dir, "{}.surr{}.LIPS_output.csv".format(acc, set_["num_of_sur_residues"]))
+            LIPS_parsed_csv = os.path.join(set_["feature_lips_score"], database, "{}.surr{}.LIPS_score_parsed.csv".format(acc, set_["num_of_sur_residues"]))
+            parse_LIPS_score(acc, LIPS_output_file, LIPS_parsed_csv, logging)
 
-                        if re.search("^\d{1}\s+", row):
-                            surface_num1 = row.split()[0]
-                            surface_lips1 = row.split()[3]
-                            if (float(surface_lips1) < float(surface_lips)):
-                                surface_lips = surface_lips1
-                                surface_num = surface_num1
-                    Lips_outnput_file_handle.close()
+def parse_LIPS_score(acc, LIPS_output_file, LIPS_parsed_csv, logging):
 
-                    surface_find = 0
-                    dict1 = {}
-                    Lips_outnput_file_handle = open(LIPS_output_file, "r")
-                    for row in Lips_outnput_file_handle:
-                        if re.search("^SURFACE\s" + surface_num, row):
-                            surface_find = 1
-                            continue
-                        if surface_find == 1 and re.search("^\s+\d+\s+[A-Z]", row):
-                            array = row.split()
-                            if not int(array[0]) in dict1:
-                                dict1[int(array[0])] = " ".join([array[1], array[2], array[3]])
-                        else:
-                            surface_find = 0
-                    Lips_outnput_file_handle.close()
+    thoipapy.utils.make_sure_path_exists(LIPS_parsed_csv, isfile=True)
 
+    if os.path.isfile(LIPS_output_file):
+        # try:
+        surface_num = 0
+        surface_lips = 100  ##100 is an initialized big number assuming lips score will not bigger than this number
+        with open(LIPS_output_file, "r") as LIPS_output_handle:
+            # LIPS_parsed_csv = os.path.join(set_["feature_lips_score"], "zpro/NoRedundPro/%s.mem.lips.output.conslips.csv") % acc
 
-                    #Lips_outnput_file_handle.close()
+            with open(LIPS_parsed_csv, "w") as LIPS_parsed_csv_handle:
+                i = 0
+                array = []
+                dict = {}
+                for row in LIPS_output_handle:
+                    if re.search("^\s+\d+\s+[A-Z]", row):
+                        array = row.split()
+                        if not int(array[0]) in dict:
+                            dict[int(array[0])] = " ".join([array[1], array[2], array[3]])
 
-                    writer = csv.writer(conslips_output_file_handle, delimiter=',', quotechar='"', lineterminator='\n',
-                                        quoting=csv.QUOTE_NONNUMERIC, doublequote=True)
-                    writer.writerow(["residue_num", "residue_name", "lipophilicity", "entropy2","Lips_surface"])
-                    for k, v in sorted(dict.items()):
-                        v1 = v.split()
-                        v1.insert(0, k)
-                        if k in dict1:
-                            v1.insert(4, 1)
-                        else:
-                            v1.insert(4, 0)
-                        csv_header_for_cons_lips_score_file = v1
-                        writer.writerow(csv_header_for_cons_lips_score_file)
-                    conslips_output_file_handle.close()
-                    logging.info('{} lips score parse finished ({})'.format(acc, conslips_output_file))
-                    #except:
-                    #    print("LIPS parsing occures errors")
-            else:
-                logging.warning("{} LIPS_output_file not found.")
+                    if re.search("^\d{1}\s+", row):
+                        surface_num1 = row.split()[0]
+                        surface_lips1 = row.split()[3]
+                        if (float(surface_lips1) < float(surface_lips)):
+                            surface_lips = surface_lips1
+                            surface_num = surface_num1
+                LIPS_output_handle.close()
 
+                surface_find = 0
+                dict1 = {}
+                LIPS_output_handle = open(LIPS_output_file, "r")
+                for row in LIPS_output_handle:
+                    if re.search("^SURFACE\s" + surface_num, row):
+                        surface_find = 1
+                        continue
+                    if surface_find == 1 and re.search("^\s+\d+\s+[A-Z]", row):
+                        array = row.split()
+                        if not int(array[0]) in dict1:
+                            dict1[int(array[0])] = " ".join([array[1], array[2], array[3]])
+                    else:
+                        surface_find = 0
+                LIPS_output_handle.close()
 
+                # LIPS_output_handle.close()
+
+                writer = csv.writer(LIPS_parsed_csv_handle, delimiter=',', quotechar='"', lineterminator='\n',
+                                    quoting=csv.QUOTE_NONNUMERIC, doublequote=True)
+                writer.writerow(["residue_num", "residue_name", "lipophilicity", "entropy2", "Lips_surface"])
+                for k, v in sorted(dict.items()):
+                    v1 = v.split()
+                    v1.insert(0, k)
+                    if k in dict1:
+                        v1.insert(4, 1)
+                    else:
+                        v1.insert(4, 0)
+                    csv_header_for_cons_lips_score_file = v1
+                    writer.writerow(csv_header_for_cons_lips_score_file)
+                LIPS_parsed_csv_handle.close()
+                logging.info('{} lips score parse finished ({})'.format(acc, LIPS_parsed_csv))
+            # except:
+            #    print("LIPS parsing occures errors")
+    else:
+        logging.warning("{} LIPS_output_file not found.")
 
 
 def convert_bind_data_to_csv(set_,logging):
@@ -1189,114 +1213,147 @@ def convert_bind_data_to_csv(set_,logging):
                          #                                                                                                 #
                          ###################################################################################################
 
-def features_combine_to_traindata(set_,logging):
+def combine_csv_files_with_features(set_, df_set, logging):
     logging.info('Combining features into traindata')
-    tmp_list_loc = set_["list_of_tmd_start_end"]
-    tmp_file_handle = open(tmp_list_loc, 'r')
-    # skip header
-    next(tmp_file_handle)
-    for row in tmp_file_handle:
-        acc = row.strip().split(",")[0]
-        database = row.strip().split(",")[6]
-        entropy_file = os.path.join(set_["feature_entropy"],database, "%s.mem.2gap.entropy%s.csv") %(acc,set_["surres"])
+    for acc in df_set.index:
+        database = df_set.loc[acc, "database"]
+        TMD_seq = df_set.loc[acc, "TMD_seq"]
+        #entropy_file = os.path.join(set_["feature_entropy"],database, "%s.mem.2gap.entropy%s.csv") %(acc,set_["surres"])
         #pssm_file = os.path.join(set_["feature_pssm"],database, "%s.mem.2gap.pssm%s.csv") %(acc,set_["surres"])
-        pssm_csv = os.path.join(set_["feature_pssm"], database, "{}.surr{}.gaps{}.pssm.csv".format(acc, set_["num_of_sur_residues"], set_["max_n_gaps_in_TMD_subject_seq"]))
 
-        lipophilicity_file=os.path.join(set_["feature_lipophilicity"],database,"%s_Hessa_lipo.csv") %acc
-        cumulative_coevlution_strength_file = os.path.join(set_["feature_cumulative_coevolution"],database,"%s.mem.2gap.cumul.coevostr%s.csv") %(acc,set_["surres"])
+        #lipophilicity_file=os.path.join(set_["feature_lipophilicity"],database,"%s_Hessa_lipo.csv") %acc
+        scalename = set_["lipophilicity_scale"]
+        lipo_csv = os.path.join(set_["feature_lipophilicity"], database, "{}_{}_lipo.csv".format(acc, scalename))
+        #freecontact_parsed_csv = os.path.join(set_["feature_cumulative_coevolution"],database,"%s.mem.2gap.cumul.coevostr%s.csv") %(acc,set_["surres"])
         relative_position_file = os.path.join(set_["feature_relative_position"], database, "%s.relative_position%s.csv") % (acc, set_["surres"])
-        #cumulative_coevlution_strength_file = os.path.join("/scratch/zeng/thoipapy/Features/cumulative_coevolution/zfullfreecontact","%s.cumul.coevostr.csv") %acc
-        conslips_score_file=os.path.join(set_["feature_lips_score"],database,"%s.mem.lips.output.conslips%s.csv") %(acc,set_["surres"])
+        #freecontact_parsed_csv = os.path.join("/scratch/zeng/thoipapy/Features/cumulative_coevolution/zfullfreecontact","%s.cumul.coevostr.csv") %acc
+        #LIPS_parsed_csv=os.path.join(set_["feature_lips_score"],database,"%s.mem.lips.output.conslips%s.csv") %(acc,set_["surres"])
+        LIPS_parsed_csv = os.path.join(set_["feature_lips_score"], database, "{}.surr{}.LIPS_score_parsed.csv".format(acc, set_["num_of_sur_residues"]))
+        pssm_csv = os.path.join(set_["feature_pssm"], database, "{}.surr{}.gaps{}.pssm.csv".format(acc, set_["num_of_sur_residues"], set_["max_n_gaps_in_TMD_subject_seq"]))
+        alignments_dir = alignments_dir = os.path.join(set_["homologues_folder"], "alignments", database)
+        entropy_file = os.path.join(set_["feature_entropy"], database, "{}.surr{}.gaps{}.uniq.entropy.csv".format(acc, set_["num_of_sur_residues"], set_["max_n_gaps_in_TMD_subject_seq"]))
+
+        freecontact_parsed_csv = os.path.join(set_["feature_cumulative_coevolution"], database, "{}.surr{}.gaps{}.freecontact_parsed.csv".format(acc, set_["num_of_sur_residues"], set_["max_n_gaps_in_TMD_subject_seq"]))
+
+        feature_combined_file = os.path.join(set_["RF_features"], "combined", database, "{}.surr{}.gaps{}.combined_features.csv".format(acc, set_["num_of_sur_residues"], set_["max_n_gaps_in_TMD_subject_seq"]))
+        thoipapy.utils.make_sure_path_exists(feature_combined_file, isfile=True)
+
+        all_files_found = True
+        for filepath in [entropy_file, pssm_csv, lipo_csv, freecontact_parsed_csv, relative_position_file, LIPS_parsed_csv]:
+            if not os.path.isfile(filepath):
+                all_files_found = False
+                raise FileNotFoundError("combine_csv_files_with_features failed. {} not found".format(filepath))
+
+
+        entropy_file_df = pd.read_csv(entropy_file)
+        test_indexing = True
+        if test_indexing:
+            sys.stdout.write("{}".format(entropy_file_df))
+            #entropy_file_df.loc[0, "residue_name"] = "X"
+            #entropy_file_df.loc[0, "Entropy"] = 9999
+            #entropy_file_df.loc[10, "Entropy"] = 7777
+            #entropy_file_df["residue_num"] = range(3, entropy_file_df.shape[0] + 3)
+
+        pssm_csv_df = pd.read_csv(pssm_csv)
+        lipophilicity_file_df=pd.read_csv(lipo_csv)
+        freecontact_parsed_csv_df = pd.read_csv(freecontact_parsed_csv)
+        relative_position_file_df = pd.read_csv(relative_position_file)
+        LIPS_parsed_csv_df=pd.read_csv(LIPS_parsed_csv)
+        #feature_combined_file = os.path.join(set_["RF_features"], "NoRedundPro/%s.mem.2gap.traindata1.csv") % acc
+        #feature_combined_file=os.path.join("/scratch/zeng/thoipapy/Features/cumulative_coevolution/zfullfreecontact","%s.traindata1.csv") %acc
+        #with open(feature_combined_file,'w') as feature_combined_file_handle:
+        merge1=entropy_file_df.merge(pssm_csv_df,on=['residue_num','residue_name'])
+        merge2=merge1.merge(lipophilicity_file_df,on=['residue_num','residue_name'])
+        if merge2.shape[0] == 0:
+            print()
+            print(lipophilicity_file_df)
+            print()
+        merge3=merge2.merge(freecontact_parsed_csv_df,on=["residue_num","residue_name"])
+        merge4=merge3.merge(relative_position_file_df, on=["residue_num","residue_name"])
+        merge5=merge4.merge(LIPS_parsed_csv_df,on=["residue_num","residue_name"])
+        #merge6 = merge5.merge(bind_status_file_df, on=["residue_num", "residue_name"])
+        merge5.to_csv(feature_combined_file)
+        #writer = csv.writer(feature_combined_file_df, delimiter=',', quotechar='"',
+                            #lineterminator='\n',
+                            #quoting=csv.QUOTE_NONNUMERIC, doublequote=True)
+
+        for df in [merge1, merge2, merge3, merge4, merge5]:
+            print(df.shape)
+
+        TMD_seq_in_merged_file = merge5.residue_name.str.cat()
+        if TMD_seq != TMD_seq_in_merged_file:
+            sys.stdout.write("acc = {}\noriginal = {}".format(acc, TMD_seq))
+            sys.stdout.write("\nmerged   = {}".format(TMD_seq_in_merged_file))
+            raise IndexError("TMD_seq in original settings file and final merged features dataframe does not match.")
+
+        logging.info("combine_csv_files_with_features finished ({})".format(feature_combined_file))
+
+
+def add_bind_data_to_combined_features(set_, df_set, logging):
+    for acc in df_set.index:
+        database = df_set.loc[acc, "database"]
+        feature_combined_file = os.path.join(set_["RF_features"], "combined", database, "{}.surr{}.gaps{}.combined_features.csv".format(acc, set_["num_of_sur_residues"], set_["max_n_gaps_in_TMD_subject_seq"]))
+        df_combined = pd.read_csv(feature_combined_file)
         bind_status_file=os.path.join(set_["RF_features"],'Structure/%s.bind.closedist.csv') %acc
-        #print(bind_status_file)
-        if (os.path.isfile(entropy_file) and os.path.isfile(pssm_csv) and os.path.isfile(lipophilicity_file) and os.path.isfile(cumulative_coevlution_strength_file) and os.path.exists(relative_position_file) and os.path.isfile(conslips_score_file) and os.path.isfile(bind_status_file)):
-            try:
-                print(bind_status_file)
-                entropy_file_handle = pd.read_csv(entropy_file)
-                pssm_csv_handle = pd.read_csv(pssm_csv)
-                lipophilicity_file_handle=pd.read_csv(lipophilicity_file)
-                cumulative_coevlution_strength_file_handle = pd.read_csv(cumulative_coevlution_strength_file)
-                relative_position_file_handle = pd.read_csv(relative_position_file)
-                conslips_score_file_handle=pd.read_csv(conslips_score_file)
-                bind_status_file_handle=pd.read_csv(bind_status_file)
-                #feature_combined_file = os.path.join(set_["RF_features"], "NoRedundPro/%s.mem.2gap.traindata1.csv") % acc
-                feature_combined_file=os.path.join(set_["RF_features"],database,"%s.mem.2gap.traindata%s.csv") %(acc,set_["surres"])
-                #feature_combined_file=os.path.join("/scratch/zeng/thoipapy/Features/cumulative_coevolution/zfullfreecontact","%s.traindata1.csv") %acc
-                feature_combined_file_handle=open(feature_combined_file,'w')
-                merge1=entropy_file_handle.merge(pssm_csv_handle,on=['residue_num','residue_name'])
-                merge2=merge1.merge(lipophilicity_file_handle,on=['residue_num','residue_name'])
-                merge3=merge2.merge(cumulative_coevlution_strength_file_handle,on=["residue_num","residue_name"])
-                merge4=merge3.merge(relative_position_file_handle, on=["residue_num","residue_name"])
-                merge5=merge4.merge(conslips_score_file_handle,on=["residue_num","residue_name"])
-                merge6 = merge5.merge(bind_status_file_handle, on=["residue_num", "residue_name"])
-                merge6.to_csv(feature_combined_file_handle)
-                #writer = csv.writer(feature_combined_file_handle, delimiter=',', quotechar='"',
-                                    #lineterminator='\n',
-                                    #quoting=csv.QUOTE_NONNUMERIC, doublequote=True)
-                #writer.wrterow
-                feature_combined_file_handle.close()
-            except:
-                print("feature combination occures errors")
-    tmp_file_handle.close()
+        if os.path.isfile(bind_status_file):
+            df_bind = pd.read_csv(bind_status_file)
+            df_combined_plus_bind = df_combined.merge(df_bind, on=["residue_num", "residue_name"])
+            # overwrite existing combined features file
+            df_combined_plus_bind.to_csv(feature_combined_file)
+        else:
+            logging.warning("{} add_bind_data_to_combined_features failed, {} not found".format(acc, add_bind_data_to_combined_features))
 
-
-
-
-def adding_physical_parameters_to_train_data(set_,logging):
+def adding_physical_parameters_to_train_data(set_, df_set, logging):
     logging.info('adding physical parameters into traindata')
-    tmp_list_loc = set_["list_of_tmd_start_end"]
-    tmp_file_handle = open(tmp_list_loc, 'r')
-    # skip header
-    next(tmp_file_handle)
-    for row in tmp_file_handle:
-        acc = row.strip().split(",")[0][0:6]
-        database = row.strip().split(",")[6]
+    for acc in df_set.index:
+        database = df_set.loc[acc, "database"]
         dict = {}
-        physical_parameter_file=os.path.join(set_["feature_physical_parameters"],"PhysicalProperty.txt")
-        physical_parameter_file_handle=open(physical_parameter_file,"r")
-        #file_handle = open(r"/scratch/zeng/Exp_Pred_161020/a3m/PhysicalProperty.txt", "r")
-        #train_data_file=os.path.join(set_["RF_features"],"NoRedundP/%s.mem.2gap.traindata1.csv") %acc
-        train_data_file = os.path.join(set_["RF_features"],database, "%s.mem.2gap.traindata%s.csv") %(acc,set_["surres"])
-        #train_data_file = os.path.join("/scratch/zeng/thoipapy/Features/cumulative_coevolution/zfullfreecontact", "%s.traindata1.csv") %acc
-        #train_data_file_handle = open(r"/scratch/zeng/thoipapy/Features/5hej_A2.mem.2gap.traindata.csv", "r")
-        if os.path.isfile(train_data_file):
-            try:
-                train_data_file_handle=open(train_data_file,"r")
-                #train_data_add_physical_parameter_file=os.path.join(set_["RF_features"],"NoRedundPro/%s.mem.2gap.physipara.traindata1.csv") %acc
-                train_data_add_physical_parameter_file = os.path.join(set_["RF_features"],database,"%s.mem.2gap.physipara.traindata%s.csv") %(acc,set_["surres"])
-                #train_data_add_physical_parameter_file = os.path.join("/scratch/zeng/thoipapy/Features/cumulative_coevolution/zfullfreecontact","%s.physipara.traindata1.csv") %acc
-                train_data_add_physical_parameter_file_handle=open(train_data_add_physical_parameter_file,"w")
-                #train_data_physical_parameter_file_handle = open(r"/scratch/zeng/thoipapy/Features/5hej_A2.mem.2gap.physipara.traindata.csv", "w")
-                writer = csv.writer(train_data_add_physical_parameter_file_handle, delimiter=',', quotechar='"',
-                                    lineterminator='\n',
-                                    quoting=csv.QUOTE_NONNUMERIC, doublequote=True)
-                for row in physical_parameter_file_handle:
-                    if re.search("^Hydro", row):
-                        continue
-                    else:
-                        array = row.split()
-                        # print(array[1])
-                        dict[array[0]] = array[1:16]
-                        # for k, v in dict.items():
-                        # print(k,v)
-                for row1 in train_data_file_handle:
-                    # print(row1)
-                    if re.search("residue_num", row1):
-                        array1 = row1.rstrip().split(",")
-                        array1[42:14]=["Hydrophobicity", "Charge", "PI", "LIPS", "LIPSM", "Hydrophobic", "Aliphatic", "Aromatic", "Polar","Negative", "Positive", "Small", "Cbbranched", "Mass", "Volumn"]
-                        #array2 = array1[0:31]
-                        #array2.extend(["Hydrophobicity", "Charge", "PI", "LIPS", "LIPSM", "Hydrophobic", "Aliphatic", "Aromatic", "Polar","Negative", "Positive", "Small", "Cbbranched", "Mass", "Volumn", array1[30].rstrip()])
-                        writer.writerow(array1)
-                    else:
-                        array3 = row1.rstrip().split(",")
-                        array3[42:14] = dict[array3[2]]
-                        writer.writerow(array3)
-                train_data_add_physical_parameter_file_handle.close()
-                train_data_file_handle.close()
-            except:
-                print("adding physical parameters occures errors")
-        physical_parameter_file_handle.close()
-    tmp_file_handle.close()
+        #physical_parameter_file=os.path.join(set_["feature_physical_parameters"],"PhysicalProperty.txt")
+        thoipapy_module_path = os.path.dirname(os.path.abspath(thoipapy.__file__))
+        physical_parameter_file = os.path.join(thoipapy_module_path, "setting", "PhysicalProperty.txt")
+
+        with open(physical_parameter_file,"r") as physical_parameter_file_handle:
+            #file_handle = open(r"/scratch/zeng/Exp_Pred_161020/a3m/PhysicalProperty.txt", "r")
+            #train_data_file=os.path.join(set_["RF_features"],"NoRedundP/%s.mem.2gap.traindata1.csv") %acc
+            train_data_file = os.path.join(set_["RF_features"],database, "%s.mem.2gap.traindata%s.csv") %(acc,set_["surres"])
+            #train_data_file = os.path.join("/scratch/zeng/thoipapy/Features/cumulative_coevolution/zfullfreecontact", "%s.traindata1.csv") %acc
+            #train_data_file_handle = open(r"/scratch/zeng/thoipapy/Features/5hej_A2.mem.2gap.traindata.csv", "r")
+            if os.path.isfile(train_data_file):
+                try:
+                    with open(train_data_file,"r") as train_data_file_handle:
+                        #train_data_add_physical_parameter_file=os.path.join(set_["RF_features"],"NoRedundPro/%s.mem.2gap.physipara.traindata1.csv") %acc
+                        train_data_add_physical_parameter_file = os.path.join(set_["RF_features"],database,"%s.mem.2gap.physipara.traindata%s.csv") %(acc,set_["surres"])
+                        #train_data_add_physical_parameter_file = os.path.join("/scratch/zeng/thoipapy/Features/cumulative_coevolution/zfullfreecontact","%s.physipara.traindata1.csv") %acc
+                        train_data_add_physical_parameter_file_handle=open(train_data_add_physical_parameter_file,"w")
+                        #train_data_physical_parameter_file_handle = open(r"/scratch/zeng/thoipapy/Features/5hej_A2.mem.2gap.physipara.traindata.csv", "w")
+                        writer = csv.writer(train_data_add_physical_parameter_file_handle, delimiter=',', quotechar='"',
+                                            lineterminator='\n',
+                                            quoting=csv.QUOTE_NONNUMERIC, doublequote=True)
+                        for row in physical_parameter_file_handle:
+                            if re.search("^Hydro", row):
+                                continue
+                            else:
+                                array = row.split()
+                                # print(array[1])
+                                dict[array[0]] = array[1:16]
+                                # for k, v in dict.items():
+                                # print(k,v)
+                        for row1 in train_data_file_handle:
+                            # print(row1)
+                            if re.search("residue_num", row1):
+                                array1 = row1.rstrip().split(",")
+                                array1[42:14]=["Hydrophobicity", "Charge", "PI", "LIPS", "LIPSM", "Hydrophobic", "Aliphatic", "Aromatic", "Polar","Negative", "Positive", "Small", "Cbbranched", "Mass", "Volumn"]
+                                #array2 = array1[0:31]
+                                #array2.extend(["Hydrophobicity", "Charge", "PI", "LIPS", "LIPSM", "Hydrophobic", "Aliphatic", "Aromatic", "Polar","Negative", "Positive", "Small", "Cbbranched", "Mass", "Volumn", array1[30].rstrip()])
+                                writer.writerow(array1)
+                            else:
+                                array3 = row1.rstrip().split(",")
+                                array3[42:14] = dict[array3[2]]
+                                writer.writerow(array3)
+                        train_data_add_physical_parameter_file_handle.close()
+                        logging.info("adding_physical_parameters_to_train_data finished. ({})".format(train_data_add_physical_parameter_file))
+                except:
+                    print("adding physical parameters occures errors")
 
 
 
@@ -1318,31 +1375,33 @@ def features_combine_to_testdata(set_,logging):
         acc = row.strip().split(",")[0]
         database = row.strip().split(",")[6]
         #if acc == "Q7L4S7":
-        entropy_file = os.path.join(set_["feature_entropy"],database, "%s.mem.2gap.entropy%s.csv") %(acc,set_["surres"])
+        #entropy_file = os.path.join(set_["feature_entropy"],database, "%s.mem.2gap.entropy%s.csv") %(acc,set_["surres"])
+        entropy_file = os.path.join(set_["feature_entropy"], database, "{}.surr{}.gaps{}.uniq.entropy.csv".format(acc, set_["num_of_sur_residues"], set_["max_n_gaps_in_TMD_subject_seq"]))
+
         pssm_csv = os.path.join(set_["feature_pssm"],database, "%s.mem.2gap.pssm%s.csv") %(acc,set_["surres"])
         lipophilicity_file = os.path.join(set_["feature_lipophilicity"], database, "%s_Hessa_lipo.csv") % acc
-        #cumulative_coevlution_strength_file = os.path.join(set_["feature_cumulative_coevolution"],"zpro/%s/%s.mem.2gap.cumul.coevostr.csv") %(set_["Datatype"],acc)
-        cumulative_coevlution_strength_file = os.path.join(set_["feature_cumulative_coevolution"],database,"%s.mem.2gap.cumul.coevostr%s.csv") %(acc,set_["surres"])
+        #freecontact_parsed_csv = os.path.join(set_["feature_cumulative_coevolution"],"zpro/%s/%s.mem.2gap.cumul.coevostr.csv") %(set_["Datatype"],acc)
+        freecontact_parsed_csv = os.path.join(set_["feature_cumulative_coevolution"],database,"%s.mem.2gap.cumul.coevostr%s.csv") %(acc,set_["surres"])
         relative_position_file = os.path.join(set_["feature_relative_position"], database,"%s.relative_position%s.csv") % (acc, set_["surres"])
-        conslips_score_file=os.path.join(set_["feature_lips_score"],database,"%s.mem.lips.output.conslips%s.csv") %(acc,set_["surres"])
+        LIPS_parsed_csv=os.path.join(set_["feature_lips_score"],database,"%s.mem.lips.output.conslips%s.csv") %(acc,set_["surres"])
         #bind_status_file=os.path.join(set_["RF_features"],'Structure/%s.csv') %acc
         #print(bind_status_file)
-        if (os.path.isfile(entropy_file) and os.path.isfile(pssm_csv) and os.path.isfile(lipophilicity_file) and os.path.isfile(cumulative_coevlution_strength_file) and os.path.isfile(conslips_score_file)):
+        if (os.path.isfile(entropy_file) and os.path.isfile(pssm_csv) and os.path.isfile(lipophilicity_file) and os.path.isfile(freecontact_parsed_csv) and os.path.isfile(LIPS_parsed_csv)):
             entropy_file_handle = pd.read_csv(entropy_file)
             pssm_csv_handle = pd.read_csv(pssm_csv)
             lipophilicity_file_handle=pd.read_csv(lipophilicity_file)
-            cumulative_coevlution_strength_file_handle = pd.read_csv(cumulative_coevlution_strength_file)
+            freecontact_parsed_csv_handle = pd.read_csv(freecontact_parsed_csv)
             relative_position_file_handle = pd.read_csv(relative_position_file)
-            conslips_score_file_handle=pd.read_csv(conslips_score_file)
+            LIPS_parsed_csv_handle=pd.read_csv(LIPS_parsed_csv)
             #bind_status_file_handle=pd.read_csv(bind_status_file)
             #feature_combined_file=os.path.join(set_["RF_loc"],"TestData/%s/%s.mem.2gap.testdata.csv") %(set_["Datatype"],acc)
             feature_combined_file=os.path.join(set_["RF_features"],database,"%s.mem.2gap.testdata%s.csv") %(acc,set_["surres"])
             feature_combined_file_handle=open(feature_combined_file,'w')
             merge1=entropy_file_handle.merge(pssm_csv_handle,on=['residue_num','residue_name'])
             merge2=merge1.merge(lipophilicity_file_handle,on=['residue_num','residue_name'])
-            merge3=merge2.merge(cumulative_coevlution_strength_file_handle,on=["residue_num","residue_name"])
+            merge3=merge2.merge(freecontact_parsed_csv_handle,on=["residue_num","residue_name"])
             merge4=merge3.merge(relative_position_file_handle,on=["residue_num","residue_name"])
-            merge5=merge4.merge(conslips_score_file_handle,on=["residue_num","residue_name"])
+            merge5=merge4.merge(LIPS_parsed_csv_handle,on=["residue_num","residue_name"])
             #merge4 = merge3.merge(bind_status_file_handle, on=["residue_num", "residue_name"])
             merge5.to_csv(feature_combined_file_handle)
             #writer = csv.writer(feature_combined_file_handle, delimiter=',', quotechar='"',

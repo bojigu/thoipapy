@@ -188,9 +188,9 @@ if __name__ == "__main__":
     # create a database label. Either crystal, NMR, ETRA or "mixed"
     unique_database_labels = df_set["database"].unique()
     if len(unique_database_labels.shape) == 1:
-        database = unique_database_labels[0]
+        database_for_full_set = unique_database_labels[0]
     else:
-        database = "mixed"
+        database_for_full_set = "mixed"
 
     # when only run one protein each time, set_["multiple_tmp_simultaneous"] is false, and create the query protein information file
     # according to the arguments inputed by user
@@ -229,7 +229,7 @@ if __name__ == "__main__":
 
 
     if set_["run_retrieve_NCBI_homologues_with_blastp"]:
-        thoipapy.NCBI_BLAST.download.download.download_homologues_from_ncbi(set_, df_set, logging)
+        thoipapy.NCBI_BLAST.download.download.download_homologues_from_ncbi_mult_prot(set_, df_set, logging)
 
 
                     ###################################################################################################
@@ -260,36 +260,38 @@ if __name__ == "__main__":
             thoipapy.RF_features.feature_calculate.create_PSSM_from_MSA_mult_prot(set_, df_set, logging)
 
         if set_["calc_lipo_from_pssm"]:
-            thoipapy.RF_features.feature_calculate.calc_lipo_from_pssm(set_,df_set, logging)
-
+            thoipapy.RF_features.feature_calculate.lipo_from_pssm_mult_prot(set_, df_set, logging)
 
         if set_["entropy_feature_calculation"]:
-            thoipapy.RF_features.feature_calculate.entropy_calculation(set_, df_set, logging)
+            thoipapy.RF_features.feature_calculate.entropy_calculation_mult_prot(set_, df_set, logging)
 
         if set_["cumulative_coevolution_feature_calculation"]:
             if "Windows" in platform.system():
-                sys.stdout.write("\n Freecontact cannot be run in Windows! Skipping coevolution_calculation_with_freecontact function.")
-                thoipapy.RF_features.feature_calculate.cumulative_co_evolutionary_strength_parser(thoipapy, set_, logging)
+                sys.stdout.write("\n Freecontact cannot be run in Windows! Skipping coevolution_calculation_with_freecontact_mult_prot.")
+                thoipapy.RF_features.feature_calculate.parse_freecontact_coevolution_mult_prot(set_, df_set, logging)
             else:
-                thoipapy.RF_features.feature_calculate.coevolution_calculation_with_freecontact(set_, logging)
-                thoipapy.RF_features.feature_calculate.cumulative_co_evolutionary_strength_parser(thoipapy ,set_, logging)
+                thoipapy.RF_features.feature_calculate.coevolution_calculation_with_freecontact_mult_prot(set_, df_set, logging)
+                thoipapy.RF_features.feature_calculate.parse_freecontact_coevolution_mult_prot(set_, df_set, logging)
 
         if set_["clac_relative_position"]:
-            thoipapy.RF_features.feature_calculate.relative_position_calculation(set_,logging)
+            thoipapy.RF_features.feature_calculate.relative_position_calculation(set_, df_set, logging)
 
         if set_["lips_score_feature_calculation"]:
-            thoipapy.RF_features.feature_calculate.LIPS_score_calculation_mult_prot(thoipapy, set_, logging)
-            thoipapy.RF_features.feature_calculate.Lips_score_parsing( set_, logging)
+            thoipapy.RF_features.feature_calculate.LIPS_score_calculation_mult_prot(set_, df_set, logging)
+            thoipapy.RF_features.feature_calculate.parse_LIPS_score_mult_prot(set_, df_set, logging)
 
         #thoipapy.RF_features.feature_calculate.convert_bind_data_to_csv(set_, logging)
 
         if set_["combine_feature_into_train_data"]:
-            if database == "Crystal" or database == "Nmr":
-                thoipapy.RF_features.feature_calculate.features_combine_to_traindata( set_, logging)
-                thoipapy.RF_features.feature_calculate.adding_physical_parameters_to_train_data(set_, logging)
-            if database == "Etra":
-                thoipapy.RF_features.feature_calculate.features_combine_to_testdata( set_, logging)
-                thoipapy.RF_features.feature_calculate.adding_physical_parameters_to_test_data(set_, logging)
+            if database_for_full_set == "crystal" or database_for_full_set == "NMR":
+                thoipapy.RF_features.feature_calculate.combine_csv_files_with_features(set_, df_set, logging)
+                thoipapy.RF_features.feature_calculate.add_bind_data_to_combined_features(set_, df_set, logging)
+                #thoipapy.RF_features.feature_calculate.adding_physical_parameters_to_train_data(set_, df_set, logging)
+            if database_for_full_set == "ETRA":
+                #thoipapy.RF_features.feature_calculate.features_combine_to_testdata( set_, logging)
+                thoipapy.RF_features.feature_calculate.combine_csv_files_with_features(set_, df_set, logging)
+                #thoipapy.RF_features.feature_calculate.adding_physical_parameters_to_test_data(set_, logging)
+            thoipapy.RF_features.feature_calculate.adding_physical_parameters_to_train_data(set_, df_set, logging)
             thoipapy.RF_features.feature_calculate.combine_all_train_data_for_random_forest(set_,logging)
 
     if set_["run_random_forest"]:

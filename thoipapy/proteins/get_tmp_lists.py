@@ -30,11 +30,11 @@ def extract_tmps_from_input_file(set_):
         tmp_protein_acc = row.strip().split("\t")[0]
         # differ uniprot acc from PDB proteins (contains PDB name,chain name and TMD order, like 1ft8_A1)
         if len(tmp_protein_acc) == 6:  # uniprot acc
-            tmp_protein_name = tmp_protein_acc
-            tmp_lists[tmp_protein_name]=1
+            acc = tmp_protein_acc
+            tmp_lists[acc]=1
         else:  # PDB proteins
-            tmp_protein_name = tmp_protein_acc[0:7]
-            tmp_lists[tmp_protein_name] = 1
+            acc = tmp_protein_acc[0:7]
+            tmp_lists[acc] = 1
     tmp_file_handle.close()
     return tmp_lists
 
@@ -50,10 +50,10 @@ def extract_test_tmps_from_input_file(set_):
         tmp_protein_acc = row.strip().split("\t")[0]
         # differ uniprot acc from PDB proteins (contains PDB name,chain name and TMD order, like 1ft8_A1)
         if len(tmp_protein_acc) == 6:  # uniprot acc
-            tmp_protein_name = tmp_protein_acc
-            tmp_lists[tmp_protein_name]=1
+            acc = tmp_protein_acc
+            tmp_lists[acc]=1
         else:  # PDB proteins
-            tmp_protein_name = tmp_protein_acc[0:7]
-            tmp_lists[tmp_protein_name] = 1
+            acc = tmp_protein_acc[0:7]
+            tmp_lists[acc] = 1
     tmp_file_handle.close()
     return tmp_lists
