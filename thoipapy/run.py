@@ -299,8 +299,6 @@ if __name__ == "__main__":
         #thoipapy.RF_features.RF_Train_Test.RF_10flod_cross_validation(thoipapy,set_,logging)
         #thoipapy.RF_features.RF_Train_Test.run_Rscipt_random_forest(set_, output_file_loc, logging)
 
-
-
     if set_["parse_prediciton_output"]:
         thoipapy.RF_features.Output_Parse.parse_Predicted_Output(thoipapy,set_,output_file_loc,output_parse_file,logging)
 

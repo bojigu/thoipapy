@@ -222,21 +222,29 @@ def save_fasta(df, col_with_seqs, filepath, acc, query_TMD_seq):
 
 def save_fasta_from_array(array_of_seqs, filepath, acc, query_TMD_seq):
     with open(filepath, "w") as f:
-        f.write(">{}_orig_seq\n{}\n".format(acc, query_TMD_seq))
-        for n, seq in enumerate(array_of_seqs):
-            if seq == query_TMD_seq:
-                # do not write the orig seq again. continue to next seq.
-                continue
-            f.write(">{}\n{}\n".format(n, seq))
+        if query_TMD_seq is not None:
+            f.write(">{}_orig_seq\n{}\n".format(acc, query_TMD_seq))
+            for n, seq in enumerate(array_of_seqs):
+                if seq == query_TMD_seq:
+                    # do not write the orig seq again. continue to next seq.
+                    continue
+                f.write(">{}\n{}\n".format(n, seq))
+        else:
+            for n, seq in enumerate(array_of_seqs):
+                f.write(">{}\n{}\n".format(n, seq))
 
 def save_seqs(array_of_seqs, filepath, query_TMD_seq):
     with open(filepath, "w") as f:
-        f.write("{}\n".format(query_TMD_seq))
-        for seq in array_of_seqs:
-            if seq == query_TMD_seq:
-                # do not write the orig seq again. continue to next seq.
-                continue
-            f.write("{}\n".format(seq))
+        if query_TMD_seq is not None:
+            f.write("{}\n".format(query_TMD_seq))
+            for seq in array_of_seqs:
+                if seq == query_TMD_seq:
+                    # do not write the orig seq again. continue to next seq.
+                    continue
+                f.write("{}\n".format(seq))
+        else:
+            for seq in array_of_seqs:
+                f.write("{}\n".format(seq))
 
 def extract_filtered_csv_homologues_to_alignments_mult_prot(set_, df_set, logging):
 
@@ -360,11 +368,12 @@ def extract_filtered_csv_homologues_to_alignments(set_, acc, TMD_len, fasta_all_
                 # delete any longer sequences, where the query had gaps
                 # assume the first sequence has no gaps
                 TMD_plus_5_len = len(df.iloc[0, :]["subject_TMD_align_seq_surr5"])
-                # only keep the sequs that have the same length as the first one
+
+                # only keep the seqs that have the same length as the first one
                 df_no_gaps_in_q_plus5 = df.loc[df['subject_TMD_align_seq_surr5'].str.len() == TMD_plus_5_len]
                 uniq_TMD_seqs_surr5_for_LIPO = df_no_gaps_in_q_plus5['subject_TMD_align_seq_surr5'].unique()
-                save_seqs(uniq_TMD_seqs_surr5_for_LIPO, path_uniq_TMD_seqs_surr5_for_LIPO, query_TMD_seq)
-                save_fasta_from_array(uniq_TMD_seqs_surr5_for_LIPO, fasta_uniq_TMD_seqs_surr5_for_LIPO, acc, query_TMD_seq)
+                save_seqs(uniq_TMD_seqs_surr5_for_LIPO, path_uniq_TMD_seqs_surr5_for_LIPO, query_TMD_seq=None)
+                save_fasta_from_array(uniq_TMD_seqs_surr5_for_LIPO, fasta_uniq_TMD_seqs_surr5_for_LIPO, acc, query_TMD_seq=None)
 
                 min_frac_ident_TMD = df["frac_ident_TMD"].min()
                 # print("min_frac_ident_TMD AFTER FILTER", min_frac_ident_TMD)
