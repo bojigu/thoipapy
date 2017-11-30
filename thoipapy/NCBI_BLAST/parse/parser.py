@@ -30,29 +30,12 @@ def parse_NCBI_xml_to_csv_mult_prot(set_, df_set, logging):
     #                                                                                            #
     ##############################################################################################
 
-    for acc in df_set.index:
-        database = df_set.loc[acc, "database"]
-        #tm_start=int(row.strip().split(",")[4])+1
-        #tm_start=int(row.strip().split(",")[4])+1-5 ###for surr20
-        # set_["surres"] set how many residues on each sides of tmd sequence
-        # if set_["surres"] == "_surr0":
-        #     tm_start = int(row.strip().split(",")[2])
-        #     tm_end = int(row.strip().split(",")[3])
-        # elif set_["surres"] == "_surr5":
-        #     tm_start = int(row.strip().split(",")[2]) -5 ###for fullseq
-        #     if(tm_start<=0):
-        #         tm_start=1
-        #     #tm_end = int(row.strip().split(",")[4])+(int(row.strip().split(",")[3])-int(row.strip().split(",")[2])+1)
-        #     #tm_end = int(row.strip().split(",")[4])+(int(row.strip().split(",")[3])-int(row.strip().split(",")[2])+1)+5 ##for surr20
-        #     tm_end = int(row.strip().split(",")[3])  + 5  ###for fullseq
-        #     if tm_end>int(row.strip().split(",")[1]):
-        #         tm_end=int(row.strip().split(",")[1]) # quals to the full sequence length
-        # else:
-        #     raise ValueError('set_["surres"] does not seem to be correct')
-
-        tm_start = df_set.loc[acc, "TMD_start"]
-        tm_end = df_set.loc[acc, "TMD_end"]
-        seqlen = df_set.loc[acc, "seqlen"]
+    for i in df_set.index:
+        acc = df_set.loc[i, "acc"]
+        database = df_set.loc[i, "database"]
+        tm_start = df_set.loc[i, "TMD_start"]
+        tm_end = df_set.loc[i, "TMD_end"]
+        seqlen = df_set.loc[i, "seqlen"]
         if set_["surres"] == "_surr0":
             pass
         elif set_["surres"] == "_surr5":
@@ -67,10 +50,7 @@ def parse_NCBI_xml_to_csv_mult_prot(set_, df_set, logging):
         else:
             raise ValueError('set_["surres"] does not seem to be correct')
 
-        #xml_file = os.path.join(set_["xml_file_folder"], database, "%s.xml") % acc
-        #blast_xml_file = os.path.join(set_["xml_file_folder"], database, "{}.surr{}.BLAST.xml".format(acc,set_["num_of_sur_residues"]))
         BLAST_xml_tar = os.path.join(set_["xml_file_folder"], database, "{}.surr{}.BLAST.xml.tar.gz".format(acc, set_["num_of_sur_residues"]))
-        # BLAST_csv_file=os.path.join(set_["homologues_folder"],"NoRedundPro/%s_homo.csv") %acc
         homo_out_dir = os.path.join(set_["homologues_folder"], "ncbi", database)
         if not os.path.isdir(homo_out_dir):
             os.makedirs(homo_out_dir)
@@ -103,16 +83,9 @@ def parse_NCBI_xml_to_csv(set_, acc, blast_xml_tar, BLAST_csv_tar, tm_start, tm_
     # opening as a handle currently doesn't work, as not recognised by NCBIXML.read
     with tarfile.open(blast_xml_tar, 'r:gz') as tar:
         tar.extractall(os.path.dirname(blast_xml_tar))
-    BLAST_xml_file_basename = os.path.basename(BLAST_xml_file)
-    #with tar.extractfile(BLAST_xml_file_basename) as BLAST_xml_extracted:
 
-    #if os.path.isfile(BLAST_csv_tar):
     with open(BLAST_csv_file, 'w') as homo_out_csv_file_handle:
         with open(BLAST_xml_file) as xml_result_handle:
-        #print(type(BLAST_xml_extracted))
-        #print(BLAST_xml_extracted[0:50])
-        #xml_result_handle = BLAST_xml_extracted
-
             xml_record = NCBIXML.read(xml_result_handle)
             E_VALUE_THRESH = set_["e_value_cutoff"]
             hit_num = 0
@@ -191,7 +164,6 @@ def parse_NCBI_xml_to_csv(set_, acc, blast_xml_tar, BLAST_csv_tar, tm_start, tm_
         logging.warning("{} could not be deleted".format(BLAST_csv_file))
     logging.info("{} parse_NCBI_xml_to_csv_mult_prot finished ({})".format(acc, BLAST_csv_tar))
 
-
     return acc, True, "no errors"
 
 
@@ -260,22 +232,19 @@ def save_seqs(array_of_seqs, filepath, query_TMD_seq):
 def extract_filtered_csv_homologues_to_alignments_mult_prot(set_, df_set, logging):
 
     logging.info('start extract filtered csv homologues to alignments')
-    min_identity_of_TMD_seq = set_["min_identity_of_TMD_seq"]
-
     out_dict = {}
 
-    for acc in df_set.index:
-        database = df_set.loc[acc, "database"]
-        query_TMD_seq = df_set.loc[acc, "TMD_seq"]
-        query_full_seq = df_set.loc[acc, "full_seq"]
-        TMD_len = df_set.loc[acc, "TMD_len"]
-        query_TMD_seq_surr5 = df_set.loc[acc, "TMD_seq_pl_surr5"]
+    for i in df_set.index:
+        acc = df_set.loc[i, "acc"]
+        database = df_set.loc[i, "database"]
+        query_TMD_seq = df_set.loc[i, "TMD_seq"]
+        query_full_seq = df_set.loc[i, "full_seq"]
+        TMD_len = df_set.loc[i, "TMD_len"]
+        query_TMD_seq_surr5 = df_set.loc[i, "TMD_seq_pl_surr5"]
 
         homo_out_dir = os.path.join(set_["homologues_folder"], "ncbi", database)
-        BLAST_csv_file = os.path.join(homo_out_dir, "{}.surr{}.BLAST.csv".format(acc, set_["num_of_sur_residues"]))
         BLAST_csv_tar = os.path.join(homo_out_dir, "{}.surr{}.BLAST.csv.tar.gz".format(acc, set_["num_of_sur_residues"]))
 
-        #homo_csv_file_loc = os.path.join(set_["homologues_folder"], "ncbi", database, "%s_homo%s.csv") % (acc, set_["surres"])
         alignments_dir = os.path.join(set_["homologues_folder"], "alignments", database)
         if not os.path.isdir(alignments_dir):
             os.makedirs(alignments_dir)
@@ -290,9 +259,6 @@ def extract_filtered_csv_homologues_to_alignments_mult_prot(set_, df_set, loggin
                                                                          path_uniq_TMD_seqs_no_gaps_for_LIPS, path_uniq_TMD_seqs_surr5_for_LIPO, BLAST_csv_tar,
                                                                          query_TMD_seq, query_TMD_seq_surr5, logging)
         out_dict[acc] = single_prot_dict
-
-
-
 
     df_align_results = pd.DataFrame(out_dict).T
     df_align_results.index.name = "acc"
@@ -310,9 +276,6 @@ def extract_filtered_csv_homologues_to_alignments(set_, acc, TMD_len, fasta_all_
     fasta_uniq_TMD_seqs_surr5_for_LIPO = path_uniq_TMD_seqs_surr5_for_LIPO[:-4] + ".fas"
 
     single_prot_dict = {}
-
-    # if (os.path.isfile(homo_csv_file_loc) and os.path.getsize(homo_csv_file_loc) > 0):  # whether protein homologues csv file exists
-    #     df = pd.read_csv(homo_csv_file_loc)
 
     # remove the final ".tar.gz" to get the csv filename
     BLAST_csv_file = BLAST_csv_tar[:-7]
@@ -389,10 +352,6 @@ def extract_filtered_csv_homologues_to_alignments(set_, acc, TMD_len, fasta_all_
                 save_seqs(uniq_TMD_seqs_surr5_for_LIPO, path_uniq_TMD_seqs_surr5_for_LIPO, query_TMD_seq=query_TMD_seq_surr5)
                 save_fasta_from_array(uniq_TMD_seqs_surr5_for_LIPO, fasta_uniq_TMD_seqs_surr5_for_LIPO, acc, query_TMD_seq=query_TMD_seq_surr5)
 
-                min_frac_ident_TMD = df["frac_ident_TMD"].min()
-                # print("min_frac_ident_TMD AFTER FILTER", min_frac_ident_TMD)
-
-
                 single_prot_dict["n_total_filtered_seqs"] = n_total_filtered_seqs
                 single_prot_dict["n_uniq_TMD_seqs_for_PSSM_FREECONTACT"] = len(uniq_TMD_seqs_for_PSSM_FREECONTACT)
                 single_prot_dict["n_uniq_TMD_seqs_no_gaps_for_LIPS"] = len(uniq_TMD_seqs_no_gaps_for_LIPS)
@@ -406,7 +365,7 @@ def extract_filtered_csv_homologues_to_alignments(set_, acc, TMD_len, fasta_all_
 
     return single_prot_dict
 
-
+# DEPRECATED METHOD
 def extract_filtered_csv_homologues_to_alignments_orig_handle_method(set_,logging):
 
     logging.info('start extract filtered csv homologues to alignments')
