@@ -1268,7 +1268,7 @@ def adding_physical_parameters_to_train_data(set_, df_set, logging):
                         # print(row1)
                         if re.search("residue_num", row1):
                             array1 = row1.rstrip().split(",")
-                            array1[42:14]=["Hydrophobicity", "Charge", "PI", "LIPS", "LIPSM", "Hydrophobic", "Aliphatic", "Aromatic", "Polar","Negative", "Positive", "Small", "Cbbranched", "Mass", "Volumn"]
+                            array1[42:14]=["Hydrophobicity_sAA", "Charge_sAA", "PI_sAA", "LIPS_sAA", "LIPSM_sAA", "Hydrophobic_sAA", "Aliphatic_sAA", "Aromatic_sAA", "Polar_sAA","Negative_sAA", "Positive_sAA", "Small_sAA", "Cbbranched_sAA", "Mass_sAA", "Volume_sAA"]
                             #array2 = array1[0:31]
                             #array2.extend(["Hydrophobicity", "Charge", "PI", "LIPS", "LIPSM", "Hydrophobic", "Aliphatic", "Aromatic", "Polar","Negative", "Positive", "Small", "Cbbranched", "Mass", "Volumn", array1[30].rstrip()])
                             writer.writerow(array1)
@@ -1279,6 +1279,11 @@ def adding_physical_parameters_to_train_data(set_, df_set, logging):
                     train_data_add_physical_parameter_file_handle.close()
                     logging.info("adding_physical_parameters_to_train_data finished. ({})".format(feature_combined_file_incl_phys_param))
 
+                df = pd.read_csv(feature_combined_file_incl_phys_param, index_col=0)
+                cols_to_delete = ["Hydrophobic_sAA", "Aliphatic_sAA", "Polar_sAA","Negative_sAA", "Positive_sAA", "Small_sAA"]
+                df.drop(cols_to_delete, axis=1, inplace=True)
+                df.to_csv(feature_combined_file_incl_phys_param)
+
             else:
                 logging.warning("{} does not exist".format(feature_combined_file))
 
@@ -1288,48 +1293,48 @@ def adding_physical_parameters_to_train_data(set_, df_set, logging):
                                              #                                                                                                 #
                                              ###################################################################################################
 
-
-def adding_physical_parameters_to_test_data(set_, df_set, logging):
-    logging.info('adding physical parameters into testdata')
-
-    for i in df_set.index:
-        acc = df_set.loc[i, "acc"]
-        database = df_set.loc[i, "database"]
-        dict = {}
-        physical_parameter_file=os.path.join(set_["feature_physical_parameters"],"PhysicalProperty.txt")
-        physical_parameter_file_handle=open(physical_parameter_file,"r")
-        train_data_file=os.path.join(set_["RF_features"],database,"%s.mem.2gap.testdata%s.csv") %(acc,set_["surres"])
-        if os.path.isfile(train_data_file):
-            train_data_file_handle=open(train_data_file,"r")
-            train_data_add_physical_parameter_file=os.path.join(set_["RF_features"],database,"%s.mem.2gap.physipara.testdata%s.csv") %(acc,set_["surres"])
-            train_data_add_physical_parameter_file_handle=open(train_data_add_physical_parameter_file,"w")
-            writer = csv.writer(train_data_add_physical_parameter_file_handle, delimiter=',', quotechar='"',
-                                lineterminator='\n',
-                                quoting=csv.QUOTE_NONNUMERIC, doublequote=True)
-            for row in physical_parameter_file_handle:
-                if re.search("^Hydro", row):
-                    continue
-                else:
-                    array = row.split()
-                    # print(array[1])
-                    dict[array[0]] = array[1:16]
-                    # for k, v in dict.items():
-                    # print(k,v)
-            for row1 in train_data_file_handle:
-                # print(row1)
-                if re.search("residue_num", row1):
-                    array1 = row1.rstrip().split(",")
-                    array1[42:14]=["Hydrophobicity", "Charge", "PI", "LIPS", "LIPSM", "Hydrophobic", "Aliphatic", "Aromatic", "Polar","Negative", "Positive", "Small", "Cbbranched", "Mass", "Volumn"]
-                    #array2 = array1[0:31]
-                    #array2.extend(["Hydrophobicity", "Charge", "PI", "LIPS", "LIPSM", "Hydrophobic", "Aliphatic", "Aromatic", "Polar","Negative", "Positive", "Small", "Cbbranched", "Mass", "Volumn", array1[30].rstrip()])
-                    writer.writerow(array1)
-                else:
-                    array3 = row1.rstrip().split(",")
-                    array3[42:14] = dict[array3[2]]
-                    writer.writerow(array3)
-            train_data_add_physical_parameter_file_handle.close()
-            train_data_file_handle.close()
-        physical_parameter_file_handle.close()
+# DEPRECATED. USE SAME FUNCTION FOR BOTH TRAIN AND TEST DATASETS
+# def adding_physical_parameters_to_test_data(set_, df_set, logging):
+#     logging.info('adding physical parameters into testdata')
+#
+#     for i in df_set.index:
+#         acc = df_set.loc[i, "acc"]
+#         database = df_set.loc[i, "database"]
+#         dict = {}
+#         physical_parameter_file=os.path.join(set_["feature_physical_parameters"],"PhysicalProperty.txt")
+#         physical_parameter_file_handle=open(physical_parameter_file,"r")
+#         train_data_file=os.path.join(set_["RF_features"],database,"%s.mem.2gap.testdata%s.csv") %(acc,set_["surres"])
+#         if os.path.isfile(train_data_file):
+#             train_data_file_handle=open(train_data_file,"r")
+#             train_data_add_physical_parameter_file=os.path.join(set_["RF_features"],database,"%s.mem.2gap.physipara.testdata%s.csv") %(acc,set_["surres"])
+#             train_data_add_physical_parameter_file_handle=open(train_data_add_physical_parameter_file,"w")
+#             writer = csv.writer(train_data_add_physical_parameter_file_handle, delimiter=',', quotechar='"',
+#                                 lineterminator='\n',
+#                                 quoting=csv.QUOTE_NONNUMERIC, doublequote=True)
+#             for row in physical_parameter_file_handle:
+#                 if re.search("^Hydro", row):
+#                     continue
+#                 else:
+#                     array = row.split()
+#                     # print(array[1])
+#                     dict[array[0]] = array[1:16]
+#                     # for k, v in dict.items():
+#                     # print(k,v)
+#             for row1 in train_data_file_handle:
+#                 # print(row1)
+#                 if re.search("residue_num", row1):
+#                     array1 = row1.rstrip().split(",")
+#                     array1[42:14]=["Hydrophobicity", "Charge", "PI", "LIPS", "LIPSM", "Hydrophobic", "Aliphatic", "Aromatic", "Polar","Negative", "Positive", "Small", "Cbbranched", "Mass", "Volume"]
+#                     #array2 = array1[0:31]
+#                     #array2.extend(["Hydrophobicity", "Charge", "PI", "LIPS", "LIPSM", "Hydrophobic", "Aliphatic", "Aromatic", "Polar","Negative", "Positive", "Small", "Cbbranched", "Mass", "Volumn", array1[30].rstrip()])
+#                     writer.writerow(array1)
+#                 else:
+#                     array3 = row1.rstrip().split(",")
+#                     array3[42:14] = dict[array3[2]]
+#                     writer.writerow(array3)
+#             train_data_add_physical_parameter_file_handle.close()
+#             train_data_file_handle.close()
+#         physical_parameter_file_handle.close()
 
 
 
