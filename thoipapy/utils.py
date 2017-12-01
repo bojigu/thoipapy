@@ -1536,7 +1536,8 @@ def create_tarballs_from_xml_files_in_folder(xml_dir, download_date="2017.11.02"
     for xml in xml_list:
         xml_renamed = xml[:-4] + ".BLAST.xml"
         xml_tar_gz = xml[:-4] + ".BLAST.xml.tar.gz"
-        xml_txt = xml[:-4] + ".BLAST_details.txt"
+        xml_txt = xml[:-4] + "_details.txt"
+        #xml_txt = xml[:-4] + ".BLAST_details.txt"
 
         if not os.path.isfile(xml_tar_gz):
             copyfile(xml, xml_renamed)

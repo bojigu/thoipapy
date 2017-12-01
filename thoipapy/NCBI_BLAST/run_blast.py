@@ -7,8 +7,8 @@ def extract_NCBI_homolgous_as_xml(acc,set_,logging,pathdict):
     #if(uniprot_acc == protein):
     #print(uniprot_acc)
     #index1=dfset['Protein'].tolist().index(protein)
-    #tm_start=dfset['Tm_start'][index1]
-    #tm_end=dfset['Tm_end'][index1]
+    #TMD_start=dfset['TMD_start'][index1]
+    #TMD_end=dfset['TMD_end'][index1]
     #if protein == "P02724":
     myEntrezQuery = "Homo sapiens[Organism]"
     fasta_string = open(filename).read()
@@ -37,7 +37,7 @@ def extract_NCBI_homolgous_as_xml(acc,set_,logging,pathdict):
                     sbjt_seq=hsp.sbjct
                     tmstr=''
                     sbjstr=''
-                    if query_start<=tm_start and query_end >= tm_end:
+                    if query_start<=TMD_start and query_end >= TMD_end:
                         print('****Alignment****',i)
                         #print('>', alignment.title)
                         #print('length:', alignment.length)
@@ -50,8 +50,8 @@ def extract_NCBI_homolgous_as_xml(acc,set_,logging,pathdict):
                         #print(hsp.query)
                         #print(hsp.match)
                         #print(hsp.sbjct)
-                        tm_str_start=tm_start-query_start
-                        tm_str_end=tm_end-query_start+1
+                        tm_str_start=TMD_start-query_start
+                        tm_str_end=TMD_end-query_start+1
                         k=0
                         j=0
                         tmstr=""

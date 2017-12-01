@@ -33,20 +33,20 @@ def parse_NCBI_xml_to_csv_mult_prot(set_, df_set, logging):
     for i in df_set.index:
         acc = df_set.loc[i, "acc"]
         database = df_set.loc[i, "database"]
-        tm_start = df_set.loc[i, "TMD_start"]
-        tm_end = df_set.loc[i, "TMD_end"]
+        TMD_start = df_set.loc[i, "TMD_start"]
+        TMD_end = df_set.loc[i, "TMD_end"]
         seqlen = df_set.loc[i, "seqlen"]
         if set_["surres"] == "_surr0":
             pass
         elif set_["surres"] == "_surr5":
             # start 5 residues earlier
-            tm_start = tm_start - 5 ###for fullseq
-            if tm_start <= 0:
-                tm_start = 1
+            TMD_start = TMD_start - 5 ###for fullseq
+            if TMD_start <= 0:
+                TMD_start = 1
             # end 5 residues later
-            tm_end = tm_end  + 5  ###for fullseq
-            if tm_end > seqlen:
-                tm_end = seqlen # quals to the full sequence length
+            TMD_end = TMD_end  + 5  ###for fullseq
+            if TMD_end > seqlen:
+                TMD_end = seqlen # quals to the full sequence length
         else:
             raise ValueError('set_["surres"] does not seem to be correct')
 
@@ -56,11 +56,11 @@ def parse_NCBI_xml_to_csv_mult_prot(set_, df_set, logging):
             os.makedirs(homo_out_dir)
         BLAST_csv_tar = os.path.join(homo_out_dir, "{}.surr{}.BLAST.csv.tar.gz".format(acc, set_["num_of_sur_residues"]))
 
-        parse_NCBI_xml_to_csv(set_, acc, BLAST_xml_tar, BLAST_csv_tar, tm_start, tm_end, logging)
+        parse_NCBI_xml_to_csv(set_, acc, BLAST_xml_tar, BLAST_csv_tar, TMD_start, TMD_end, logging)
 
     logging.info('~~~~~~~~~~~~                 finished parse_NCBI_xml_to_csv_mult_prot              ~~~~~~~~~~~~')
 
-def parse_NCBI_xml_to_csv(set_, acc, blast_xml_tar, BLAST_csv_tar, tm_start, tm_end, logging):
+def parse_NCBI_xml_to_csv(set_, acc, blast_xml_tar, BLAST_csv_tar, TMD_start, TMD_end, logging):
     # remove the final ".tar.gz" to get the xml and csv filename
     BLAST_xml_file = blast_xml_tar[:-7]
     BLAST_csv_file = BLAST_csv_tar[:-7]
@@ -89,14 +89,15 @@ def parse_NCBI_xml_to_csv(set_, acc, blast_xml_tar, BLAST_csv_tar, tm_start, tm_
             xml_record = NCBIXML.read(xml_result_handle)
             E_VALUE_THRESH = set_["e_value_cutoff"]
             hit_num = 0
+            n_hsps_excluded_due_to_e_value_cutoff = 0
             for alignment in xml_record.alignments:
                 for hsp in alignment.hsps:
                     if hsp.expect <= E_VALUE_THRESH:  # set homologues evalue cutoff
                         match_details_dict['hit_num'] = hit_num
                         query_seq_no_gap = re.sub('-', '', hsp.query)
-                        if hsp.query_start <= tm_start and hsp.query_end >= tm_end:
-                            tm_str_start = tm_start - hsp.query_start
-                            tm_str_end = tm_end - hsp.query_start + 1
+                        if hsp.query_start <= TMD_start and hsp.query_end >= TMD_end:
+                            tm_str_start = TMD_start - hsp.query_start
+                            tm_str_end = TMD_end - hsp.query_start + 1
                             k = 0
                             j = 0
                             tm_query_str = ''
@@ -147,8 +148,10 @@ def parse_NCBI_xml_to_csv(set_, acc, blast_xml_tar, BLAST_csv_tar, tm_start, tm_
                         writer.writerow(match_details_dict)
                         hit_num += 1
                     else:
-                        sys.stdout.write("|")
+                        n_hsps_excluded_due_to_e_value_cutoff += 1
+                        #sys.stdout.write("|")
 
+    logging.info("n_hsps_excluded_due_to_e_value_cutoff = {}".format(n_hsps_excluded_due_to_e_value_cutoff))
 
     # delete the extracted xml file
     thoipapy.utils.delete_BLAST_xml(BLAST_xml_file)
@@ -162,7 +165,7 @@ def parse_NCBI_xml_to_csv(set_, acc, blast_xml_tar, BLAST_csv_tar, tm_start, tm_
         os.remove(BLAST_csv_file)
     except:
         logging.warning("{} could not be deleted".format(BLAST_csv_file))
-    logging.info("{} parse_NCBI_xml_to_csv_mult_prot finished ({})".format(acc, BLAST_csv_tar))
+    logging.info("{} parse_NCBI_xml_to_csv finished ({})".format(acc, BLAST_csv_tar))
 
     return acc, True, "no errors"
 
@@ -257,7 +260,7 @@ def extract_filtered_csv_homologues_to_alignments_mult_prot(set_, df_set, loggin
 
         single_prot_dict = extract_filtered_csv_homologues_to_alignments(set_, acc, TMD_len, fasta_all_TMD_seqs, path_uniq_TMD_seqs_for_PSSM_FREECONTACT,
                                                                          path_uniq_TMD_seqs_no_gaps_for_LIPS, path_uniq_TMD_seqs_surr5_for_LIPO, BLAST_csv_tar,
-                                                                         query_TMD_seq, query_TMD_seq_surr5, database, logging)
+                                                                         query_TMD_seq, query_TMD_seq_surr5, logging)
         out_dict[acc] = single_prot_dict
 
     df_align_results = pd.DataFrame(out_dict).T
@@ -270,7 +273,7 @@ def extract_filtered_csv_homologues_to_alignments_mult_prot(set_, df_set, loggin
 
 def extract_filtered_csv_homologues_to_alignments(set_, acc, TMD_len, fasta_all_TMD_seqs, path_uniq_TMD_seqs_for_PSSM_FREECONTACT,
                                                   path_uniq_TMD_seqs_no_gaps_for_LIPS, path_uniq_TMD_seqs_surr5_for_LIPO, BLAST_csv_tar,
-                                                  query_TMD_seq, query_TMD_seq_surr5, database, logging):
+                                                  query_TMD_seq, query_TMD_seq_surr5, logging):
     fasta_uniq_TMD_seqs_for_PSSM_FREECONTACT = path_uniq_TMD_seqs_for_PSSM_FREECONTACT[:-4] + ".fas"
     fasta_uniq_TMD_seqs_no_gaps_for_LIPS = path_uniq_TMD_seqs_no_gaps_for_LIPS[:-4] + ".fas"
     fasta_uniq_TMD_seqs_surr5_for_LIPO = path_uniq_TMD_seqs_surr5_for_LIPO[:-4] + ".fas"
@@ -303,10 +306,10 @@ def extract_filtered_csv_homologues_to_alignments(set_, acc, TMD_len, fasta_all_
                 df["end"] = df["end"].astype(int)
 
                 if df.empty:
-                    BLAST_xml_tar = os.path.join(set_["xml_file_folder"], database, "{}.surr{}.BLAST.xml.tar.gz".format(acc, set_["num_of_sur_residues"]))
+                    BLAST_xml_tar = "{}.surr{}.BLAST.xml.tar.gz".format(acc, set_["num_of_sur_residues"])
                     raise ValueError("{} extract_filtered_csv_homologues_to_alignments failed\n. None of the homologues contained the original TMD sequence.\n"
                                      "This can occur when the homologue xml file is old, and the sequences from BLAST and the protein set don't match. Delete the"
-                                     "homologue xml file ({}), re-run NCBI blast, and try-again".format(acc, BLAST_xml_tar ))
+                                     "homologue xml file ({}), re-run NCBI blast, and try-again".format(acc, BLAST_xml_tar))
 
                 df['query_TMD_align_seq'] = df.apply(slice_query_TMD_seq, axis=1)
                 df['markup_TMD_align_seq'] = df.apply(slice_markup_TMD_seq, axis=1)
@@ -357,6 +360,7 @@ def extract_filtered_csv_homologues_to_alignments(set_, acc, TMD_len, fasta_all_
                 # only keep the seqs that have the same length as the first one
                 df_no_gaps_in_q_plus5 = df.loc[df['subject_TMD_align_seq_surr5'].str.len() == TMD_plus_5_len]
                 uniq_TMD_seqs_surr5_for_LIPO = df_no_gaps_in_q_plus5['subject_TMD_align_seq_surr5'].unique()
+                print("query_TMD_seq_surr5", query_TMD_seq_surr5)
                 save_seqs(uniq_TMD_seqs_surr5_for_LIPO, path_uniq_TMD_seqs_surr5_for_LIPO, query_TMD_seq=query_TMD_seq_surr5)
                 save_fasta_from_array(uniq_TMD_seqs_surr5_for_LIPO, fasta_uniq_TMD_seqs_surr5_for_LIPO, acc, query_TMD_seq=query_TMD_seq_surr5)
 

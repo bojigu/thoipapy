@@ -67,7 +67,6 @@ def download_homologues_from_ncbi_mult_prot(set_, df_set, logging):
 
         if not os.path.isfile(xml_tar_gz):
             run_download = True
-            logging.info('{} starting download_homologues_from_ncbi'.format(acc))
         else:
             if set_["rerun_existing_blast_results"]:
                 run_download = True
@@ -108,7 +107,7 @@ def download_homologues_from_ncbi(acc, TMD_seq_pl_surr, blast_xml_file, xml_txt,
     logging : logging.Logger
         Python object with settings for logging to console and file.
     """
-
+    logging.info('{} starting download_homologues_from_ncbi'.format(acc))
     query_fasta_string = ">{} TMD add surround 20 residues\n{}".format(acc, TMD_seq_pl_surr)
 
     try:

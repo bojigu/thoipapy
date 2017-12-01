@@ -267,7 +267,7 @@ def setup_keyboard_interrupt_and_error_logging(set_, setname):
     logging = thoipapy.common.setup_error_logging(logfile, level_console, level_logfile)
     return logging
 
-def setup_error_logging(logfile, level_console="DEBUG", level_logfile="DEBUG"):
+def setup_error_logging(logfile, level_console="DEBUG", level_logfile="DEBUG", print_system_info=True):
     """ Sets up error logging, and logs a number of system settings.
 
     Parameters:
@@ -352,7 +352,8 @@ def setup_error_logging(logfile, level_console="DEBUG", level_logfile="DEBUG"):
     system_settings_dict["total_ram"] = "{:0.2f} GB".format(psutil.virtual_memory()[0] / 1000000000)
     system_settings_dict["available_ram"] = "{:0.2f} GB ({}% used)".format(psutil.virtual_memory()[1] / 1000000000, psutil.virtual_memory()[2])
     # log the system settings
-    logging.warning(system_settings_dict)
+    if print_system_info:
+        logging.warning(system_settings_dict)
     #test error message reporting
     #logging.warning('LOGGING TEST:')
     #try:

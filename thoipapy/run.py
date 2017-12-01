@@ -93,12 +93,12 @@ if __name__ == "__main__":
         set_["input_fasta_file"]=args.i
         set_["tm_len"] = thoipapy.common.calculate_fasta_file_length(set_)
     if args.ts is not None:
-        set_["tm_start"]=args.ts
+        set_["TMD_start"]=args.ts
     if args.te is not None:
-        set_["tm_end"]=args.te
+        set_["TMD_end"]=args.te
     if args.tmd is not None:
         set_["input_tmd_file"]=args.tmd
-        set_["tm_start"], set_["tm_end"] = common.tmd_positions_match_fasta(set_)
+        set_["TMD_start"], set_["TMD_end"] = common.tmd_positions_match_fasta(set_)
     if args.email_to is not None:
         set_["email_to"]=args.email_to
 
@@ -180,6 +180,7 @@ if __name__ == "__main__":
     # Repeat for the actual surrounding number of residues chosen in the settings file
     # this overwrites the indexing columns created for the surr5 above, except for the final sequence
     num_of_sur_residues = set_["num_of_sur_residues"]
+    print("num_of_sur_residues", num_of_sur_residues)
     df_set, TMD_seq_pl_surr_series = create_column_with_TMD_plus_surround_seq(df_set, num_of_sur_residues)
     df_set["TMD_seq_pl_surr"] = TMD_seq_pl_surr_series
 
@@ -204,6 +205,8 @@ if __name__ == "__main__":
     set_["list_of_tmd_start_end"] = list_of_tmd_start_end
     thoipapy.utils.make_sure_path_exists(list_of_tmd_start_end, isfile=True)
     df_set.set_index("acc").to_csv(list_of_tmd_start_end)
+    train_data_csv = os.path.join(set_["set_results_folder"], "{}_processed_input_sequences.csv".format(set_["setname"]))
+    df_set.set_index("acc").to_csv(train_data_csv)
 
     # create a database label. Either crystal, NMR, ETRA or "mixed"
     unique_database_labels = df_set["database"].unique()
@@ -219,7 +222,7 @@ if __name__ == "__main__":
         query_protein_tmd_file_handle=open(query_protein_tmd_file,"w")
         writer = csv.writer(query_protein_tmd_file_handle, delimiter=',', quoting = csv.QUOTE_NONE,lineterminator='\n')
         writer.writerow(["Protein","TMD_len","TMD_Start","TMD_End"])
-        writer.writerow([set_["tm_protein_name"],set_["tm_len"],set_["tm_start"],set_["tm_end"]])
+        writer.writerow([set_["tm_protein_name"],set_["tm_len"],set_["TMD_start"],set_["TMD_end"]])
         query_protein_tmd_file_handle.close()
         set_["list_of_tmd_start_end"]=query_protein_tmd_file
 
@@ -293,7 +296,7 @@ if __name__ == "__main__":
             thoipapy.RF_features.feature_calculate.parse_freecontact_coevolution_mult_prot(set_, df_set, logging)
 
     if set_["clac_relative_position"]:
-        thoipapy.RF_features.feature_calculate.relative_position_calculation(set_, df_set, logging)
+        thoipapy.RF_features.feature_calculate.calc_relative_position_mult_prot(set_, df_set, logging)
 
     if set_["lips_score_feature_calculation"]:
         thoipapy.RF_features.feature_calculate.LIPS_score_calculation_mult_prot(set_, df_set, logging)
@@ -303,15 +306,15 @@ if __name__ == "__main__":
 
     if set_["combine_feature_into_train_data"]:
         # if database_for_full_set == "crystal" or database_for_full_set == "NMR":
-        #     thoipapy.RF_features.feature_calculate.combine_csv_files_with_features(set_, df_set, logging)
+        #     thoipapy.RF_features.feature_calculate.combine_all_features_mult_prot(set_, df_set, logging)
         #     thoipapy.RF_features.feature_calculate.add_bind_data_to_combined_features(set_, df_set, logging)
-        #     #thoipapy.RF_features.feature_calculate.adding_physical_parameters_to_train_data(set_, df_set, logging)
+        #     #thoipapy.RF_features.feature_calculate.add_physical_parameters_to_features_mult_prot(set_, df_set, logging)
         # if database_for_full_set == "ETRA":
         #     #thoipapy.RF_features.feature_calculate.features_combine_to_testdata( set_, logging)
-        #     thoipapy.RF_features.feature_calculate.combine_csv_files_with_features(set_, df_set, logging)
+        #     thoipapy.RF_features.feature_calculate.combine_all_features_mult_prot(set_, df_set, logging)
         #     #thoipapy.RF_features.feature_calculate.adding_physical_parameters_to_test_data(set_, logging)
-        thoipapy.RF_features.feature_calculate.combine_csv_files_with_features(set_, df_set, logging)
-        thoipapy.RF_features.feature_calculate.adding_physical_parameters_to_train_data(set_, df_set, logging)
+        thoipapy.RF_features.feature_calculate.combine_all_features_mult_prot(set_, df_set, logging)
+        thoipapy.RF_features.feature_calculate.add_physical_parameters_to_features_mult_prot(set_, df_set, logging)
         if set_["add_bind_data_to_combined_features"]:
             thoipapy.RF_features.feature_calculate.add_bind_data_to_combined_features(set_, df_set, logging)
         thoipapy.RF_features.feature_calculate.combine_all_train_data_for_random_forest(set_, df_set, logging)
