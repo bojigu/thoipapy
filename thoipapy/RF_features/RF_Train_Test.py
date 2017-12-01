@@ -29,8 +29,10 @@ def thoipa_rfmodel_create(set_,logging):
     -------
 
     """
-    train_data = os.path.join(set_["thoipapy_data_folder"],"RandomForest",r"Crystal_Nmr_Traindata.csv")
-    data = pd.read_csv(train_data, sep=',', engine='python', index_col=0)
+    logging.info('starting to predict etra data with THOIPA prediction model')
+
+    train_data_csv = os.path.join(set_["set_results_folder"], "{}_train_data.csv".format(set_["setname"]))
+    data = pd.read_csv(train_data_csv, sep=',', engine='python', index_col=0)
     del data["residue_num"]
     del data["residue_name"]
     del data["closedist"]
