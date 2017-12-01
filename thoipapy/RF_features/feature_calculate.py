@@ -1268,7 +1268,7 @@ def adding_physical_parameters_to_train_data(set_, df_set, logging):
                         # print(row1)
                         if re.search("residue_num", row1):
                             array1 = row1.rstrip().split(",")
-                            array1[42:14]=["Hydrophobicity_sAA", "Charge_sAA", "PI_sAA", "LIPS_sAA", "LIPSM_sAA", "Hydrophobic_sAA", "Aliphatic_sAA", "Aromatic_sAA", "Polar_sAA","Negative_sAA", "Positive_sAA", "Small_sAA", "Cbbranched_sAA", "Mass_sAA", "Volume_sAA"]
+                            array1[42:14]=["Hydrophobicity_sAA", "Charge_sAA", "PI_sAA", "LIPSI_sAA", "LIPSM_sAA", "Hydrophobic_sAA", "Aliphatic_sAA", "Aromatic_sAA", "Polar_sAA","Negative_sAA", "Positive_sAA", "Small_sAA", "Cbbranched_sAA", "Mass_sAA", "Volume_sAA"]
                             #array2 = array1[0:31]
                             #array2.extend(["Hydrophobicity", "Charge", "PI", "LIPS", "LIPSM", "Hydrophobic", "Aliphatic", "Aromatic", "Polar","Negative", "Positive", "Small", "Cbbranched", "Mass", "Volumn", array1[30].rstrip()])
                             writer.writerow(array1)
@@ -1280,7 +1280,7 @@ def adding_physical_parameters_to_train_data(set_, df_set, logging):
                     logging.info("adding_physical_parameters_to_train_data finished. ({})".format(feature_combined_file_incl_phys_param))
 
                 df = pd.read_csv(feature_combined_file_incl_phys_param, index_col=0)
-                cols_to_delete = ["Hydrophobic_sAA", "Aliphatic_sAA", "Polar_sAA","Negative_sAA", "Positive_sAA", "Small_sAA"]
+                cols_to_delete = ["Charge_sAA","LIPSI_sAA","LIPSM_sAA","Hydrophobic_sAA", "Aliphatic_sAA", "Negative_sAA", "Positive_sAA", "Volume_sAA"]
                 df.drop(cols_to_delete, axis=1, inplace=True)
                 df.to_csv(feature_combined_file_incl_phys_param)
 

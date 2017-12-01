@@ -1,4 +1,4 @@
-Parameters Hydrophobicity Charge PI LIPSI LIPSM Hydrophobic Aliphatic Aromatic Poloar Negative Positve Small Cbbranched Mass Volume
+Parameters Hydrophobicity Charge PI LIPSI LIPSM Hydrophobic Aliphatic Aromatic Polar Negative Positve Small Cbbranched Mass Volume
 A  1.80  2.00  6.00  0.71  0.82  3.00  2.00  1.00  2.00  1.00  1.00  3.00  1.00 89.09 67.00
 R  -4.50   3.00  10.67   1.47   0.18   2.00   1.00   1.00   3.00   1.00   2.00   1.00   1.00 174.20  86.00
 N  -3.50   2.00   5.41   0.96   0.19   1.00   1.00   1.00   3.00   1.00   1.00   1.00   1.00 132.11  91.00
