@@ -274,6 +274,7 @@ def extract_filtered_csv_homologues_to_alignments(set_, acc, TMD_len, fasta_all_
     fasta_uniq_TMD_seqs_for_PSSM_FREECONTACT = path_uniq_TMD_seqs_for_PSSM_FREECONTACT[:-4] + ".fas"
     fasta_uniq_TMD_seqs_no_gaps_for_LIPS = path_uniq_TMD_seqs_no_gaps_for_LIPS[:-4] + ".fas"
     fasta_uniq_TMD_seqs_surr5_for_LIPO = path_uniq_TMD_seqs_surr5_for_LIPO[:-4] + ".fas"
+    alignment_summary_csv = fasta_all_TMD_seqs[:-13] + "alignment_summary.csv"
 
     single_prot_dict = {}
 
@@ -286,6 +287,7 @@ def extract_filtered_csv_homologues_to_alignments(set_, acc, TMD_len, fasta_all_
             BLAST_csv_file_basename = os.path.basename(BLAST_csv_file)
             with tar.extractfile(BLAST_csv_file_basename) as BLAST_csv_extracted:
                 df = pd.read_csv(BLAST_csv_extracted)
+                n_total_BLAST_hits = df.shape[0]
 
                 # create regex search string, e.g. V-*L-*L-*G-*A-*V-*G-*G-*A-*G-*A-*T-*A-*L-*V-*F-*L-*S-*F-*C
                 # (finds sequence regardless of gaps)
@@ -358,14 +360,19 @@ def extract_filtered_csv_homologues_to_alignments(set_, acc, TMD_len, fasta_all_
                 save_seqs(uniq_TMD_seqs_surr5_for_LIPO, path_uniq_TMD_seqs_surr5_for_LIPO, query_TMD_seq=query_TMD_seq_surr5)
                 save_fasta_from_array(uniq_TMD_seqs_surr5_for_LIPO, fasta_uniq_TMD_seqs_surr5_for_LIPO, acc, query_TMD_seq=query_TMD_seq_surr5)
 
+                single_prot_dict["n_total_BLAST_hits"] = n_total_BLAST_hits
                 single_prot_dict["n_total_filtered_seqs"] = n_total_filtered_seqs
                 single_prot_dict["n_uniq_TMD_seqs_for_PSSM_FREECONTACT"] = len(uniq_TMD_seqs_for_PSSM_FREECONTACT)
                 single_prot_dict["n_uniq_TMD_seqs_no_gaps_for_LIPS"] = len(uniq_TMD_seqs_no_gaps_for_LIPS)
                 single_prot_dict["n_uniq_TMD_seqs_surr5_for_LIPO"] = len(uniq_TMD_seqs_surr5_for_LIPO)
 
+                single_prot_aln_result_ser = pd.Series(single_prot_dict)
+                single_prot_aln_result_ser.to_csv(alignment_summary_csv)
+
                 logging.info("{} extract_filtered_csv_homologues_to_alignments finished ({}). {}, {}, and {} valid seqs "
                              "from {} total".format(acc, path_uniq_TMD_seqs_for_PSSM_FREECONTACT, single_prot_dict["n_uniq_TMD_seqs_for_PSSM_FREECONTACT"], single_prot_dict["n_uniq_TMD_seqs_no_gaps_for_LIPS"],
                                                     single_prot_dict["n_uniq_TMD_seqs_surr5_for_LIPO"], n_total_filtered_seqs))
+
     else:
         print("{} not found".format(BLAST_csv_tar))
 

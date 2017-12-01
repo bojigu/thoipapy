@@ -1174,21 +1174,18 @@ def combine_csv_files_with_features(set_, df_set, logging):
         merge2=merge1.merge(lipophilicity_file_df,on=['residue_num','residue_name'])
         merge3=merge2.merge(freecontact_parsed_csv_df,on=["residue_num","residue_name"])
         merge4=merge3.merge(relative_position_file_df, on=["residue_num","residue_name"])
-        merge5=merge4.merge(LIPS_parsed_csv_df,on=["residue_num","residue_name"])
-        merge5.to_csv(feature_combined_file)
-
-
-        file_list = ["entropy_file", "pssm_csv", "lipo_csv", "freecontact_parsed_csv", "relative_position_file", "LIPS_parsed_csv"]
-        df_list = ["entropy_file_df", "pssm_csv_df", "lipophilicity_file_df", "freecontact_parsed_csv_df",  "relative_position_file_df", "LIPS_parsed_csv_df"]
+        df_features_single_protein = merge4.merge(LIPS_parsed_csv_df,on=["residue_num","residue_name"])
 
         test_indexing = False
         if test_indexing:
+            file_list = ["entropy_file", "pssm_csv", "lipo_csv", "freecontact_parsed_csv", "relative_position_file", "LIPS_parsed_csv"]
+            df_list = ["entropy_file_df", "pssm_csv_df", "lipophilicity_file_df", "freecontact_parsed_csv_df", "relative_position_file_df", "LIPS_parsed_csv_df"]
             sys.stdout.write("{}".format(entropy_file_df))
             #entropy_file_df.loc[0, "residue_name"] = "X"
             #entropy_file_df.loc[0, "Entropy"] = 9999
             #entropy_file_df.loc[10, "Entropy"] = 7777
             #entropy_file_df["residue_num"] = range(3, entropy_file_df.shape[0] + 3)
-            for df in [merge1, merge2, merge3, merge4, merge5]:
+            for df in [merge1, merge2, merge3, merge4, df_features_single_protein]:
                 sys.stdout.write(df.shape)
             for n, df in enumerate([entropy_file_df, pssm_csv_df, lipophilicity_file_df,freecontact_parsed_csv_df,  relative_position_file_df, LIPS_parsed_csv_df]):
                 dfname = df_list[n]
@@ -1196,12 +1193,19 @@ def combine_csv_files_with_features(set_, df_set, logging):
                 sys.stdout.write("\n{} ({})".format(TMD_seq_this_df, dfname))
 
         # Raise an error if the TMD sequence does not match original seq in settings file
-        TMD_seq_in_merged_file = merge5.residue_name.str.cat()
+        TMD_seq_in_merged_file = df_features_single_protein.residue_name.str.cat()
         if TMD_seq != TMD_seq_in_merged_file:
             sys.stdout.write("acc = {}\noriginal = {}".format(acc, TMD_seq))
             sys.stdout.write("\nmerged   = {}".format(TMD_seq_in_merged_file))
             raise IndexError("TMD_seq in original settings file and final merged features dataframe does not match.")
 
+        alignments_dir = os.path.join(set_["homologues_folder"], "alignments", database)
+        alignment_summary_csv = os.path.join(alignments_dir, "{}.surr{}.gaps{}.alignment_summary.csv".format(acc, set_["num_of_sur_residues"], set_["max_n_gaps_in_TMD_subject_seq"]))
+        single_prot_aln_result_ser = pd.Series.from_csv(alignment_summary_csv)
+        n_homologues = single_prot_aln_result_ser["n_uniq_TMD_seqs_for_PSSM_FREECONTACT"]
+        # add the number of homologues (same number for all residues)
+        df_features_single_protein["n_homologues"] = n_homologues
+        df_features_single_protein.to_csv(feature_combined_file)
         logging.info("combine_csv_files_with_features finished ({})".format(feature_combined_file))
 
 
@@ -1366,17 +1370,20 @@ def combine_all_train_data_for_random_forest(set_, df_set, logging):
         feature_combined_file_incl_phys_param = os.path.join(set_["RF_features"], "combined", database,"{}.surr{}.gaps{}.combined_features_incl_phys_param.csv".format(
                                                              acc, set_["num_of_sur_residues"], set_["max_n_gaps_in_TMD_subject_seq"]))
 
-        # pathstr = "D:\data_thoipapy/Features/combined/{}/{}.surr20.gaps5.combined_features_incl_phys_param.csv")
-
         df_features_new_protein = pd.read_csv(feature_combined_file_incl_phys_param, index_col=0)
-        # for the first protein, replace the dataframe
+        df_features_new_protein["acc_db"] = "{}-{}".format(acc, database)
+
+        # reorder the columns
+        df_features_new_protein = thoipapy.utils.set_column_sequence(df_features_new_protein, ['acc_db', 'residue_num', 'residue_name','n_homologues'])
+
+        # for the first protein, replace the empty dataframe
         if df_all.empty:
             df_all = df_features_new_protein
-
         else:
-            # concatenate the combined and new dataframe
+            # concatenate the growing dataframe of combined proteins and new dataframe
             df_all = pd.concat([df_all, df_features_new_protein])
 
+    # reset the index to be a range (0,...).
     df_all.index = range(df_all.shape[0])
     df_all.to_csv(train_data_csv)
     logging.info('Finished creating train or test data for random forest.')
