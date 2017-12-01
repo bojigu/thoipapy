@@ -1215,8 +1215,8 @@ def add_bind_data_to_combined_features(set_, df_set, logging):
         feature_combined_file_incl_phys_param = os.path.join(set_["RF_features"], "combined", database,
         "{}.surr{}.gaps{}.combined_features_incl_phys_param.csv".format(acc, set_["num_of_sur_residues"], set_["max_n_gaps_in_TMD_subject_seq"]))
 
-        df_combined = pd.read_csv(feature_combined_file_incl_phys_param)
-        bind_status_file = os.path.join(set_["RF_features"],'Structure/%s.bind.closedist.csv') %acc
+        df_combined = pd.read_csv(feature_combined_file_incl_phys_param,index_col=0)
+        bind_status_file = os.path.join(set_["RF_features"],'Structure/%s/%s.bind.closedist.csv') %(database,acc)
         if os.path.isfile(bind_status_file):
             df_bind = pd.read_csv(bind_status_file)
             df_combined_plus_bind = df_bind.merge(df_combined, on=["residue_num", "residue_name"])
