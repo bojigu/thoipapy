@@ -46,24 +46,10 @@ def download_homologues_from_ncbi_mult_prot(set_, df_set, logging):
     #                                                                                            #
     ##############################################################################################
 
-    # tmp_list_loc = set_["list_of_tmd_start_end"]
-    # tmp_file_handle = open(tmp_list_loc, 'r')
-    # # skip header
-    # next(tmp_file_handle)
-    # for row in tmp_file_handle:
-    #     acc = row.strip().split(",")[0]
-    #
-    #     tmp_protein_fasta = os.path.join(set_["Protein_folder"], database, "%s.surr20.fasta") % acc
-    #
-    #     if os.path.isfile(tmp_protein_fasta):  # whether fasta file in folder
-    #         with open(tmp_protein_fasta, 'r') as f:
-    #             query_fasta_string = f.read()
-    #             print("query_fasta_string")
-    #             print(query_fasta_string)
-
-    for acc in df_set.index:
-        TMD_seq_pl_surr = df_set.loc[acc, "TMD_seq_pl_surr"]
-        database = df_set.loc[acc, "database"]
+    for i in df_set.index:
+        acc = df_set.loc[i, "acc"]
+        TMD_seq_pl_surr = df_set.loc[i, "TMD_seq_pl_surr"]
+        database = df_set.loc[i, "database"]
         query_fasta_string = ">{} TMD add surround 20 residues\n{}".format(acc, TMD_seq_pl_surr)
 
         # run online server NCBI blastp with biopython module
@@ -101,9 +87,6 @@ def download_homologues_from_ncbi(acc, query_fasta_string, blast_xml_file, xml_t
         with open(blast_xml_file, "w") as save_tmp_xml_file:
             save_tmp_xml_file.write(tmp_protein_homologues_xml_handle.read())
 
-        # save_tmp_xml_file = open(blast_xml_file, "w")
-        # save_tmp_xml_file.write(tmp_protein_homologues_xml_handle.read())
-        # save_tmp_xml_file.close()
         tmp_protein_homologues_xml_handle.close()
         duration = time.clock() - start
 

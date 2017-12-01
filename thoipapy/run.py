@@ -34,9 +34,10 @@ def create_column_with_TMD_plus_surround_seq(df_set, num_of_sur_residues):
     df_set["TMD_start_pl_surr"] = df_set.TMD_start - num_of_sur_residues
     df_set.loc[df_set["TMD_start_pl_surr"] < 1, "TMD_start_pl_surr"] = 1
     df_set["TMD_end_pl_surr"] = df_set.TMD_end + num_of_sur_residues
-    for acc in df_set.index:
-        if df_set.loc[acc, "TMD_end_pl_surr"] > df_set.loc[acc, "seqlen"]:
-            df_set.loc[acc, "TMD_end_pl_surr"] = df_set.loc[acc, "seqlen"]
+    for i in df_set.index:
+        acc = df_set.loc[i, "acc"]
+        if df_set.loc[i, "TMD_end_pl_surr"] > df_set.loc[i, "seqlen"]:
+            df_set.loc[i, "TMD_end_pl_surr"] = df_set.loc[i, "seqlen"]
     TMD_seq_pl_surr_series = df_set.apply(slice_TMD_seq_pl_surr, axis=1)
     return df_set, TMD_seq_pl_surr_series
 
@@ -138,10 +139,10 @@ if __name__ == "__main__":
         raise ValueError("More than one excel file in set folder contains '{}' in the filename.\nexcel files in folder = {}".format(setname, xlsx_list))
 
     # load the protein set (e.g. set01.xlsx) as a dataframe
-    df_set = pd.read_excel(set_path, sheetname='proteins', index_col=0)
+    df_set = pd.read_excel(set_path, sheetname='proteins')
 
     # create list of uniprot accessions to run
-    acc_list = df_set.index.tolist()
+    acc_list = df_set.acc.tolist()
     sys.stdout.write("settings file : {}\nsettings : {}\nprotein set number {}, acc_list : {}\n".format(os.path.basename(args.s), set_, set_["set_number"], acc_list))
     sys.stdout.flush()
 
@@ -150,23 +151,26 @@ if __name__ == "__main__":
     #                          process set of protein sequences                                  #
     #                                                                                            #
     ##############################################################################################
+    # set a unique index temporari
+    #df_set.index = df_set.acc + "-" + df_set.database
 
     df_set["seqlen"] = df_set.full_seq.str.len()
     df_set["TMD_len"] = df_set.TMD_seq.str.len()
     # df_set.loc["O75460", "TMD_seq"] = df_set.loc["O75460", "TMD_seq"] + "A"
 
-    for acc in df_set.index:
-        TMD_seq = df_set.loc[acc, "TMD_seq"]
-        full_seq = df_set.loc[acc, "full_seq"]
+    for i in df_set.index:
+        acc = df_set.loc[i, "acc"]
+        TMD_seq = df_set.loc[i, "TMD_seq"]
+        full_seq = df_set.loc[i, "full_seq"]
+
         # use regeg to get indices for start and end of TMD in seq
         m = re.search(TMD_seq, full_seq)
         if m:
             # convert from python indexing to unprot indexing
-            df_set.loc[acc, "TMD_start"] = m.start() + 1
-            df_set.loc[acc, "TMD_end"] = m.end()
+            df_set.loc[i, "TMD_start"] = m.start() + 1
+            df_set.loc[i, "TMD_end"] = m.end()
         else:
             raise IndexError("TMD seq not found in full_seq.\nacc = {}\nTMD_seq = {}\nfull_seq = {}".format(acc, TMD_seq, full_seq))
-
 
     # first get TMD plus 5 surrounding residues (for TMD_lipo script)
     num_of_sur_residues = 5
@@ -190,7 +194,7 @@ if __name__ == "__main__":
 
     """
     # reorder columns
-    df_set = thoipapy.utils.set_column_sequence(df_set, ['seqlen', 'TMD_start', 'TMD_end', "tm_surr_left", "tm_surr_right", "database"])
+    df_set = thoipapy.utils.set_column_sequence(df_set, ['acc', 'seqlen', 'TMD_start', 'TMD_end', "tm_surr_left", "tm_surr_right", "database"])
 
     # convert the floats to integers
     df_set.iloc[:, 1:5] = df_set.iloc[:, 1:5].astype(int)
@@ -199,7 +203,7 @@ if __name__ == "__main__":
     list_of_tmd_start_end = os.path.join(set_["thoipapy_data_folder"], "Input_data", os.path.basename(set_path)[:-5] + "_processed.csv")
     set_["list_of_tmd_start_end"] = list_of_tmd_start_end
     thoipapy.utils.make_sure_path_exists(list_of_tmd_start_end, isfile=True)
-    df_set.to_csv(list_of_tmd_start_end)
+    df_set.set_index("acc").to_csv(list_of_tmd_start_end)
 
     # create a database label. Either crystal, NMR, ETRA or "mixed"
     unique_database_labels = df_set["database"].unique()
