@@ -1241,7 +1241,7 @@ def adding_physical_parameters_to_train_data(set_, df_set, logging):
         database = df_set.loc[i, "database"]
         dict = {}
         thoipapy_module_path = os.path.dirname(os.path.abspath(thoipapy.__file__))
-        physical_parameter_file = os.path.join(thoipapy_module_path, "setting", "PhysicalProperty.txt")
+        physical_parameter_file = os.path.join(thoipapy_module_path, "setting", "Physical_Property_csv.txt")
 
         with open(physical_parameter_file,"r") as physical_parameter_file_handle:
             feature_combined_file = os.path.join(set_["RF_features"], "combined", database, "{}.surr{}.gaps{}.combined_features.csv".format(acc, set_["num_of_sur_residues"], set_["max_n_gaps_in_TMD_subject_seq"]))
