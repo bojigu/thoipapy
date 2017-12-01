@@ -1,0 +1,23 @@
+    set_ : dict
+        Settings dictionary
+    df_set : pd.DataFrame
+        Dataframe containing the list of proteins to process, including their TMD sequences and full-length sequences
+        index : range(0, ..)
+        columns : ['acc', 'seqlen', 'TMD_start', 'TMD_end', 'tm_surr_left', 'tm_surr_right', 'database',  ....]
+    logging : logging.Logger
+        Python object with settings for logging to console and file.
+    acc : str
+        Protein accession number. (e.g. UniProt acc, PDB_acc + chain letter)
+    TMD_seq_pl_surr : str
+        TMD sequence plus surrouding residues (usually 20) for BLAST
+    blast_xml_file : str
+        Path to xml file with BLAST results from NCBI.
+    xml_txt : str
+        Path to a text file that saves the download date, etc.
+    xml_tar_gz : str
+        Path to compressed tar file containing blast_xml_file, with BLAST results from NCBI.
+    expect_value : float or int
+        BLAST parameter "expect", which gives the expected number of random matches after BLAST with these parameters.
+        Typically 10.
+    hit_list_size : int
+        Maximum number of BLAST hits.

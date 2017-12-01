@@ -257,7 +257,7 @@ def extract_filtered_csv_homologues_to_alignments_mult_prot(set_, df_set, loggin
 
         single_prot_dict = extract_filtered_csv_homologues_to_alignments(set_, acc, TMD_len, fasta_all_TMD_seqs, path_uniq_TMD_seqs_for_PSSM_FREECONTACT,
                                                                          path_uniq_TMD_seqs_no_gaps_for_LIPS, path_uniq_TMD_seqs_surr5_for_LIPO, BLAST_csv_tar,
-                                                                         query_TMD_seq, query_TMD_seq_surr5, logging)
+                                                                         query_TMD_seq, query_TMD_seq_surr5, database, logging)
         out_dict[acc] = single_prot_dict
 
     df_align_results = pd.DataFrame(out_dict).T
@@ -270,7 +270,7 @@ def extract_filtered_csv_homologues_to_alignments_mult_prot(set_, df_set, loggin
 
 def extract_filtered_csv_homologues_to_alignments(set_, acc, TMD_len, fasta_all_TMD_seqs, path_uniq_TMD_seqs_for_PSSM_FREECONTACT,
                                                   path_uniq_TMD_seqs_no_gaps_for_LIPS, path_uniq_TMD_seqs_surr5_for_LIPO, BLAST_csv_tar,
-                                                  query_TMD_seq, query_TMD_seq_surr5, logging):
+                                                  query_TMD_seq, query_TMD_seq_surr5, database, logging):
     fasta_uniq_TMD_seqs_for_PSSM_FREECONTACT = path_uniq_TMD_seqs_for_PSSM_FREECONTACT[:-4] + ".fas"
     fasta_uniq_TMD_seqs_no_gaps_for_LIPS = path_uniq_TMD_seqs_no_gaps_for_LIPS[:-4] + ".fas"
     fasta_uniq_TMD_seqs_surr5_for_LIPO = path_uniq_TMD_seqs_surr5_for_LIPO[:-4] + ".fas"
@@ -295,11 +295,17 @@ def extract_filtered_csv_homologues_to_alignments(set_, acc, TMD_len, fasta_all_
                 start_end_list_in_alignment_ser = df.query_align_seq.apply(get_start_and_end_of_TMD_in_query, args=(TMD_regex_ss,)).dropna()
                 df['start'] = start_end_list_in_alignment_ser.apply(lambda x: x[1])
                 df['end'] = start_end_list_in_alignment_ser.apply(lambda x: x[2])
-
                 # slice TMDs out of dfs_sel, and save them in the new df_TMD
                 df.dropna(subset=["start", "end"], inplace=True)
                 df["start"] = df["start"].astype(int)
                 df["end"] = df["end"].astype(int)
+
+                if df.empty:
+                    BLAST_xml_tar = os.path.join(set_["xml_file_folder"], database, "{}.surr{}.BLAST.xml.tar.gz".format(acc, set_["num_of_sur_residues"]))
+                    raise ValueError("{} extract_filtered_csv_homologues_to_alignments failed\n. None of the homologues contained the original TMD sequence.\n"
+                                     "This can occur when the homologue xml file is old, and the sequences from BLAST and the protein set don't match. Delete the"
+                                     "homologue xml file ({}), re-run NCBI blast, and try-again".format(acc, BLAST_xml_tar ))
+
                 df['query_TMD_align_seq'] = df.apply(slice_query_TMD_seq, axis=1)
                 df['markup_TMD_align_seq'] = df.apply(slice_markup_TMD_seq, axis=1)
                 df['subject_TMD_align_seq'] = df.apply(slice_match_TMD_seq, axis=1)
@@ -389,8 +395,6 @@ def extract_filtered_csv_homologues_to_alignments_orig_handle_method(set_,loggin
         if (os.path.isfile(homo_csv_file_loc) and os.path.getsize(homo_csv_file_loc) > 0):  # whether protein homologues csv file exists
             df = pd.read_csv(homo_csv_file_loc)
             print(df["tm_sbjt_seq"])
-            from thoipapy.utils import aaa
-            aaa(df)
             #homo_filtered_out_csv_file = os.path.join(set_["homologues_folder"], "NoRedundPro/%s_homo_filtered_aln.fasta") % acc
             homo_filtered_out_csv_file = os.path.join(set_["homologues_folder"],"a3m",database,
                                                       "%s_homo_filtered_aln%s.fasta") % (acc,set_["surres"])

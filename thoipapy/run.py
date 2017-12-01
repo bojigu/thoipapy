@@ -314,7 +314,7 @@ if __name__ == "__main__":
         thoipapy.RF_features.feature_calculate.adding_physical_parameters_to_train_data(set_, df_set, logging)
         if set_["add_bind_data_to_combined_features"]:
             thoipapy.RF_features.feature_calculate.add_bind_data_to_combined_features(set_, df_set, logging)
-        thoipapy.RF_features.feature_calculate.combine_all_train_data_for_random_forest(set_,logging)
+        thoipapy.RF_features.feature_calculate.combine_all_train_data_for_random_forest(set_, df_set, logging)
 
 
     if set_["run_random_forest"]:

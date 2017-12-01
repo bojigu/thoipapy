@@ -89,7 +89,6 @@ def calc_lipophilicity(seq, method = "mean"):
     if method == "sum":
         return sum_of_multiplied
 
-
 def mem_a3m_homologues_filter(set_,logging):
 
     tmp_list_loc = set_["list_of_tmd_start_end"]
@@ -246,8 +245,8 @@ def lipo_from_pssm_mult_prot(set_, df_set, logging):
         acc = df_set.loc[i, "acc"]
         database = df_set.loc[i, "database"]
 
-        tm_surr_left = df_set.loc[i, "tm_surr_left"]
-        tm_surr_right = df_set.loc[i, "tm_surr_right"]
+        tm_surr_left = int(df_set.loc[i, "tm_surr_left"])
+        tm_surr_right = int(df_set.loc[i, "tm_surr_right"])
         # reset to 5. AM NOT SURE WHY.
         if tm_surr_left >= 5:
             tm_surr_left = 5
@@ -460,12 +459,11 @@ def lipo_from_pssm(acc, pssm_csv_surr5, lipo_csv, tm_surr_left, tm_surr_right, s
     df_lipo["lipo_{}_mean_3_N_pos".format(scalename)] = lipo_mean_3_N_pos
     df_lipo["lipo_{}_mean_3_C_pos".format(scalename)] = lipo_mean_3_C_pos
 
-
     df_lipo["residue_num"] = df["aa_pos"].values
     df_lipo["residue_name"] = df["residue_name"].values
     #df_lipo.index = range(df_lipo.shape[0])
     #df_lipo.index=[int(i) -tm_surr_left for i in df_lipo.index]
-    df_lipo["residue_num"] = [int(i) -tm_surr_left for i in df_lipo["residue_num"]]
+    df_lipo["residue_num"] = [int(i) - tm_surr_left for i in df_lipo["residue_num"]]
     df_lipo.index =df_lipo["residue_num"]
 
     df_lipo = df_lipo[["residue_name","lipo_{}".format(scalename), "lipo_{}_mean_3_N_pos".format(scalename),"lipo_{}_mean_3_C_pos".format(scalename)]]
@@ -1132,7 +1130,7 @@ def convert_bind_data_to_csv(set_, df_set, logging):
             except:
                 print("bind file parsing occures errors")
         else:
-            sys.stdout.write("{} convert_bind_data_to_csv failed. {} not found".format(acc, bind_file))
+            print("{} convert_bind_data_to_csv failed. {} not found".format(acc, bind_file))
 
 
                          ###################################################################################################
@@ -1191,7 +1189,7 @@ def combine_csv_files_with_features(set_, df_set, logging):
             #entropy_file_df.loc[10, "Entropy"] = 7777
             #entropy_file_df["residue_num"] = range(3, entropy_file_df.shape[0] + 3)
             for df in [merge1, merge2, merge3, merge4, merge5]:
-                print(df.shape)
+                sys.stdout.write(df.shape)
             for n, df in enumerate([entropy_file_df, pssm_csv_df, lipophilicity_file_df,freecontact_parsed_csv_df,  relative_position_file_df, LIPS_parsed_csv_df]):
                 dfname = df_list[n]
                 TMD_seq_this_df = df.residue_name.str.cat()
@@ -1260,12 +1258,8 @@ def adding_physical_parameters_to_train_data(set_, df_set, logging):
                             continue
                         else:
                             array = row.split()
-                            # print(array[1])
                             dict[array[0]] = array[1:16]
-                            # for k, v in dict.items():
-                            # print(k,v)
                     for row1 in train_data_file_handle:
-                        # print(row1)
                         if re.search("residue_num", row1):
                             array1 = row1.rstrip().split(",")
                             array1[42:14]=["Hydrophobicity_sAA", "Charge_sAA", "PI_sAA", "LIPSI_sAA", "LIPSM_sAA", "Hydrophobic_sAA", "Aliphatic_sAA", "Aromatic_sAA", "Polar_sAA","Negative_sAA", "Positive_sAA", "Small_sAA", "Cbbranched_sAA", "Mass_sAA", "Volume_sAA"]
@@ -1316,12 +1310,8 @@ def adding_physical_parameters_to_train_data(set_, df_set, logging):
 #                     continue
 #                 else:
 #                     array = row.split()
-#                     # print(array[1])
 #                     dict[array[0]] = array[1:16]
-#                     # for k, v in dict.items():
-#                     # print(k,v)
 #             for row1 in train_data_file_handle:
-#                 # print(row1)
 #                 if re.search("residue_num", row1):
 #                     array1 = row1.rstrip().split(",")
 #                     array1[42:14]=["Hydrophobicity", "Charge", "PI", "LIPS", "LIPSM", "Hydrophobic", "Aliphatic", "Aromatic", "Polar","Negative", "Positive", "Small", "Cbbranched", "Mass", "Volume"]
@@ -1338,74 +1328,125 @@ def adding_physical_parameters_to_train_data(set_, df_set, logging):
 
 
 
-def combine_all_train_data_for_random_forest(set_,logging):
-    logging.info('creating train and test data for random forest')
+def combine_all_train_data_for_random_forest(set_, df_set, logging):
+    """ Combing training (or test) data for multiple proteins
 
-    crystal_train_data_files = glob.glob(os.path.join(set_["RF_features"], "combined/crystal/*.surr{}.gaps{}.combined_features_incl_phys_param.csv".format( set_["num_of_sur_residues"], set_["max_n_gaps_in_TMD_subject_seq"])))
-    nmr_train_data_files = glob.glob(os.path.join(set_["RF_features"], "combined/NMR/*.surr{}.gaps{}.combined_features_incl_phys_param.csv".format( set_["num_of_sur_residues"], set_["max_n_gaps_in_TMD_subject_seq"])))
-    train_data_add_physical_parameter_files = glob.glob(os.path.join(set_["RF_features"], "combined/NMR/*.surr{}.gaps{}.combined_features_incl_phys_param.csv".format( set_["num_of_sur_residues"], set_["max_n_gaps_in_TMD_subject_seq"]))) + glob.glob(os.path.join(set_["RF_features"], "combined/Crystal/*.surr{}.gaps{}.combined_features_incl_phys_param.csv".format( set_["num_of_sur_residues"], set_["max_n_gaps_in_TMD_subject_seq"])))
-    etra_test_data_files = glob.glob(os.path.join(set_["RF_features"], "combined/ETRA/*.surr{}.gaps{}.combined_features_incl_phys_param.csv".format( set_["num_of_sur_residues"], set_["max_n_gaps_in_TMD_subject_seq"])))
-    delete_crystal_traindata_files = []
+    Effectively stacks the CSVs on top of each other.
 
-    delete_acc_lists = ["4gyc_B","4hod_A","2hyn_A","4qe9_A","4roc_A"]
-    for acc in delete_acc_lists:
-        delete_crystal_traindata_files.append(os.path.join(set_["RF_features"],"combined/crystal","%s.surr{}.gaps{}.combined_features_incl_phys_param.csv".format( set_["num_of_sur_residues"], set_["max_n_gaps_in_TMD_subject_seq"])))
+    Parameters
+    ----------
+    set_ : dict
+        Settings dictionary
+    df_set : pd.DataFrame
+        Dataframe containing the list of proteins to process, including their TMD sequences and full-length sequences
+        index : range(0, ..)
+        columns : ['acc', 'seqlen', 'TMD_start', 'TMD_end', 'tm_surr_left', 'tm_surr_right', 'database',  ....]
+    logging : logging.Logger
+        Python object with settings for logging to console and file.
 
-    header_saved = False
+    Saved Files
+    -----------
+    train_data_csv : csv
+        csv file with stacked feature data for multiple proteins
+        index = range(0, ..)
+        columns =
 
-    crystal_train_data_after_delete_files = [item for item in crystal_train_data_files if item not in delete_crystal_traindata_files]
-    train_data_after_delete_files = [item for item in train_data_add_physical_parameter_files if item not in delete_crystal_traindata_files]
+    """
+    logging.info('creating train or test data for random forest')
 
-    RF_dir = set_["RF_loc"]
-    Crystal_Traindata_csv = os.path.join(RF_dir, 'Crystal_Traindata.csv')
-    Nmr_Traindata_csv = os.path.join(RF_dir, 'Nmr_Traindata.csv')
-    Crystal_Nmr_Traindata_csv = os.path.join(RF_dir, 'Crystal_Nmr_Traindata.csv')
-    Etra_Testdata_csv = os.path.join(RF_dir, 'Etra_Testdata.csv')
+    train_data_csv = os.path.join(set_["set_results_folder"], "{}_train_data.csv".format(set_["setname"]))
 
-    with open(Crystal_Traindata_csv , 'w')   as fout :
+    # set up a dataframe to hold the features for all proteins
+    df_all = pd.DataFrame()
+    for i in df_set.index:
+        acc = df_set.loc[i, "acc"]
+        database = df_set.loc[i, "database"]
 
-        for filename in crystal_train_data_after_delete_files:
-            with open(filename) as fin:
-                header = next(fin)
-                if not header_saved:
-                    fout.write(header)
-                    header_saved = True
-                for line in fin:
-                    fout.write(line)
+        #pathstr = os.path.normpath(r"D:\data_thoipapy/Features/combined/{}/{}.surr20.gaps5.combined_features_incl_phys_param.csv")
+        feature_combined_file_incl_phys_param = os.path.join(set_["RF_features"], "combined", database,"{}.surr{}.gaps{}.combined_features_incl_phys_param.csv".format(
+                                                             acc, set_["num_of_sur_residues"], set_["max_n_gaps_in_TMD_subject_seq"]))
 
-    header_saved = False
-    #with open('/scratch/zeng/thoipapy/RandomForest/Nmr_Traindata.csv' , 'w')   as fout :
-    with open(Nmr_Traindata_csv, 'w')   as fout :
+        # pathstr = "D:\data_thoipapy/Features/combined/{}/{}.surr20.gaps5.combined_features_incl_phys_param.csv")
 
-        for filename in nmr_train_data_files:
-            with open(filename) as fin:
-                header = next(fin)
-                if not header_saved:
-                    fout.write(header)
-                    header_saved = True
-                for line in fin:
-                    fout.write(line)
+        df_features_new_protein = pd.read_csv(feature_combined_file_incl_phys_param, index_col=0)
+        # for the first protein, replace the dataframe
+        if df_all.empty:
+            df_all = df_features_new_protein
 
-    header_saved = False
-    with open(Crystal_Nmr_Traindata_csv, 'w')   as fout :
+        else:
+            # concatenate the combined and new dataframe
+            df_all = pd.concat([df_all, df_features_new_protein])
 
-        for filename in train_data_after_delete_files:
-            with open(filename) as fin:
-                header = next(fin)
-                if not header_saved:
-                    fout.write(header)
-                    header_saved = True
-                for line in fin:
-                    fout.write(line)
+    df_all.index = range(df_all.shape[0])
+    df_all.to_csv(train_data_csv)
+    logging.info('Finished creating train or test data for random forest.')
 
-    header_saved = False
-    with open(Etra_Testdata_csv, 'w')   as fout :
-
-        for filename in etra_test_data_files:
-            with open(filename) as fin:
-                header = next(fin)
-                if not header_saved:
-                    fout.write(header)
-                    header_saved = True
-                for line in fin:
-                    fout.write(line)
+    # DEPRECATED METHOD THAT TOOK ALL FILES IN FOLDER
+    # crystal_train_data_files = glob.glob(os.path.join(set_["RF_features"], "Crystal/*.mem.2gap.physipara.traindata_surr0.csv") )
+    # nmr_train_data_files = glob.glob(os.path.join(set_["RF_features"], "Nmr/*.mem.2gap.physipara.traindata_surr0.csv") )
+    # train_data_add_physical_parameter_files = glob.glob(os.path.join(set_["RF_features"], "Nmr/*.mem.2gap.physipara.traindata_surr0.csv") ) + glob.glob(os.path.join(set_["RF_features"], "Crystal/*.mem.2gap.physipara.traindata_surr0.csv") )
+    # etra_test_data_files = glob.glob(os.path.join(set_["RF_features"], "Etra/*.mem.2gap.physipara.testdata_surr0.csv"))
+    # delete_crystal_traindata_files = []
+    #
+    # delete_acc_lists = ["4gyc_B","4hod_A","2hyn_A","4qe9_A","4roc_A"]
+    # for acc in delete_acc_lists:
+    #     delete_crystal_traindata_files.append(os.path.join(set_["RF_features"],"Crystal","%s.mem.2gap.physipara.traindata_surr0.csv")%acc)
+    #
+    # header_saved = False
+    #
+    # crystal_train_data_after_delete_files = [item for item in crystal_train_data_files if item not in delete_crystal_traindata_files]
+    # train_data_after_delete_files = [item for item in train_data_add_physical_parameter_files if item not in delete_crystal_traindata_files]
+    #
+    # RF_dir = set_["RF_loc"]
+    # Crystal_Traindata_csv = os.path.join(RF_dir, 'Crystal_Traindata.csv')
+    # Nmr_Traindata_csv = os.path.join(RF_dir, 'Nmr_Traindata.csv')
+    # Crystal_Nmr_Traindata_csv = os.path.join(RF_dir, 'Crystal_Nmr_Traindata.csv')
+    # Etra_Testdata_csv = os.path.join(RF_dir, 'Etra_Testdata.csv')
+    #
+    # with open(Crystal_Traindata_csv , 'w')   as fout :
+    #
+    #     for filename in crystal_train_data_after_delete_files:
+    #         with open(filename) as fin:
+    #             header = next(fin)
+    #             if not header_saved:
+    #                 fout.write(header)
+    #                 header_saved = True
+    #             for line in fin:
+    #                 fout.write(line)
+    #
+    # header_saved = False
+    # #with open('/scratch/zeng/thoipapy/RandomForest/Nmr_Traindata.csv' , 'w')   as fout :
+    # with open(Nmr_Traindata_csv, 'w')   as fout :
+    #
+    #     for filename in nmr_train_data_files:
+    #         with open(filename) as fin:
+    #             header = next(fin)
+    #             if not header_saved:
+    #                 fout.write(header)
+    #                 header_saved = True
+    #             for line in fin:
+    #                 fout.write(line)
+    #
+    # header_saved = False
+    # with open(Crystal_Nmr_Traindata_csv, 'w')   as fout :
+    #
+    #     for filename in train_data_after_delete_files:
+    #         with open(filename) as fin:
+    #             header = next(fin)
+    #             if not header_saved:
+    #                 fout.write(header)
+    #                 header_saved = True
+    #             for line in fin:
+    #                 fout.write(line)
+    #
+    # header_saved = False
+    # with open(Etra_Testdata_csv, 'w')   as fout :
+    #
+    #     for filename in etra_test_data_files:
+    #         with open(filename) as fin:
+    #             header = next(fin)
+    #             if not header_saved:
+    #                 fout.write(header)
+    #                 header_saved = True
+    #             for line in fin:
+    #                 fout.write(line)
