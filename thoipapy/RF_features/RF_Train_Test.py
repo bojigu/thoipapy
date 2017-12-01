@@ -29,13 +29,13 @@ def thoipa_rfmodel_create(set_,logging):
     -------
 
     """
-    train_data = os.path.join(set_["data_harddrive"],"RandomForest",r"Crystal_Nmr_Traindata.csv")
+    train_data = os.path.join(set_["thoipapy_data_folder"],"RandomForest",r"Crystal_Nmr_Traindata.csv")
     data = pd.read_csv(train_data, sep=',', engine='python', index_col=0)
     del data["residue_num"]
     del data["residue_name"]
     del data["closedist"]
-    features = data.columns[0:54]
-    X = data[features]
+    #features = data.drop["bind"]
+    X = data.drop(["bind"],axis=1)
     y = data["bind"]
     forest = RandomForestClassifier(n_estimators=200)
     # save random forest model into local driver
@@ -45,21 +45,21 @@ def thoipa_rfmodel_create(set_,logging):
     # fit = joblib.load(pkl_file)
 
     # test etra data
-    testdata_list = glob.glob(os.path.join(set_["data_harddrive"],"Features", "Etra", "*.mem.2gap.physipara.testdata_surr0.csv"))
+    testdata_list = glob.glob(os.path.join(set_["thoipapy_data_folder"],"Features", "combined/etra", "*.surr{}.gaps{}.combined_features_incl_phys_param.csv".format( set_["num_of_sur_residues"], set_["max_n_gaps_in_TMD_subject_seq"])))
     i = 0
     for test_data in testdata_list:
-        acc = test_data.split('\\')[4][0:6]
+        acc = test_data.split('\\')[-1][0:6]
         # if acc == "O75460":
         dirupt_path = os.path.join(set_["base_dir"],"data_xy","Figure","Show_interface","Interface_xlsx", "{}.xlsx".format(acc))
         ddf = pd.read_excel(dirupt_path, index_col=0)
         disruption = ddf.Disruption
-        thoipa_out = os.path.join(set_["data_harddrive"],"Features","Etra", "{}.thoipa_pred.csv".format(acc))
+        thoipa_out = os.path.join(set_["thoipapy_data_folder"],"Features","combined/etra", "{}.thoipa_pred.csv".format(acc))
         tdf = pd.read_csv(test_data, sep=',', engine='python', index_col=0)
         tdf.index = tdf.index.astype(int) + 1
         aa = tdf.residue_name
         del tdf["residue_num"]
         del tdf["residue_name"]
-        tX = tdf[tdf.columns[0:54]]
+        tX = tdf[tdf.columns]
         tp = fit.predict_proba(tX)
         odf = pd.DataFrame()
         odf["AA"] = aa

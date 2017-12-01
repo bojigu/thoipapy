@@ -1341,15 +1341,15 @@ def adding_physical_parameters_to_train_data(set_, df_set, logging):
 def combine_all_train_data_for_random_forest(set_,logging):
     logging.info('creating train and test data for random forest')
 
-    crystal_train_data_files = glob.glob(os.path.join(set_["RF_features"], "combined/crystal/*.surr{}.gaps{}.combined_features.csv".format( set_["num_of_sur_residues"], set_["max_n_gaps_in_TMD_subject_seq"])))
-    nmr_train_data_files = glob.glob(os.path.join(set_["RF_features"], "combined/NMR/*.surr{}.gaps{}.combined_features.csv".format( set_["num_of_sur_residues"], set_["max_n_gaps_in_TMD_subject_seq"])))
-    train_data_add_physical_parameter_files = glob.glob(os.path.join(set_["RF_features"], "combined/NMR/*.surr{}.gaps{}.combined_features.csv".format( set_["num_of_sur_residues"], set_["max_n_gaps_in_TMD_subject_seq"]))) + glob.glob(os.path.join(set_["RF_features"], "Crystal/*.surr{}.gaps{}.combined_features.csv".format( set_["num_of_sur_residues"], set_["max_n_gaps_in_TMD_subject_seq"])))
-    etra_test_data_files = glob.glob(os.path.join(set_["RF_features"], "combined/ETRA/*.surr{}.gaps{}.combined_features.csv".format( set_["num_of_sur_residues"], set_["max_n_gaps_in_TMD_subject_seq"])))
+    crystal_train_data_files = glob.glob(os.path.join(set_["RF_features"], "combined/crystal/*.surr{}.gaps{}.combined_features_incl_phys_param.csv".format( set_["num_of_sur_residues"], set_["max_n_gaps_in_TMD_subject_seq"])))
+    nmr_train_data_files = glob.glob(os.path.join(set_["RF_features"], "combined/NMR/*.surr{}.gaps{}.combined_features_incl_phys_param.csv".format( set_["num_of_sur_residues"], set_["max_n_gaps_in_TMD_subject_seq"])))
+    train_data_add_physical_parameter_files = glob.glob(os.path.join(set_["RF_features"], "combined/NMR/*.surr{}.gaps{}.combined_features_incl_phys_param.csv".format( set_["num_of_sur_residues"], set_["max_n_gaps_in_TMD_subject_seq"]))) + glob.glob(os.path.join(set_["RF_features"], "combined/Crystal/*.surr{}.gaps{}.combined_features_incl_phys_param.csv".format( set_["num_of_sur_residues"], set_["max_n_gaps_in_TMD_subject_seq"])))
+    etra_test_data_files = glob.glob(os.path.join(set_["RF_features"], "combined/ETRA/*.surr{}.gaps{}.combined_features_incl_phys_param.csv".format( set_["num_of_sur_residues"], set_["max_n_gaps_in_TMD_subject_seq"])))
     delete_crystal_traindata_files = []
 
     delete_acc_lists = ["4gyc_B","4hod_A","2hyn_A","4qe9_A","4roc_A"]
     for acc in delete_acc_lists:
-        delete_crystal_traindata_files.append(os.path.join(set_["RF_features"],"combined/crystal","%s.surr{}.gaps{}.combined_features.csv".format( set_["num_of_sur_residues"], set_["max_n_gaps_in_TMD_subject_seq"])))
+        delete_crystal_traindata_files.append(os.path.join(set_["RF_features"],"combined/crystal","%s.surr{}.gaps{}.combined_features_incl_phys_param.csv".format( set_["num_of_sur_residues"], set_["max_n_gaps_in_TMD_subject_seq"])))
 
     header_saved = False
 
