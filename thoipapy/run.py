@@ -352,3 +352,19 @@ if __name__ == "__main__":
 
     if set_["Send_email_finished"]:
         thoipapy.Send_Email.Send_Email_Smtp.send_email_when_finished(set_, thoipapy,output_parse_file,output_png_loc)
+
+
+                    ###################################################################################################
+                    #                                                                                                 #
+                    #                   THOIPApy Result analysis Figs creation                                        #
+                    #                                                                                                 #
+                    ###################################################################################################
+
+    Fontsize = set_["Fontsize"]
+    Filter = set_["Filter"]
+    Width= set_["Width"]
+    Size= set_["Size"]
+    Linewidth= set_["Linewidth"]
+
+    if set_["bocurve_comp_thipa_LIPS_NMR"]:
+        thoipapy.figs.BoCurve_ThoipaBest_comp_LIPS_and_Nmr.run_bocurve_comp(Fontsize, Width, Size, set_,Linewidth)

@@ -33,11 +33,7 @@ def thoipa_rfmodel_create(set_,logging):
 
     train_data_csv = os.path.join(set_["set_results_folder"], "{}_train_data.csv".format(set_["setname"]))
     data = pd.read_csv(train_data_csv, sep=',', engine='python', index_col=0)
-    del data["residue_num"]
-    del data["residue_name"]
-    del data["closedist"]
-    #features = data.drop["bind"]
-    X = data.drop(["bind"],axis=1)
+    X = data.drop(["residue_num","residue_name","acc_db","n_homologues","closedist","bind"],axis=1)
     y = data["bind"]
     forest = RandomForestClassifier(n_estimators=200)
     # save random forest model into local driver
@@ -59,8 +55,7 @@ def thoipa_rfmodel_create(set_,logging):
         tdf = pd.read_csv(test_data, sep=',', engine='python', index_col=0)
         tdf.index = tdf.index.astype(int) + 1
         aa = tdf.residue_name
-        del tdf["residue_num"]
-        del tdf["residue_name"]
+        tdf=tdf.drop(["residue_num", "residue_name",  "n_homologues"], axis = 1)
         tX = tdf[tdf.columns]
         tp = fit.predict_proba(tX)
         odf = pd.DataFrame()

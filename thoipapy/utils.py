@@ -28,6 +28,7 @@ import pandas as pd
 from Bio.SeqUtils.ProtParam import ProteinAnalysis
 from shutil import copyfile
 from time import strftime
+import plotly
 
 def aaa(df_or_series):
     """ Function for use in debugging.
@@ -1582,3 +1583,7 @@ def delete_BLAST_xml(blast_xml_file):
         os.remove(xml_txt)
     except:
         print("{} could not be deleted".format(xml_txt))
+
+def setup_biopol_plotly(username, api_key):
+    plotly.tools.set_config_file(world_readable=False, sharing='private')
+    plotly.tools.set_credentials_file(username=username, api_key=api_key)
