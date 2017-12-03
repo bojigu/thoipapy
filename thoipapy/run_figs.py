@@ -31,8 +31,8 @@ if s["FigZB_05"] == True:
     thoipapy.figs.Average_Fraction_DI.FigZB_05(Fontsize,Width,Size,s)
 
 
-# if s["FigZB_18"] == True:
-#     thoipapy.figs.FigZB_18(s_path,Fontsize,Width,Size,s)
+if s["FigZB_18"] == True:
+    thoipapy.figs.Preddimer_TMdock_heatmap.FigZB_18(Fontsize,Width,Size)
 
 
 if s["run_bocurve_comp"] == True:
