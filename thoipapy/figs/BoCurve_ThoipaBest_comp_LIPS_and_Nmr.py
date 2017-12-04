@@ -1,29 +1,22 @@
 import sys
-import numpy as np
 import pandas as pd
 from matplotlib import pyplot as plt
-from plotly import graph_objs as go, plotly
-from plotly.tools import FigureFactory as FF
-from scipy.interpolate import interp1d
-from scipy.stats import ttest_ind
-import plotly
-import plotly.plotly as py
-import tlabtools.tools as tools
-import scipy.optimize
-import scipy.stats
-from tlabtools.mathfunctions import sine, residuals
-from plotly.graph_objs import *
-import thoipapy
+#import tlabtools.tools as tools
+#import scipy.optimize
+#import scipy.stats
+#from tlabtools.mathfunctions import sine, residuals
+#from plotly.graph_objs import *
+#import thoipapy
 plt.rcParams["font.family"] = "Verdana"
-import matplotlib as mpl
-from plotly import figure_factory as FF
-import statistics
-import glob
+#import matplotlib as mpl
+#from plotly import figure_factory as FF
+#import statistics
+#import glob
 import os
 import korbinian
 plt.rcParams["font.family"] = "Verdana"
 colour_dict = korbinian.utils.create_colour_lists()
-colour_lists = tools.create_colour_lists()
+#colour_lists = tools.create_colour_lists()
 color_thoipa = "k"
 color_Lips = colour_dict["TUM_colours"]['TUM5']
 blue1 = colour_dict["TUM_colours"]['TUM1']

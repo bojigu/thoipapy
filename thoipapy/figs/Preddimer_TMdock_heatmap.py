@@ -1,25 +1,13 @@
-import os
-from collections import Counter
 import sys
-import numpy as np
 import pandas as pd
 from matplotlib import pyplot as plt
 from plotly import graph_objs as go, plotly
 from plotly.tools import FigureFactory as FF
 from scipy.interpolate import interp1d
-from scipy.stats import ttest_ind
-import plotly
 import plotly.plotly as py
 import tlabtools.tools as tools
-import scipy.optimize
-import scipy.stats
-from tlabtools.mathfunctions import sine, residuals
-from plotly.graph_objs import *
-import datoxr
 plt.rcParams["font.family"] = "Verdana"
-import matplotlib as mpl
 from plotly import figure_factory as FF
-import statistics
 import glob
 import os
 import korbinian
