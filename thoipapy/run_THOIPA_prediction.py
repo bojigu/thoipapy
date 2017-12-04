@@ -28,8 +28,16 @@ def run_THOIPA_prediction(protein_name, TMD_seq, full_seq, predictions_folder):
     TMD_plus_full_seq = unicodedata.normalize('NFKD', TMD_plus_full_seq).encode('ascii','ignore')
     hash_object = hashlib.md5(TMD_plus_full_seq)
     md5 = hash_object.hexdigest()
+    folder_with_md5_exists = False
+    if folder_with_md5_exists:
+        create_indiv_name_and_email = 99
+        sys.stdout.write("You shuld just email the results here.")
     acc = md5[0:6]
     out_folder = os.path.join(predictions_folder, md5)
+    if os.path.isdir(out_folder):
+        sys.stdout.write("This sequence has already been analysed![folder exists]")
+    else:
+        thoipapy.utils.make_sure_path_exists(out_folder)
     logfile = os.path.join(out_folder, "logfile.txt")
     logging = thoipapy.common.setup_error_logging(logfile, "DEBUG", "DEBUG", print_system_info=False)
     seqlen = len(full_seq)
@@ -41,11 +49,6 @@ def run_THOIPA_prediction(protein_name, TMD_seq, full_seq, predictions_folder):
         logging.warning("TMD sequence was not found in full protein sequence. Please check input sequences.")
         return
         # the following code will only continue if the TMD seq is found ONCE in the full protein seq
-
-    if os.path.isdir(out_folder):
-        logging.info("This sequence has already been analysed![folder exists]")
-    else:
-        thoipapy.utils.make_sure_path_exists(out_folder)
 
     blast_xml_file = os.path.join(out_folder, "BLAST_results.xml")
     xml_txt = blast_xml_file[:-4] + "_details.txt"

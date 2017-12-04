@@ -120,15 +120,20 @@ def run_Rscipt_random_forest(set_, output_file_loc, logging):
 
 
 
-def RF_10flod_cross_validation(tmplist,thoipapyset_,logging):
+def RF_10flod_cross_validation(set_, tmplist,thoipapyset_,logging):
     logging.info('10-fold cross validatation is running')
-    data = pd.read_csv('/scratch2/zeng/homotypic_data/data/RandomForest/PsEnCo/TrainData2',delimiter="\s",engine='python')
-    del data["Residue_id"]
-    del data["Residue_name"]
+    # REPLACE WITH THIS NEW TRAINDATA
+    train_data_csv = os.path.join(set_["set_results_folder"], "{}_train_data.csv".format(set_["setname"]))
+    data = pd.read_csv(train_data_csv)
+    #data = pd.read_csv('/scratch2/zeng/homotypic_data/data/RandomForest/PsEnCo/TrainData2',delimiter="\s",engine='python')
+    # del data["Residue_id"]
+    # del data["Residue_name"]
     #print(data.as_matrix(data.columns))
-    features=data.columns[0:28]
-    X=data[features]
-    y=data["Bind"]
+    # features=data.columns[0:28]
+    # X=data[features]
+    # y=data["Bind"]
+    X = data.drop(["residue_num","residue_name","acc_db","n_homologues","closedist","bind"],axis=1)
+    y = data["bind"]
     #n_samples, n_features = X.shape
     #random_state = np.random.RandomState(0)
     #X = np.c_[X, random_state.randn(n_samples, 200 * n_features)]
@@ -159,8 +164,10 @@ def RF_10flod_cross_validation(tmplist,thoipapyset_,logging):
     plt.title('Receiver operating characteristic example')
     plt.legend(loc="lower right")
     plt.show()
+    # ADD SAVED PLOT
 
 def RF_variable_importance_calculate(tmplist,pathdic,set_,logging):
+    # UPDATE AS ABOVE
     data = pd.read_csv('/scratch2/zeng/homotypic_data/data/RandomForest/PsEnCo/TrainData2',delimiter="\s")
     del data["Residue_num"]
     del data["Residue_name"]

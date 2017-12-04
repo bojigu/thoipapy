@@ -713,8 +713,14 @@ def calc_relative_position_mult_prot(set_, df_set, logging):
 
     Parameters
     ----------
-    set_
-    logging
+    set_ : dict
+        Settings dictionary
+    df_set : pd.DataFrame
+        Dataframe containing the list of proteins to process, including their TMD sequences and full-length sequences
+        index : range(0, ..)
+        columns : ['acc', 'seqlen', 'TMD_start', 'TMD_end', 'tm_surr_left', 'tm_surr_right', 'database',  ....]
+    logging : logging.Logger
+        Python object with settings for logging to console and file.
 
     Returns
     -------
@@ -772,6 +778,23 @@ def calc_relative_position(acc, path_uniq_TMD_seqs_for_PSSM_FREECONTACT, relativ
 
 
 def LIPS_score_calculation_mult_prot(set_, df_set, logging):
+    """
+
+    Parameters
+    ----------
+    set_ : dict
+        Settings dictionary
+    df_set : pd.DataFrame
+        Dataframe containing the list of proteins to process, including their TMD sequences and full-length sequences
+        index : range(0, ..)
+        columns : ['acc', 'seqlen', 'TMD_start', 'TMD_end', 'tm_surr_left', 'tm_surr_right', 'database',  ....]
+    logging : logging.Logger
+        Python object with settings for logging to console and file.
+
+    Returns
+    -------
+
+    """
     logging.info('start lips score calculation')
     for i in df_set.index:
         acc = df_set.loc[i, "acc"]
