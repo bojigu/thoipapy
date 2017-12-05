@@ -9,7 +9,8 @@ if __name__ == "__main__":
 
     plt.rcParams["font.family"] = "Verdana"
 
-    s_path = r"C:\Users\ZENGBO\Dropbox\tm_homodimer_dropbox\Setting_figure_Bo_win10.xlsx"
+    #s_path = r"C:\Users\ZENGBO\Dropbox\tm_homodimer_dropbox\Setting_figure_Bo_win10.xlsx"
+    s_path = r"C:\Users\ZENGBO\Dropbox\tm_homodimer_dropbox\thoipapy_run_settings_Bo_win10.xlsx"
 
     df_setting_control = pd.read_excel(s_path, sheetname='run', index_col=0)
     df_setting_control.dropna(inplace = True, subset=["Run"])
@@ -38,4 +39,7 @@ if __name__ == "__main__":
 
     if s["run_bocurve_comp"] == True:
         thoipapy.figs.BoCurve_ThoipaBest_comp_LIPS_and_Nmr.run_bocurve_comp(Fontsize,Width,Size,s,Linewidth)
+
+    if s["create_bocurve_files"] == True:
+        thoipapy.figs.Create_Bo_Curve_files.Test_Etra(s)
 

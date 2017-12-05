@@ -50,7 +50,7 @@ def thoipa_rfmodel_create(set_, logging):
         # if acc == "O75460":
         dirupt_path = os.path.join(set_["base_dir"],"data_xy","Figure","Show_interface","Interface_xlsx", "{}.xlsx".format(acc))
         ddf = pd.read_excel(dirupt_path, index_col=0)
-        disruption = ddf.Disruption
+        disruption = ddf.disruption
         thoipa_out = os.path.join(set_["thoipapy_data_folder"],"Features","combined/etra", "{}.thoipa_pred.csv".format(acc))
         tdf = pd.read_csv(test_data, sep=',', engine='python', index_col=0)
         tdf.index = tdf.index.astype(int) + 1
