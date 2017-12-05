@@ -1,6 +1,11 @@
 #pycharm stuff
 .idea
 .idea\inspectionProfiles\profiles_settings.xml
+.idea/thoipapy.iml
+.idea/misc.xml
+.idea/modules.xml
+.idea/vcs.xml
+.idea/workspace.xml
 
 # Created by .ignore support plugin (hsz.mobi)
 ### Python template
@@ -94,8 +99,4 @@ ENV/
 # Rope project settings
 .ropeproject
 
-.idea/thoipapy.iml
-.idea/misc.xml
-.idea/modules.xml
-.idea/vcs.xml
-.idea/workspace.xml
+

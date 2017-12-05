@@ -17,7 +17,7 @@ from sklearn.externals import joblib
 def intersect(a, b):
      return list(set(a) & set(b))
 
-def thoipa_rfmodel_create(set_,logging):
+def thoipa_rfmodel_create(set_, logging):
     """
 
     Parameters
