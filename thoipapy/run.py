@@ -12,7 +12,10 @@ Dependencies:   Python 3.5
 Purpose:        Self-interacting single-pass membrane protein interface residues prediction
 
 """
-
+# I'm getting sick of the warnings that occur due to imported seaborn and statsmodels.stats.api modules, and have nothing to do with your code.
+# you should turn on warnings once a month to check if there is anything related to your code
+import warnings
+warnings.filterwarnings("ignore")
 import argparse
 import sys
 import os

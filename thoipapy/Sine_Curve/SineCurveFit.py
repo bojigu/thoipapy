@@ -1,23 +1,15 @@
 import pandas as pd
 import numpy as np
-import logging
 import matplotlib.pyplot as plt
-import sys
-import os
-import glob
-import thoipapy.Sine_Curve.eccpy
-import warnings
-import string
-import thoipapy.Sine_Curve.tlabtools.tools
 #from __future__ import unicode_literals
-from thoipapy.Sine_Curve.tlabassays.mathfunctions import sine, sine_perfect_helix, residuals
+#from thoipapy.Sine_Curve.tlabassays.mathfunctions import sine, sine_perfect_helix, residuals
+from tlabassays.mathfunctions import sine, sine_perfect_helix, residuals
 import scipy.optimize
 import os
-from thoipapy.Sine_Curve.eccpy.tools import normalise_0_1
-from thoipapy.Sine_Curve.eccpy.settings import setup_analysed_data_folder, read_settings_file
-from thoipapy.Sine_Curve.tlabassays.sin_disrupt_fit import fit_sin_to_data , extract_aa_pos_from_sample_names
-from thoipapy.Sine_Curve.tlabtools import tools
-colour_lists = tools.create_colour_lists()
+#from thoipapy.Sine_Curve.tlabtools import tools
+#import tlabtools as tools
+from korbinian.utils import create_colour_lists
+colour_lists = create_colour_lists()
 fontsize = 12
 data_dir = 'TMD16/'   #set the data_dir where you save all the data
 file_dir_extension = os.path.join(data_dir, '*.xlsx')
