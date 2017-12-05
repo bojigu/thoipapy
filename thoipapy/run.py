@@ -310,7 +310,7 @@ if __name__ == "__main__":
     if set_["combine_feature_into_train_data"]:
         # if database_for_full_set == "crystal" or database_for_full_set == "NMR":
         #     thoipapy.RF_features.feature_calculate.combine_all_features_mult_prot(set_, df_set, logging)
-        #     thoipapy.RF_features.feature_calculate.add_bind_data_to_combined_features_mult_prot(set_, df_set, logging)
+        #     thoipapy.RF_features.feature_calculate.add_experimental_data_to_combined_features_mult_prot(set_, df_set, logging)
         #     #thoipapy.RF_features.feature_calculate.add_physical_parameters_to_features_mult_prot(set_, df_set, logging)
         # if database_for_full_set == "ETRA":
         #     #thoipapy.RF_features.feature_calculate.features_combine_to_testdata( set_, logging)
@@ -318,8 +318,8 @@ if __name__ == "__main__":
         #     #thoipapy.RF_features.feature_calculate.adding_physical_parameters_to_test_data(set_, logging)
         thoipapy.RF_features.feature_calculate.combine_all_features_mult_prot(set_, df_set, logging)
         thoipapy.RF_features.feature_calculate.add_physical_parameters_to_features_mult_prot(set_, df_set, logging)
-        if set_["add_bind_data_to_combined_features"]:
-            thoipapy.RF_features.feature_calculate.add_bind_data_to_combined_features_mult_prot(set_, df_set, logging)
+        if set_["add_experimental_data_to_combined_features"]:
+            thoipapy.RF_features.feature_calculate.add_experimental_data_to_combined_features_mult_prot(set_, df_set, logging)
         thoipapy.RF_features.feature_calculate.combine_all_train_data_for_random_forest(set_, df_set, logging)
 
 

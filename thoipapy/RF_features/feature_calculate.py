@@ -1225,32 +1225,28 @@ def combine_all_features(acc, TMD_seq, feature_combined_file, entropy_file, pssm
     # Raise an error if the TMD sequence does not match original seq in settings file
     TMD_seq_in_merged_file = df_features_single_protein.residue_name.str.cat()
     if TMD_seq != TMD_seq_in_merged_file:
-        sys.stdout.write("acc = {}\noriginal = {}".format(acc, TMD_seq))
-        sys.stdout.write("\nmerged   = {}".format(TMD_seq_in_merged_file))
+        sys.stdout.write("acc = {}\nTMD_seq in protein set = {}\nmerged                 = {}\n".format(acc, TMD_seq, TMD_seq_in_merged_file))
         raise IndexError("TMD_seq in original settings file and final merged features dataframe does not match.")
-
 
     single_prot_aln_result_ser = pd.Series.from_csv(alignment_summary_csv)
     n_homologues = single_prot_aln_result_ser["n_uniq_TMD_seqs_for_PSSM_FREECONTACT"]
     # add the number of homologues (same number for all residues)
     df_features_single_protein["n_homologues"] = n_homologues
 
-    def normalise_number_of_homologues(x):
-        if x <= 100:
-            return 1
-        elif x <= 1000:
-            return 2
-        else:
-            return 3
-
     df_features_single_protein["n_homol_norm"] = df_features_single_protein["n_homologues"].apply(normalise_number_of_homologues)
 
     df_features_single_protein.to_csv(feature_combined_file)
     logging.info("{} combine_all_features_mult_prot finished ({})".format(acc, feature_combined_file))
 
+def normalise_number_of_homologues(x):
+    if x <= 100:
+        return 1
+    elif x <= 1000:
+        return 2
+    else:
+        return 3
 
-
-def add_bind_data_to_combined_features_mult_prot(set_, df_set, logging):
+def add_experimental_data_to_combined_features_mult_prot(set_, df_set, logging):
     for i in df_set.index:
         acc = df_set.loc[i, "acc"]
         database = df_set.loc[i, "database"]
@@ -1259,22 +1255,31 @@ def add_bind_data_to_combined_features_mult_prot(set_, df_set, logging):
         #"{}.surr{}.gaps{}.combined_features_incl_phys_param.csv".format(acc, set_["num_of_sur_residues"], set_["max_n_gaps_in_TMD_subject_seq"]))
 
         feature_combined_file = os.path.join(set_["RF_features"], "combined", database, "{}.surr{}.gaps{}.combined_features.csv".format(acc, set_["num_of_sur_residues"], set_["max_n_gaps_in_TMD_subject_seq"]))
-        bind_status_file = os.path.join(set_["RF_features"], 'Structure', database, '{}.bind.closedist.csv'.format(acc))
+        if database == "ETRA":
+            experimental_data_file = os.path.join(set_["base_dir"], "data_xy", "Figure", "Show_interface", "Interface_xlsx", "{}.xlsx".format(acc))
+        else:
+            experimental_data_file = os.path.join(set_["RF_features"], 'Structure', database, '{}.bind.closedist.csv'.format(acc))
 
-        add_bind_data_to_combined_features(feature_combined_file, bind_status_file, acc, TMD_seq, logging)
+        add_experimental_data_to_combined_features(acc, database, TMD_seq, feature_combined_file, experimental_data_file, logging)
 
 
-def add_bind_data_to_combined_features(feature_combined_file, bind_status_file, acc, TMD_seq, logging):
+def add_experimental_data_to_combined_features(acc, database, TMD_seq, feature_combined_file, experimental_data_file, logging):
     df_combined = pd.read_csv(feature_combined_file, index_col=0)
 
-    if os.path.isfile(bind_status_file):
-        df_bind = pd.read_csv(bind_status_file)
-        df_combined_plus_bind = df_bind.merge(df_combined, on=["residue_num", "residue_name"])
+    if os.path.isfile(experimental_data_file):
+        if database == "ETRA":
+            df_experiment_data = pd.read_excel(experimental_data_file)
+            df_experiment_data = df_experiment_data.rename(columns={"aa_position" : "residue_num", "orig_aa" : "residue_name", "Interface" : "bind"})
+        else:
+            df_experiment_data = pd.read_csv(experimental_data_file)
+        # join the two dataframes together
+        # if either the residue_num or residue_name don't match, the rows will be dropped
+        df_combined_plus_exp_data = df_experiment_data.merge(df_combined, on=["residue_num", "residue_name"])
 
-        TMD_seq_in_merged_file = df_combined_plus_bind.residue_name.str.cat()
+        TMD_seq_in_merged_file = df_combined_plus_exp_data.residue_name.str.cat()
         if TMD_seq != TMD_seq_in_merged_file:
             TMD_seq_in_combined_file = df_combined.residue_name.str.cat()
-            TMD_seq_in_bind_file = df_bind.residue_name.str.cat()
+            TMD_seq_in_bind_file = df_experiment_data.residue_name.str.cat()
             sys.stdout.write("\n{}, TMD_seq in protein set   = {}".format(acc, TMD_seq))
             sys.stdout.write("\n{}, TMD_seq_in_combined_file = {}".format(acc, TMD_seq_in_combined_file))
             sys.stdout.write("\n{}, TMD_seq_in_bind_file     = {}".format(acc, TMD_seq_in_bind_file))
@@ -1283,11 +1288,11 @@ def add_bind_data_to_combined_features(feature_combined_file, bind_status_file, 
             raise IndexError("TMD_seq in original settings file and final merged features dataframe does not match.")
 
         # overwrite existing combined features file
-        df_combined_plus_bind.to_csv(feature_combined_file)
-        logging.info("{} add_bind_data_to_combined_features_mult_prot finished ({})".format(acc, bind_status_file))
+        df_combined_plus_exp_data.to_csv(feature_combined_file)
+        logging.info("{} add_experimental_data_to_combined_features_mult_prot finished ({})".format(acc, experimental_data_file))
 
     else:
-        logging.warning("{} add_bind_data_to_combined_features_mult_prot failed, {} not found".format(acc, bind_status_file))
+        logging.warning("{} add_experimental_data_to_combined_features failed, {} not found".format(acc, experimental_data_file))
 
 
 def add_physical_parameters_to_features_mult_prot(set_, df_set, logging):

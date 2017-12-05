@@ -44,6 +44,8 @@ def thoipa_rfmodel_create(set_, logging):
 
     # test etra data
     testdata_list = glob.glob(os.path.join(set_["thoipapy_data_folder"],"Features", "combined/etra", "*.surr{}.gaps{}.combined_features_incl_phys_param.csv".format( set_["num_of_sur_residues"], set_["max_n_gaps_in_TMD_subject_seq"])))
+
+
     i = 0
     for test_data in testdata_list:
         acc = test_data.split('\\')[-1][0:6]
@@ -55,7 +57,9 @@ def thoipa_rfmodel_create(set_, logging):
         tdf = pd.read_csv(test_data, sep=',', engine='python', index_col=0)
         tdf.index = tdf.index.astype(int) + 1
         aa = tdf.residue_name
-        tdf=tdf.drop(["residue_num", "residue_name",  "n_homologues"], axis = 1)
+        print(tdf.columns)
+        print(tdf.shape)
+        tdf = tdf.drop(["residue_num", "residue_name",  "n_homologues"], axis = 1)
         tX = tdf[tdf.columns]
         tp = fit.predict_proba(tX)
         odf = pd.DataFrame()
