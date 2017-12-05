@@ -13,8 +13,8 @@ import os
 import sys
 from thoipapy.Sine_Curve.eccpy.settings import setup_analysed_data_folder, read_settings_file
 from thoipapy.Sine_Curve.eccpy.tools import setup_t20_colour_list, hill_eq, denormalise_0_1
-import warnings
-warnings.simplefilter("error")
+#import warnings
+#warnings.simplefilter("error")
 
 def run_analysis(settings_excel_file):
     """ Analysis of EC50 data from multiple experiments.
