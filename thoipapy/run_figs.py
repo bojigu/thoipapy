@@ -17,8 +17,8 @@ if __name__ == "__main__":
 
     df_setting_control["Run"] = df_setting_control["Run"].apply(eccpy.tools.convert_truelike_to_bool, convert_nontrue=False)
     s = df_setting_control.Run.to_dict()
-    sys.stdout.write('{}, '.format(s))
-    sys.stdout.flush()
+    #sys.stdout.write('{}, '.format(s))
+    #sys.stdout.flush()
 
     thoipapy.utils.setup_biopol_plotly(username=s["plotly_username"], api_key=s["plotly_api_key"])
 
@@ -41,5 +41,6 @@ if __name__ == "__main__":
         thoipapy.figs.BoCurve_ThoipaBest_comp_LIPS_and_Nmr.run_bocurve_comp(Fontsize,Width,Size,s,Linewidth)
 
     if s["create_bocurve_files"] == True:
-        thoipapy.figs.Create_Bo_Curve_files.Test_Etra(s)
+        #thoipapy.figs.Create_Bo_Curve_files.Test_Etra(s)
+        thoipapy.figs.Create_Bo_Curve_files.Test_Crystal(s)
 

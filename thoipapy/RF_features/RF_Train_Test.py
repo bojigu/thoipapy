@@ -43,7 +43,7 @@ def thoipa_rfmodel_create(set_, logging):
     # fit = joblib.load(pkl_file)
 
     # test etra data
-    testdata_list = glob.glob(os.path.join(set_["thoipapy_data_folder"],"Features", "combined/etra", "*.surr{}.gaps{}.combined_features_incl_phys_param.csv".format( set_["num_of_sur_residues"], set_["max_n_gaps_in_TMD_subject_seq"])))
+    testdata_list = glob.glob(os.path.join(set_["thoipapy_data_folder"],"Features", "combined/etra", "*.surr{}.gaps{}.combined_features.csv".format( set_["num_of_sur_residues"], set_["max_n_gaps_in_TMD_subject_seq"])))
 
 
     i = 0
@@ -52,14 +52,14 @@ def thoipa_rfmodel_create(set_, logging):
         # if acc == "O75460":
         dirupt_path = os.path.join(set_["base_dir"],"data_xy","Figure","Show_interface","Interface_xlsx", "{}.xlsx".format(acc))
         ddf = pd.read_excel(dirupt_path, index_col=0)
-        disruption = ddf.disruption
+        disruption = ddf.Disruption
         thoipa_out = os.path.join(set_["thoipapy_data_folder"],"Features","combined/etra", "{}.thoipa_pred.csv".format(acc))
         tdf = pd.read_csv(test_data, sep=',', engine='python', index_col=0)
         tdf.index = tdf.index.astype(int) + 1
         aa = tdf.residue_name
         print(tdf.columns)
         print(tdf.shape)
-        tdf = tdf.drop(["residue_num", "residue_name",  "n_homologues"], axis = 1)
+        tdf = tdf.drop(["residue_num", "residue_name",  "n_homologues","bind","Disruption"], axis = 1)
         tX = tdf[tdf.columns]
         tp = fit.predict_proba(tX)
         odf = pd.DataFrame()
