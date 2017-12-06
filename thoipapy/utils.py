@@ -1486,17 +1486,6 @@ def get_list_failed_downloads(pathdict):
     return acc_list_failed_downloads
 
 
-def normalise_0_1(arraylike):
-    """ Normalise an array to values between 0 and 1.
-    """
-    array_min = np.min(arraylike)
-    array_max = np.max(arraylike)
-    normalised = (arraylike - array_min)/(array_max - array_min)
-    # convert to float
-    normalised = np.array(normalised).astype(float)
-    return normalised
-
-
 def set_column_sequence(dataframe, seq, front=True):
     '''Takes a dataframe and a subsequence of its columns,
        returns dataframe with seq as first columns if "front" is True,

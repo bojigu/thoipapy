@@ -59,7 +59,11 @@ def thoipa_rfmodel_create(set_, logging):
         aa = tdf.residue_name
         print(tdf.columns)
         print(tdf.shape)
-        tdf = tdf.drop(["residue_num", "residue_name",  "n_homologues","bind","Disruption"], axis = 1)
+
+        coev_colname_list = ["CoevDImax", "CoevDI4", "CoevDI8", "CumDI4", "CumDI8", "CoevMImax", "CoevMI4", "CoevMI8", "CumMI4", "CumMI8"]
+        list_cols_not_used_in_ML = ['acc_db', "residue_num", "residue_name",  "n_homologues", "Entropy"] + coev_colname_list
+
+        tdf = tdf.drop(list_cols_not_used_in_ML, axis = 1)
         tX = tdf[tdf.columns]
         tp = fit.predict_proba(tX)
         odf = pd.DataFrame()
