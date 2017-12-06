@@ -17,6 +17,16 @@ from sklearn.externals import joblib
 def intersect(a, b):
      return list(set(a) & set(b))
 
+def drop_cols_not_used_in_ML(df_data):
+
+    # columns in combined file that are not used in machine-learning training or testing
+    cols_to_drop = ['bind', "Disruption", "closedist", 'acc_db', "residue_num", "residue_name", "n_homologues", "Entropy",
+                    "CoevDImax", "CoevDI4", "CoevDI8", "CumDI4", "CumDI8", "CoevMImax", "CoevMI4", "CoevMI8", "CumMI4", "CumMI8"]
+    # got only those that are actually in the columns
+    cols_to_drop = set(cols_to_drop).intersection(set(df_data.columns))
+    df_data = df_data.drop(cols_to_drop,axis=1)
+    return df_data
+
 def thoipa_rfmodel_create(set_, logging):
     """
 
@@ -32,45 +42,78 @@ def thoipa_rfmodel_create(set_, logging):
     logging.info('starting to predict etra data with THOIPA prediction model')
 
     train_data_csv = os.path.join(set_["set_results_folder"], "{}_train_data.csv".format(set_["setname"]))
-    data = pd.read_csv(train_data_csv, sep=',', engine='python', index_col=0)
-    X = data.drop(["residue_num","residue_name","acc_db","n_homologues","closedist","bind"],axis=1)
-    y = data["bind"]
+    model_pkl = os.path.join(set_["set_results_folder"], "{}_rfmodel.pkl".format(set_["setname"]))
+
+    df_data = pd.read_csv(train_data_csv, index_col=0)
+    y = df_data["bind"]
+
+    df_data = drop_cols_not_used_in_ML(df_data)
+    print(df_data.columns)
+
+    X = df_data
+
     forest = RandomForestClassifier(n_estimators=200)
     # save random forest model into local driver
     # pkl_file = r'D:\thoipapy\RandomForest\rfmodel.pkl'
-    fit = forest.fit(X, y)
-    # joblib.dump(fit, pkl_file)
-    # fit = joblib.load(pkl_file)
+    fit = forest.fit(df_data, y)
+    joblib.dump(fit, model_pkl)
 
-    # test etra data
-    testdata_list = glob.glob(os.path.join(set_["thoipapy_data_folder"],"Features", "combined/etra", "*.surr{}.gaps{}.combined_features.csv".format( set_["num_of_sur_residues"], set_["max_n_gaps_in_TMD_subject_seq"])))
+    logging.info('finished training random forest algorithm ({})'.format(model_pkl))
 
+def predict_test_dataset_with_THOIPA(set_, train_setname, test_setname="set03"):
 
-    i = 0
-    for test_data in testdata_list:
-        acc = test_data.split('\\')[-1][0:6]
-        # if acc == "O75460":
-        dirupt_path = os.path.join(set_["base_dir"],"data_xy","Figure","Show_interface","Interface_xlsx", "{}.xlsx".format(acc))
-        ddf = pd.read_excel(dirupt_path, index_col=0)
-        disruption = ddf.Disruption
-        thoipa_out = os.path.join(set_["thoipapy_data_folder"],"Features","combined/etra", "{}.thoipa_pred.csv".format(acc))
-        tdf = pd.read_csv(test_data, sep=',', engine='python', index_col=0)
-        tdf.index = tdf.index.astype(int) + 1
-        aa = tdf.residue_name
-        print(tdf.columns)
-        print(tdf.shape)
+    model_pkl = os.path.join(set_["set_results_folder"], "{}_rfmodel.pkl".format(train_setname))
+    test_data_csv = os.path.join(set_["Results_folder"], test_setname, "{}_train_data.csv".format(test_setname))
+    THOIPA_pred_csv = os.path.join(set_["set_results_folder"], "{}_trainset_{}_testset_predictions.csv".format(train_setname, test_setname))
 
-        coev_colname_list = ["CoevDImax", "CoevDI4", "CoevDI8", "CumDI4", "CumDI8", "CoevMImax", "CoevMI4", "CoevMI8", "CumMI4", "CumMI8"]
-        list_cols_not_used_in_ML = ['acc_db', "residue_num", "residue_name",  "n_homologues", "Entropy"] + coev_colname_list
+    fit = joblib.load(model_pkl)
 
-        tdf = tdf.drop(list_cols_not_used_in_ML, axis = 1)
-        tX = tdf[tdf.columns]
-        tp = fit.predict_proba(tX)
-        odf = pd.DataFrame()
-        odf["AA"] = aa
-        odf["thoipa"] = tools.normalise_0_1(tp[:, 1])[0]
-        odf["disruption"] = tools.normalise_0_1(disruption)[0]
-        odf.to_csv(thoipa_out)
+    df_data = pd.read_csv(test_data_csv, index_col=0)
+    df_testdata = drop_cols_not_used_in_ML(df_data)
+    tX = df_testdata
+
+    tp = fit.predict_proba(tX)
+
+    df_out = pd.DataFrame()
+    if "Disruption" in df_data.columns:
+        df_out["Disruption"] = df_data["Disruption"]
+        df_out["bind"] = df_data["bind"]
+    df_out["THOIPA"] = tp[:, 1]  # tools.normalise_0_1(tp[:, 1])[0]
+
+    df_out.to_csv(THOIPA_pred_csv)
+    #
+    #
+    # # fit = joblib.load(pkl_file)
+    #
+    # # test etra data
+    # testdata_list = glob.glob(os.path.join(set_["thoipapy_data_folder"],"Features", "combined/etra", "*.surr{}.gaps{}.combined_features.csv".format( set_["num_of_sur_residues"], set_["max_n_gaps_in_TMD_subject_seq"])))
+    #
+    #
+    # i = 0
+    # for test_data in testdata_list:
+    #     acc = test_data.split('\\')[-1][0:6]
+    #     # if acc == "O75460":
+    #     dirupt_path = os.path.join(set_["base_dir"],"data_xy","Figure","Show_interface","Interface_xlsx", "{}.xlsx".format(acc))
+    #     ddf = pd.read_excel(dirupt_path, index_col=0)
+    #     disruption = ddf.Disruption
+    #     thoipa_out = os.path.join(set_["thoipapy_data_folder"],"Features","combined/etra", "{}.thoipa_pred.csv".format(acc))
+    #     tdf = pd.read_csv(test_data, sep=',', engine='python', index_col=0)
+    #     tdf.index = tdf.index.astype(int) + 1
+    #     aa = tdf.residue_name
+    #     print(tdf.columns)
+    #     print(tdf.shape)
+    #
+    #     coev_colname_list = ["CoevDImax", "CoevDI4", "CoevDI8", "CumDI4", "CumDI8", "CoevMImax", "CoevMI4", "CoevMI8", "CumMI4", "CumMI8"]
+    #     list_cols_not_used_in_ML = ['acc_db', "residue_num", "residue_name",  "n_homologues", "Entropy"] + coev_colname_list
+    #
+    #     tdf = tdf.drop(list_cols_not_used_in_ML, axis = 1)
+    #     tX = tdf[tdf.columns]
+    #     tp = fit.predict_proba(tX)
+    #     odf = pd.DataFrame()
+    #     odf["AA"] = aa
+    #     odf["thoipa"] = tools.normalise_0_1(tp[:, 1])[0]
+    #     odf["disruption"] = tools.normalise_0_1(disruption)[0]
+    #     odf.to_csv(thoipa_out)
 
 
 
