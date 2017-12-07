@@ -1240,7 +1240,6 @@ def combine_all_features(acc, TMD_seq, feature_combined_file, entropy_file, pssm
 
     df_features_single_protein = normalise_features(df_features_single_protein)
 
-
     df_features_single_protein.to_csv(feature_combined_file)
     logging.info("{} combine_all_features_mult_prot finished ({})".format(acc, feature_combined_file))
 
@@ -1286,9 +1285,11 @@ def add_experimental_data_to_combined_features(acc, database, TMD_seq, feature_c
     if os.path.isfile(experimental_data_file):
         if database == "ETRA":
             df_experiment_data = pd.read_excel(experimental_data_file)
-            df_experiment_data = df_experiment_data.rename(columns={"aa_position" : "residue_num", "orig_aa" : "residue_name", "Interface" : "bind"})
+            df_experiment_data = df_experiment_data.rename(columns={"aa_position" : "residue_num", "orig_aa" : "residue_name", "Interface" : "interface", "Disruption" : "interface_score"})
         else:
             df_experiment_data = pd.read_csv(experimental_data_file)
+            df_experiment_data = df_experiment_data.rename(columns={"bind": "interface", "closedist": "interface_score"})
+
         # join the two dataframes together
         # if either the residue_num or residue_name don't match, the rows will be dropped
         df_combined_plus_exp_data = df_experiment_data.merge(df_combined, on=["residue_num", "residue_name"])
@@ -1424,9 +1425,7 @@ def combine_all_train_data_for_random_forest(set_, df_set, logging):
 
         df_features_new_protein = pd.read_csv(feature_combined_file, index_col=0)
         df_features_new_protein["acc_db"] = "{}-{}".format(acc, database)
-        # reorder the columns
-        df_features_new_protein = thoipapy.utils.set_column_sequence(df_features_new_protein, ['acc_db', 'residue_num', 'residue_name', 'n_homologues'])
-
+#
         # for the first protein, replace the empty dataframe
         if df_all.empty:
             df_all = df_features_new_protein
@@ -1434,14 +1433,15 @@ def combine_all_train_data_for_random_forest(set_, df_set, logging):
             # concatenate the growing dataframe of combined proteins and new dataframe
             df_all = pd.concat([df_all, df_features_new_protein])
 
+    # drop any positions where there is no interface_score (e.g. no mutations, or hetero contacts?)
+    df_all.dropna(subset=["interface_score"], inplace=True)
+
     # reset the index to be a range (0,...).
     df_all.index = range(df_all.shape[0])
 
     # reorder the columns
-    column_list = ['acc_db', 'residue_num', 'residue_name', 'n_homologues']
-    if "bind" in df_all.columns:
-        column_list.append("bind")
-    df_all = thoipapy.utils.set_column_sequence(df_all, column_list)
+    column_list = ['acc_db', 'interface', 'interface_value', 'residue_num', 'residue_name', 'n_homologues']
+    df_all = thoipapy.utils.reorder_dataframe_columns(df_all, column_list)
 
     df_all.to_csv(train_data_csv)
     logging.info('Finished creating train or test data for random forest.')

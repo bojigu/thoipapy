@@ -89,7 +89,7 @@ def Test_Crystal(s):
             test_data_df["acc_db"] = "{}-{}".format(acc, database)
 
             # reorder the columns
-            test_data_df = thoipapy.utils.set_column_sequence(test_data_df,['acc_db', 'residue_num', 'residue_name','n_homologues'])
+            test_data_df = thoipapy.utils.reorder_dataframe_columns(test_data_df, ['acc_db', 'residue_num', 'residue_name', 'n_homologues'])
 
             set04_path= os.path.join(s["set_path"],"set04_crystal_NMR.xlsx")
             train04_df = thoipapy.figs.fig_utils.create_one_out_train_data(acc, set04_path ,s)
@@ -125,7 +125,7 @@ def Test_Crystal(s):
 def Train_Input_Test_Pred_Out(acc, train_data_df, tdf, train_features_del, test_features_del, database, s):
 
     X=train_data_df.drop(train_features_del,axis=1)
-    y=train_data_df["bind"]
+    y=train_data_df["interface"]
     clf = RandomForestClassifier(max_depth=5, n_estimators=10, max_features=1)
     fit = clf.fit(X,y)
     if database == "crystal" or database == "NMR":

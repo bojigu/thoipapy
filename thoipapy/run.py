@@ -198,7 +198,7 @@ if __name__ == "__main__":
 
     """
     # reorder columns
-    df_set = thoipapy.utils.set_column_sequence(df_set, ['acc', 'seqlen', 'TMD_start', 'TMD_end', "tm_surr_left", "tm_surr_right", "database"])
+    df_set = thoipapy.utils.reorder_dataframe_columns(df_set, ['acc', 'seqlen', 'TMD_start', 'TMD_end', "tm_surr_left", "tm_surr_right", "database"])
 
     # convert the floats to integers
     df_set.iloc[:, 1:5] = df_set.iloc[:, 1:5].astype(int)
@@ -329,7 +329,7 @@ if __name__ == "__main__":
         #thoipapy.RF_features.RF_Train_Test.run_Rscipt_random_forest(set_, output_file_loc, logging)
 
     if set_["predict_test_dataset_with_THOIPA"]:
-        thoipapy.RF_features.RF_Train_Test.predict_test_dataset_with_THOIPA(set_, set_["setname"], test_setname="set03")
+        thoipapy.RF_features.RF_Train_Test.predict_test_dataset_with_THOIPA(set_, set_["setname"], logging, set_["test_dataset"])
 
     if set_["parse_prediciton_output"]:
         thoipapy.RF_features.Output_Parse.parse_Predicted_Output(thoipapy,set_,output_file_loc,output_parse_file,logging)

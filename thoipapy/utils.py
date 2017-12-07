@@ -1486,28 +1486,40 @@ def get_list_failed_downloads(pathdict):
     return acc_list_failed_downloads
 
 
-def set_column_sequence(dataframe, seq, front=True):
+def reorder_dataframe_columns(dataframe, cols, front=True):
     '''Takes a dataframe and a subsequence of its columns,
        returns dataframe with seq as first columns if "front" is True,
        and seq as last columns if "front" is False.
        taken from https://stackoverflow.com/questions/12329853/how-to-rearrange-pandas-column-sequence
 
+    Parameters
+    ----------
+    df : pd.DataFrame
+        original dataframe
+    cols : list
+        List of cols to put first or last.
+    front : bool
+        Whether to put the columns at the front or the back.
+
     Usage
     -----
-    df = set_column_sequence(df, ["TMD_start", "database", "whatever other col I want first"])
+    df = reorder_dataframe_columns(df, ["TMD_start", "database", "whatever other col I want first"])
     '''
-    cols = seq[:] # copy so we don't mutate seq
-    for x in dataframe.columns:
-        if x not in cols:
+    for col in cols:
+        if col not in dataframe.columns:
+            cols.remove(col)
+    cols_to_place_first = cols[:] # copy so we don't mutate seq
+    for existing_col in dataframe.columns:
+        if existing_col not in cols_to_place_first:
             if front: #we want "seq" to be in the front
                 #so append current column to the end of the list
-                cols.append(x)
+                cols_to_place_first.append(existing_col)
             else:
                 #we want "seq" to be last, so insert this
                 #column in the front of the new column list
                 #"cols" we are building:
-                cols.insert(0, x)
-    return dataframe[cols]
+                cols_to_place_first.insert(0, existing_col)
+    return dataframe[cols_to_place_first]
 
 def create_tarballs_from_xml_files_in_folder(xml_dir, download_date="2017.11.02"):
     """script to create .tar.gz compressed files from a folder of xml files

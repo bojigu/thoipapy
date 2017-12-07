@@ -92,8 +92,8 @@ def create_one_out_train_data(acc,set_path,s):
             df_features_new_protein1["acc_db"] = "{}-{}".format(acc1, database)
 
             # reorder the columns
-            df_features_new_protein1 = thoipapy.utils.set_column_sequence(df_features_new_protein1,
-                                                                          ['acc_db', 'residue_num', 'residue_name',
+            df_features_new_protein1 = thoipapy.utils.reorder_dataframe_columns(df_features_new_protein1,
+                                                                                ['acc_db', 'residue_num', 'residue_name',
                                                                            'n_homologues'])
             # for the first protein, replace the empty dataframe
             if df_train.empty:

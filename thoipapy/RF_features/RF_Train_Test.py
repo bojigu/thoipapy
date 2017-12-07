@@ -20,7 +20,7 @@ def intersect(a, b):
 def drop_cols_not_used_in_ML(df_data):
 
     # columns in combined file that are not used in machine-learning training or testing
-    cols_to_drop = ['bind', "Disruption", "closedist", 'acc_db', "residue_num", "residue_name", "n_homologues", "Entropy",
+    cols_to_drop = ['interface', "interface_score", 'acc_db', "residue_num", "residue_name", "n_homologues", "Entropy",
                     "CoevDImax", "CoevDI4", "CoevDI8", "CumDI4", "CumDI8", "CoevMImax", "CoevMI4", "CoevMI8", "CumMI4", "CumMI8"]
     # got only those that are actually in the columns
     cols_to_drop = set(cols_to_drop).intersection(set(df_data.columns))
@@ -45,10 +45,9 @@ def thoipa_rfmodel_create(set_, logging):
     model_pkl = os.path.join(set_["set_results_folder"], "{}_rfmodel.pkl".format(set_["setname"]))
 
     df_data = pd.read_csv(train_data_csv, index_col=0)
-    y = df_data["bind"]
+    y = df_data["interface"]
 
     df_data = drop_cols_not_used_in_ML(df_data)
-    print(df_data.columns)
 
     X = df_data
 
@@ -60,11 +59,11 @@ def thoipa_rfmodel_create(set_, logging):
 
     logging.info('finished training random forest algorithm ({})'.format(model_pkl))
 
-def predict_test_dataset_with_THOIPA(set_, train_setname, test_setname="set03"):
+def predict_test_dataset_with_THOIPA(set_, train_setname, logging, test_setname):
 
     model_pkl = os.path.join(set_["set_results_folder"], "{}_rfmodel.pkl".format(train_setname))
     test_data_csv = os.path.join(set_["Results_folder"], test_setname, "{}_train_data.csv".format(test_setname))
-    THOIPA_pred_csv = os.path.join(set_["set_results_folder"], "{}_trainset_{}_testset_predictions.csv".format(train_setname, test_setname))
+    THOIPA_pred_csv = os.path.join(set_["set_results_folder"], "trainset{}_testset{}_predictions.csv".format(train_setname[-2:], test_setname[-2:]))
 
     fit = joblib.load(model_pkl)
 
@@ -75,14 +74,14 @@ def predict_test_dataset_with_THOIPA(set_, train_setname, test_setname="set03"):
     tp = fit.predict_proba(tX)
 
     df_out = pd.DataFrame()
-    if "Disruption" in df_data.columns:
-        df_out["Disruption"] = df_data["Disruption"]
-        df_out["bind"] = df_data["bind"]
+    if "interface_score" in df_data.columns:
+        df_out["interface_score"] = df_data["interface_score"]
+        df_out["interface"] = df_data["interface"]
     df_out["THOIPA"] = tp[:, 1]  # tools.normalise_0_1(tp[:, 1])[0]
 
     df_out.to_csv(THOIPA_pred_csv)
-    #
-    #
+    logging.info('finished predict_test_dataset_with_THOIPA ({})'.format(THOIPA_pred_csv))
+
     # # fit = joblib.load(pkl_file)
     #
     # # test etra data
@@ -100,8 +99,6 @@ def predict_test_dataset_with_THOIPA(set_, train_setname, test_setname="set03"):
     #     tdf = pd.read_csv(test_data, sep=',', engine='python', index_col=0)
     #     tdf.index = tdf.index.astype(int) + 1
     #     aa = tdf.residue_name
-    #     print(tdf.columns)
-    #     print(tdf.shape)
     #
     #     coev_colname_list = ["CoevDImax", "CoevDI4", "CoevDI8", "CumDI4", "CumDI8", "CoevMImax", "CoevMI4", "CoevMI8", "CumMI4", "CumMI8"]
     #     list_cols_not_used_in_ML = ['acc_db', "residue_num", "residue_name",  "n_homologues", "Entropy"] + coev_colname_list
@@ -164,10 +161,6 @@ def run_Rscipt_random_forest(set_, output_file_loc, logging):
         # command.run(timeout=120)
         logging.info("Output file: %s\n" % output_file_loc)
         prediction_output_file_handle.close()
-
-
-
-
 
 
 
