@@ -1,5 +1,7 @@
 import pandas as pd
 import numpy as np
+import thoipapy
+import sys
 from scipy import interp
 import matplotlib.pyplot as plt
 from sklearn.ensemble import RandomForestClassifier
@@ -7,11 +9,12 @@ from sklearn.metrics import roc_curve, auc
 from sklearn.model_selection import StratifiedKFold
 import os
 import subprocess, threading
-import sys
-import glob
+# import sys
+# import glob
 import numpy as np
-import eccpy.tools as tools
+# import eccpy.tools as tools
 from sklearn.externals import joblib
+import pickle
 
 # intersect function
 def intersect(a, b):
@@ -51,7 +54,7 @@ def thoipa_rfmodel_create(set_, logging):
 
     X = df_data
 
-    forest = RandomForestClassifier(n_estimators=200)
+    forest = RandomForestClassifier(n_estimators=set_["RF_number_of_estimators"])
     # save random forest model into local driver
     # pkl_file = r'D:\thoipapy\RandomForest\rfmodel.pkl'
     fit = forest.fit(df_data, y)
@@ -164,11 +167,16 @@ def run_Rscipt_random_forest(set_, output_file_loc, logging):
 
 
 
-def RF_10flod_cross_validation(set_, tmplist,thoipapyset_,logging):
-    logging.info('10-fold cross validatation is running')
+def run_10fold_cross_validation(set_, logging):
+    logging.info('10-fold cross validatation is running\n')
     # REPLACE WITH THIS NEW TRAINDATA
     train_data_csv = os.path.join(set_["set_results_folder"], "{}_train_data.csv".format(set_["setname"]))
-    data = pd.read_csv(train_data_csv)
+    crossvalidation_csv = os.path.join(set_["set_results_folder"], "crossvalidation", "trainset{}_testset{}_crossvalidation.csv".format(set_["setname"][-2:], set_["setname"][-2:]))
+    crossvalidation_pkl = os.path.join(set_["set_results_folder"], "crossvalidation", "trainset{}_testset{}_crossvalidation.pkl".format(set_["setname"][-2:], set_["setname"][-2:]))
+
+    thoipapy.utils.make_sure_path_exists(crossvalidation_csv, isfile=True)
+
+    df_data = pd.read_csv(train_data_csv)
     #data = pd.read_csv('/scratch2/zeng/homotypic_data/data/RandomForest/PsEnCo/TrainData2',delimiter="\s",engine='python')
     # del data["Residue_id"]
     # del data["Residue_name"]
@@ -176,38 +184,114 @@ def RF_10flod_cross_validation(set_, tmplist,thoipapyset_,logging):
     # features=data.columns[0:28]
     # X=data[features]
     # y=data["Bind"]
-    X = data.drop(["residue_num","residue_name","acc_db","n_homologues","closedist","bind"],axis=1)
-    y = data["bind"]
+    X = drop_cols_not_used_in_ML(df_data)
+    y = df_data["interface"]
     #n_samples, n_features = X.shape
     #random_state = np.random.RandomState(0)
     #X = np.c_[X, random_state.randn(n_samples, 200 * n_features)]
     #print(X.iloc[[20,22]])
-    cv = StratifiedKFold(y, n_folds=6)
-    forest = RandomForestClassifier(n_estimators=100)
+    #StratifiedKFold(n_splits=2, random_state=None, shuffle=False)
+    #cv = StratifiedKFold(y, n_folds=6)
+
+    skf = StratifiedKFold(n_splits=set_["cross_validation_number_of_splits"])
+    cv = list(skf.split(X, y))
+
+    forest = RandomForestClassifier(n_estimators=set_["RF_number_of_estimators"])
     mean_tpr = 0.0
     mean_fpr = np.linspace(0, 1, 100)
     all_tpr = []
+    df_xv = pd.DataFrame()
+    # save all outputs to a cross-validation dictionary, to be saved as a pickle file
+    xv_dict = {}
     for i, (train, test) in enumerate(cv):
+        sys.stdout.write("f{}.".format(i+1)), sys.stdout.flush()
         probas_ = forest.fit(X.iloc[train], y.iloc[train]).predict_proba(X.iloc[test])
         # Compute ROC curve and area the curve
         fpr, tpr, thresholds = roc_curve(y.iloc[test], probas_[:, 1])
+        xv_dict["fpr{}".format(i)] = fpr
+        xv_dict["tpr{}".format(i)] = tpr
         mean_tpr += interp(mean_fpr, fpr, tpr)
         mean_tpr[0] = 0.0
         roc_auc = auc(fpr, tpr)
-        plt.plot(fpr, tpr, lw=1, label='ROC fold %d (area = %0.2f)' % (i, roc_auc))
-    plt.plot([0, 1], [0, 1], '--', color=(0.6, 0.6, 0.6), label='Luck')
+        #plt.plot(fpr, tpr, lw=1, label='ROC fold %d (area = %0.2f)' % (i, roc_auc))
+
+    #plt.plot([0, 1], [0, 1], '--', color=(0.6, 0.6, 0.6), label='random')
     mean_tpr /= len(cv)
     mean_tpr[-1] = 1.0
+
     mean_auc = auc(mean_fpr, mean_tpr)
-    plt.plot(mean_fpr, mean_tpr, 'k--',
-             label='Mean ROC (area = %0.2f)' % mean_auc, lw=2)
-    plt.xlim([-0.05, 1.05])
-    plt.ylim([-0.05, 1.05])
-    plt.xlabel('False Positive Rate')
-    plt.ylabel('True Positive Rate')
-    plt.title('Receiver operating characteristic example')
-    plt.legend(loc="lower right")
-    plt.show()
+
+    xv_dict["true_positive_rate_mean"] = mean_tpr
+    xv_dict["false_positive_rate_mean"] = mean_fpr
+    xv_dict["mean_auc"] = mean_auc
+
+    # save dict as pickle
+    with open(crossvalidation_pkl, "wb") as f:
+        pickle.dump(xv_dict, f, protocol=pickle.HIGHEST_PROTOCOL)
+    
+    # df_xv.loc["mean_auc"] = mean_auc
+    # df_xv.to_csv(crossvalidation_csv)
+
+
+def fig_10fold_cross_validation(set_, logging):
+    plt.rcParams.update({'font.size': 7})
+    crossvalidation_csv = os.path.join(set_["set_results_folder"], "crossvalidation", "trainset{}_testset{}_crossvalidation.csv".format(set_["setname"][-2:], set_["setname"][-2:]))
+    crossvalidation_png = os.path.join(set_["set_results_folder"], "crossvalidation", "trainset{}_testset{}_ROC.png".format(set_["setname"][-2:], set_["setname"][-2:]))
+    crossvalidation_pkl = os.path.join(set_["set_results_folder"], "crossvalidation", "trainset{}_testset{}_crossvalidation.pkl".format(set_["setname"][-2:], set_["setname"][-2:]))
+
+    # open pickle file
+    with open(crossvalidation_pkl, "rb") as f:
+        xv_dict = pickle.load(f)
+
+    fig, ax = plt.subplots(figsize=(4.2, 4.2))
+
+    for i in range(set_["cross_validation_number_of_splits"]):
+        roc_auc = auc(xv_dict["fpr{}".format(i)], xv_dict["tpr{}".format(i)])
+        ax.plot(xv_dict["fpr{}".format(i)], xv_dict["tpr{}".format(i)], lw=1, label='fold %d (area = %0.2f)' % (i, roc_auc), alpha=0.8)
+
+    #mean_auc = auc(df_xv["false_positive_rate"], df_xv["true_positive_rate"])
+    mean_auc = xv_dict["mean_auc"]
+
+    ax.plot(xv_dict["false_positive_rate_mean"], xv_dict["true_positive_rate_mean"], color="k", label='mean (area = %0.2f)' % mean_auc, lw=1.5)
+    ax.plot([0, 1], [0, 1], '--', color=(0.6, 0.6, 0.6), label='random')
+    ax.set_xlim([-0.05, 1.05])
+    ax.set_ylim([-0.05, 1.05])
+    ax.set_xlabel("False positive rate")
+    ax.set_ylabel("True positive rate")
+    ax.legend(loc="lower right")
+    fig.tight_layout()
+    fig.savefig(crossvalidation_png, dpi=240)
+
+    #
+    #
+    # df_xv = pd.read_csv(crossvalidation_csv)
+    #
+    # #mean_auc = auc(df_xv["false_positive_rate"], df_xv["true_positive_rate"])
+    # mean_auc = df_xv.loc[0, "mean_auc"]
+    #
+    # fig, ax = plt.subplots(figsize=(4.2, 4.2))
+    #
+    # ax.plot([0, 1], [0, 1], '--', color=(0.6, 0.6, 0.6), label='random')
+    # ax.plot(xv_dict["false_positive_rate_mean"], xv_dict["true_positive_rate_mean"], 'k--',
+    #          label='Mean ROC (area = %0.2f)' % mean_auc, lw=2)
+    # ax.set_xlim([-0.05, 1.05])
+    # ax.set_ylim([-0.05, 1.05])
+    # ax.set_xlabel("False positive rate")
+    # ax.set_ylabel("True positive rate")
+    # ax.legend(loc="lower_right")
+    # fig.tight_layout()
+    # fig.savefig(crossvalidation_png)
+
+    # plt.plot(df_xv["false_positive_rate"], df_xv["true_positive_rate"], 'k--',
+    #          label='Mean ROC (area = %0.2f)' % mean_auc, lw=2)
+    # plt.xlim([-0.05, 1.05])
+    # plt.ylim([-0.05, 1.05])
+    # plt.xlabel('False Positive Rate')
+    # plt.ylabel('True Positive Rate')
+    # plt.title('Receiver operating characteristic example')
+    # plt.legend(loc="lower right")
+    # plt.savefig(crossvalidation_png)
+    #plt.show()
     # ADD SAVED PLOT
 
 def RF_variable_importance_calculate(tmplist,pathdic,set_,logging):
