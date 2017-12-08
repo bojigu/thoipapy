@@ -324,16 +324,20 @@ if __name__ == "__main__":
 
 
     if set_["run_random_forest"]:
-        thoipapy.RF_features.RF_Train_Test.thoipa_rfmodel_create(set_,logging)
+        thoipapy.RF_features.RF_Train_Test.train_random_forest_model(set_, logging)
         #thoipapy.RF_features.RF_Train_Test.run_10fold_cross_validation(thoipapy,set_,logging)
         #thoipapy.RF_features.RF_Train_Test.run_Rscipt_random_forest(set_, output_file_loc, logging)
 
     if set_["predict_test_dataset_with_THOIPA"]:
-        thoipapy.RF_features.RF_Train_Test.predict_test_dataset_with_THOIPA(set_, set_["setname"], logging, set_["test_dataset"])
+        thoipapy.RF_features.RF_Train_Test.predict_test_dataset_with_THOIPA(set_["setname"], set_["test_dataset"], set_, logging)
 
 
     if set_["run_10fold_cross_validation"]:
         thoipapy.RF_features.RF_Train_Test.run_10fold_cross_validation(set_, logging)
+
+    if set_["calculate_RF_variable_importance"]:
+        thoipapy.RF_features.RF_Train_Test.calculate_RF_variable_importance(set_, logging)
+
 
     if set_["parse_prediciton_output"]:
         thoipapy.RF_features.Output_Parse.parse_Predicted_Output(thoipapy,set_,output_file_loc,output_parse_file,logging)
@@ -371,4 +375,5 @@ if __name__ == "__main__":
                     ###################################################################################################
     if set_["fig_10fold_cross_validation"]:
         thoipapy.RF_features.RF_Train_Test.fig_10fold_cross_validation(set_, logging)
-
+    if set_["fig_variable_importance"]:
+        thoipapy.RF_features.RF_Train_Test.fig_variable_importance(set_, logging)
