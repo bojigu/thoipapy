@@ -111,6 +111,7 @@ def download_homologues_from_ncbi(acc, TMD_seq_pl_surr, blast_xml_file, xml_txt,
     query_fasta_string = ">{} TMD add surround 20 residues\n{}".format(acc, TMD_seq_pl_surr)
 
     try:
+        # NOTE : time.clock gives a different unit in Linux!
         start = time.clock()
         tmp_protein_homologues_xml_handle = NCBIWWW.qblast("blastp", "nr", query_fasta_string,
                                                            expect=expect_value,

@@ -44,8 +44,9 @@ def drop_cols_not_used_in_ML(df_data):
 
     # columns in combined file that are not used in machine-learning training or testing
     cols_to_drop = ["acc_db", "residue_num", "residue_name", "interface", "interface_score", "n_homologues", "Entropy", "LIPS_entropy",
-                    "CoevDImax", "CoevDI4", "CoevDI8", "CumDI4", "CumDI8", "CoevMImax", "CoevMI4", "CoevMI8", "CumMI4", "CumMI8",
-                    "CoevDImax_norm", "CoevDI8_norm", "CumDI4_norm", "CumDI8_norm", "CoevMImax_norm", "CoevMI8_norm", "CumMI4_norm", "CumMI8_norm"]#"CoevDI4_norm", "CoevMI4_norm",
+                    "CoevDImax", "CoevDI4", "CoevDI8",  "CoevMImax", "CoevMI4", "CoevMI8", "CumDI4", "CumDI8","CoevDI4_norm", "CoevMI4_norm",
+                    "CumDI4_norm", "CumDI8_norm", "CumMI4_norm", "CumMI8_norm"]
+                    #"CoevDImax_norm", "CoevDI8_norm", "CoevMImax_norm", "CoevMI8_norm", ]#
     # got only those that are actually in the columns
     cols_to_drop = set(cols_to_drop).intersection(set(df_data.columns))
     df_data = df_data.drop(cols_to_drop, axis=1)
@@ -73,16 +74,19 @@ def train_random_forest_model(set_, logging):
     model_pkl = os.path.join(set_["set_results_folder"], "{}_rfmodel.pkl".format(set_["setname"]))
 
     df_data = pd.read_csv(train_data_csv, index_col=0)
+
+    df_data = df_data.loc[df_data.n_homologues >= 50]
+
     y = df_data["interface"]
+    X = drop_cols_not_used_in_ML(df_data)
 
-    df_data = drop_cols_not_used_in_ML(df_data)
-
-    X = df_data
+    if 1 not in y.tolist():
+        raise ValueError("None of the residues are marked 1 for an interface residue!")
 
     forest = RandomForestClassifier(n_estimators=set_["RF_number_of_estimators"])
     # save random forest model into local driver
     # pkl_file = r'D:\thoipapy\RandomForest\rfmodel.pkl'
-    fit = forest.fit(df_data, y)
+    fit = forest.fit(X, y)
     joblib.dump(fit, model_pkl)
 
     logging.info('finished training random forest algorithm ({})'.format(model_pkl))
@@ -255,6 +259,9 @@ def run_10fold_cross_validation(set_, logging):
     thoipapy.utils.make_sure_path_exists(crossvalidation_csv, isfile=True)
 
     df_data = pd.read_csv(train_data_csv, index_col=0)
+
+    df_data = df_data.loc[df_data.n_homologues >= 50]
+
     #data = pd.read_csv('/scratch2/zeng/homotypic_data/data/RandomForest/PsEnCo/TrainData2',delimiter="\s",engine='python')
     # del data["Residue_id"]
     # del data["Residue_name"]

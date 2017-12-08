@@ -1250,9 +1250,15 @@ def normalise_features(df_features_single_protein):
     # convert entropy to conservation
     df_features_single_protein["conservation"] = -df_features_single_protein["Entropy"]
 
-    coev_colname_list = ["CoevDImax", "CoevDI4", "CoevDI8", "CumDI4", "CumDI8", "CoevMImax", "CoevMI4", "CoevMI8", "CumMI4", "CumMI8"]
+    coev_colname_list = ["CoevDImax", "CoevDI4", "CoevDI8", "CoevMImax", "CoevMI4", "CoevMI8"]
     for col in coev_colname_list:
         df_features_single_protein["{}_norm".format(col)] = normalise_0_1(df_features_single_protein[col])[0]
+
+    coev_cum_colname_list = ["CumDI4", "CumDI8", "CumMI4", "CumMI8"]
+    for col in coev_cum_colname_list:
+        df_features_single_protein["{}_norm".format(col)] = df_features_single_protein[col].apply(lambda x : 1 if x > 0 else 0)
+
+
 
     return df_features_single_protein
 
@@ -1415,11 +1421,20 @@ def combine_all_train_data_for_random_forest(set_, df_set, logging):
 
     train_data_csv = os.path.join(set_["set_results_folder"], "{}_train_data.csv".format(set_["setname"]))
 
+    if "no_cdhit_results" in df_set.cdhit_cluster_rep:
+        logging.warning("No CD-HIT results were used to remove redundant seq,  but model is being trained anyway.")
+
+    n_prot_initial = df_set.shape[0]
+    # create model only using CD-HIT cluster representatives
+    df_set_nonred = df_set.loc[df_set.cdhit_cluster_rep != False]
+    n_prot_final = df_set_nonred.shape[0]
+    logging.info("n_prot_initial = {}, n_prot_final = {}, n_prot_dropped = {}".format(n_prot_initial, n_prot_final, n_prot_initial - n_prot_final))
+
     # set up a dataframe to hold the features for all proteins
     df_all = pd.DataFrame()
-    for i in df_set.index:
-        acc = df_set.loc[i, "acc"]
-        database = df_set.loc[i, "database"]
+    for i in df_set_nonred.index:
+        acc = df_set_nonred.loc[i, "acc"]
+        database = df_set_nonred.loc[i, "database"]
 
         feature_combined_file = os.path.join(set_["RF_features"], "combined", database, "{}.surr{}.gaps{}.combined_features.csv".format(acc, set_["num_of_sur_residues"], set_["max_n_gaps_in_TMD_subject_seq"]))
 
@@ -1434,13 +1449,16 @@ def combine_all_train_data_for_random_forest(set_, df_set, logging):
             df_all = pd.concat([df_all, df_features_new_protein])
 
     # drop any positions where there is no interface_score (e.g. no mutations, or hetero contacts?)
-    df_all.dropna(subset=["interface_score"], inplace=True)
+    if "interface_score" in df_all.columns:
+        df_all.dropna(subset=["interface_score"], inplace=True)
+    else:
+        logging.warning("No experimental data has been added to this dataset. Hope you're not trying to train with it!!!")
 
     # reset the index to be a range (0,...).
     df_all.index = range(df_all.shape[0])
 
     # reorder the columns
-    column_list = ['acc_db', 'interface', 'interface_value', 'residue_num', 'residue_name', 'n_homologues']
+    column_list = ['acc_db', 'interface', 'interface_score', 'residue_num', 'residue_name', 'n_homologues']
     df_all = thoipapy.utils.reorder_dataframe_columns(df_all, column_list)
 
     df_all.to_csv(train_data_csv)

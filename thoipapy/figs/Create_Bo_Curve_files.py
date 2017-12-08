@@ -1,10 +1,12 @@
+import sys
 import thoipapy
 import pandas as pd
 import os
 from sklearn.ensemble import RandomForestClassifier
 import glob
 import numpy as np
-
+import warnings
+warnings.filterwarnings("ignore")
 
 
 def Test_Etra(s):
@@ -21,7 +23,7 @@ def Test_Etra(s):
     BoCurve_CrystalTrain_output_path = os.path.join(s["Bo_Curve_path"], "TrainCrystal_TestEtra.bocurve.csv")
     BoCurve_NmrTrain_output_path = os.path.join(s["Bo_Curve_path"], "TrainNmr_TestEtra.bocurve.csv")
 
-    train_features_del = ["residue_num","residue_name","acc_db","n_homologues","closedist","bind"]
+    train_features_del = ["residue_num","residue_name","acc_db","n_homologues","interface_score","bind"]
     test_features_del=["residue_num","residue_name","n_homologues","bind","Disruption"]
 
     database = "ETRA"
@@ -59,19 +61,21 @@ def Test_Etra(s):
 
 
 
-def Test_Crystal(s):
+def pred_interf_single_prot_using_sel_train_datasets(s):
     if not os.path.exists(s["Bo_Curve_path"]):
         os.makedirs(s["Bo_Curve_path"])
 
     test_data_type_list=["crystal","NMR"]
-    list_name_lists =["01","02"]
+    test_data_type_list = ["BNIP3_GpA_NMR"]
+    #list_name_lists =["01","02"]
+    list_name_lists = ["31"]
     for test_data_type, list_name in zip(test_data_type_list, list_name_lists):
         BoCurve_CrystalNmrTrain_output_path = os.path.join(s["Bo_Curve_path"], "TrainCrystalNmr_Test{}.bocurve.csv".format(test_data_type))
         BoCurve_CrystalTrain_output_path = os.path.join(s["Bo_Curve_path"], "TrainCrystal_Test{}.bocurve.csv".format(test_data_type))
         BoCurve_NmrTrain_output_path = os.path.join(s["Bo_Curve_path"], "TrainNmr_Test{}.bocurve.csv".format(test_data_type))
 
-        train_features_del = ["residue_num","residue_name","acc_db","n_homologues","closedist","bind"]
-        test_features_del=["residue_num","residue_name","acc_db","n_homologues","closedist","bind"]
+        train_features_del = ["residue_num","residue_name","acc_db","n_homologues","interface_score","bind"]
+        test_features_del = ["residue_num","residue_name","acc_db","n_homologues","interface_score","bind"]
 
         dfc = pd.DataFrame()
         dfn = pd.DataFrame()
@@ -119,30 +123,40 @@ def Test_Crystal(s):
         dfc.to_csv(BoCurve_CrystalTrain_output_path)
         dfn.to_csv(BoCurve_NmrTrain_output_path)
 
+    sys.stdout.write("pred_interf_single_prot_using_sel_train_datasets finished ({})".format(BoCurve_CrystalNmrTrain_output_path))
+    sys.stdout.flush()
+
 
 
 
 def Train_Input_Test_Pred_Out(acc, train_data_df, tdf, train_features_del, test_features_del, database, s):
-
-    X=train_data_df.drop(train_features_del,axis=1)
-    y=train_data_df["interface"]
+    #drop_cols_not_used_in_ML
+    #X=train_data_df.drop(train_features_del,axis=1)
+    X = thoipapy.RF_features.RF_Train_Test.drop_cols_not_used_in_ML(train_data_df)
+    y = train_data_df["interface"]
     clf = RandomForestClassifier(max_depth=5, n_estimators=10, max_features=1)
     fit = clf.fit(X,y)
+
+    interface_score = tdf.interface_score
+
     if database == "crystal" or database == "NMR":
-        disrupt_or_closedist = tdf.closedist
-        disrupt_or_closedist = -1 * disrupt_or_closedist  #(it is closest distance and low value means high propencity of interfacial)
-    if database == "ETRA":
-        dirupt_path = os.path.join(s["toxr_disruption_folder"], "{}_mul_scan_average_data.xlsx".format(acc))
-        ddf = pd.read_excel(dirupt_path, index_col=0)
-        disrupt_or_closedist = ddf.Disruption
-        disrupt_or_closedist = disrupt_or_closedist      #(it is closest experimental disruption and high value means high propencity of interfacial)
+        interface_score = tdf.interface_score
+        interface_score = -1 * interface_score  #(it is closest distance and low value means high propencity of interfacial)
+    # if database == "ETRA":
+    #     dirupt_path = os.path.join(s["toxr_disruption_folder"], "{}_mul_scan_average_data.xlsx".format(acc))
+    #     ddf = pd.read_excel(dirupt_path, index_col=0)
+    #     interface_score = ddf.Disruption
+    #     interface_score = interface_score      #(it is closest experimental disruption and high value means high propencity of interfacial)
     tdf.index = tdf.index.astype(int) +1
     Lips_score = tdf.LIPS_lipo * tdf.LIPS_entropy
-    tX=tdf.drop(test_features_del,axis=1)
+
+    #tX=tdf.drop(test_features_del,axis=1)
+    tX = thoipapy.RF_features.RF_Train_Test.drop_cols_not_used_in_ML(tdf)
+
     if hasattr(clf,'predict_proba'):
         prob_pos=fit.predict_proba(tX)[:,1]
     else:
         prob_pos=fit.decision_function(tX)
         prob_pos=(prob_pos - prob_pos.min())/(prob_pos.max() - prob_pos.min())
-    odf=thoipapy.figs.fig_utils.Bo_Curve_Create(acc,prob_pos,Lips_score,disrupt_or_closedist,database)
+    odf=thoipapy.figs.fig_utils.Bo_Curve_Create(acc,prob_pos,Lips_score,interface_score,database)
     return odf

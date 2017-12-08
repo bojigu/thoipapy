@@ -159,6 +159,8 @@ if __name__ == "__main__":
 
     df_set["seqlen"] = df_set.full_seq.str.len()
     df_set["TMD_len"] = df_set.TMD_seq.str.len()
+    df_set["acc_db"] = df_set.acc + "-" + df_set.database
+
     # df_set.loc["O75460", "TMD_seq"] = df_set.loc["O75460", "TMD_seq"] + "A"
 
     for i in df_set.index:
@@ -191,6 +193,38 @@ if __name__ == "__main__":
     # e.g. 20 where the TMD is in the centre of the protein, otherwise <20 where TMD is near start or end of full seq
     df_set["tm_surr_left"] = df_set.TMD_start - df_set.TMD_start_pl_surr
     df_set["tm_surr_right"] = df_set.TMD_end_pl_surr - df_set.TMD_end
+
+    # save the full sequences in fasta format for CD-HIT, etc.
+    fasta_out = os.path.join(os.path.dirname(set_path), "fasta", "{}_full.fas".format(setname))
+    thoipapy.utils.make_sure_path_exists(fasta_out, isfile=True)
+    with open(fasta_out, "w") as f:
+        for n, acc in enumerate(df_set.index):
+            f.write(">{}-{}\n{}\n".format(n, df_set.loc[acc, "acc_db"], df_set.loc[acc, "full_seq"]))
+
+    fasta_out = os.path.join(os.path.dirname(set_path), "fasta", "{}_TMD.fas".format(setname))
+    thoipapy.utils.make_sure_path_exists(fasta_out, isfile=True)
+    with open(fasta_out, "w") as f:
+        for n, acc in enumerate(df_set.index):
+            f.write(">{}-{}\n{}\n".format(n, df_set.loc[acc, "acc_db"], df_set.loc[acc, "TMD_seq"]))
+
+    # open previously saved CD-hit results
+    cdhit_cluster_txt = os.path.join(os.path.dirname(set_path), "fasta", "{}.fas.1.clstr.sorted.txt".format(setname))
+    if os.path.isfile(cdhit_cluster_txt):
+        lines_with_ref_seq = []
+        with open(cdhit_cluster_txt, "r") as f:
+            for line in f:
+                if "*" in line:
+                    lines_with_ref_seq.append(line)
+
+        cluster_rep_lines_ser = pd.Series(lines_with_ref_seq)
+        # extracts the number between > and - (i.e., the index), sorts and returns as a list
+        # redundant sequences will be excluded
+        cluster_rep_list = cluster_rep_lines_ser.str.extract(">(\d*)-", expand=False).astype(int).sort_values().tolist()
+        df_set.loc[cluster_rep_list, "cdhit_cluster_rep"] = True
+        df_set["cdhit_cluster_rep"] = df_set["cdhit_cluster_rep"].fillna(False)
+    else:
+        logging.warning("No CD-HIT results found. Redundancy check for training and validation is not possible.")
+        df_set["cdhit_cluster_rep"] = "no_cdhit_results"
 
     """  Rearrange the dataframe columns so that the order is as follows.
     orig Bo file : ['acc', 'TMD_Length', 'TMD_Start', 'TMD_End', 'TMD_Sur_Left', 'TMD_Sur_Right']

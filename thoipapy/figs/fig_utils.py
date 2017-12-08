@@ -61,19 +61,19 @@ def Bo_Curve_Create(acc,prob_pos,Lips_score, disrupt_or_closedist,database):
                                                                                                     inter_num_total) * j
         odf.set_value(ind, acc, thoipa_inter_num_ober)
         odf.set_value(ind, "sample_size", "Top" + str(i))
-        odf.set_value(ind, "parameters", "Ono")
+        odf.set_value(ind, "parameters", "observed_overlap")
         ind = ind + 1
         odf.set_value(ind, acc, inter_num_random)
         odf.set_value(ind, "sample_size", "Top" + str(i))
-        odf.set_value(ind, "parameters", "Rno")
+        odf.set_value(ind, "parameters", "random_overlap")
         ind = ind + 1
         odf.set_value(ind, acc, Lips_inter_num_ober)
         odf.set_value(ind, "sample_size", "Top" + str(i))
-        odf.set_value(ind, "parameters", "Lpno")
+        odf.set_value(ind, "parameters", "LIPS_observed_overlap")
         ind = ind + 1
         odf.set_value(ind, acc, pval)
         odf.set_value(ind, "sample_size", "Top" + str(i))
-        odf.set_value(ind, "parameters", "Pono")
+        odf.set_value(ind, "parameters", "p_value_from_obs_overlap")
         ind = ind + 1
     odf.set_index(["sample_size", "parameters"], inplace=True, drop=True)
     return odf
