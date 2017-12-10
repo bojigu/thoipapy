@@ -9,7 +9,7 @@ import warnings
 warnings.filterwarnings("ignore")
 
 def Test_Etra(s):
-    testsetname = "set{:02d}".format(s["test_dataset"])
+    testsetname = "set03"
     train_set_list = s["train_datasets"].split(",")
     for train_set in train_set_list:
         trainsetname = "set{:02d}".format(int(train_set))

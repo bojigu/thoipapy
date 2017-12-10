@@ -28,16 +28,16 @@ def thoipabest_vs_LIPS(bo_curve_handle,overlap_num,output_basename_LIPS,output_b
     fig, ax = plt.subplots(figsize=(3.42, 3.42))
     ax1 = plt.subplot(311)
     # ax1 = plt.subplot(311)
-    ax1.plot(overlap_num, bo_curve_handle['ThoipaTrainRatio68'].values, color=blue5, linestyle="-", linewidth=1.0,label="THOIPA best")
-    ax1.plot(overlap_num, bo_curve_handle['ThoipaTrainLipsRatio68'].values, color=blue1, linestyle='--', linewidth=1.0,label="LIPS")
-    ax1.fill_between(overlap_num, bo_curve_handle['ThoipaTrainRatio68'].values,bo_curve_handle['ThoipaTrainLipsRatio68'].values, color=color_thoipa, alpha=0.26,zorder=0)
+    ax1.plot(overlap_num, bo_curve_handle['Tr4Te1Ratio'].values, color=blue5, linestyle="-", linewidth=1.0,label="THOIPA best")
+    ax1.plot(overlap_num, bo_curve_handle['Tr4Te1LIPSRatio'].values, color=blue1, linestyle='--', linewidth=1.0,label="LIPS")
+    ax1.fill_between(overlap_num, bo_curve_handle['Tr4Te1Ratio'].values,bo_curve_handle['Tr4Te1LIPSRatio'].values, color=color_thoipa, alpha=0.26,zorder=0)
     ax1.plot(overlap_num, [1] * 10, color=black, linestyle=':', linewidth= Linewidth, label="random", alpha=0.6)
     handles, labels = ax1.get_legend_handles_labels()
     ax1.legend(handles, labels, ncol=1, fontsize=Fontsize, frameon=True)
 
     plt.setp(ax1.get_xticklabels(), fontsize=Fontsize, visible=False)
 
-    ax1.set_ylabel("test crystal/NMR", fontsize=Fontsize)
+    ax1.set_ylabel("test crystal", fontsize=Fontsize)
     ax1.yaxis.set_label_position("right")
 
     plt.yticks(fontsize=Fontsize)
@@ -45,9 +45,9 @@ def thoipabest_vs_LIPS(bo_curve_handle,overlap_num,output_basename_LIPS,output_b
     # share x only
     ax2 = plt.subplot(312, sharex=ax1)
     # ax2 = plt.subplot(312, sharex=ax1)
-    ax2.plot(overlap_num, bo_curve_handle['ThoipaTrain68Test13nmr'].values, color=blue5, linestyle="-", linewidth=1.0,label="THOIPA best")
-    ax2.plot(overlap_num, bo_curve_handle['ThoipaTrain68LipsTest13nmr'].values, color=blue1, linestyle="--",linewidth=1.0, label="LIPS")
-    ax2.fill_between(overlap_num, bo_curve_handle['ThoipaTrain68Test13nmr'].values,bo_curve_handle['ThoipaTrain68LipsTest13nmr'].values, color=color_thoipa, alpha=0.26,zorder=0)
+    ax2.plot(overlap_num, bo_curve_handle['Tra4Tes2Ratio'].values, color=blue5, linestyle="-", linewidth=1.0,label="THOIPA best")
+    ax2.plot(overlap_num, bo_curve_handle['Tr4Te2LIPSRatio'].values, color=blue1, linestyle="--",linewidth=1.0, label="LIPS")
+    ax2.fill_between(overlap_num, bo_curve_handle['Tra4Tes2Ratio'].values,bo_curve_handle['Tr4Te2LIPSRatio'].values, color=color_thoipa, alpha=0.26,zorder=0)
     ax2.plot(overlap_num, [1] * 10, color=black, linestyle=':', linewidth=Linewidth, label="random", alpha=0.6)
     # plt.plot(t, s2)
     # make these tick labels invisible
@@ -60,9 +60,9 @@ def thoipabest_vs_LIPS(bo_curve_handle,overlap_num,output_basename_LIPS,output_b
     # share x and y
     ax3 = plt.subplot(313, sharex=ax1)
     # ax3 = plt.subplot(313, sharex=ax1)
-    ax3.plot(overlap_num, bo_curve_handle['ThoipaEtraRatio68'].values, color=blue5, linestyle="-", linewidth=1.0,label="THOIPA best")
-    ax3.plot(overlap_num, bo_curve_handle['ThoipaEtraLipsRatio68'].values, color=blue1, linestyle="--", linewidth=1.0,label="LIPS")
-    ax3.fill_between(overlap_num, bo_curve_handle['ThoipaEtraRatio68'].values, bo_curve_handle['ThoipaEtraLipsRatio68'].values, color=color_thoipa, alpha=0.26,zorder=0)
+    ax3.plot(overlap_num, bo_curve_handle['Tra4Tes3Ratio'].values, color=blue5, linestyle="-", linewidth=1.0,label="THOIPA best")
+    ax3.plot(overlap_num, bo_curve_handle['Tr4Te3LIPSRatio'].values, color=blue1, linestyle="--", linewidth=1.0,label="LIPS")
+    ax3.fill_between(overlap_num, bo_curve_handle['Tra4Tes3Ratio'].values, bo_curve_handle['Tr4Te3LIPSRatio'].values, color=color_thoipa, alpha=0.26,zorder=0)
     ax3.plot(overlap_num, [1] * 10, color=black, linestyle=':', linewidth=Linewidth, label="random", alpha=0.6)
 
 
@@ -107,25 +107,27 @@ def thoipabest_vs_thoipanmr(bo_curve_handle,overlap_num,output_basename_nmr,outp
     fig, ax = plt.subplots(figsize=(3.42, 3.42))
     # plt.close()
     ax1 = plt.subplot(311)
-    ax1.plot(overlap_num, bo_curve_handle['ThoipaTrainRatio68'].values, color=blue5, linestyle="-", linewidth=1.0,label="train crystal/NMR")
-    ax1.plot(overlap_num, bo_curve_handle['ThoipaTrain68nmrLipsTestTrain68'].values, color=blue1, linestyle='--',linewidth=1.0, label="train NMR")
-    ax1.fill_between(overlap_num, bo_curve_handle['ThoipaTrainRatio68'].values,
-                     bo_curve_handle['ThoipaTrain68nmrLipsTestTrain68'].values, color=color_thoipa, alpha=0.26,zorder=0)
+    #ax1.plot(overlap_num, bo_curve_handle['ThoipaTrainRatio68'].values, color=blue5, linestyle="-", linewidth=1.0,label="train crystal/NMR")
+    ax1.plot(overlap_num, bo_curve_handle['Tr4Te1Ratio'].values, color=blue5, linestyle="-", linewidth=1.0,
+             label="train crystal/NMR")
+    ax1.plot(overlap_num, bo_curve_handle['Tra2Te1Ratio'].values, color=blue1, linestyle='--',linewidth=1.0, label="train NMR")
+    ax1.fill_between(overlap_num, bo_curve_handle['Tr4Te1Ratio'].values,
+                     bo_curve_handle['Tra2Te1Ratio'].values, color=color_thoipa, alpha=0.26,zorder=0)
     ax1.plot(overlap_num, [1] * 10, color=black, linestyle=':', linewidth=Linewidth, label="random", alpha=0.6)
     plt.setp(ax1.get_xticklabels(), fontsize=Fontsize, visible=False)
     handles, labels = ax1.get_legend_handles_labels()
     ax1.legend(handles, labels, ncol=1, fontsize=Fontsize, frameon=True)
 
-    ax1.set_ylabel("test crystal/NMR", fontsize=Fontsize)
+    ax1.set_ylabel("test crystal", fontsize=Fontsize)
     ax1.yaxis.set_label_position("right")
     plt.yticks(fontsize=Fontsize)
 
     # share x only
     ax2 = plt.subplot(312, sharex=ax1)
-    ax2.plot(overlap_num, bo_curve_handle['ThoipaTrain68Test13nmr'].values, color=blue5, linestyle="-", linewidth=1.0,label="train crystal/NMR")
-    ax2.plot(overlap_num, bo_curve_handle['ThoipaTrainRatio68nmr'].values, color=blue1, linestyle="--", linewidth=1.0,label="train NMR")
-    ax2.fill_between(overlap_num, bo_curve_handle['ThoipaTrain68Test13nmr'].values,
-                     bo_curve_handle['ThoipaTrainRatio68nmr'].values, color=color_thoipa, alpha=0.26,zorder=0)
+    ax2.plot(overlap_num, bo_curve_handle['Tra4Tes2Ratio'].values, color=blue5, linestyle="-", linewidth=1.0,label="train crystal/NMR")
+    ax2.plot(overlap_num, bo_curve_handle['Tra2Tes2Ratio'].values, color=blue1, linestyle="--", linewidth=1.0,label="train NMR")
+    ax2.fill_between(overlap_num, bo_curve_handle['Tra4Tes2Ratio'].values,
+                     bo_curve_handle['Tra4Tes2Ratio'].values, color=color_thoipa, alpha=0.26,zorder=0)
     ax2.plot(overlap_num, [1] * 10, color=black, linestyle=':', linewidth=Linewidth, label="random", alpha=0.6)
     # plt.plot(t, s2)
     # make these tick labels invisible
@@ -138,9 +140,9 @@ def thoipabest_vs_thoipanmr(bo_curve_handle,overlap_num,output_basename_nmr,outp
 
     # share x and y
     ax3 = plt.subplot(313, sharex=ax1)
-    ax3.plot(overlap_num, bo_curve_handle['ThoipaEtraRatio68'].values, color=blue5, linestyle="-", linewidth=1.0,label="train crystal/NMR")
-    ax3.plot(overlap_num, bo_curve_handle['ThoipaEtraRatio68nmr'].values, color=blue1, linestyle="--", linewidth=1.0,label="train NMR")
-    ax3.fill_between(overlap_num, bo_curve_handle['ThoipaEtraRatio68'].values,bo_curve_handle['ThoipaEtraRatio68nmr'].values, color=color_thoipa, alpha=0.26,zorder=0)
+    ax3.plot(overlap_num, bo_curve_handle['Tra4Tes3Ratio'].values, color=blue5, linestyle="-", linewidth=1.0,label="train crystal/NMR")
+    ax3.plot(overlap_num, bo_curve_handle['Tra2Te3Ratio'].values, color=blue1, linestyle="--", linewidth=1.0,label="train NMR")
+    ax3.fill_between(overlap_num, bo_curve_handle['Tra4Tes3Ratio'].values,bo_curve_handle['Tra2Te3Ratio'].values, color=color_thoipa, alpha=0.26,zorder=0)
     ax3.plot(overlap_num, [1] * 10, color=black, linestyle=':', linewidth=Linewidth, label="random", alpha=0.6)
 
 
@@ -191,7 +193,8 @@ def run_bocurve_comp( Fontsize, Width, Size, s,Linewidth):
     output_base_filename_nmr = "Thoipabest_vs_NMR.pdf"
     output_base_filename_nmr_png = "Thoipabest_vs_NMR.png"
 
-    save_path_nmr = os.path.join("H:")
+    #save_path_nmr = os.path.join("H:")
+    save_path_nmr = os.path.join(r"D:/THOIPA_data/Results/Bo_Curve/")
     settings_folder_nmr = os.path.dirname(save_path_nmr)
     output_folder_nmr = os.path.join(settings_folder_nmr,  "figs","FigBZ14_Bocurve_THOIPAbest_NMR")
     output_folder_pdf_nmr = os.path.join(output_folder_nmr, "pdf")
@@ -200,7 +203,8 @@ def run_bocurve_comp( Fontsize, Width, Size, s,Linewidth):
 
     output_base_filename_LIPS = "Thoipabest_vs_LIPS.pdf"
     output_base_filename_LIPS_png = "Thoipabest_vs_LIPS.png"
-    save_path_LIPS = os.path.join("H:", "figs")
+    #save_path_LIPS = os.path.join("H:", "figs")
+    save_path_LIPS = os.path.join(r"D:/THOIPA_data/Results/Bo_Curve/")
     settings_folder_LIPS = os.path.dirname(save_path_LIPS)
     output_folder_LIPS = os.path.join(settings_folder_LIPS, "figs","FigBZ15_Bocurve_THOIPAbest_LIPS")
     output_folder_pdf_LIPS = os.path.join(output_folder_LIPS, "pdf")
@@ -213,10 +217,13 @@ def run_bocurve_comp( Fontsize, Width, Size, s,Linewidth):
         if not os.path.exists(path):
             os.makedirs(path)
 
-    bo_curve_file = r"H:\\figs\\FigBZ14_Bocurve_THOIPAbest_NMR\\zBo_Curve_save_for_python.csv"
+    #bo_curve_file = r"H:\\figs\\FigBZ14_Bocurve_THOIPAbest_NMR\\zBo_Curve_save_for_python.csv"
+    #bo_curve_file = r"H:\\figs\\FigBZ14_Bocurve_THOIPAbest_NMR\\zBo_Curve_save_for_python.csv"
+    bo_curve_file = r"D:\THOIPA_data\Results\Bo_Curve\Combined_Bo_Curve_ratio_file.csv"
     bo_curve_handle = pd.read_csv(bo_curve_file)
     bo_curve_handle.dropna(inplace=True)
-    overlap_num = bo_curve_handle['OverlapNum'].values
+    #overlap_num = bo_curve_handle['OverlapNum'].values
+    overlap_num = bo_curve_handle['sample_size'].values
     plt.close("all")
     thoipabest_vs_LIPS(bo_curve_handle, overlap_num, output_basename_LIPS,output_basename_LIPS_png,Fontsize,Linewidth)
     thoipabest_vs_thoipanmr(bo_curve_handle, overlap_num, output_basename_nmr,output_basename_nmr_png,Fontsize,Linewidth)
