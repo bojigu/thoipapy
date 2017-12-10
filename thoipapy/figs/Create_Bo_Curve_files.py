@@ -8,56 +8,48 @@ import numpy as np
 import warnings
 warnings.filterwarnings("ignore")
 
-
 def Test_Etra(s):
-    crystalnmr_train_data = os.path.join(s["Result_folder"], "set04\set04_train_data.csv")
-    crystalnmr_train_data_df = pd.read_csv(crystalnmr_train_data, sep=',', engine='python', index_col=0)
-    crystal_train_data = os.path.join(s["Result_folder"], "set01\set01_train_data.csv")
-    crystal_train_data_df = pd.read_csv(crystal_train_data, sep=',', engine='python', index_col=0)
-    nmr_train_data = os.path.join(s["Result_folder"], "set02\set02_train_data.csv")
-    nmr_train_data_df = pd.read_csv(nmr_train_data, sep=',', engine='python', index_col=0)
-    if not os.path.exists(s["Bo_Curve_path"]):
-        os.makedirs(s["Bo_Curve_path"])
+    testsetname = "set{:02d}".format(s["test_dataset"])
+    train_set_list = s["train_datasets"].split(",")
+    for train_set in train_set_list:
+        trainsetname = "set{:02d}".format(int(train_set))
+        traindata_set = os.path.join(s["Result_folder"], "{}\{}_train_data.csv".format(trainsetname,trainsetname))
+        traindata_set_df =  pd.read_csv(traindata_set, sep=',', engine='python', index_col=0)
 
-    BoCurve_CrystalNmrTrain_output_path = os.path.join(s["Bo_Curve_path"], "TrainCrystalNmr_TestEtra.bocurve.csv")
-    BoCurve_CrystalTrain_output_path = os.path.join(s["Bo_Curve_path"], "TrainCrystal_TestEtra.bocurve.csv")
-    BoCurve_NmrTrain_output_path = os.path.join(s["Bo_Curve_path"], "TrainNmr_TestEtra.bocurve.csv")
+        if not os.path.exists(s["Bo_Curve_path"]):
+            os.makedirs(s["Bo_Curve_path"])
 
-    train_features_del = ["residue_num","residue_name","acc_db","n_homologues","interface_score","bind"]
-    test_features_del=["residue_num","residue_name","n_homologues","bind","Disruption"]
+        BoCurve_Output_path = os.path.join(s["Bo_Curve_path"],
+                                               "Train{}_Test{}.bocurve.csv".format(trainsetname, testsetname))
 
-    database = "ETRA"
+        train_features_del = ["residue_num","residue_name","acc_db","n_homologues","interface_score","bind"]
+        test_features_del=["residue_num","residue_name","n_homologues","bind","Disruption"]
 
-    testdata_list = glob.glob(os.path.join(s["thoipapy_feature_folder"],"combined", database, "*.surr20.gaps5.combined_features.csv"))
+        xlsx_list = glob.glob(os.path.join(s["set_path"], "{}*.xlsx".format(testsetname)))
+        if len(xlsx_list) == 1:
+            testset_path = xlsx_list[0]
+        elif len(xlsx_list) == 0:
+            raise FileNotFoundError(
+            "Excel file with this test data set not found.\nsetname = {}\nexcel files in folder = {}".format(testsetname, xlsx_list))
+        elif len(xlsx_list) > 1:
+            raise ValueError(
+                "More than one excel file in set folder contains '{}' in the filename.\nexcel files in folder = {}".format(
+                    testsetname, xlsx_list))
 
-    dfc = pd.DataFrame()
-    dfn = pd.DataFrame()
-    dfcn = pd.DataFrame()
-    for test_data in testdata_list:
-        acc = test_data.split('\\')[-1][0:6]
-        test_data_df = pd.read_csv(test_data,sep=',',engine='python',index_col=0)
-        odfcn=Train_Input_Test_Pred_Out(acc, crystalnmr_train_data_df, test_data_df, train_features_del, test_features_del, database, s)
-        if dfc.empty:
-            dfcn = odfcn
-        else:
-            dfcn = pd.concat([dfc, odfcn], axis=1, join="outer")
+        testdataset_df = pd.read_excel(testset_path,sheetname="proteins")
+        acc_list = testdataset_df.acc.tolist()
+        database = testdataset_df.database[0]
+        dfc = pd.DataFrame()
+        for acc in acc_list:
+            testdata_combined_file = os.path.join(s["thoipapy_feature_folder"],"combined", database, "{}.surr20.gaps5.combined_features.csv".format(acc))
+            test_data_df = pd.read_csv(testdata_combined_file,sep=',',engine='python',index_col=0)
+            odf=Train_Input_Test_Pred_Out(acc, traindata_set_df, test_data_df, train_features_del, test_features_del, database, s)
+            if dfc.empty:
+                dfc = odf
+            else:
+                dfc = pd.concat([dfc, odf], axis=1, join="outer")
 
-        odfc=Train_Input_Test_Pred_Out(acc, crystal_train_data_df, test_data_df, train_features_del, test_features_del, database, s)
-        if dfc.empty:
-            dfc = odfc
-        else:
-            dfc = pd.concat([dfc, odfc], axis=1, join="outer")
-
-        odfn=Train_Input_Test_Pred_Out(acc, nmr_train_data_df, test_data_df, train_features_del, test_features_del, database, s)
-        if dfn.empty:
-            dfn = odfn
-        else:
-            dfn = pd.concat([dfn, odfn], axis=1, join="outer")
-
-    dfcn.to_csv(BoCurve_CrystalNmrTrain_output_path)
-    dfc.to_csv(BoCurve_CrystalTrain_output_path)
-    dfn.to_csv(BoCurve_NmrTrain_output_path)
-
+        dfc.to_csv(BoCurve_Output_path)
 
 
 
@@ -65,65 +57,50 @@ def pred_interf_single_prot_using_sel_train_datasets(s):
     if not os.path.exists(s["Bo_Curve_path"]):
         os.makedirs(s["Bo_Curve_path"])
 
-    test_data_type_list=["crystal","NMR"]
-    test_data_type_list = ["BNIP3_GpA_NMR"]
-    #list_name_lists =["01","02"]
-    list_name_lists = ["31"]
-    for test_data_type, list_name in zip(test_data_type_list, list_name_lists):
-        BoCurve_CrystalNmrTrain_output_path = os.path.join(s["Bo_Curve_path"], "TrainCrystalNmr_Test{}.bocurve.csv".format(test_data_type))
-        BoCurve_CrystalTrain_output_path = os.path.join(s["Bo_Curve_path"], "TrainCrystal_Test{}.bocurve.csv".format(test_data_type))
-        BoCurve_NmrTrain_output_path = os.path.join(s["Bo_Curve_path"], "TrainNmr_Test{}.bocurve.csv".format(test_data_type))
+    test_set_list = s["test_datasets"].split(",")
+    train_set_list = s["train_datasets"].split(",")
+    for train_set in train_set_list:
+        trainsetname = "set{:02d}".format(int(train_set))
+        traindata_set = os.path.join(s["Result_folder"], "{}\{}_train_data.csv".format(trainsetname,trainsetname))
+        traindata_set_df =  pd.read_csv(traindata_set, sep=',', engine='python', index_col=0)
 
-        train_features_del = ["residue_num","residue_name","acc_db","n_homologues","interface_score","bind"]
-        test_features_del = ["residue_num","residue_name","acc_db","n_homologues","interface_score","bind"]
+        for test_set in test_set_list:
+            testsetname = "set{:02d}".format(int(test_set))
+            BoCurve_Output_path = os.path.join(s["Bo_Curve_path"],
+                                           "Train{}_Test{}.bocurve.csv".format(trainsetname, testsetname))
 
-        dfc = pd.DataFrame()
-        dfn = pd.DataFrame()
-        dfcn = pd.DataFrame()
+            xlsx_list = glob.glob(os.path.join(s["set_path"], "{}*.xlsx".format(testsetname)))
+            if len(xlsx_list) == 1:
+                testset_path = xlsx_list[0]
+            elif len(xlsx_list) == 0:
+                raise FileNotFoundError(
+                    "Excel file with this test data set not found.\nsetname = {}\nexcel files in folder = {}".format(
+                        testsetname, xlsx_list))
+            elif len(xlsx_list) > 1:
+                raise ValueError(
+                    "More than one excel file in set folder contains '{}' in the filename.\nexcel files in folder = {}".format(
+                        testsetname, xlsx_list))
 
-        set_path = s["set_path"]
+            train_features_del = ["residue_num", "residue_name", "acc_db", "n_homologues", "interface_score", "bind"]
+            test_features_del = ["residue_num", "residue_name", "n_homologues", "bind", "Disruption"]
 
-        df_set = pd.read_excel(os.path.join(set_path,"set{}_{}.xlsx".format(list_name,test_data_type)), sheetname='proteins')
-        for i in df_set.index:
-            acc = df_set.loc[i, "acc"]
-            database = df_set.loc[i, "database"]
-            feature_combined_file = os.path.join(s["thoipapy_feature_folder"], "combined", database, "{}.surr20.gaps5.combined_features.csv".format(acc))
+            testdataset_df = pd.read_excel(testset_path, sheetname="proteins")
+            acc_list = testdataset_df.acc.tolist()
+            database = testdataset_df.database[0]
+            dfc = pd.DataFrame()
+            for acc in acc_list:
+                testdata_combined_file = os.path.join(s["thoipapy_feature_folder"], "combined", database,
+                                                      "{}.surr20.gaps5.combined_features.csv".format(acc))
+                test_data_df = pd.read_csv(testdata_combined_file, sep=',', engine='python', index_col=0)
+                odf = Train_Input_Test_Pred_Out(acc, traindata_set_df, test_data_df, train_features_del, test_features_del,
+                                                database, s)
+                if dfc.empty:
+                    dfc = odf
+                else:
+                    dfc = pd.concat([dfc, odf], axis=1, join="outer")
 
-            test_data_df = pd.read_csv(feature_combined_file, index_col=0)
-            test_data_df["acc_db"] = "{}-{}".format(acc, database)
-
-            # reorder the columns
-            test_data_df = thoipapy.utils.reorder_dataframe_columns(test_data_df, ['acc_db', 'residue_num', 'residue_name', 'n_homologues'])
-
-            set04_path= os.path.join(s["set_path"],"set04_crystal_NMR.xlsx")
-            train04_df = thoipapy.figs.fig_utils.create_one_out_train_data(acc, set04_path ,s)
-            set01_path= os.path.join(s["set_path"],"set01_crystal.xlsx")
-            train01_df = thoipapy.figs.fig_utils.create_one_out_train_data(acc, set01_path ,s)
-            set02_path= os.path.join(s["set_path"],"set02_NMR.xlsx")
-            train02_df = thoipapy.figs.fig_utils.create_one_out_train_data(acc, set02_path ,s)
-
-            odfcn=Train_Input_Test_Pred_Out(acc, train04_df, test_data_df, train_features_del, test_features_del, database, s)
-            if dfc.empty:
-                dfcn = odfcn
-            else:
-                dfcn = pd.concat([dfc, odfcn], axis=1, join="outer")
-
-            odfc=Train_Input_Test_Pred_Out(acc, train01_df, test_data_df, train_features_del, test_features_del, database, s)
-            if dfc.empty:
-                dfc = odfc
-            else:
-                dfc = pd.concat([dfc, odfc], axis=1, join="outer")
-
-            odfn=Train_Input_Test_Pred_Out(acc, train02_df, test_data_df, train_features_del, test_features_del, database, s)
-            if dfn.empty:
-                dfn = odfn
-            else:
-                dfn = pd.concat([dfn, odfn], axis=1, join="outer")
-        dfcn.to_csv(BoCurve_CrystalNmrTrain_output_path)
-        dfc.to_csv(BoCurve_CrystalTrain_output_path)
-        dfn.to_csv(BoCurve_NmrTrain_output_path)
-
-    sys.stdout.write("pred_interf_single_prot_using_sel_train_datasets finished ({})".format(BoCurve_CrystalNmrTrain_output_path))
+            dfc.to_csv(BoCurve_Output_path)
+    sys.stdout.write("pred_interf_single_prot_using_sel_train_datasets finished ({})".format(BoCurve_Output_path))
     sys.stdout.flush()
 
 
