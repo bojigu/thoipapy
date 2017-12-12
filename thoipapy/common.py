@@ -13,6 +13,7 @@ import re
 from Bio import SeqIO
 from Bio.SeqUtils.ProtParam import ProteinAnalysis
 import numpy as np
+import glob
 
 
 def calculate_fasta_file_length(set_):
@@ -34,7 +35,7 @@ def calculate_fasta_file_length(set_):
     FastaFile.close()
     return seqLen
 
-def create_TMD_surround20_fasta_file(set_):
+def create_TMD_surround20_fasta_file(set_, database):
     """create fasta file with tmd and surround 20 residues as new sequence for further blastp.
     also the input protein list file will be updated by adding "TMD_Sur_Left" and "TMD_Sur_Right"
 
@@ -364,3 +365,20 @@ def setup_error_logging(logfile, level_console="DEBUG", level_logfile="DEBUG", p
     #    logging.error('Failed to open file', exc_info=True)
     logging.warning('LOGGING SETUP IS SUCCESSFUL (logging levels: console={}, logfile={}). \n'.format(level_console, level_logfile))
     return logging
+
+
+def get_path_of_protein_set(setname, sets_folder):
+    xlsx_list = glob.glob(os.path.join(sets_folder, "*.xlsx"))
+
+    # remove temporary open excel files from the list (hidden files that start with ~$)
+    xlsx_list = [path for path in xlsx_list if r"~$" not in path]
+    # get subset of excel files that contains e.g. "set01"
+    matching_xlsx_file_list = [set_path for set_path in xlsx_list if setname in set_path]
+    if len(matching_xlsx_file_list) == 1:
+        set_path = matching_xlsx_file_list[0]
+    elif len(matching_xlsx_file_list) == 0:
+        raise FileNotFoundError("Excel file with this set not found.\nsetname = {}\nexcel files in folder = {}".format(setname, xlsx_list))
+    elif len(matching_xlsx_file_list) > 1:
+        raise ValueError("More than one excel file in set folder contains '{}' in the filename.\nexcel files in folder = {}".format(setname, xlsx_list))
+
+    return set_path

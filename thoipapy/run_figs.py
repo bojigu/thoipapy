@@ -54,7 +54,9 @@ if __name__ == "__main__":
     if s["pred_interf_single_prot_using_sel_train_datasets"] == True:
         thoipapy.figs.Create_Bo_Curve_files.Test_Etra(s)
         thoipapy.figs.Create_Bo_Curve_files.pred_interf_single_prot_using_sel_train_datasets(s)
-        thoipapy.figs.Combine_Bo_Curve_files(s)
+
+    if s["combine_BO_curve_files"] == True:
+        thoipapy.figs.Combine_Bo_Curve_files.combine_BO_curve_files(s)
 
     if s["run_bocurve_comp"] == True:
         thoipapy.figs.BoCurve_ThoipaBest_comp_LIPS_and_Nmr.run_bocurve_comp(Fontsize,Width,Size,s,Linewidth)

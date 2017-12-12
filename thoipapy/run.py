@@ -116,10 +116,6 @@ if __name__ == "__main__":
     #D:\\Dropbox\\tm_homodimer_dropbox\\sets
     #sets_folder = os.path.join(set_["base_dir"], "sets")
     sets_folder = set_["sets_folder"]
-    xlsx_list = glob.glob(os.path.join(sets_folder, "*.xlsx"))
-
-    # remove temporary open excel files from the list (hidden files that start with ~$)
-    xlsx_list = [path for path in xlsx_list if r"~$" not in path]
 
     # define set name, which should be in the excel file name
     setname = "set{:02d}".format(set_["set_number"])
@@ -132,14 +128,7 @@ if __name__ == "__main__":
 
     logging = common.setup_keyboard_interrupt_and_error_logging(set_, setname)
 
-    # get subset of excel files that contains e.g. "set01"
-    matching_xlsx_file_list = [set_path for set_path in xlsx_list if setname in set_path]
-    if len(matching_xlsx_file_list) == 1:
-        set_path = matching_xlsx_file_list[0]
-    elif len(matching_xlsx_file_list) == 0:
-        raise FileNotFoundError("Excel file with this set not found.\nsetname = {}\nexcel files in folder = {}".format(setname, xlsx_list))
-    elif len(matching_xlsx_file_list) > 1:
-        raise ValueError("More than one excel file in set folder contains '{}' in the filename.\nexcel files in folder = {}".format(setname, xlsx_list))
+    set_path = thoipapy.common.get_path_of_protein_set(setname, sets_folder)
 
     # load the protein set (e.g. set01.xlsx) as a dataframe
     df_set = pd.read_excel(set_path, sheetname='proteins')
