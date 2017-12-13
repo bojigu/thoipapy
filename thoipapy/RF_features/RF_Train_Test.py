@@ -45,7 +45,7 @@ def drop_cols_not_used_in_ML(df_data):
     # columns in combined file that are not used in machine-learning training or testing
     cols_to_drop = ["acc_db", "residue_num", "residue_name", "interface", "interface_score", "n_homologues", "Entropy", "LIPS_entropy", "LIPS_L*E",
                     "CoevDImax", "CoevDI4", "CoevDI8",  "CoevMImax", "CoevMI4", "CoevMI8", "CumDI4", "CumDI8","CoevDI4_norm", "CoevMI4_norm",
-                    "CumDI4_norm", "CumDI8_norm", "CumMI4_norm", "CumMI8_norm"]
+                    "CumDI4_norm", "CumDI8_norm", "CumMI4_norm", "CumMI8_norm"]#, "RelPos_TMD", "RelPos_fullseq"
                     #"CoevDImax_norm", "CoevDI8_norm", "CoevMImax_norm", "CoevMI8_norm", ]#
     # got only those that are actually in the columns
     cols_to_drop = set(cols_to_drop).intersection(set(df_data.columns))
@@ -281,7 +281,7 @@ def run_10fold_cross_validation(set_, logging):
     skf = StratifiedKFold(n_splits=set_["cross_validation_number_of_splits"])
     cv = list(skf.split(X, y))
 
-    forest = RandomForestClassifier(n_estimators=set_["RF_number_of_estimators"])
+    forest = RandomForestClassifier(n_estimators=set_["RF_number_of_estimators"], n_jobs=set_["n_jobs"])
     mean_tpr = 0.0
     mean_fpr = np.linspace(0, 1, 100)
     all_tpr = []

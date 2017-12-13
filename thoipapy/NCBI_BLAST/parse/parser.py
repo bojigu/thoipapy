@@ -283,7 +283,6 @@ def extract_filtered_csv_homologues_to_alignments(set_, acc, TMD_len, fasta_all_
 
     # remove the final ".tar.gz" to get the csv filename
     BLAST_csv_file = BLAST_csv_tar[:-7]
-    print(BLAST_csv_tar)
 
     if os.path.isfile(BLAST_csv_tar):
         with tarfile.open(BLAST_csv_tar, 'r:gz') as tar:
@@ -360,7 +359,6 @@ def extract_filtered_csv_homologues_to_alignments(set_, acc, TMD_len, fasta_all_
                 # only keep the seqs that have the same length as the first one
                 df_no_gaps_in_q_plus5 = df.loc[df['subject_TMD_align_seq_surr5'].str.len() == TMD_plus_5_len]
                 uniq_TMD_seqs_surr5_for_LIPO = df_no_gaps_in_q_plus5['subject_TMD_align_seq_surr5'].unique()
-                print("query_TMD_seq_surr5", query_TMD_seq_surr5)
                 save_seqs(uniq_TMD_seqs_surr5_for_LIPO, path_uniq_TMD_seqs_surr5_for_LIPO, query_TMD_seq=query_TMD_seq_surr5)
                 save_fasta_from_array(uniq_TMD_seqs_surr5_for_LIPO, fasta_uniq_TMD_seqs_surr5_for_LIPO, acc, query_TMD_seq=query_TMD_seq_surr5)
 
@@ -378,7 +376,7 @@ def extract_filtered_csv_homologues_to_alignments(set_, acc, TMD_len, fasta_all_
                                                     single_prot_dict["n_uniq_TMD_seqs_surr5_for_LIPO"], n_total_filtered_seqs))
 
     else:
-        print("{} not found".format(BLAST_csv_tar))
+        sys.stdout.write("{} not found".format(BLAST_csv_tar))
 
     return single_prot_dict
 
@@ -402,10 +400,8 @@ def extract_filtered_csv_homologues_to_alignments_orig_handle_method(set_,loggin
         alignment_dict2 = {}
         #homo_csv_file_loc = os.path.join(set_["homologues_folder"], "NoRedundPro/%s_homo.csv") % acc
         homo_csv_file_loc = os.path.join(set_["homologues_folder"],"a3m",database, "%s_homo%s.csv") % (acc,set_["surres"])
-        print(homo_csv_file_loc)
         if (os.path.isfile(homo_csv_file_loc) and os.path.getsize(homo_csv_file_loc) > 0):  # whether protein homologues csv file exists
             df = pd.read_csv(homo_csv_file_loc)
-            print(df["tm_sbjt_seq"])
             #homo_filtered_out_csv_file = os.path.join(set_["homologues_folder"], "NoRedundPro/%s_homo_filtered_aln.fasta") % acc
             homo_filtered_out_csv_file = os.path.join(set_["homologues_folder"],"a3m",database,
                                                       "%s_homo_filtered_aln%s.fasta") % (acc,set_["surres"])
@@ -446,7 +442,6 @@ def extract_filtered_csv_homologues_to_alignments_orig_handle_method(set_,loggin
                         continue
                     tm_query_seq_len = len(row["tm_query_seq"])
                     tm_sbjt_seq_gap_num = row["tm_sbjt_seq"].count('-')
-                    print('row["tm_sbjt_seq"]', row["tm_sbjt_seq"])
                     query_sbjt_identity_num = [x == y for (x, y) in zip(row["tm_query_seq"], row["tm_sbjt_seq"])].count(True)
                     mean_hydrophobicity=thoipapy.common.calc_lipophilicity(row["tm_sbjt_seq"])
                     ratio = SequenceMatcher(None, row["tm_query_seq"], row["tm_sbjt_seq"]).ratio()
@@ -479,6 +474,6 @@ def extract_filtered_csv_homologues_to_alignments_orig_handle_method(set_,loggin
             homo_filtered_out_csv_file_handle.close()
             logging.info("{} extract_filtered_csv_homologues_to_alignments_mult_prot finished ({})".format(acc, homo_filter_file))
         else:
-            print("{} not found".format(homo_csv_file_loc))
+            sys.stdout.write("{} not found".format(homo_csv_file_loc))
     tmp_file_handle.close()
 

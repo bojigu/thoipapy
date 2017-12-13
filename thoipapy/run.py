@@ -73,7 +73,6 @@ if __name__ == "__main__":
     sys.stdout.write('\nRun thoipapy as follows:')
     sys.stdout.write(r'python \Path\to\run.py -s \Path\to\your\settingsfile.xlsx -i \Path\to\your\input.fasta -tmd \Path\to\your\input_tmd.txt '
           r'-ts tm_start_position -te tm_end_position -of C:\Path\to\your output_file\ -email_to email_address')
-    print("code get to this line")
     # get the command-line arguments
     args = parser.parse_args()
     # args.s is the excel_settings_file input by the user
@@ -174,7 +173,6 @@ if __name__ == "__main__":
     # Repeat for the actual surrounding number of residues chosen in the settings file
     # this overwrites the indexing columns created for the surr5 above, except for the final sequence
     num_of_sur_residues = set_["num_of_sur_residues"]
-    print("num_of_sur_residues", num_of_sur_residues)
     df_set, TMD_seq_pl_surr_series = create_column_with_TMD_plus_surround_seq(df_set, num_of_sur_residues)
     df_set["TMD_seq_pl_surr"] = TMD_seq_pl_surr_series
 
@@ -366,7 +364,7 @@ if __name__ == "__main__":
         thoipapy.RF_features.Output_Parse.parse_Predicted_Output(thoipapy,set_,output_file_loc,output_parse_file,logging)
 
     if set_["Send_sine_curve_to_email"]:
-        print('begining to run run sine curve fitting')
+        sys.stdout.write('begining to run run sine curve fitting')
         thoipapy.Sine_Curve.SineCurveFit.Save_Sine_Curve_Result(set_,output_file_loc,output_png_loc)
         logging.info('the fitting of sine curve is done')
 

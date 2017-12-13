@@ -1,4 +1,63 @@
+import numpy as np
 import pandas as pd
+import thoipapy
+import os
+import matplotlib.pyplot as plt
+import sys
+
+def fig_plot_BO_curve_mult_train_datasets(s):
+
+    plt.rcParams.update({'font.size': 7})
+
+    test_set_list, train_set_list = thoipapy.figs.fig_utils.get_test_and_train_set_lists(s)
+
+    test_dataset_str = "-".join([str(n) for n in test_set_list])
+    train_dataset_str = "-".join([str(n) for n in train_set_list])
+
+    mult_testname = "testsets({})_trainsets({})".format(test_dataset_str, train_dataset_str)
+    mult_THOIPA_dir = os.path.join(s["Bo_Curve_path"], "mult_THOIPA", mult_testname)
+    thoipapy.utils.make_sure_path_exists(mult_THOIPA_dir)
+
+    plot_BO_curve(s, train_set_list, test_set_list, mult_THOIPA_dir, mult_testname)
+
+    plot_BO_curve(s, train_set_list, test_set_list, mult_THOIPA_dir, mult_testname, sheetname="df_o_over_r", suffix="_old_method_o_over_r")
+
+
+def plot_BO_curve(s,train_set_list, test_set_list, mult_THOIPA_dir, mult_testname, sheetname="df_o_minus_r", suffix=""):
+
+    BO_curve_png = os.path.join(mult_THOIPA_dir, "{}{}.png".format(mult_testname, suffix))
+
+    fig, ax = plt.subplots(figsize=(3.42, 3.42))
+
+    for train_set in train_set_list:
+        trainsetname = "set{:02d}".format(int(train_set))
+
+        for test_set in test_set_list:
+            testsetname = "set{:02d}".format(int(test_set))
+            #/media/mark/sindy/m_data/THOIPA_data/Results/Bo_Curve/Testset03_Trainset01.THOIPA.best_overlap_data/bo_curve_underlying_data_indiv_df.xlsx
+            bo_curve_underlying_data_indiv_xlsx = os.path.join(s["Bo_Curve_path"], "Test{}_Train{}.THOIPA.best_overlap_data".format(testsetname, trainsetname), "bo_curve_underlying_data_indiv_df.xlsx")
+
+            df = pd.read_excel(bo_curve_underlying_data_indiv_xlsx, sheetname=sheetname, index_col=0)
+
+            df["mean_"] = df.mean(axis=1)
+
+            # use the composite trapezoidal rule to get the area under the curve
+            # https://docs.scipy.org/doc/numpy-1.13.0/reference/generated/numpy.trapz.html
+            area_under_curve = np.trapz(y=df["mean_"], x=df.index)
+
+            df["mean_"].plot(ax=ax, label="Test{}_Train{}(AUBOC10={:0.1f})".format(testsetname, trainsetname, area_under_curve))
+
+    ax.set_xlabel("sample size")
+    ax.set_ylabel("performance\n(observed overlap - random overlap)")
+    ax.set_xticks(range(1, df.shape[0] + 1))
+    ax.set_xticklabels(df.index)
+    ax.legend()
+    fig.tight_layout()
+    fig.savefig(BO_curve_png, dpi=240)
+    fig.savefig(BO_curve_png[:-4] + ".pdf")
+    sys.stdout.write("\nfig_plot_BO_curve_mult_train_datasets finished ({})".format(BO_curve_png))
+
+
 
 def combine_BO_curve_files(s):
 

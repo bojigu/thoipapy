@@ -192,3 +192,17 @@ def create_one_out_train_data(acc,set_path,s):
                 # reset the index to be a range (0,...).
     df_train.index = range(df_train.shape[0])
     return df_train
+
+def get_test_and_train_set_lists(s):
+
+    if isinstance(s["test_datasets"], int):
+        test_set_list = [s["test_datasets"]]
+    else:
+        test_set_list = s["test_datasets"].split(",")
+
+    if isinstance(s["train_datasets"], int):
+        train_set_list = [s["train_datasets"]]
+    else:
+        train_set_list = s["train_datasets"].split(",")
+
+    return test_set_list, train_set_list

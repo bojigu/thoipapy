@@ -1,3 +1,4 @@
+import sys
 import os
 import subprocess,threading
 import time
@@ -55,7 +56,8 @@ def download_homologues_with_hhblits(set_,logging):
 
             command = utils.Command(exect_str)
             command.run(timeout=20)
-            print("hhblits is running ......................")
+            sys.stdout.write("hhblits is running ......................")
+            sys.stdout.flush()
             while not os.path.exists(output_oa3m_homologues_file):
                 time.sleep(1)
             logging.info("Output file: %s\n" % output_oa3m_homologues_file)

@@ -703,7 +703,7 @@ def parse_freecontact_coevolution(acc, freecontact_file, freecontact_parsed_csv,
             freecontact_parsed_csv_handle.close()
             # freecontact_parsed_csv_handle.write(str(residue_di[index])+"\t"+str(residue_mi[index])+"\n")
         except:
-            print("coevolution parsing gave an error")
+            sys.stdout.write("coevolution parsing gave an error")
     else:
         logging.warning("{} parse_freecontact_coevolution failed, {} not found.".format(acc, freecontact_file))
 
