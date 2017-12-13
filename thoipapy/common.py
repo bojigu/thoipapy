@@ -368,6 +368,21 @@ def setup_error_logging(logfile, level_console="DEBUG", level_logfile="DEBUG", p
 
 
 def get_path_of_protein_set(setname, sets_folder):
+    """Get path of protein set, using glob to search for "set03"
+    for example within all excel files in the sets folder.
+
+    Parameters
+    ----------
+    setname : str
+        Name of the protein set. E.g. set03
+    sets_folder : str
+        Path to protein set folder
+
+    Returns
+    -------
+    set_path : str
+        Path to particular protein set.
+    """
     xlsx_list = glob.glob(os.path.join(sets_folder, "*.xlsx"))
 
     # remove temporary open excel files from the list (hidden files that start with ~$)

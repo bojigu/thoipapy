@@ -1249,6 +1249,8 @@ def normalise_features(df_features_single_protein):
     df_features_single_protein["n_homol_norm"] = df_features_single_protein["n_homologues"].apply(normalise_number_of_homologues)
     # convert entropy to conservation
     df_features_single_protein["conservation"] = -df_features_single_protein["Entropy"]
+    # calculate LIPS L*E for later BO curve, etc
+    df_features_single_protein["LIPS_L*E"] = df_features_single_protein.LIPS_lipo * df_features_single_protein.LIPS_entropy
 
     coev_colname_list = ["CoevDImax", "CoevDI4", "CoevDI8", "CoevMImax", "CoevMI4", "CoevMI8"]
     for col in coev_colname_list:

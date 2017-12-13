@@ -52,7 +52,7 @@ if __name__ == "__main__":
         thoipapy.figs.Preddimer_TMdock_heatmap.FigZB_18(Fontsize,Width,Size)
 
     if s["pred_interf_single_prot_using_sel_train_datasets"] == True:
-        thoipapy.figs.Create_Bo_Curve_files.Test_Etra(s)
+        #thoipapy.figs.Create_Bo_Curve_files.Test_Etra(s)
         thoipapy.figs.Create_Bo_Curve_files.pred_interf_single_prot_using_sel_train_datasets(s)
 
     if s["combine_BO_curve_files"] == True:
