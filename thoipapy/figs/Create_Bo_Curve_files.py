@@ -105,7 +105,7 @@ def pred_interf_single_prot_using_sel_train_datasets(s):
 
                 add_THOIPA_pred_to_combined_file(model_pkl, testdata_combined_file, test_combined_incl_pred)
 
-                test_df = pd.read_csv(test_combined_incl_pred)
+                test_df = pd.read_csv(test_combined_incl_pred, index_col=0)
 
                 df_for_best_overlap = test_df[["residue_name", "interface_score", "THOIPA"]].copy()
 

@@ -1290,6 +1290,13 @@ def add_experimental_data_to_combined_features_mult_prot(set_, df_set, logging):
 def add_experimental_data_to_combined_features(acc, database, TMD_seq, feature_combined_file, experimental_data_file, logging):
     df_combined = pd.read_csv(feature_combined_file, index_col=0)
 
+
+    if not os.path.isfile(experimental_data_file):
+        # try searching for the data files with uppercase accession
+        experimental_data_file = experimental_data_file.replace(acc, acc.upper())
+        if os.path.isfile(experimental_data_file):
+            logging.warning("experimental_data_file IS IN UPPERCASE ({})".format(experimental_data_file))
+
     if os.path.isfile(experimental_data_file):
         if database == "ETRA":
             df_experiment_data = pd.read_excel(experimental_data_file)
