@@ -1,3 +1,4 @@
+import ast
 import numpy as np
 import pandas as pd
 import thoipapy
@@ -6,6 +7,29 @@ import matplotlib.pyplot as plt
 import sys
 
 def fig_plot_BO_curve_mult_train_datasets(s):
+    """Plot the BO-curve for multiple training datasets.
+
+    Takes the datasets listed in settings under "train_datasets" and "test_datasets"
+    and plots the BO-curve of each combination in a single figure.
+
+    The Area Under the BO Curve for a sample size of 0 to 10 (AUBOC10) is shown in the legend.
+
+    Currently plots both the new and old performance method.
+
+    NEW METHOD
+    ----------
+    Performance = overlap between experiment and predicted MINUS the overlap expected in random selections
+
+    OLD METHOD
+    ----------
+    Performance = overlap between experiment and predicted DIVIDED BY the overlap expected in random selections
+
+    Parameters
+    ----------
+    s : dict
+        Settings dictionary for figures.
+
+    """
 
     plt.rcParams.update({'font.size': 7})
 
@@ -24,6 +48,32 @@ def fig_plot_BO_curve_mult_train_datasets(s):
 
 
 def plot_BO_curve(s,train_set_list, test_set_list, mult_THOIPA_dir, mult_testname, sheetname="df_o_minus_r", suffix=""):
+    """ Separate function allowing a toggle of the OLD or NEW performance methods
+
+    Parameters
+    ----------
+	s : dict
+        Settings dictionary for figures.
+    train_set_list : list
+        List of training datasets in selection
+        E.g. ["set02", "set04"]
+    test_set_list : list
+        List of test datasets in selection
+        E.g. ["set03", "set31"]
+    mult_THOIPA_dir : str
+        Path to folder containing results for multiple THOIPA comparisons.
+    mult_testname : str
+        String denoting this combination of test and training datasets
+        E.g. testsets(2)_trainsets(2)
+    sheetname : str
+        Excel sheetname
+        This is the toggle deciding whether the OLD or NEW performance measure is used
+        Default = new method ("df_o_minus_r"), where the overlap MINUS random_overlap is used
+    suffix : str
+        Suffix for figure
+        E.g. "" or "_old_method_o_over_r"
+
+    """
 
     BO_curve_png = os.path.join(mult_THOIPA_dir, "{}{}.png".format(mult_testname, suffix))
 
@@ -58,6 +108,72 @@ def plot_BO_curve(s,train_set_list, test_set_list, mult_THOIPA_dir, mult_testnam
     sys.stdout.write("\nfig_plot_BO_curve_mult_train_datasets finished ({})".format(BO_curve_png))
 
 
+def fig_plot_BO_curve_mult_predictors(s):
+    """Plot the BO-curve for multiple prediction methods
+
+    Takes the datasets listed in settings under fig_plot_BO_curve_mult_predictors_list
+    (e.g. ["Testset03_Trainset04.THOIPA","Testset03.LIPS"])
+    and plots the BO-curves in a single figure.
+
+    The Area Under the BO Curve for a sample size of 0 to 10 (AUBOC10) is shown in the legend.
+
+    Currently plots both the new and old performance method.
+
+    Performance is measured with the NEW METHOD:
+    Performance = overlap between experiment and predicted MINUS the overlap expected in random selections
+
+    Parameters
+    ----------
+    s : dict
+        Settings dictionary for figures.
+
+    """
+
+    plt.rcParams.update({'font.size': 7})
+    mult_pred_dir = os.path.join(s["Bo_Curve_path"], "mult_pred_analysis")
+    BO_curve_png = os.path.join(mult_pred_dir, "BO_curve_mult_pred.png")
+    AUBOC10_bar_png = os.path.join(mult_pred_dir, "AUBOC10_barchart_mult_pred.png")
+    thoipapy.utils.make_sure_path_exists(mult_pred_dir)
+
+    fig, ax = plt.subplots(figsize=(3.42, 3.42))
+
+    # list of predictors to compare, e.g. ["Testset03_Trainset04.THOIPA", "Testset03.LIPS"]
+    predictor_list = ast.literal_eval(s["fig_plot_BO_curve_mult_predictors_list"])
+    area_under_curve_dict = {}
+
+    for predictor_name in predictor_list:
+        bo_curve_underlying_data_indiv_xlsx = os.path.join(s["Bo_Curve_path"], "{}.best_overlap_data".format(predictor_name), "bo_curve_underlying_data_indiv_df.xlsx")
+
+        df = pd.read_excel(bo_curve_underlying_data_indiv_xlsx, sheetname="df_o_minus_r", index_col=0)
+
+        df["mean_"] = df.mean(axis=1)
+
+        # use the composite trapezoidal rule to get the area under the curve
+        # https://docs.scipy.org/doc/numpy-1.13.0/reference/generated/numpy.trapz.html
+        area_under_curve = np.trapz(y=df["mean_"], x=df.index)
+        area_under_curve_dict[predictor_name] = area_under_curve
+
+        df["mean_"].plot(ax=ax, label="{}(AUBOC10={:0.1f})".format(predictor_name, area_under_curve))
+
+    ax.set_xlabel("sample size")
+    ax.set_ylabel("performance\n(observed overlap - random overlap)")
+    ax.set_xticks(range(1, df.shape[0] + 1))
+    ax.set_xticklabels(df.index)
+    ax.legend()
+    fig.tight_layout()
+    fig.savefig(BO_curve_png, dpi=240)
+    fig.savefig(BO_curve_png[:-4] + ".pdf")
+
+    plt.close("all")
+    AUBOC10_ser = pd.Series(area_under_curve_dict).sort_index()
+    fig, ax = plt.subplots(figsize=(3.42, 3.42))
+    AUBOC10_ser.plot(ax=ax, kind="bar")
+    ax.set_ylabel("performance (AUBOC10)")
+    fig.tight_layout()
+    fig.savefig(AUBOC10_bar_png, dpi=240)
+    fig.savefig(AUBOC10_bar_png[:-4] + ".pdf")
+
+    sys.stdout.write("\nfig_plot_BO_curve_mult_predictors finished ({})".format(BO_curve_png))
 
 def combine_BO_curve_files(s):
 

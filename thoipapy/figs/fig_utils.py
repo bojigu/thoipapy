@@ -81,6 +81,11 @@ def calc_best_overlap(acc, df, experiment_col="interface_score", pred_col="THOIP
     """
     tm_len = df.shape[0]
 
+    if experiment_col not in df.columns:
+        raise IndexError("{} {} is not in the columns.\n column list = {}".format(acc, experiment_col, df.columns))
+    if pred_col not in df.columns:
+        raise IndexError("{} {} is not in the columns.\n column list = {}".format(acc, pred_col, df.columns))
+
     # Give the rank of the values
     # NOTE THAT IT IS NECESSARY TO RUN ARGSORT TWICE TO ACHIEVE THIS
     # https://stackoverflow.com/questions/31910407/numpy-argsort-cant-see-whats-wrong

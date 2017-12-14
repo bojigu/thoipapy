@@ -15,6 +15,7 @@ import numpy as np
 # import eccpy.tools as tools
 from sklearn.externals import joblib
 import pickle
+import time
 
 # intersect function
 def intersect(a, b):
@@ -288,6 +289,9 @@ def run_10fold_cross_validation(set_, logging):
     df_xv = pd.DataFrame()
     # save all outputs to a cross-validation dictionary, to be saved as a pickle file
     xv_dict = {}
+
+    start = time.clock()
+
     for i, (train, test) in enumerate(cv):
         sys.stdout.write("f{}.".format(i+1)), sys.stdout.flush()
         probas_ = forest.fit(X.iloc[train], y.iloc[train]).predict_proba(X.iloc[test])
@@ -299,6 +303,9 @@ def run_10fold_cross_validation(set_, logging):
         mean_tpr[0] = 0.0
         roc_auc = auc(fpr, tpr)
         #plt.plot(fpr, tpr, lw=1, label='ROC fold %d (area = %0.2f)' % (i, roc_auc))
+
+    duration = time.clock() - start
+    logging.info("time taken for cross validation = {} (seconds in Windows)".format(duration))
 
     #plt.plot([0, 1], [0, 1], '--', color=(0.6, 0.6, 0.6), label='random')
     mean_tpr /= len(cv)
@@ -316,7 +323,7 @@ def run_10fold_cross_validation(set_, logging):
     
     # df_xv.loc["mean_auc"] = mean_auc
     # df_xv.to_csv(crossvalidation_csv)
-
+    logging.info('10-fold cross validatation is finished. Mean AUC = {:.3f}\n'.format(mean_auc))
 
 def fig_10fold_cross_validation(set_, logging):
     """Create figure showing ROC curve for each fold in a 10-fold validation.

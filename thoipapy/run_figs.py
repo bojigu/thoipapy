@@ -61,6 +61,9 @@ if __name__ == "__main__":
     if s["fig_plot_BO_curve_mult_train_datasets"] == True:
         thoipapy.figs.Combine_Bo_Curve_files.fig_plot_BO_curve_mult_train_datasets(s)
 
+    if s["fig_plot_BO_curve_mult_predictors"] == True:
+        thoipapy.figs.Combine_Bo_Curve_files.fig_plot_BO_curve_mult_predictors(s)
+
     if s["run_bocurve_comp"] == True:
         thoipapy.figs.BoCurve_ThoipaBest_comp_LIPS_and_Nmr.run_bocurve_comp(Fontsize,Width,Size,s,Linewidth)
 

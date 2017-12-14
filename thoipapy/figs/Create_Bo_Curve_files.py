@@ -47,7 +47,7 @@ def Test_Etra(s):
             testdata_combined_file = os.path.join(s["thoipapy_feature_folder"], "combined", database, "{}.surr20.gaps5.combined_features.csv".format(acc))
             test_df = pd.read_csv(testdata_combined_file, sep=',', engine='python', index_col=0)
 
-            odf = add_THOIPA_pred_to_combined_file(acc, train_df, test_df)
+            odf = save_THOIPA_pred_indiv_prot(acc, train_df, test_df)
             if dfc.empty:
                 dfc = odf
             else:
@@ -66,7 +66,7 @@ def pred_interf_single_prot_using_sel_train_datasets(s):
 
     test_set_list, train_set_list = thoipapy.figs.fig_utils.get_test_and_train_set_lists(s)
 
-    for train_set in train_set_list:
+    for n, train_set in enumerate(train_set_list):
         trainsetname = "set{:02d}".format(int(train_set))
         #traindata_set = os.path.join(s["Result_folder"], trainsetname, "{}_train_data.csv".format(trainsetname))
         #train_df = pd.read_csv(traindata_set, sep=',', engine='python', index_col=0)
@@ -74,7 +74,8 @@ def pred_interf_single_prot_using_sel_train_datasets(s):
 
         for test_set in test_set_list:
             testsetname = "set{:02d}".format(int(test_set))
-            BO_curve_csv = os.path.join(s["Bo_Curve_path"],"Test{}_Train{}.THOIPA.best_overlap_data.csv".format(testsetname, trainsetname))
+            THOIPA_BO_curve_data_csv = os.path.join(s["Bo_Curve_path"],"Test{}_Train{}.THOIPA.best_overlap_data.csv".format(testsetname, trainsetname))
+            LIPS_BO_curve_data_csv = os.path.join(s["Bo_Curve_path"], "Test{}.LIPS.best_overlap_data.csv".format(testsetname, trainsetname))
 
             # xlsx_list = glob.glob(os.path.join(s["set_path"], "{}*.xlsx".format(testsetname)))
             # if len(xlsx_list) == 1:
@@ -95,26 +96,35 @@ def pred_interf_single_prot_using_sel_train_datasets(s):
             testdataset_df = pd.read_excel(testset_path, sheetname="proteins")
             acc_list = testdataset_df.acc.tolist()
             database = testdataset_df.database[0]
-            dfc = pd.DataFrame()
+            THOIPA_BO_data_df = pd.DataFrame()
             for acc in acc_list:
                 testdata_combined_file = os.path.join(s["thoipapy_feature_folder"], "combined", database,
                                                       "{}.surr20.gaps5.combined_features.csv".format(acc))
-                test_combined_incl_pred = os.path.join(os.path.dirname(s["thoipapy_feature_folder"]), "combined_incl_pred", database,
-                                                      "{}.train{}.combined_features_incl_pred.csv".format(acc, trainsetname))
-                thoipapy.utils.make_sure_path_exists(test_combined_incl_pred, isfile=True)
+                THOIPA_pred_csv = os.path.join(os.path.dirname(s["thoipapy_feature_folder"]), "predictions_sets", database,
+                                                      "{}.THOIPA.train{}.csv".format(acc, trainsetname))
+                combined_incl_THOIPA_csv = os.path.join(os.path.dirname(s["thoipapy_feature_folder"]), "predictions_sets", database,
+                                                      "{}.THOIPA_incl_combined.train{}.csv".format(acc, trainsetname))
+                thoipapy.utils.make_sure_path_exists(combined_incl_THOIPA_csv, isfile=True)
 
-                add_THOIPA_pred_to_combined_file(model_pkl, testdata_combined_file, test_combined_incl_pred)
+                combined_incl_THOIPA_df = save_THOIPA_pred_indiv_prot(model_pkl, testdata_combined_file, THOIPA_pred_csv, combined_incl_THOIPA_csv)
 
-                test_df = pd.read_csv(test_combined_incl_pred, index_col=0)
+                # SAVE LIPS PREDICTION DATA
+                # this is somewhat inefficient, as it is conducted for every test dataset
+                LIPS_pred_csv = os.path.join(os.path.dirname(s["thoipapy_feature_folder"]), "predictions_sets", database,
+                                                      "{}.LIPS_pred.csv".format(acc, trainsetname))
+                LIPS_pred_df = combined_incl_THOIPA_df[["residue_name", "residue_num", "LIPS_lipo", "LIPS_entropy", "LIPS_L*E", "LIPS_surface"]]
+                LIPS_pred_df.to_csv(LIPS_pred_csv)
 
-                df_for_best_overlap = test_df[["residue_name", "interface_score", "THOIPA"]].copy()
+                #THOIPA_pred_df = pd.read_csv(THOIPA_pred_csv, index_col=0)
 
                 #test_df.index = test_df.index.astype(int) + 1
 
                 #test_df["interface_score"] = -1 * test_df["interface_score"]
 
+                combined_incl_THOIPA_df["LIPS_L*E"] = -1 * combined_incl_THOIPA_df["LIPS_L*E"]
+
                 if database == "crystal" or database == "NMR":
-                    df_for_best_overlap["interface_score"] = -1 * df_for_best_overlap["interface_score"]
+                    combined_incl_THOIPA_df["interface_score"] = -1 * combined_incl_THOIPA_df["interface_score"]
                     #interface_score = test_df.interface_score
                     #interface_score = -1 * interface_score  # (it is closest distance and low value means high propencity of interfacial)
 
@@ -128,31 +138,36 @@ def pred_interf_single_prot_using_sel_train_datasets(s):
                 #prob_arr = test_df["THOIPA"].as_matrix()
                 #interface_score = test_df["interface_score"].as_matrix()
 
+                THOIPA_BO_single_prot_df = thoipapy.figs.fig_utils.calc_best_overlap(acc, combined_incl_THOIPA_df)
+                LIPS_BO_single_prot_df = thoipapy.figs.fig_utils.calc_best_overlap(acc, combined_incl_THOIPA_df, experiment_col="interface_score", pred_col="LIPS_L*E")
 
-                odf = thoipapy.figs.fig_utils.calc_best_overlap(acc, df_for_best_overlap)
-
-                if dfc.empty:
-                    dfc = odf
+                if THOIPA_BO_data_df.empty:
+                    THOIPA_BO_data_df = THOIPA_BO_single_prot_df
+                    LIPS_BO_data_df = LIPS_BO_single_prot_df
                 else:
-                    dfc = pd.concat([dfc, odf], axis=1, join="outer")
+                    THOIPA_BO_data_df = pd.concat([THOIPA_BO_data_df, THOIPA_BO_single_prot_df], axis=1, join="outer")
+                    LIPS_BO_data_df = pd.concat([LIPS_BO_data_df, LIPS_BO_single_prot_df], axis=1, join="outer")
 
-            dfc.to_csv(BO_curve_csv)
-            sys.stdout.write("\nBO curve data collected ({})".format(BO_curve_csv))
+            THOIPA_BO_data_df.to_csv(THOIPA_BO_curve_data_csv)
+            LIPS_BO_data_df.to_csv(LIPS_BO_curve_data_csv)
+            sys.stdout.write("\nBO curve data collected ({})".format(THOIPA_BO_curve_data_csv))
 
             names_excel_path = os.path.join(os.path.dirname(s["set_path"]), "ETRA_NMR_names.xlsx")
 
-            linechart_mean_obs_and_rand = analyse_bo_curve_underlying_data(BO_curve_csv, names_excel_path)
-            sys.stdout.write("\nBO curve data analysed ({})".format(linechart_mean_obs_and_rand))
+            THOIPA_linechart_mean_obs_and_rand = analyse_bo_curve_underlying_data(THOIPA_BO_curve_data_csv, names_excel_path)
+            LIPS_linechart_mean_obs_and_rand = analyse_bo_curve_underlying_data(LIPS_BO_curve_data_csv, names_excel_path)
+
+            sys.stdout.write("\nBO curve data analysed ({})".format(THOIPA_linechart_mean_obs_and_rand))
 
             sys.stdout.write("\nTest{}_Train{} finished\n".format(testsetname, trainsetname))
             sys.stdout.flush()
 
-    sys.stdout.write("\npred_interf_single_prot_using_sel_train_datasets finished (all train and test datasets)".format(BO_curve_csv))
+    sys.stdout.write("\npred_interf_single_prot_using_sel_train_datasets finished (all train and test datasets)".format(THOIPA_BO_curve_data_csv))
     sys.stdout.flush()
 
-def add_THOIPA_pred_to_combined_file(model_pkl, testdata_combined_file, test_combined_incl_pred):
+def save_THOIPA_pred_indiv_prot(model_pkl, testdata_combined_file, THOIPA_pred_csv, test_combined_incl_pred):
 
-    test_df = pd.read_csv(testdata_combined_file, sep=',', engine='python', index_col=0)
+    combined_incl_THOIPA_df = pd.read_csv(testdata_combined_file, sep=',', engine='python', index_col=0)
 
     #drop_cols_not_used_in_ML
     #X=train_df.drop(train_features_del,axis=1)
@@ -172,7 +187,7 @@ def add_THOIPA_pred_to_combined_file(model_pkl, testdata_combined_file, test_com
     #Lips_score = test_df.LIPS_lipo * test_df.LIPS_entropy
 
     #tX=test_df.drop(test_features_del,axis=1)
-    test_X = thoipapy.RF_features.RF_Train_Test.drop_cols_not_used_in_ML(test_df)
+    test_X = thoipapy.RF_features.RF_Train_Test.drop_cols_not_used_in_ML(combined_incl_THOIPA_df)
 
     prob_arr = fit.predict_proba(test_X)[:, 1]
 
@@ -182,12 +197,16 @@ def add_THOIPA_pred_to_combined_file(model_pkl, testdata_combined_file, test_com
     #     prob_arr = fit.decision_function(tX)
     #     prob_arr = (prob_arr - prob_arr.min())/(prob_arr.max() - prob_arr.min())
 
-    test_df["THOIPA"] = prob_arr
-    test_df.to_csv(test_combined_incl_pred)
-
+    combined_incl_THOIPA_df["THOIPA"] = prob_arr
+    # save full combined file with THOIPA prediction
+    combined_incl_THOIPA_df.to_csv(test_combined_incl_pred)
+    # save only THOIPA prediction
+    THOIPA_pred_df = combined_incl_THOIPA_df[["residue_num", "residue_name", "THOIPA"]]
+    THOIPA_pred_df.to_csv(THOIPA_pred_csv)
+    return combined_incl_THOIPA_df
 
 #
-# def add_THOIPA_pred_to_combined_file(acc, train_df, test_df, database):
+# def save_THOIPA_pred_indiv_prot(acc, train_df, test_df, database):
 #     #drop_cols_not_used_in_ML
 #     #X=train_df.drop(train_features_del,axis=1)
 #     X = thoipapy.RF_features.RF_Train_Test.drop_cols_not_used_in_ML(train_df)
@@ -224,9 +243,9 @@ def add_THOIPA_pred_to_combined_file(model_pkl, testdata_combined_file, test_com
 #     else:
 #         raise ValueError()
 #
-#     odf = thoipapy.figs.fig_utils.calc_best_overlap(acc, prob_pos, interface_score, database)
+#     THOIPA_BO_single_prot_df = thoipapy.figs.fig_utils.calc_best_overlap(acc, prob_pos, interface_score, database)
 #
-#     return odf
+#     return THOIPA_BO_single_prot_df
 
 
 def analyse_bo_curve_underlying_data(bo_data_csv, names_excel_path):
