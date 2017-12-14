@@ -6,7 +6,10 @@ from sklearn.ensemble import RandomForestClassifier
 import glob
 import numpy as np
 from sklearn.externals import joblib
+from sklearn.metrics import roc_curve, auc
+from scipy import interp
 import matplotlib.pyplot as plt
+import pickle
 import warnings
 warnings.filterwarnings("ignore")
 
@@ -76,6 +79,8 @@ def pred_interf_single_prot_using_sel_train_datasets(s):
             testsetname = "set{:02d}".format(int(test_set))
             THOIPA_BO_curve_data_csv = os.path.join(s["Bo_Curve_path"],"Test{}_Train{}.THOIPA.best_overlap_data.csv".format(testsetname, trainsetname))
             LIPS_BO_curve_data_csv = os.path.join(s["Bo_Curve_path"], "Test{}.LIPS.best_overlap_data.csv".format(testsetname, trainsetname))
+            THOIPA_ROC_pkl = os.path.join(s["Bo_Curve_path"], "Test{}_Train{}.THOIPA.ROC_data.pkl".format(testsetname, trainsetname))
+            LIPS_ROC_pkl = os.path.join(s["Bo_Curve_path"], "Test{}.LIPS.ROC_data.pkl".format(testsetname, trainsetname))
 
             # xlsx_list = glob.glob(os.path.join(s["set_path"], "{}*.xlsx".format(testsetname)))
             # if len(xlsx_list) == 1:
@@ -97,6 +102,13 @@ def pred_interf_single_prot_using_sel_train_datasets(s):
             acc_list = testdataset_df.acc.tolist()
             database = testdataset_df.database[0]
             THOIPA_BO_data_df = pd.DataFrame()
+            LIPS_BO_data_df = pd.DataFrame()
+
+            # save all outputs to a cross-validation dictionary, to be saved as a pickle file
+            xv_dict_THOIPA = {}
+            mean_tpr = 0.0
+            mean_fpr = np.linspace(0, 1, 100)
+
             for acc in acc_list:
                 testdata_combined_file = os.path.join(s["thoipapy_feature_folder"], "combined", database,
                                                       "{}.surr20.gaps5.combined_features.csv".format(acc))
@@ -108,6 +120,11 @@ def pred_interf_single_prot_using_sel_train_datasets(s):
 
                 combined_incl_THOIPA_df = save_THOIPA_pred_indiv_prot(model_pkl, testdata_combined_file, THOIPA_pred_csv, combined_incl_THOIPA_csv)
 
+                #######################################################################################################
+                #                                                                                                     #
+                #                           Processing BO curve data for each single protein                          #
+                #                                                                                                     #
+                #######################################################################################################
                 # SAVE LIPS PREDICTION DATA
                 # this is somewhat inefficient, as it is conducted for every test dataset
                 LIPS_pred_csv = os.path.join(os.path.dirname(s["thoipapy_feature_folder"]), "predictions_sets", database,
@@ -115,28 +132,11 @@ def pred_interf_single_prot_using_sel_train_datasets(s):
                 LIPS_pred_df = combined_incl_THOIPA_df[["residue_name", "residue_num", "LIPS_lipo", "LIPS_entropy", "LIPS_L*E", "LIPS_surface"]]
                 LIPS_pred_df.to_csv(LIPS_pred_csv)
 
-                #THOIPA_pred_df = pd.read_csv(THOIPA_pred_csv, index_col=0)
-
-                #test_df.index = test_df.index.astype(int) + 1
-
-                #test_df["interface_score"] = -1 * test_df["interface_score"]
-
                 combined_incl_THOIPA_df["LIPS_L*E"] = -1 * combined_incl_THOIPA_df["LIPS_L*E"]
 
                 if database == "crystal" or database == "NMR":
+                    # (it is closest distance and low value means high propencity of interfacial)
                     combined_incl_THOIPA_df["interface_score"] = -1 * combined_incl_THOIPA_df["interface_score"]
-                    #interface_score = test_df.interface_score
-                    #interface_score = -1 * interface_score  # (it is closest distance and low value means high propencity of interfacial)
-
-                #if database == "crystal" or database == "NMR":
-                #    interface_score = -1 * interface_score  # (it is closest distance and low value means high propencity of interfacial)
-                #elif database == "ETRA":
-                #    pass  # (it is closest experimental disruption and high value means high propencity of interfacial)
-                #else:
-                #    raise ValueError()
-
-                #prob_arr = test_df["THOIPA"].as_matrix()
-                #interface_score = test_df["interface_score"].as_matrix()
 
                 THOIPA_BO_single_prot_df = thoipapy.figs.fig_utils.calc_best_overlap(acc, combined_incl_THOIPA_df)
                 LIPS_BO_single_prot_df = thoipapy.figs.fig_utils.calc_best_overlap(acc, combined_incl_THOIPA_df, experiment_col="interface_score", pred_col="LIPS_L*E")
@@ -148,10 +148,31 @@ def pred_interf_single_prot_using_sel_train_datasets(s):
                     THOIPA_BO_data_df = pd.concat([THOIPA_BO_data_df, THOIPA_BO_single_prot_df], axis=1, join="outer")
                     LIPS_BO_data_df = pd.concat([LIPS_BO_data_df, LIPS_BO_single_prot_df], axis=1, join="outer")
 
+                #######################################################################################################
+                #                                                                                                     #
+                #                     Processing ROC data for each single protein, saving to nested dict              #
+                #                                                                                                     #
+                #######################################################################################################
+
+                df_for_roc = combined_incl_THOIPA_df.dropna(subset=["interface_score"])
+
+                predictor_name = "THOIPA"
+
+                fpr, tpr, thresholds = roc_curve(df_for_roc.interface, df_for_roc[predictor_name])
+                auc_value = auc(fpr, tpr)
+                mean_tpr += interp(mean_fpr, fpr, tpr)
+                mean_tpr[0] = 0.0
+
+                xv_dict_THOIPA[acc] = {"fpr" : fpr, "tpr" : tpr, "auc" : auc_value}
+
+            #######################################################################################################
+            #                                                                                                     #
+            #      Processing BO CURVE data, saving to csv and running the BO curve analysis script               #
+            #                                                                                                     #
+            #######################################################################################################
+
             THOIPA_BO_data_df.to_csv(THOIPA_BO_curve_data_csv)
             LIPS_BO_data_df.to_csv(LIPS_BO_curve_data_csv)
-            sys.stdout.write("\nBO curve data collected ({})".format(THOIPA_BO_curve_data_csv))
-
             names_excel_path = os.path.join(os.path.dirname(s["set_path"]), "ETRA_NMR_names.xlsx")
 
             THOIPA_linechart_mean_obs_and_rand = analyse_bo_curve_underlying_data(THOIPA_BO_curve_data_csv, names_excel_path)
@@ -159,11 +180,70 @@ def pred_interf_single_prot_using_sel_train_datasets(s):
 
             sys.stdout.write("\nBO curve data analysed ({})".format(THOIPA_linechart_mean_obs_and_rand))
 
+            #######################################################################################################
+            #                                                                                                     #
+            #                     Processing dictionary with ROC data, saving to pickle                           #
+            #                                                                                                     #
+            #######################################################################################################
+            mean_tpr /= len(acc_list)
+            mean_tpr[-1] = 1.0
+
+            mean_auc = auc(mean_fpr, mean_tpr)
+
+            ROC_out_dict = {"xv_dict_THOIPA" : xv_dict_THOIPA}
+            ROC_out_dict["true_positive_rate_mean"] = mean_tpr
+            ROC_out_dict["false_positive_rate_mean"] = mean_fpr
+            ROC_out_dict["mean_auc"] = mean_auc
+
+            # save dict as pickle
+            with open(THOIPA_ROC_pkl, "wb") as f:
+                pickle.dump(ROC_out_dict, f, protocol=pickle.HIGHEST_PROTOCOL)
+
+            sys.stdout.write("\nBO curve and ROC data collected. Mean AUC = {}. BO output={}".format(mean_auc, THOIPA_BO_curve_data_csv))
+
+            create_ROC_fig_for_testset_trainset_combination(THOIPA_ROC_pkl)
+
             sys.stdout.write("\nTest{}_Train{} finished\n".format(testsetname, trainsetname))
             sys.stdout.flush()
 
     sys.stdout.write("\npred_interf_single_prot_using_sel_train_datasets finished (all train and test datasets)".format(THOIPA_BO_curve_data_csv))
     sys.stdout.flush()
+
+
+def create_ROC_fig_for_testset_trainset_combination(THOIPA_ROC_pkl):
+
+    plt.rcParams.update({'font.size': 6})
+    ROC_pkl_foldername = os.path.basename(THOIPA_ROC_pkl)[:-4]
+    ROC_pkl_dir = os.path.dirname(THOIPA_ROC_pkl)
+
+    ROC_png = os.path.join(ROC_pkl_dir, ROC_pkl_foldername, "{}.ROC.png".format(ROC_pkl_foldername))
+    thoipapy.utils.make_sure_path_exists(ROC_png, isfile=True)
+
+    # open pickle file
+    with open(THOIPA_ROC_pkl, "rb") as f:
+        ROC_out_dict = pickle.load(f)
+
+    xv_dict_THOIPA = ROC_out_dict["xv_dict_THOIPA"]
+
+    fig, ax = plt.subplots(figsize=(3.42, 3.42))
+
+    for acc in xv_dict_THOIPA:
+        roc_auc = xv_dict_THOIPA[acc]["auc"]
+        ax.plot(xv_dict_THOIPA[acc]["fpr"], xv_dict_THOIPA[acc]["tpr"], lw=1, label='{} ({:0.2f})'.format(acc, roc_auc), alpha=0.8)
+
+    #mean_auc = auc(df_xv["false_positive_rate"], df_xv["true_positive_rate"])
+    mean_auc = ROC_out_dict["mean_auc"]
+
+    ax.plot(ROC_out_dict["false_positive_rate_mean"], ROC_out_dict["true_positive_rate_mean"], color="k", label='mean (area = %0.2f)' % mean_auc, lw=1.5)
+    ax.plot([0, 1], [0, 1], '--', color=(0.6, 0.6, 0.6), label='random')
+    ax.set_xlim([-0.05, 1.05])
+    ax.set_ylim([-0.05, 1.05])
+    ax.set_xlabel("False positive rate")
+    ax.set_ylabel("True positive rate")
+    ax.legend(loc="lower right")
+    fig.tight_layout()
+    fig.savefig(ROC_png, dpi=240)
+    fig.savefig(ROC_png[:-4] + ".pdf")
 
 def save_THOIPA_pred_indiv_prot(model_pkl, testdata_combined_file, THOIPA_pred_csv, test_combined_incl_pred):
 

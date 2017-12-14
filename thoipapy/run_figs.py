@@ -5,7 +5,7 @@ import sys
 import eccpy
 import argparse
 import warnings
-warnings.filterwarnings("ignore")
+warnings.simplefilter(action='ignore', category=FutureWarning)
 
 # read the command line arguments
 parser = argparse.ArgumentParser()
