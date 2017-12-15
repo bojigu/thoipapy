@@ -65,12 +65,12 @@ import thoipapy
 
 
 
-def calc_best_overlap(acc, df, experiment_col="interface_score", pred_col="THOIPA"):
+def calc_best_overlap(acc_db, df, experiment_col="interface_score", pred_col="THOIPA"):
     """
-    Create Bo Curve parameter for protein acc and return the output as a dataframe
+    Create Bo Curve parameter for protein acc_db and return the output as a dataframe
     Parameters
     ----------
-    acc : str, protein name
+    acc_db : str, protein name
     prob_pos : the thoipa prediction score for each protein positions
     Lips_score : the LIPS score predicted by LIPS for each protein positions
     interface_score_arr : for experimental ToxR etra data, it is disruption, but for CRYSTAL or NMR data, it is closedistance
@@ -83,9 +83,9 @@ def calc_best_overlap(acc, df, experiment_col="interface_score", pred_col="THOIP
     tm_len = df.shape[0]
 
     if experiment_col not in df.columns:
-        raise IndexError("{} {} is not in the columns.\n column list = {}".format(acc, experiment_col, df.columns))
+        raise IndexError("{} {} is not in the columns.\n column list = {}".format(acc_db, experiment_col, df.columns))
     if pred_col not in df.columns:
-        raise IndexError("{} {} is not in the columns.\n column list = {}".format(acc, pred_col, df.columns))
+        raise IndexError("{} {} is not in the columns.\n column list = {}".format(acc_db, pred_col, df.columns))
 
     # Give the rank of the values
     # NOTE THAT IT IS NECESSARY TO RUN ARGSORT TWICE TO ACHIEVE THIS
@@ -154,15 +154,15 @@ def calc_best_overlap(acc, df, experiment_col="interface_score", pred_col="THOIP
             random_non_inter_num = tm_len - sample_size
             inter_num_random = inter_num_random + scipy.special.comb(sample_size, random_inter_num_ober) * scipy.special.comb(random_non_inter_num, sample_size - random_inter_num_ober) / scipy.special.comb(tm_len,
                                                                                                                                                                                                               sample_size) * j
-        odf.set_value(ind, acc, observed_overlap)
+        odf.set_value(ind, acc_db, observed_overlap)
         odf.set_value(ind, "sample_size", "Top" + str(sample_size))
         odf.set_value(ind, "parameters", "observed_overlap")
         ind = ind + 1
-        odf.set_value(ind, acc, inter_num_random)
+        odf.set_value(ind, acc_db, inter_num_random)
         odf.set_value(ind, "sample_size", "Top" + str(sample_size))
         odf.set_value(ind, "parameters", "random_overlap")
         ind = ind + 1
-        odf.set_value(ind, acc, pval)
+        odf.set_value(ind, acc_db, pval)
         odf.set_value(ind, "sample_size", "Top" + str(sample_size))
         odf.set_value(ind, "parameters", "p_value_from_obs_overlap")
         ind = ind + 1
@@ -171,12 +171,12 @@ def calc_best_overlap(acc, df, experiment_col="interface_score", pred_col="THOIP
     odf.set_index(["sample_size", "parameters"], inplace=True, drop=True)
     return odf
 
-def create_one_out_train_data(acc,set_path,s):
+def create_one_out_train_data(acc_db,set_path,s):
     df_train = pd.DataFrame()
     df_set04 = pd.read_excel(set_path, sheetname='proteins')
     for j in df_set04.index:
-        acc1 = df_set04.loc[j, "acc"]
-        if not acc1 == acc:
+        acc1 = df_set04.loc[j, "acc_db"]
+        if not acc1 == acc_db:
             database = df_set04.loc[j, "database"]
             feature_combined_file = os.path.join(s["thoipapy_feature_folder"], "combined", database,
                                                  "{}.surr20.gaps5.combined_features.csv".format(acc1))

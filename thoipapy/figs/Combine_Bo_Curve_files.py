@@ -5,6 +5,7 @@ import thoipapy
 import os
 import matplotlib.pyplot as plt
 import sys
+import pickle
 
 def fig_plot_BO_curve_mult_train_datasets(s):
     """Plot the BO-curve for multiple training datasets.
@@ -40,15 +41,15 @@ def fig_plot_BO_curve_mult_train_datasets(s):
 
     mult_testname = "testsets({})_trainsets({})".format(test_dataset_str, train_dataset_str)
     print(mult_testname)
-    mult_THOIPA_dir = os.path.join(s["Bo_Curve_path"], "mult_THOIPA", mult_testname)
+    mult_THOIPA_dir = os.path.join(s["thoipapy_folder"], "Results", "compare_testset_trainset", "summaries", mult_testname)
     thoipapy.utils.make_sure_path_exists(mult_THOIPA_dir)
 
     plot_BO_curve(s, train_set_list, test_set_list, mult_THOIPA_dir, mult_testname)
 
-    plot_BO_curve(s, train_set_list, test_set_list, mult_THOIPA_dir, mult_testname, sheetname="df_o_over_r", suffix="_old_method_o_over_r")
+    plot_BO_curve(s, train_set_list, test_set_list, mult_THOIPA_dir, mult_testname, sheetname="df_o_over_r", suffix="_BO_curve_old_method")
 
 
-def plot_BO_curve(s,train_set_list, test_set_list, mult_THOIPA_dir, mult_testname, sheetname="df_o_minus_r", suffix=""):
+def plot_BO_curve(s,train_set_list, test_set_list, mult_THOIPA_dir, mult_testname, sheetname="df_o_minus_r", suffix="_BO_curve"):
     """ Separate function allowing a toggle of the OLD or NEW performance methods
 
     Parameters
@@ -85,8 +86,8 @@ def plot_BO_curve(s,train_set_list, test_set_list, mult_THOIPA_dir, mult_testnam
 
         for test_set in test_set_list:
             testsetname = "set{:02d}".format(int(test_set))
-            #/media/mark/sindy/m_data/THOIPA_data/Results/Bo_Curve/Testset03_Trainset01.THOIPA.best_overlap_data/bo_curve_underlying_data_indiv_df.xlsx
-            bo_curve_underlying_data_indiv_xlsx = os.path.join(s["Bo_Curve_path"], "Test{}_Train{}.THOIPA.best_overlap_data".format(testsetname, trainsetname), "bo_curve_underlying_data_indiv_df.xlsx")
+            #/media/mark/sindy/m_data/THOIPA_data/Results/Bo_Curve/Testset03_Trainset01.THOIPA.validation/bo_curve_underlying_data_indiv_df.xlsx
+            bo_curve_underlying_data_indiv_xlsx = os.path.join(s["thoipapy_folder"], "Results", "compare_testset_trainset", "data", "Test{}_Train{}.THOIPA".format(testsetname, trainsetname), "bo_curve_underlying_data_indiv_df.xlsx")
 
             df = pd.read_excel(bo_curve_underlying_data_indiv_xlsx, sheetname=sheetname, index_col=0)
 
@@ -131,9 +132,11 @@ def fig_plot_BO_curve_mult_predictors(s):
     """
 
     plt.rcParams.update({'font.size': 7})
-    mult_pred_dir = os.path.join(s["Bo_Curve_path"], "mult_pred_analysis")
+    mult_pred_dir = os.path.join(s["thoipapy_folder"], "Results", "compare_predictors")
     BO_curve_png = os.path.join(mult_pred_dir, "BO_curve_mult_pred.png")
     AUBOC10_bar_png = os.path.join(mult_pred_dir, "AUBOC10_barchart_mult_pred.png")
+    ROC_png = os.path.join(mult_pred_dir, "ROC.png")
+
     thoipapy.utils.make_sure_path_exists(mult_pred_dir)
 
     fig, ax = plt.subplots(figsize=(3.42, 3.42))
@@ -141,9 +144,11 @@ def fig_plot_BO_curve_mult_predictors(s):
     # list of predictors to compare, e.g. ["Testset03_Trainset04.THOIPA", "Testset03.LIPS"]
     predictor_list = ast.literal_eval(s["fig_plot_BO_curve_mult_predictors_list"])
     area_under_curve_dict = {}
+    # create an empty dataframe to keep the pycharm IDE happy
+    df = pd.DataFrame()
 
     for predictor_name in predictor_list:
-        bo_curve_underlying_data_indiv_xlsx = os.path.join(s["Bo_Curve_path"], "{}.best_overlap_data".format(predictor_name), "bo_curve_underlying_data_indiv_df.xlsx")
+        bo_curve_underlying_data_indiv_xlsx = os.path.join(s["thoipapy_folder"], "Results", "compare_testset_trainset", "data", "{}".format(predictor_name), "bo_curve_underlying_data_indiv_df.xlsx")
 
         df = pd.read_excel(bo_curve_underlying_data_indiv_xlsx, sheetname="df_o_minus_r", index_col=0)
 
@@ -174,17 +179,30 @@ def fig_plot_BO_curve_mult_predictors(s):
     fig.savefig(AUBOC10_bar_png, dpi=240)
     fig.savefig(AUBOC10_bar_png[:-4] + ".pdf")
 
-
     plt.close("all")
+
+    fig, ax = plt.subplots(figsize=(3.42, 3.42))
+
     for predictor_name in predictor_list:
-        ROC_pkl = os.path.join(s["Bo_Curve_path"], "{}.ROC_data.pkl".format(predictor_name))
+        #"D:\data_thoipapy\Results\compare_testset_trainset\data\Testset03_Trainset04.THOIPA\Testset03_Trainset04.THOIPA.ROC_data.pkl"
+        ROC_pkl = os.path.join(s["thoipapy_folder"], "Results", "compare_testset_trainset", "data", predictor_name, "{}.ROC_data.pkl".format(predictor_name))
+
         if os.path.isfile(ROC_pkl):
-            print("ROC PICKLE FOUND")
+            with open(ROC_pkl, "rb") as f:
+                ROC_out_dict = pickle.load(f)
+                ax.plot(ROC_out_dict["false_positive_rate_mean"], ROC_out_dict["true_positive_rate_mean"], label='{} ({:0.2f})'.format(predictor_name, ROC_out_dict["mean_auc"]), lw=1.5)
         else:
-            print("PICLE NOT FOUND")
-            print(ROC_pkl)
+            sys.stdout.write("PICKLE WITH ROC DATA NOT FOUND : {}".format(ROC_pkl))
 
-
+    ax.plot([0, 1], [0, 1], '--', color=(0.6, 0.6, 0.6), label='random')
+    ax.set_xlim([-0.05, 1.05])
+    ax.set_ylim([-0.05, 1.05])
+    ax.set_xlabel("False positive rate")
+    ax.set_ylabel("True positive rate")
+    ax.legend(loc="lower right")
+    fig.tight_layout()
+    fig.savefig(ROC_png, dpi=240)
+    fig.savefig(ROC_png[:-4] + ".pdf")
 
     sys.stdout.write("\nfig_plot_BO_curve_mult_predictors finished ({})".format(BO_curve_png))
 

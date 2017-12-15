@@ -21,3 +21,36 @@
         Typically 10.
     hit_list_size : int
         Maximum number of BLAST hits.
+
+	s : dict
+        Settings dictionary for figures.
+    train_set_list : list
+        List of training datasets in selection
+        E.g. ["set02", "set04"]
+    test_set_list : list
+        List of test datasets in selection
+        E.g. ["set03", "set31"]
+    mult_THOIPA_dir : str
+        Path to folder containing results for multiple THOIPA comparisons.
+    mult_testname : str
+        String denoting this combination of test and training datasets
+        E.g. testsets(2)_trainsets(2)
+    sheetname : str
+        Excel sheetname
+        This is the toggle deciding whether the OLD or NEW performance measure is used
+        Default = new method ("df_o_minus_r"), where the overlap MINUS random_overlap is used
+    suffix : str
+        Suffix for figure
+        E.g. "" or "_old_method_o_over_r"
+		
+    THOIPA_pred_csv : csv
+        THOIPA result for this testset-trainset combination
+        Columns = "residue_num", "residue_name", "THOIPA"
+        Index = range index of residues
+    combined_incl_THOIPA_csv : csv
+        The combined file with all features. THOIPA prediction is added as a new column
+    THOIPA_ROC_pkl : pickle
+        Pickled output dictionary with ROC curves
+        keys = accessions
+        values = dictionary with fpr, tpr etc for each protein
+        Could not be saved easily as a dataframe, because the number of residues is different for each protein

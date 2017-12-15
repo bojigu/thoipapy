@@ -333,7 +333,6 @@ def lipo_from_pssm(acc, pssm_csv_surr5, lipo_csv, tm_surr_left, tm_surr_right, s
     """
 
     df["aa_pos"] = df.index.astype(str)
-    thoipapy.utils.aaa(df)
     df["newindex"] = df.residue_name + df.aa_pos
     df.set_index("newindex", inplace=True, drop=False)
 
@@ -1251,6 +1250,8 @@ def normalise_features(df_features_single_protein):
     df_features_single_protein["conservation"] = -df_features_single_protein["Entropy"]
     # calculate LIPS L*E for later BO curve, etc
     df_features_single_protein["LIPS_L*E"] = df_features_single_protein.LIPS_lipo * df_features_single_protein.LIPS_entropy
+    # rank the LIPS score by adding a fraction of the L*E to the predicted interface (0 or 1)
+    df_features_single_protein["LIPS_surface_ranked"] = df_features_single_protein["LIPS_surface"] - (df_features_single_protein["LIPS_L*E"] / 20)
 
     coev_colname_list = ["CoevDImax", "CoevDI4", "CoevDI8", "CoevMImax", "CoevMI4", "CoevMI8"]
     for col in coev_colname_list:
@@ -1259,8 +1260,6 @@ def normalise_features(df_features_single_protein):
     coev_cum_colname_list = ["CumDI4", "CumDI8", "CumMI4", "CumMI8"]
     for col in coev_cum_colname_list:
         df_features_single_protein["{}_norm".format(col)] = df_features_single_protein[col].apply(lambda x : 1 if x > 0 else 0)
-
-
 
     return df_features_single_protein
 

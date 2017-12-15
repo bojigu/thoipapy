@@ -1,3 +1,5 @@
+import warnings
+warnings.simplefilter(action='ignore', category=FutureWarning)
 import pandas as pd
 import numpy as np
 import thoipapy
@@ -44,7 +46,7 @@ def drop_cols_not_used_in_ML(df_data):
     """
 
     # columns in combined file that are not used in machine-learning training or testing
-    cols_to_drop = ["acc_db", "residue_num", "residue_name", "interface", "interface_score", "n_homologues", "Entropy", "LIPS_entropy", "LIPS_L*E",
+    cols_to_drop = ["acc_db", "residue_num", "residue_name", "interface", "interface_score", "n_homologues", "Entropy", "LIPS_entropy", "LIPS_L*E", "LIPS_surface_ranked",
                     "CoevDImax", "CoevDI4", "CoevDI8",  "CoevMImax", "CoevMI4", "CoevMI8", "CumDI4", "CumDI8","CoevDI4_norm", "CoevMI4_norm",
                     "CumDI4_norm", "CumDI8_norm", "CumMI4_norm", "CumMI8_norm"]#, "RelPos_TMD", "RelPos_fullseq"
                     #"CoevDImax_norm", "CoevDI8_norm", "CoevMImax_norm", "CoevMI8_norm", ]#
