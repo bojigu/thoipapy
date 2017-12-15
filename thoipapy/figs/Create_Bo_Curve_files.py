@@ -78,21 +78,8 @@ def pred_interf_single_prot_using_sel_train_datasets(s):
         for test_set in test_set_list:
             testsetname = "set{:02d}".format(int(test_set))
             THOIPA_BO_curve_data_csv = os.path.join(s["Bo_Curve_path"],"Test{}_Train{}.THOIPA.best_overlap_data.csv".format(testsetname, trainsetname))
-            LIPS_BO_curve_data_csv = os.path.join(s["Bo_Curve_path"], "Test{}.LIPS.best_overlap_data.csv".format(testsetname, trainsetname))
+            #LIPS_BO_curve_data_csv = os.path.join(s["Bo_Curve_path"], "Test{}.LIPS.best_overlap_data.csv".format(testsetname, trainsetname))
             THOIPA_ROC_pkl = os.path.join(s["Bo_Curve_path"], "Test{}_Train{}.THOIPA.ROC_data.pkl".format(testsetname, trainsetname))
-            LIPS_ROC_pkl = os.path.join(s["Bo_Curve_path"], "Test{}.LIPS.ROC_data.pkl".format(testsetname, trainsetname))
-
-            # xlsx_list = glob.glob(os.path.join(s["set_path"], "{}*.xlsx".format(testsetname)))
-            # if len(xlsx_list) == 1:
-            #     testset_path = xlsx_list[0]
-            # elif len(xlsx_list) == 0:
-            #     raise FileNotFoundError(
-            #         "Excel file with this test data set not found.\nsetname = {}\nexcel files in folder = {}".format(
-            #             testsetname, xlsx_list))
-            # elif len(xlsx_list) > 1:
-            #     raise ValueError(
-            #         "More than one excel file in set folder contains '{}' in the filename.\nexcel files in folder = {}".format(
-            #             testsetname, xlsx_list))
 
             testset_path = thoipapy.common.get_path_of_protein_set(testsetname, s["set_path"])
             #train_features_del = ["residue_num", "residue_name", "acc_db", "n_homologues", "interface_score", "bind"]
@@ -102,7 +89,7 @@ def pred_interf_single_prot_using_sel_train_datasets(s):
             acc_list = testdataset_df.acc.tolist()
             database = testdataset_df.database[0]
             THOIPA_BO_data_df = pd.DataFrame()
-            LIPS_BO_data_df = pd.DataFrame()
+            #LIPS_BO_data_df = pd.DataFrame()
 
             # save all outputs to a cross-validation dictionary, to be saved as a pickle file
             xv_dict_THOIPA = {}
@@ -112,9 +99,9 @@ def pred_interf_single_prot_using_sel_train_datasets(s):
             for acc in acc_list:
                 testdata_combined_file = os.path.join(s["thoipapy_feature_folder"], "combined", database,
                                                       "{}.surr20.gaps5.combined_features.csv".format(acc))
-                THOIPA_pred_csv = os.path.join(os.path.dirname(s["thoipapy_feature_folder"]), "predictions_sets", database,
+                THOIPA_pred_csv = os.path.join(os.path.dirname(s["thoipapy_feature_folder"]), "Predictions", "testset_trainset", database,
                                                       "{}.THOIPA.train{}.csv".format(acc, trainsetname))
-                combined_incl_THOIPA_csv = os.path.join(os.path.dirname(s["thoipapy_feature_folder"]), "predictions_sets", database,
+                combined_incl_THOIPA_csv = os.path.join(os.path.dirname(s["thoipapy_feature_folder"]), "Predictions", "testset_trainset", database,
                                                       "{}.THOIPA_incl_combined.train{}.csv".format(acc, trainsetname))
                 thoipapy.utils.make_sure_path_exists(combined_incl_THOIPA_csv, isfile=True)
 
@@ -127,10 +114,10 @@ def pred_interf_single_prot_using_sel_train_datasets(s):
                 #######################################################################################################
                 # SAVE LIPS PREDICTION DATA
                 # this is somewhat inefficient, as it is conducted for every test dataset
-                LIPS_pred_csv = os.path.join(os.path.dirname(s["thoipapy_feature_folder"]), "predictions_sets", database,
-                                                      "{}.LIPS_pred.csv".format(acc, trainsetname))
-                LIPS_pred_df = combined_incl_THOIPA_df[["residue_name", "residue_num", "LIPS_lipo", "LIPS_entropy", "LIPS_L*E", "LIPS_surface"]]
-                LIPS_pred_df.to_csv(LIPS_pred_csv)
+                #LIPS_pred_csv = os.path.join(os.path.dirname(s["thoipapy_feature_folder"]), "Predictions", "testset_trainset", database,
+                #                                      "{}.LIPS_pred.csv".format(acc, trainsetname))
+                #LIPS_pred_df = combined_incl_THOIPA_df[["residue_name", "residue_num", "LIPS_lipo", "LIPS_entropy", "LIPS_L*E", "LIPS_surface"]]
+                #LIPS_pred_df.to_csv(LIPS_pred_csv)
 
                 combined_incl_THOIPA_df["LIPS_L*E"] = -1 * combined_incl_THOIPA_df["LIPS_L*E"]
 
@@ -139,14 +126,14 @@ def pred_interf_single_prot_using_sel_train_datasets(s):
                     combined_incl_THOIPA_df["interface_score"] = -1 * combined_incl_THOIPA_df["interface_score"]
 
                 THOIPA_BO_single_prot_df = thoipapy.figs.fig_utils.calc_best_overlap(acc, combined_incl_THOIPA_df)
-                LIPS_BO_single_prot_df = thoipapy.figs.fig_utils.calc_best_overlap(acc, combined_incl_THOIPA_df, experiment_col="interface_score", pred_col="LIPS_L*E")
+                #LIPS_BO_single_prot_df = thoipapy.figs.fig_utils.calc_best_overlap(acc, combined_incl_THOIPA_df, experiment_col="interface_score", pred_col="LIPS_L*E")
 
                 if THOIPA_BO_data_df.empty:
                     THOIPA_BO_data_df = THOIPA_BO_single_prot_df
-                    LIPS_BO_data_df = LIPS_BO_single_prot_df
+                    #LIPS_BO_data_df = LIPS_BO_single_prot_df
                 else:
                     THOIPA_BO_data_df = pd.concat([THOIPA_BO_data_df, THOIPA_BO_single_prot_df], axis=1, join="outer")
-                    LIPS_BO_data_df = pd.concat([LIPS_BO_data_df, LIPS_BO_single_prot_df], axis=1, join="outer")
+                    #LIPS_BO_data_df = pd.concat([LIPS_BO_data_df, LIPS_BO_single_prot_df], axis=1, join="outer")
 
                 #######################################################################################################
                 #                                                                                                     #
@@ -172,11 +159,11 @@ def pred_interf_single_prot_using_sel_train_datasets(s):
             #######################################################################################################
 
             THOIPA_BO_data_df.to_csv(THOIPA_BO_curve_data_csv)
-            LIPS_BO_data_df.to_csv(LIPS_BO_curve_data_csv)
+            #LIPS_BO_data_df.to_csv(LIPS_BO_curve_data_csv)
             names_excel_path = os.path.join(os.path.dirname(s["set_path"]), "ETRA_NMR_names.xlsx")
 
             THOIPA_linechart_mean_obs_and_rand = analyse_bo_curve_underlying_data(THOIPA_BO_curve_data_csv, names_excel_path)
-            LIPS_linechart_mean_obs_and_rand = analyse_bo_curve_underlying_data(LIPS_BO_curve_data_csv, names_excel_path)
+            #LIPS_linechart_mean_obs_and_rand = analyse_bo_curve_underlying_data(LIPS_BO_curve_data_csv, names_excel_path)
 
             sys.stdout.write("\nBO curve data analysed ({})".format(THOIPA_linechart_mean_obs_and_rand))
 
@@ -199,15 +186,138 @@ def pred_interf_single_prot_using_sel_train_datasets(s):
             with open(THOIPA_ROC_pkl, "wb") as f:
                 pickle.dump(ROC_out_dict, f, protocol=pickle.HIGHEST_PROTOCOL)
 
-            sys.stdout.write("\nBO curve and ROC data collected. Mean AUC = {}. BO output={}".format(mean_auc, THOIPA_BO_curve_data_csv))
+            sys.stdout.write("\nBO curve and ROC data collected. Mean AUC = {:.03f}. BO output={}".format(mean_auc, THOIPA_BO_curve_data_csv))
 
             create_ROC_fig_for_testset_trainset_combination(THOIPA_ROC_pkl)
 
             sys.stdout.write("\nTest{}_Train{} finished\n".format(testsetname, trainsetname))
             sys.stdout.flush()
 
-    sys.stdout.write("\npred_interf_single_prot_using_sel_train_datasets finished (all train and test datasets)".format(THOIPA_BO_curve_data_csv))
+    validate_LIPS_for_testset(s)
+
+    sys.stdout.write("\npred_interf_single_prot_using_sel_train_datasets finished (all train and test datasets)")
     sys.stdout.flush()
+
+
+
+def validate_LIPS_for_testset(s):
+    if not os.path.exists(s["Bo_Curve_path"]):
+        os.makedirs(s["Bo_Curve_path"])
+
+    # create list of test and train datasets
+    # if only one is given, make a list with only one dataset
+
+    test_set_list, train_set_list = thoipapy.figs.fig_utils.get_test_and_train_set_lists(s)
+
+    for test_set in test_set_list:
+        testsetname = "set{:02d}".format(int(test_set))
+        LIPS_BO_curve_data_csv = os.path.join(s["Bo_Curve_path"], "Test{}.LIPS.best_overlap_data.csv".format(testsetname))
+        LIPS_ROC_pkl = os.path.join(s["Bo_Curve_path"], "Test{}.LIPS.ROC_data.pkl".format(testsetname))
+
+        testset_path = thoipapy.common.get_path_of_protein_set(testsetname, s["set_path"])
+        #train_features_del = ["residue_num", "residue_name", "acc_db", "n_homologues", "interface_score", "bind"]
+        #test_features_del = ["residue_num", "residue_name", "n_homologues", "bind", "Disruption"]
+
+        testdataset_df = pd.read_excel(testset_path, sheetname="proteins")
+        acc_list = testdataset_df.acc.tolist()
+        database = testdataset_df.database[0]
+        LIPS_BO_data_df = pd.DataFrame()
+
+        # save all outputs to a cross-validation dictionary, to be saved as a pickle file
+        xv_dict_LIPS = {}
+        mean_tpr = 0.0
+        mean_fpr = np.linspace(0, 1, 100)
+
+        for acc in acc_list:
+            testdata_combined_file = os.path.join(s["thoipapy_feature_folder"], "combined", database,
+                                                  "{}.surr20.gaps5.combined_features.csv".format(acc))
+
+            combined_df = pd.read_csv(testdata_combined_file, index_col=0)
+
+            #######################################################################################################
+            #                                                                                                     #
+            #                           Processing BO curve data for each single protein                          #
+            #                                                                                                     #
+            #######################################################################################################
+            # SAVE LIPS PREDICTION DATA
+            # this is somewhat inefficient, as it is conducted for every test dataset
+            LIPS_pred_csv = os.path.join(os.path.dirname(s["thoipapy_feature_folder"]), "Predictions", "testset_trainset", database,
+                                                  "{}.LIPS_pred.csv".format(acc, testsetname))
+            LIPS_pred_df = combined_df[["residue_name", "residue_num", "LIPS_lipo", "LIPS_entropy", "LIPS_L*E", "LIPS_surface"]]
+            LIPS_pred_df.to_csv(LIPS_pred_csv)
+
+            combined_df["LIPS_L*E"] = -1 * combined_df["LIPS_L*E"]
+
+            if database == "crystal" or database == "NMR":
+                # (it is closest distance and low value means high propencity of interfacial)
+                combined_df["interface_score"] = -1 * combined_df["interface_score"]
+
+            LIPS_BO_single_prot_df = thoipapy.figs.fig_utils.calc_best_overlap(acc, combined_df, experiment_col="interface_score", pred_col="LIPS_L*E")
+
+            if LIPS_BO_single_prot_df.empty:
+                LIPS_BO_data_df = LIPS_BO_single_prot_df
+            else:
+                LIPS_BO_data_df = pd.concat([LIPS_BO_data_df, LIPS_BO_single_prot_df], axis=1, join="outer")
+
+            #######################################################################################################
+            #                                                                                                     #
+            #                     Processing ROC data for each single protein, saving to nested dict              #
+            #                                                                                                     #
+            #######################################################################################################
+
+            df_for_roc = combined_df.dropna(subset=["interface_score"])
+
+            predictor_name = "LIPS_L*E"
+
+            fpr, tpr, thresholds = roc_curve(df_for_roc.interface, df_for_roc[predictor_name])
+            auc_value = auc(fpr, tpr)
+            mean_tpr += interp(mean_fpr, fpr, tpr)
+            mean_tpr[0] = 0.0
+
+            xv_dict_LIPS[acc] = {"fpr" : fpr, "tpr" : tpr, "auc" : auc_value}
+
+        #######################################################################################################
+        #                                                                                                     #
+        #      Processing BO CURVE data, saving to csv and running the BO curve analysis script               #
+        #                                                                                                     #
+        #######################################################################################################
+
+        LIPS_BO_data_df.to_csv(LIPS_BO_curve_data_csv)
+        names_excel_path = os.path.join(os.path.dirname(s["set_path"]), "ETRA_NMR_names.xlsx")
+
+        LIPS_linechart_mean_obs_and_rand = analyse_bo_curve_underlying_data(LIPS_BO_curve_data_csv, names_excel_path)
+
+        sys.stdout.write("\nBO curve data analysed ({})".format(LIPS_linechart_mean_obs_and_rand))
+
+        #######################################################################################################
+        #                                                                                                     #
+        #                     Processing dictionary with ROC data, saving to pickle                           #
+        #                                                                                                     #
+        #######################################################################################################
+        mean_tpr /= len(acc_list)
+        mean_tpr[-1] = 1.0
+
+        mean_auc = auc(mean_fpr, mean_tpr)
+
+        ROC_out_dict = {"xv_dict_THOIPA" : xv_dict_LIPS}
+        ROC_out_dict["true_positive_rate_mean"] = mean_tpr
+        ROC_out_dict["false_positive_rate_mean"] = mean_fpr
+        ROC_out_dict["mean_auc"] = mean_auc
+
+        # save dict as pickle
+        with open(LIPS_ROC_pkl, "wb") as f:
+            pickle.dump(ROC_out_dict, f, protocol=pickle.HIGHEST_PROTOCOL)
+
+        sys.stdout.write("\nBO curve and ROC data collected. Mean AUC = {:.03f}. BO output={}".format(mean_auc, LIPS_BO_curve_data_csv))
+
+        create_ROC_fig_for_testset_trainset_combination(LIPS_ROC_pkl)
+
+        sys.stdout.write("\nTest{} LIPS validation finished\n".format(testsetname))
+        sys.stdout.flush()
+
+    sys.stdout.write("\npred_interf_single_prot_using_sel_train_datasets finished (all train and test datasets)")
+    sys.stdout.flush()
+
 
 
 def create_ROC_fig_for_testset_trainset_combination(THOIPA_ROC_pkl):

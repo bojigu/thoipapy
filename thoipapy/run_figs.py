@@ -1,11 +1,11 @@
 import matplotlib.pyplot as plt
-import pandas as pd
 import thoipapy
 import sys
 import eccpy
 import argparse
 import warnings
 warnings.simplefilter(action='ignore', category=FutureWarning)
+import pandas as pd
 
 # read the command line arguments
 parser = argparse.ArgumentParser()

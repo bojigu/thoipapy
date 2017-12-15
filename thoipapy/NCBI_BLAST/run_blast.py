@@ -3,7 +3,6 @@ from Bio.Blast import NCBIWWW
 def extract_NCBI_homolgous_as_xml(acc,set_,logging,pathdict):
     filename = "OLD script"
     protein=filename[-12:-6]
-    print(protein)
     #for uniprot_acc in dfset['Protein']:
     #if(uniprot_acc == protein):
     #print(uniprot_acc)

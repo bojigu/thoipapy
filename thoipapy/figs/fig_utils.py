@@ -201,14 +201,26 @@ def create_one_out_train_data(acc,set_path,s):
 
 def get_test_and_train_set_lists(s):
 
-    if isinstance(s["test_datasets"], int):
-        test_set_list = [s["test_datasets"]]
-    else:
+    if s["test_datasets"] == True:
+        test_set_list = ["1"]
+    elif s["test_datasets"] == False:
+        test_set_list = ["0"]
+    elif isinstance(s["test_datasets"], int):
+        test_set_list = [str(s["test_datasets"])]
+    elif isinstance(s["test_datasets"], str):
         test_set_list = s["test_datasets"].split(",")
-
-    if isinstance(s["train_datasets"], int):
-        train_set_list = [s["train_datasets"]]
     else:
+        raise ValueError("test_datasets type is not correct {} ({})".format(s["test_datasets"], type(s["test_datasets"])))
+
+    if s["train_datasets"] == True:
+        train_set_list = ["1"]
+    elif s["train_datasets"] == False:
+        train_set_list = ["0"]
+    elif isinstance(s["train_datasets"], int):
+        train_set_list = [str(s["train_datasets"])]
+    elif isinstance(s["train_datasets"], str):
         train_set_list = s["train_datasets"].split(",")
+    else:
+        raise ValueError("train_datasets type is not correct {} ({})".format(s["train_datasets"], type(s["train_datasets"])))
 
     return test_set_list, train_set_list

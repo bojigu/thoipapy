@@ -668,18 +668,6 @@ def run_command(command):
         stderr=subprocess.STDOUT)
     return iter(p.stdout.readline, b'')
 
-def sleep_x_seconds(x, print_stuff=True):
-    # sleep for several seconds to not overload a server, for example
-    if print_stuff == True:
-        sys.stdout.write("sleeping ")
-    for i in range(x):
-        time.sleep(1)
-        if print_stuff == True:
-            sys.stdout.write(" .")
-            sys.stdout.flush()
-    if print_stuff == True:
-        sys.stdout.write(' .')
-
 def sleep_x_hours(x):
     """Sleeps for a certain number of hours. Prints a dot each hour.
 

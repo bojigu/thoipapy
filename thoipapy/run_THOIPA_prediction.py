@@ -159,7 +159,7 @@ parser.add_argument("-f",  # "-folder",
 
 if __name__ == "__main__":
     sys.stdout.write("\nUsage example:\n")
-    sys.stdout.write(r"python run_THOIPA_prediction.py -s D:\Dropbox\tm_homodimer_dropbox\thoipapy_run_settings_MT_win10_work.xlsx -i D:\Dropbox\tm_homodimer_dropbox\THOIPA_prediction_inputs\Q12983.txt -f D:\data_thoipapy\Predictions")
+    sys.stdout.write(r"python run_THOIPA_prediction.py -s D:\Dropbox\tm_homodimer_dropbox\thoipapy_run_settings_MT_win10_work.xlsx -i D:\Dropbox\tm_homodimer_dropbox\THOIPA_prediction_inputs\Q12983.txt -f D:\data_thoipapy\Predictions\server-like")
     sys.stdout.write("\n\n")
     sys.stdout.flush()
     # get the command-line arguments

@@ -39,6 +39,7 @@ def fig_plot_BO_curve_mult_train_datasets(s):
     train_dataset_str = "-".join([str(n) for n in train_set_list])
 
     mult_testname = "testsets({})_trainsets({})".format(test_dataset_str, train_dataset_str)
+    print(mult_testname)
     mult_THOIPA_dir = os.path.join(s["Bo_Curve_path"], "mult_THOIPA", mult_testname)
     thoipapy.utils.make_sure_path_exists(mult_THOIPA_dir)
 
@@ -172,6 +173,18 @@ def fig_plot_BO_curve_mult_predictors(s):
     fig.tight_layout()
     fig.savefig(AUBOC10_bar_png, dpi=240)
     fig.savefig(AUBOC10_bar_png[:-4] + ".pdf")
+
+
+    plt.close("all")
+    for predictor_name in predictor_list:
+        ROC_pkl = os.path.join(s["Bo_Curve_path"], "{}.ROC_data.pkl".format(predictor_name))
+        if os.path.isfile(ROC_pkl):
+            print("ROC PICKLE FOUND")
+        else:
+            print("PICLE NOT FOUND")
+            print(ROC_pkl)
+
+
 
     sys.stdout.write("\nfig_plot_BO_curve_mult_predictors finished ({})".format(BO_curve_png))
 
