@@ -1289,7 +1289,6 @@ def add_experimental_data_to_combined_features_mult_prot(set_, df_set, logging):
 def add_experimental_data_to_combined_features(acc, database, TMD_seq, feature_combined_file, experimental_data_file, logging):
     df_combined = pd.read_csv(feature_combined_file, index_col=0)
 
-
     if not os.path.isfile(experimental_data_file):
         # try searching for the data files with uppercase accession
         experimental_data_file = experimental_data_file.replace(acc, acc.upper())
@@ -1303,6 +1302,11 @@ def add_experimental_data_to_combined_features(acc, database, TMD_seq, feature_c
         else:
             df_experiment_data = pd.read_csv(experimental_data_file)
             df_experiment_data = df_experiment_data.rename(columns={"bind": "interface", "closedist": "interface_score"})
+            closedist_notes = False
+            if closedist_notes:
+                min_closedist = df_experiment_data.interface_score.min()
+                if min_closedist < 3:
+                    sys.stdout.write("\n{} {} min_closedist {:0.2f}".format(acc, database, min_closedist))
 
         # join the two dataframes together
         # if either the residue_num or residue_name don't match, the rows will be dropped

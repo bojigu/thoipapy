@@ -23,7 +23,6 @@ import thoipapy
 from thoipapy import common
 import csv
 import platform
-import glob
 import pandas as pd
 import re
 
@@ -38,7 +37,7 @@ def create_column_with_TMD_plus_surround_seq(df_set, num_of_sur_residues):
     df_set.loc[df_set["TMD_start_pl_surr"] < 1, "TMD_start_pl_surr"] = 1
     df_set["TMD_end_pl_surr"] = df_set.TMD_end + num_of_sur_residues
     for i in df_set.index:
-        acc = df_set.loc[i, "acc"]
+        #acc = df_set.loc[i, "acc"]
         if df_set.loc[i, "TMD_end_pl_surr"] > df_set.loc[i, "seqlen"]:
             df_set.loc[i, "TMD_end_pl_surr"] = df_set.loc[i, "seqlen"]
     TMD_seq_pl_surr_series = df_set.apply(slice_TMD_seq_pl_surr, axis=1)
@@ -327,6 +326,9 @@ if __name__ == "__main__":
         thoipapy.RF_features.feature_calculate.parse_LIPS_score_mult_prot(set_, df_set, logging)
 
     #thoipapy.RF_features.feature_calculate.convert_bind_data_to_csv(set_, logging)
+
+    if set_["add_experimental_data_to_combined_features"] and not set_["combine_feature_into_train_data"]:
+        raise ValueError("add_experimental_data_to_combined_features only runs if combine_feature_into_train_data is true in settings file.")
 
     if set_["combine_feature_into_train_data"]:
         # if database_for_full_set == "crystal" or database_for_full_set == "NMR":

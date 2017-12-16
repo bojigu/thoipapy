@@ -14,7 +14,23 @@ fontsize = 12
 data_dir = 'TMD16/'   #set the data_dir where you save all the data
 file_dir_extension = os.path.join(data_dir, '*.xlsx')
 
-def Save_Sine_Curve_Result(set_,output_file_loc,output_png_loc):
+
+def make_interpolater(left_min, left_max, right_min, right_max):
+    # Figure out how 'wide' each range is
+    leftSpan = left_max - left_min
+    rightSpan = right_max - right_min
+
+    # Compute the scale factor between left and right values
+    scaleFactor = float(rightSpan) / float(leftSpan)
+
+    # create interpolation function using pre-calculated scaleFactor
+    def interp_fn(value):
+        return right_min + (value - left_min) * scaleFactor
+
+    return interp_fn
+
+
+def Save_Sine_Curve_Result(set_, output_file_loc, output_png_loc):
     uniprot_acc=set_["tm_protein_name"]
     #Pred_disruption=os.path.join(set_["Sine_Curve_loc"],"TMD16/%s_prediction.xls") %uniprot_acc
     #Pred_disruption=r"/home/students/zeng/workspace/test2/out/58f795953dc45/output.csv"
@@ -37,22 +53,6 @@ def Save_Sine_Curve_Result(set_,output_file_loc,output_png_loc):
     #y_sin_disruption = prd_disruption['Disruption'].values
     #y_sin_pred = prd_disruption['Prediction'].values
     y_sin_pred = prd_disruption['Score'].values
-
-
-
-    def make_interpolater(left_min, left_max, right_min, right_max): 
-        # Figure out how 'wide' each range is  
-        leftSpan = left_max - left_min  
-        rightSpan = right_max - right_min  
-
-        # Compute the scale factor between left and right values 
-        scaleFactor = float(rightSpan) / float(leftSpan) 
-
-        # create interpolation function using pre-calculated scaleFactor
-        def interp_fn(value):
-            return right_min + (value-left_min)*scaleFactor
-
-        return interp_fn
 
     #scaler1 = make_interpolater(min(y_sin_disruption), max(y_sin_disruption), 0.2, 0.8)
     # now convert to scaled values using map 
