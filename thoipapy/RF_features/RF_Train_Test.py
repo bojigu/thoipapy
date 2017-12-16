@@ -254,7 +254,7 @@ def run_10fold_cross_validation(set_, logging):
         Pickled dictionary (xv_dict) containing the results for each fold of validation.
         Also contains the mean ROC curve, and the mean AUC.
     """
-    logging.info('10-fold cross validatation is running\n')
+    logging.info('10-fold cross validation is running\n')
     train_data_csv = os.path.join(set_["set_results_folder"], "{}_train_data.csv".format(set_["setname"]))
     crossvalidation_csv = os.path.join(set_["set_results_folder"], "crossvalidation", "trainset{}_testset{}_crossvalidation.csv".format(set_["setname"][-2:], set_["setname"][-2:]))
     crossvalidation_pkl = os.path.join(set_["set_results_folder"], "crossvalidation", "trainset{}_testset{}_crossvalidation.pkl".format(set_["setname"][-2:], set_["setname"][-2:]))
@@ -307,7 +307,7 @@ def run_10fold_cross_validation(set_, logging):
         #plt.plot(fpr, tpr, lw=1, label='ROC fold %d (area = %0.2f)' % (i, roc_auc))
 
     duration = time.clock() - start
-    logging.info("time taken for cross validation = {} (seconds in Windows)".format(duration))
+    logging.info("time taken for cross validation = {:.2f} (s in Windows, min in Linux?)".format(duration))
 
     #plt.plot([0, 1], [0, 1], '--', color=(0.6, 0.6, 0.6), label='random')
     mean_tpr /= len(cv)
@@ -325,7 +325,7 @@ def run_10fold_cross_validation(set_, logging):
     
     # df_xv.loc["mean_auc"] = mean_auc
     # df_xv.to_csv(crossvalidation_csv)
-    logging.info('10-fold cross validatation is finished. Mean AUC = {:.3f}\n'.format(mean_auc))
+    logging.info('10-fold cross validation is finished. Mean AUC = {:.3f}\n'.format(mean_auc))
 
 def fig_10fold_cross_validation(set_, logging):
     """Create figure showing ROC curve for each fold in a 10-fold validation.

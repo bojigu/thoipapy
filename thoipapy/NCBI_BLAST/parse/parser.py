@@ -8,6 +8,7 @@ import thoipapy
 import numpy as np
 import sys
 import tarfile
+from korbinian.utils import create_regex_string
 
 def parse_NCBI_xml_to_csv_mult_prot(set_, df_set, logging):
     """
@@ -240,6 +241,7 @@ def extract_filtered_csv_homologues_to_alignments_mult_prot(set_, df_set, loggin
     for i in df_set.index:
         acc = df_set.loc[i, "acc"]
         database = df_set.loc[i, "database"]
+        acc_db = acc + "-" + database
         query_TMD_seq = df_set.loc[i, "TMD_seq"]
         query_full_seq = df_set.loc[i, "full_seq"]
         TMD_len = df_set.loc[i, "TMD_len"]
@@ -261,7 +263,7 @@ def extract_filtered_csv_homologues_to_alignments_mult_prot(set_, df_set, loggin
         single_prot_dict = extract_filtered_csv_homologues_to_alignments(set_, acc, TMD_len, fasta_all_TMD_seqs, path_uniq_TMD_seqs_for_PSSM_FREECONTACT,
                                                                          path_uniq_TMD_seqs_no_gaps_for_LIPS, path_uniq_TMD_seqs_surr5_for_LIPO, BLAST_csv_tar,
                                                                          query_TMD_seq, query_TMD_seq_surr5, logging)
-        out_dict[acc] = single_prot_dict
+        out_dict[acc_db] = single_prot_dict
 
     df_align_results = pd.DataFrame(out_dict).T
     df_align_results.index.name = "acc"
@@ -293,7 +295,7 @@ def extract_filtered_csv_homologues_to_alignments(set_, acc, TMD_len, fasta_all_
 
                 # create regex search string, e.g. V-*L-*L-*G-*A-*V-*G-*G-*A-*G-*A-*T-*A-*L-*V-*F-*L-*S-*F-*C
                 # (finds sequence regardless of gaps)
-                TMD_regex_ss = thoipapy.utils.create_regex_string(query_TMD_seq)
+                TMD_regex_ss = create_regex_string(query_TMD_seq)
 
                 # obtain the bool, start, end of TMD seqs in the match sequences. Add to the new TMD-specific dataframe.
                 start_end_list_in_alignment_ser = df.query_align_seq.apply(get_start_and_end_of_TMD_in_query, args=(TMD_regex_ss,)).dropna()

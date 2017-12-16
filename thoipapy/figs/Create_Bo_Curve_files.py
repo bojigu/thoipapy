@@ -31,7 +31,9 @@ def Test_Etra(s):
         acc_list = testdataset_df.acc.tolist()
         database = testdataset_df.database[0]
         dfc = pd.DataFrame()
-        for acc in acc_list:
+        for i in testdataset_df.index:
+            acc = testdataset_df.loc[i, "acc"]
+            database = testdataset_df.loc[i, "database"]
             testdata_combined_file = os.path.join(s["thoipapy_feature_folder"], "combined", database, "{}.surr20.gaps5.combined_features.csv".format(acc))
             test_df = pd.read_csv(testdata_combined_file, sep=',', engine='python', index_col=0)
 
@@ -100,7 +102,7 @@ def validate_THOIPA_for_testset_trainset_combination(s, test_set_list, train_set
 
             testset_path = thoipapy.common.get_path_of_protein_set(testsetname, s["set_path"])
 
-            testdataset_df = pd.read_excel(testset_path, sheetname="proteins", index_col=0)
+            testdataset_df = pd.read_excel(testset_path, sheetname="proteins")
             THOIPA_BO_data_df = pd.DataFrame()
             #LIPS_BO_data_df = pd.DataFrame()
 
@@ -109,8 +111,9 @@ def validate_THOIPA_for_testset_trainset_combination(s, test_set_list, train_set
             mean_tpr = 0.0
             mean_fpr = np.linspace(0, 1, 100)
 
-            for acc in testdataset_df.index:
-                database = testdataset_df.loc[acc, "database"]
+            for i in testdataset_df.index:
+                acc = testdataset_df.loc[i, "acc"]
+                database = testdataset_df.loc[i, "database"]
                 acc_db = acc + "-" + database
                 testdata_combined_file = os.path.join(s["thoipapy_feature_folder"], "combined", database,
                                                       "{}.surr20.gaps5.combined_features.csv".format(acc))
@@ -156,7 +159,7 @@ def validate_THOIPA_for_testset_trainset_combination(s, test_set_list, train_set
                 mean_tpr += interp(mean_fpr, fpr, tpr)
                 mean_tpr[0] = 0.0
 
-                xv_dict_THOIPA[acc] = {"fpr" : fpr, "tpr" : tpr, "auc" : auc_value}
+                xv_dict_THOIPA[acc_db] = {"fpr" : fpr, "tpr" : tpr, "auc" : auc_value}
 
             #######################################################################################################
             #                                                                                                     #
@@ -217,7 +220,7 @@ def validate_LIPS_for_testset(s, LIPS_name = "LIPS_LE", pred_col="LIPS_L*E"):
 
         testset_path = thoipapy.common.get_path_of_protein_set(testsetname, s["set_path"])
 
-        testdataset_df = pd.read_excel(testset_path, sheetname="proteins", index_col=0)
+        testdataset_df = pd.read_excel(testset_path, sheetname="proteins")
         LIPS_BO_data_df = pd.DataFrame()
 
         # save all outputs to a cross-validation dictionary, to be saved as a pickle file
@@ -225,8 +228,9 @@ def validate_LIPS_for_testset(s, LIPS_name = "LIPS_LE", pred_col="LIPS_L*E"):
         mean_tpr = 0.0
         mean_fpr = np.linspace(0, 1, 100)
 
-        for acc in testdataset_df.index:
-            database = testdataset_df.loc[acc, "database"]
+        for i in testdataset_df.index:
+            acc = testdataset_df.loc[i, "acc"]
+            database = testdataset_df.loc[i, "database"]
             acc_db = acc + "-" + database
 
             testdata_combined_file = os.path.join(s["thoipapy_feature_folder"], "combined", database,
@@ -273,7 +277,7 @@ def validate_LIPS_for_testset(s, LIPS_name = "LIPS_LE", pred_col="LIPS_L*E"):
             mean_tpr += interp(mean_fpr, fpr, tpr)
             mean_tpr[0] = 0.0
 
-            xv_dict_LIPS[acc] = {"fpr" : fpr, "tpr" : tpr, "auc" : auc_value}
+            xv_dict_LIPS[acc_db] = {"fpr" : fpr, "tpr" : tpr, "auc" : auc_value}
 
         #######################################################################################################
         #                                                                                                     #
@@ -336,9 +340,9 @@ def create_ROC_fig_for_testset_trainset_combination(THOIPA_ROC_pkl):
 
     fig, ax = plt.subplots(figsize=(3.42, 3.42))
 
-    for acc in xv_dict_THOIPA:
-        roc_auc = xv_dict_THOIPA[acc]["auc"]
-        ax.plot(xv_dict_THOIPA[acc]["fpr"], xv_dict_THOIPA[acc]["tpr"], lw=1, label='{} ({:0.2f})'.format(acc, roc_auc), alpha=0.8)
+    for acc_db in xv_dict_THOIPA:
+        roc_auc = xv_dict_THOIPA[acc_db]["auc"]
+        ax.plot(xv_dict_THOIPA[acc_db]["fpr"], xv_dict_THOIPA[acc_db]["tpr"], lw=1, label='{} ({:0.2f})'.format(acc_db, roc_auc), alpha=0.8)
 
     #mean_auc = auc(df_xv["false_positive_rate"], df_xv["true_positive_rate"])
     mean_auc = ROC_out_dict["mean_auc"]

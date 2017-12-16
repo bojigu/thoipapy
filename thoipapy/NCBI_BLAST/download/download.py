@@ -1,12 +1,11 @@
 from Bio.Blast import NCBIWWW
-from thoipapy import mtutiles as utils
+from korbinian.utils import get_free_space, HardDriveSpaceException
 import os
 import tarfile
 import platform
 import time
 from time import strftime
-from thoipapy.utils import delete_BLAST_xml
-
+from thoipapy.utils import delete_BLAST_xml, make_sure_path_exists
 
 def download_homologues_from_ncbi_mult_prot(set_, df_set, logging):
     """Runs download_homologues_from_ncbi for a set of proteins
@@ -33,18 +32,19 @@ def download_homologues_from_ncbi_mult_prot(set_, df_set, logging):
         try:
             byteformat = "GB"
             thoipapy_data_folder = set_["thoipapy_data_folder"]
-            size = utils.get_free_space(thoipapy_data_folder, byteformat)
+
+            size = get_free_space(thoipapy_data_folder, byteformat)
             # logging.info('Hard disk remaining space = {}'.format(size))
 
             if size[0] < 5:
-                raise utils.HardDriveSpaceException(
+                raise HardDriveSpaceException(
                     "Hard drive space limit reached, there is only %s %s space left." % (size[0], size[1]))
 
         # log the exception, so you actually can see what goes on in the logfile
-        except utils.HardDriveSpaceException as e:
+        except HardDriveSpaceException as e:
             logging.critical(e)
             # now stop all processes and raise an error
-            raise utils.HardDriveSpaceException("process stopped")
+            raise HardDriveSpaceException("process stopped")
     else:
         logging.warning("Your system does not seem to be Linux or Windows. Harddrive space check not conducted.")
 
@@ -109,6 +109,7 @@ def download_homologues_from_ncbi(acc, TMD_seq_pl_surr, blast_xml_file, xml_txt,
     """
     logging.info('{} starting download_homologues_from_ncbi'.format(acc))
     query_fasta_string = ">{} TMD add surround 20 residues\n{}".format(acc, TMD_seq_pl_surr)
+    make_sure_path_exists(blast_xml_file, isfile=True)
 
     try:
         # NOTE : time.clock gives a different unit in Linux!

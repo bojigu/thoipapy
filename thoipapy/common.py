@@ -1,7 +1,7 @@
 from time import strftime
 import json
 import thoipapy
-from thoipapy import mtutiles as utils
+from korbinian.utils import convert_truelike_to_bool, convert_falselike_to_bool
 import logging
 import os
 import pandas as pd
@@ -221,8 +221,8 @@ def create_settingdict(excel_file_with_settings):
         dfset = dfset[["parameter", "value"]].dropna()
         dfset.set_index("parameter", inplace=True)
         # convert true-like strings to True, and false-like strings to False
-        dfset.value = dfset.value.apply(utils.convert_truelike_to_bool, convert_nontrue=False)
-        dfset.value = dfset.value.apply(utils.convert_falselike_to_bool)
+        dfset.value = dfset.value.apply(convert_truelike_to_bool, convert_nontrue=False)
+        dfset.value = dfset.value.apply(convert_falselike_to_bool)
         # convert to dictionary
         sheet_as_dict = dfset.to_dict()["value"]
         # join dictionaries together

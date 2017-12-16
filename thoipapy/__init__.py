@@ -2,7 +2,6 @@ import thoipapy.Atom_Dist
 import thoipapy.RF_features
 import thoipapy.NCBI_BLAST
 import thoipapy.proteins
-import thoipapy.mtutiles
 import thoipapy.common
 import thoipapy.setting
 import thoipapy.hhblits
