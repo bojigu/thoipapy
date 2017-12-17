@@ -150,6 +150,9 @@ def fig_plot_BO_curve_mult_predictors(s):
     for predictor_name in predictor_list:
         bo_curve_underlying_data_indiv_xlsx = os.path.join(s["thoipapy_folder"], "Results", "compare_testset_trainset", "data", "{}".format(predictor_name), "bo_curve_underlying_data_indiv_df.xlsx")
 
+        if not os.path.isfile(bo_curve_underlying_data_indiv_xlsx):
+            raise FileNotFoundError("bo_curve_underlying_data_indiv_xlsx does not exist ({}). Try running pred_interf_single_prot_using_sel_train_datasets in run_figs.py".format(bo_curve_underlying_data_indiv_xlsx))
+
         df = pd.read_excel(bo_curve_underlying_data_indiv_xlsx, sheetname="df_o_minus_r", index_col=0)
 
         df["mean_"] = df.mean(axis=1)

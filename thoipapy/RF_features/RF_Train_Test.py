@@ -46,14 +46,59 @@ def drop_cols_not_used_in_ML(df_data):
     """
 
     # columns in combined file that are not used in machine-learning training or testing
-    cols_to_drop = ["acc_db", "residue_num", "residue_name", "interface", "interface_score", "n_homologues", "Entropy", "LIPS_entropy", "LIPS_L*E", "LIPS_surface_ranked",
-                    "CoevDImax", "CoevDI4", "CoevDI8",  "CoevMImax", "CoevMI4", "CoevMI8", "CumDI4", "CumDI8","CoevDI4_norm", "CoevMI4_norm",
-                    "CumDI4_norm", "CumDI8_norm", "CumMI4_norm", "CumMI8_norm"]#, "RelPos_TMD", "RelPos_fullseq"
+    # cols_to_drop = ["acc_db", "residue_num", "residue_name", "interface", "interface_score", "Entropy", "n_homologues", "LIPS_entropy", "LIPS_L*E", "LIPS_surface_ranked",
+    #                 "CoevDImax", "CoevDI4", "CoevDI8",  "CoevMImax", "CoevMI4", "CoevMI8", "CumDI4", "CumDI8","CoevDI4_norm", "CoevMI4_norm",
+    #                 "CumDI4_norm", "CumDI8_norm", "CumMI4_norm", "CumMI8_norm"]#, "RelPos_TMD", "RelPos_fullseq"
+    #                 #"CoevDImax_norm", "CoevDI8_norm", "CoevMImax_norm", "CoevMI8_norm", ]#
+
+
+    cols_to_drop = ["acc_db", "residue_num", "residue_name", "interface", "interface_score", "Entropy",
+                    #"CumDI4", "CumDI8", "CumMI4", "CumMI8", "CumDI4_norm", "CumDI8_norm", "CumMI4_norm", "CumMI8_norm",
+                    #"Aromatic_sAA", "Polar_sAA", "Cbbranched_sAA", "Small_sAA",
+                    #"H", "E", "K", "D", "N",
+                    #"C", "S", "D", "E", "K", "R", "Q", "N",
+                    "CS", "DE", "KR", "QN",
+                    "RelPos_TMD", "RelPos_fullseq",
+                    "CoevDImax", "CoevDI4", "CoevDI8",  "CoevMImax", "CoevMI4", "CoevMI8", "CoevDI4_norm", "CoevMI4_norm",
+                    "CoevDImax_norm", 'CoevMImax_norm',
+                    #"LIPS_entropy", "LIPS_L*E", "LIPS_lipo",
+                    "LIPS_surface",
+                    "LIPS_surface_ranked",
+                    #"n_homologues",
+                    "n_homol_norm"
+                    ]
+                    #"n_homologues", , "LIPS_surface_ranked",
+                    #"
+                    #"CumDI4_norm", "CumDI8_norm", "CumMI4_norm", "CumMI8_norm"]#, "RelPos_TMD", "RelPos_fullseq"
                     #"CoevDImax_norm", "CoevDI8_norm", "CoevMImax_norm", "CoevMI8_norm", ]#
+
     # got only those that are actually in the columns
     cols_to_drop = set(cols_to_drop).intersection(set(df_data.columns))
     df_data = df_data.drop(cols_to_drop, axis=1)
     return df_data
+
+def THOIPA_RF_classifier_with_settings(set_):
+    """ For tuning the RF parameters, they are always in one place, and determined by the settings file.
+
+    Parameters
+    ----------
+    set_
+
+    Returns
+    -------
+
+    """
+
+    # convert max_features to python None if "None"
+    max_features = None if set_["max_features"] == "None" else set_["max_features"]
+
+    forest = RandomForestClassifier(n_estimators=set_["RF_number_of_estimators"], n_jobs=set_["n_jobs"], criterion=set_["criterion"],
+                                    min_samples_leaf=set_["min_samples_leaf"],
+                                    #max_depth=set_["max_depth"],
+                                    oob_score=True, max_features=max_features, bootstrap=bool(set_["bootstrap"]),
+                                    #random_state=set_["random_state"]
+                                    )
+    return forest
 
 def train_random_forest_model(set_, logging):
     """Train the random forest model for a particular set.
@@ -74,19 +119,22 @@ def train_random_forest_model(set_, logging):
     logging.info('starting to predict etra data with THOIPA prediction model')
 
     train_data_csv = os.path.join(set_["set_results_folder"], "{}_train_data.csv".format(set_["setname"]))
+    train_data_used_for_model_csv = train_data_csv[:-4] + "used_for_model.csv"
     model_pkl = os.path.join(set_["set_results_folder"], "{}_rfmodel.pkl".format(set_["setname"]))
 
     df_data = pd.read_csv(train_data_csv, index_col=0)
 
-    df_data = df_data.loc[df_data.n_homologues >= 50]
+    df_data = df_data.loc[df_data.n_homologues >= set_["min_n_homol_training"]]
 
     y = df_data["interface"]
     X = drop_cols_not_used_in_ML(df_data)
 
+    X.to_csv(train_data_used_for_model_csv)
+
     if 1 not in y.tolist():
         raise ValueError("None of the residues are marked 1 for an interface residue!")
 
-    forest = RandomForestClassifier(n_estimators=set_["RF_number_of_estimators"])
+    forest = THOIPA_RF_classifier_with_settings(set_)
     # save random forest model into local driver
     # pkl_file = r'D:\thoipapy\RandomForest\rfmodel.pkl'
     fit = forest.fit(X, y)
@@ -263,7 +311,8 @@ def run_10fold_cross_validation(set_, logging):
 
     df_data = pd.read_csv(train_data_csv, index_col=0)
 
-    df_data = df_data.loc[df_data.n_homologues >= 50]
+    # drop training data (full protein) that don't have enough homologues
+    df_data = df_data.loc[df_data.n_homologues >= set_["min_n_homol_training"]]
 
     #data = pd.read_csv('/scratch2/zeng/homotypic_data/data/RandomForest/PsEnCo/TrainData2',delimiter="\s",engine='python')
     # del data["Residue_id"]
@@ -284,7 +333,18 @@ def run_10fold_cross_validation(set_, logging):
     skf = StratifiedKFold(n_splits=set_["cross_validation_number_of_splits"])
     cv = list(skf.split(X, y))
 
-    forest = RandomForestClassifier(n_estimators=set_["RF_number_of_estimators"], n_jobs=set_["n_jobs"])
+    # # convert max_features to python None if "None"
+    # max_features = None if set_["max_features"] == "None" else set_["max_features"]
+    #
+    # forest = RandomForestClassifier(n_estimators=set_["RF_number_of_estimators"], n_jobs=set_["n_jobs"], criterion=set_["criterion"],
+    #                                 min_samples_leaf=set_["min_samples_leaf"],
+    #                                 #max_depth=set_["max_depth"],
+    #                                 oob_score=True, max_features=max_features, bootstrap=bool(set_["bootstrap"]),
+    #                                 #random_state=set_["random_state"]
+    #                                 )
+
+    forest = THOIPA_RF_classifier_with_settings(set_)
+
     mean_tpr = 0.0
     mean_fpr = np.linspace(0, 1, 100)
     all_tpr = []
@@ -306,6 +366,8 @@ def run_10fold_cross_validation(set_, logging):
         roc_auc = auc(fpr, tpr)
         #plt.plot(fpr, tpr, lw=1, label='ROC fold %d (area = %0.2f)' % (i, roc_auc))
 
+    print([estimator.tree_.max_depth for estimator in forest.estimators_])
+
     duration = time.clock() - start
     logging.info("time taken for cross validation = {:.2f} (s in Windows, min in Linux?)".format(duration))
 
@@ -325,7 +387,7 @@ def run_10fold_cross_validation(set_, logging):
     
     # df_xv.loc["mean_auc"] = mean_auc
     # df_xv.to_csv(crossvalidation_csv)
-    logging.info('10-fold cross validation is finished. Mean AUC = {:.3f}\n'.format(mean_auc))
+    logging.info('10-fold cross validation is finished. Mean AUC = {:.3f}\nFeatures included:\n{}'.format(mean_auc, X.columns.tolist()))
 
 def fig_10fold_cross_validation(set_, logging):
     """Create figure showing ROC curve for each fold in a 10-fold validation.
@@ -369,8 +431,6 @@ def fig_10fold_cross_validation(set_, logging):
     fig.savefig(crossvalidation_png, dpi=240)
     fig.savefig(crossvalidation_png[:-4] + ".pdf")
 
-    #
-    #
     # df_xv = pd.read_csv(crossvalidation_csv)
     #
     # #mean_auc = auc(df_xv["false_positive_rate"], df_xv["true_positive_rate"])
@@ -417,7 +477,7 @@ def calculate_RF_variable_importance(set_, logging):
         List of variables, sorted by their importance to the algorithm.
         Also includes the standard deviation supplied by the random forest algorithm
     """
-    logging.info('RF_variable_importance_calculate is running\n')
+    #logging.info('RF_variable_importance_calculate is running\n')
     train_data_csv = os.path.join(set_["set_results_folder"], "{}_train_data.csv".format(set_["setname"]))
 
     variable_importance_csv = os.path.join(set_["set_results_folder"], "crossvalidation", "trainset{}_testset{}_variable_importance.csv".format(set_["setname"][-2:], set_["setname"][-2:]))
@@ -426,7 +486,7 @@ def calculate_RF_variable_importance(set_, logging):
     df_data = pd.read_csv(train_data_csv, index_col=0)
     X = drop_cols_not_used_in_ML(df_data)
     y = df_data["interface"]
-    forest = RandomForestClassifier(n_estimators=set_["RF_number_of_estimators"])
+    forest = THOIPA_RF_classifier_with_settings(set_)
     forest.fit(X, y)
     importances_arr = forest.feature_importances_
     std_arr = np.std([tree.feature_importances_ for tree in forest.estimators_], axis=0)

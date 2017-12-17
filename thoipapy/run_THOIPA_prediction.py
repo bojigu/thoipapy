@@ -140,7 +140,8 @@ def run_THOIPA_prediction(protein_name, TMD_seq, full_seq, predictions_folder):
 
     parse_LIPS_score(acc, LIPS_output_file, LIPS_parsed_csv, logging)
 
-    combine_all_features(acc, TMD_seq, feature_combined_file, entropy_file, pssm_csv, lipo_csv, freecontact_parsed_csv, relative_position_file, LIPS_parsed_csv, alignment_summary_csv, logging)
+    database = "standalone_prediction"
+    combine_all_features(acc, database, TMD_seq, feature_combined_file, entropy_file, pssm_csv, lipo_csv, freecontact_parsed_csv, relative_position_file, LIPS_parsed_csv, alignment_summary_csv, logging)
 
     add_physical_parameters_to_features(acc, feature_combined_file, logging)
 

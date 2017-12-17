@@ -1181,9 +1181,9 @@ def combine_all_features_mult_prot(set_, df_set, logging):
         alignments_dir = os.path.join(set_["homologues_folder"], "alignments", database)
         alignment_summary_csv = os.path.join(alignments_dir, "{}.surr{}.gaps{}.alignment_summary.csv".format(acc, set_["num_of_sur_residues"], set_["max_n_gaps_in_TMD_subject_seq"]))
 
-        combine_all_features(acc, TMD_seq, feature_combined_file, entropy_file, pssm_csv, lipo_csv, freecontact_parsed_csv, relative_position_file, LIPS_parsed_csv, alignment_summary_csv, logging)
+        combine_all_features(acc, database, TMD_seq, feature_combined_file, entropy_file, pssm_csv, lipo_csv, freecontact_parsed_csv, relative_position_file, LIPS_parsed_csv, alignment_summary_csv, logging)
 
-def combine_all_features(acc, TMD_seq, feature_combined_file, entropy_file, pssm_csv, lipo_csv, freecontact_parsed_csv, relative_position_file, LIPS_parsed_csv, alignment_summary_csv, logging):
+def combine_all_features(acc, database, TMD_seq, feature_combined_file, entropy_file, pssm_csv, lipo_csv, freecontact_parsed_csv, relative_position_file, LIPS_parsed_csv, alignment_summary_csv, logging):
     thoipapy.utils.make_sure_path_exists(feature_combined_file, isfile=True)
 
     for n, filepath in enumerate([entropy_file, pssm_csv, lipo_csv, freecontact_parsed_csv, relative_position_file, LIPS_parsed_csv]):
@@ -1236,6 +1236,12 @@ def combine_all_features(acc, TMD_seq, feature_combined_file, entropy_file, pssm
     n_homologues = single_prot_aln_result_ser["n_uniq_TMD_seqs_for_PSSM_FREECONTACT"]
     # add the number of homologues (same number for all residues)
     df_features_single_protein["n_homologues"] = n_homologues
+    # add if the protein is multipass or singlepass
+    # TEMPORARY! NEEDS TO BE REPLACED WITH A TOPOLOGY PREDICTOR LATER
+    if database == "crystal":
+        df_features_single_protein["n_TMDs"] = 2
+    else:
+        df_features_single_protein["n_TMDs"] = 1
 
     df_features_single_protein = normalise_features(df_features_single_protein)
 
@@ -1261,15 +1267,30 @@ def normalise_features(df_features_single_protein):
     for col in coev_cum_colname_list:
         df_features_single_protein["{}_norm".format(col)] = df_features_single_protein[col].apply(lambda x : 1 if x > 0 else 0)
 
+    df_features_single_protein["CS"] = df_features_single_protein["C"] + df_features_single_protein["S"]
+    df_features_single_protein["DE"] = df_features_single_protein["D"] + df_features_single_protein["E"]
+    df_features_single_protein["KR"] = df_features_single_protein["K"] + df_features_single_protein["R"]
+    df_features_single_protein["QN"] = df_features_single_protein["Q"] + df_features_single_protein["N"]
+
     return df_features_single_protein
 
 def normalise_number_of_homologues(x):
-    if x <= 100:
+    if x <= 75:
         return 1
-    elif x <= 1000:
+    elif x <= 100:
         return 2
-    else:
+    elif x <= 200:
         return 3
+    elif x <= 400:
+        return 4
+    elif x <= 800:
+        return 5
+    elif x <= 1600:
+        return 6
+    elif x <= 3200:
+        return 7
+    else:
+        return 8
 
 def add_experimental_data_to_combined_features_mult_prot(set_, df_set, logging):
     for i in df_set.index:
