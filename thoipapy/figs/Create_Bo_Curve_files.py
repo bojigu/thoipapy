@@ -656,7 +656,9 @@ def analyse_bo_curve_underlying_data(bo_data_csv, out_folder, names_excel_path):
         ax2.spines['left'].set_color("#0f7d9b")
         ax2.spines['right'].set_color("#9b2d0f")
 
-        fig.legend()
+        ax.legend()
+        ax2.legend()
+        #fig.legend()
         fig.tight_layout()
         fig.savefig(linechart_BO_curve_single_dataset, dpi=140)
 

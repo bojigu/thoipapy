@@ -67,5 +67,8 @@ if __name__ == "__main__":
     if s["run_bocurve_comp"] == True:
         thoipapy.figs.BoCurve_ThoipaBest_comp_LIPS_and_Nmr.run_bocurve_comp(Fontsize,Width,Size,s,Linewidth)
 
+    if s["calc_PREDDIMER_TMDOCK_closedist"] == True:
+        thoipapy.figs.Calc_PREDDIMER_TMDOCK_Closedist.calc_closedist_from_PREDDIMER_TMDOCK_best_model(s)
+
 
 

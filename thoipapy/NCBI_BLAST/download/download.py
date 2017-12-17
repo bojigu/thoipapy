@@ -131,12 +131,13 @@ def download_homologues_from_ncbi(acc, TMD_seq_pl_surr, blast_xml_file, xml_txt,
     with open(xml_txt, "w") as f:
         f.write("acc\t{}\ndownload_date\t{}\ndatabase\tncbi_nr\nexpect_value\t{}\n".format(acc, date, expect_value))
 
-    with tarfile.open(xml_tar_gz, mode='w:gz') as tar:
-        # add the files to the compressed tarfile
-        tar.add(blast_xml_file, arcname=os.path.basename(blast_xml_file))
-        tar.add(xml_txt, arcname=os.path.basename(xml_txt))
+    if os.path.isfile(blast_xml_file):
+        with tarfile.open(xml_tar_gz, mode='w:gz') as tar:
+            # add the files to the compressed tarfile
+            tar.add(blast_xml_file, arcname=os.path.basename(blast_xml_file))
+            tar.add(xml_txt, arcname=os.path.basename(xml_txt))
 
-    delete_BLAST_xml(blast_xml_file)
+        delete_BLAST_xml(blast_xml_file)
 
     logging.info("Output file: {}. (time taken = {:0.3f} min)".format(xml_tar_gz, duration / 60))
 
