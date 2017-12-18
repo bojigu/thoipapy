@@ -325,6 +325,9 @@ if __name__ == "__main__":
         thoipapy.RF_features.feature_calculate.LIPS_score_calculation_mult_prot(set_, df_set, logging)
         thoipapy.RF_features.feature_calculate.parse_LIPS_score_mult_prot(set_, df_set, logging)
 
+    if set_["motifs_from_seq"]:
+        thoipapy.RF_features.feature_calculate.motifs_from_seq_mult_protein(set_, df_set, logging)
+
     #thoipapy.RF_features.feature_calculate.convert_bind_data_to_csv(set_, logging)
 
     if set_["add_experimental_data_to_combined_features"] and not set_["combine_feature_into_train_data"]:

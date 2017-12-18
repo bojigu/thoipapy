@@ -1132,6 +1132,48 @@ def parse_LIPS_score(acc, LIPS_output_file, LIPS_parsed_csv, logging):
         logging.warning("{} LIPS_output_file not found.")
 
 
+def motifs_from_seq_mult_protein(set_, df_set, logging):
+    logging.info('start parsing lips output to cons and lips scores')
+
+    for i in df_set.index:
+        acc = df_set.loc[i, "acc"]
+        database = df_set.loc[i, "database"]
+        TMD_seq = df_set.loc[i, "TMD_seq"]
+        TMD_seq_pl_surr = df_set.loc[i, "TMD_seq_pl_surr"]
+        motifs_file = os.path.join(set_["RF_features"], "motifs", database, "{}.motifs.csv".format(acc))
+        thoipapy.utils.make_sure_path_exists(motifs_file, isfile=True)
+        tm_surr_left = int(df_set.loc[i, "tm_surr_left"])
+        tm_surr_right = int(df_set.loc[i, "tm_surr_right"])
+        motifs_from_seq(TMD_seq, TMD_seq_pl_surr, tm_surr_left, tm_surr_right, motifs_file, logging)
+
+def motifs_from_seq(TMD_seq, TMD_seq_pl_surr, tm_surr_left, tm_surr_right, motifs_file, logging):
+
+    motif_dict = {"GxxxG" : {"motif_ss" : r"[G].{3}[G]", "motif_len" : 4},
+                  "SmxxxSm": {"motif_ss": r"[GASC].{3}[GASC]", "motif_len": 4},
+                  "PolarxxxPolar": {"motif_ss": r"[DKERQPHNSGYTWAMC].{3}[DKERQPHNSGYTWAMC]", "motif_len": 4}}
+                  # This simple method doesn't work for "LxxLLxL", as the internal residues are not labelled
+                  #"LxxLLxL": {"motif_ss": r"([LVI].{2}[LVI][LVI].{1}[LVI])", "motif_len": 6}}
+
+    df_motifs = pd.DataFrame()
+    df_motifs["residue_num"] = range(1, len(TMD_seq) + 1)
+    df_motifs["residue_name"] = list(TMD_seq)
+
+    for motif_name in motif_dict:
+        # motif search string
+        motif_ss = motif_dict[motif_name]["motif_ss"]
+        # length of the searched segment - 1 (e.g. i, i+4 for GxxxG).
+        motif_len = motif_dict[motif_name]["motif_len"]
+        list_residues_in_motif = thoipapy.utils.get_list_residues_in_motif(TMD_seq_pl_surr, motif_ss, motif_len)
+        #sys.stdout.write(TMD_seq)
+        #sys.stdout.write("".join([str(x) for x in list_residues_in_motif])[tm_surr_left:len(TMD_seq_pl_surr) - tm_surr_right])
+        # slice out the TMD region
+        list_residues_in_motif_TMD_only = list_residues_in_motif[tm_surr_left: len(TMD_seq_pl_surr) - tm_surr_right]
+
+        df_motifs[motif_name] = list_residues_in_motif_TMD_only
+    df_motifs.to_csv(motifs_file, index=False)
+    logging.info("motifs_from_seq finished ({})".format(motifs_file))
+
+
 def convert_bind_data_to_csv(set_, df_set, logging):
     for i in df_set.index:
         acc = df_set.loc[i, "acc"]
@@ -1176,14 +1218,14 @@ def combine_all_features_mult_prot(set_, df_set, logging):
         pssm_csv = os.path.join(set_["feature_pssm"], database, "{}.surr{}.gaps{}.pssm.csv".format(acc, set_["num_of_sur_residues"], set_["max_n_gaps_in_TMD_subject_seq"]))
         entropy_file = os.path.join(set_["feature_entropy"], database, "{}.surr{}.gaps{}.uniq.entropy.csv".format(acc, set_["num_of_sur_residues"], set_["max_n_gaps_in_TMD_subject_seq"]))
         freecontact_parsed_csv = os.path.join(set_["feature_cumulative_coevolution"], database, "{}.surr{}.gaps{}.freecontact_parsed.csv".format(acc, set_["num_of_sur_residues"], set_["max_n_gaps_in_TMD_subject_seq"]))
-
+        motifs_file = os.path.join(set_["RF_features"], "motifs", database, "{}.motifs.csv".format(acc))
         feature_combined_file = os.path.join(set_["RF_features"], "combined", database, "{}.surr{}.gaps{}.combined_features.csv".format(acc, set_["num_of_sur_residues"], set_["max_n_gaps_in_TMD_subject_seq"]))
         alignments_dir = os.path.join(set_["homologues_folder"], "alignments", database)
         alignment_summary_csv = os.path.join(alignments_dir, "{}.surr{}.gaps{}.alignment_summary.csv".format(acc, set_["num_of_sur_residues"], set_["max_n_gaps_in_TMD_subject_seq"]))
 
-        combine_all_features(acc, database, TMD_seq, feature_combined_file, entropy_file, pssm_csv, lipo_csv, freecontact_parsed_csv, relative_position_file, LIPS_parsed_csv, alignment_summary_csv, logging)
+        combine_all_features(acc, database, TMD_seq, feature_combined_file, entropy_file, pssm_csv, lipo_csv, freecontact_parsed_csv, relative_position_file, LIPS_parsed_csv, motifs_file, alignment_summary_csv, logging)
 
-def combine_all_features(acc, database, TMD_seq, feature_combined_file, entropy_file, pssm_csv, lipo_csv, freecontact_parsed_csv, relative_position_file, LIPS_parsed_csv, alignment_summary_csv, logging):
+def combine_all_features(acc, database, TMD_seq, feature_combined_file, entropy_file, pssm_csv, lipo_csv, freecontact_parsed_csv, relative_position_file, LIPS_parsed_csv, motifs_file, alignment_summary_csv, logging):
     thoipapy.utils.make_sure_path_exists(feature_combined_file, isfile=True)
 
     for n, filepath in enumerate([entropy_file, pssm_csv, lipo_csv, freecontact_parsed_csv, relative_position_file, LIPS_parsed_csv]):
@@ -1192,15 +1234,17 @@ def combine_all_features(acc, database, TMD_seq, feature_combined_file, entropy_
 
     entropy_file_df = pd.read_csv(entropy_file)
     pssm_csv_df = pd.read_csv(pssm_csv)
-    lipophilicity_file_df=pd.read_csv(lipo_csv)
+    lipophilicity_file_df = pd.read_csv(lipo_csv)
     freecontact_parsed_csv_df = pd.read_csv(freecontact_parsed_csv)
     relative_position_file_df = pd.read_csv(relative_position_file)
-    LIPS_parsed_csv_df=pd.read_csv(LIPS_parsed_csv)
-    merge1=entropy_file_df.merge(pssm_csv_df,on=['residue_num','residue_name'])
-    merge2=merge1.merge(lipophilicity_file_df,on=['residue_num','residue_name'])
-    merge3=merge2.merge(freecontact_parsed_csv_df,on=["residue_num","residue_name"])
-    merge4=merge3.merge(relative_position_file_df, on=["residue_num","residue_name"])
-    df_features_single_protein = merge4.merge(LIPS_parsed_csv_df,on=["residue_num","residue_name"])
+    LIPS_parsed_csv_df = pd.read_csv(LIPS_parsed_csv)
+    motifs_df = pd.read_csv(motifs_file)
+    merge1 = entropy_file_df.merge(pssm_csv_df, on=['residue_num','residue_name'])
+    merge2 = merge1.merge(lipophilicity_file_df, on=['residue_num','residue_name'])
+    merge3 = merge2.merge(freecontact_parsed_csv_df, on=["residue_num","residue_name"])
+    merge4 = merge3.merge(relative_position_file_df, on=["residue_num","residue_name"])
+    merge5 = merge4.merge(LIPS_parsed_csv_df, on=["residue_num", "residue_name"])
+    df_features_single_protein = merge5.merge(motifs_df, on=["residue_num","residue_name"])
 
     test_indexing = False
     if test_indexing:
@@ -1230,6 +1274,7 @@ def combine_all_features(acc, database, TMD_seq, feature_combined_file, entropy_
         sys.stdout.write("\n{}, lipophilicity_file_df    = {}".format(acc, lipophilicity_file_df.residue_name.str.cat()))
         sys.stdout.write("\n{}, freecontact_parsed_csv_df= {}".format(acc, freecontact_parsed_csv_df.residue_name.str.cat()))
         sys.stdout.write("\n{}, relative_position_file_df= {}".format(acc, relative_position_file_df.residue_name.str.cat()))
+        sys.stdout.write("\n{}, motifs_df                = {}".format(acc, motifs_df.residue_name.str.cat()))
         raise IndexError("TMD_seq in original settings file and final merged features dataframe does not match.")
 
     single_prot_aln_result_ser = pd.Series.from_csv(alignment_summary_csv)
@@ -1258,6 +1303,7 @@ def normalise_features(df_features_single_protein):
     df_features_single_protein["LIPS_L*E"] = df_features_single_protein.LIPS_lipo * df_features_single_protein.LIPS_entropy
     # rank the LIPS score by adding a fraction of the L*E to the predicted interface (0 or 1)
     df_features_single_protein["LIPS_surface_ranked"] = df_features_single_protein["LIPS_surface"] - (df_features_single_protein["LIPS_L*E"] / 20)
+    df_features_single_protein["LIPS_surface_ranked_norm"] = normalise_0_1(df_features_single_protein["LIPS_surface_ranked"])[0]
 
     coev_colname_list = ["CoevDImax", "CoevDI4", "CoevDI8", "CoevMImax", "CoevMI4", "CoevMI8"]
     for col in coev_colname_list:

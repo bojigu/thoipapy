@@ -59,13 +59,18 @@ def drop_cols_not_used_in_ML(df_data):
                     #"C", "S", "D", "E", "K", "R", "Q", "N",
                     "CS", "DE", "KR", "QN",
                     "RelPos_TMD", "RelPos_fullseq",
-                    "CoevDImax", "CoevDI4", "CoevDI8",  "CoevMImax", "CoevMI4", "CoevMI8", "CoevDI4_norm", "CoevMI4_norm",
+                    "CoevDImax", "CoevDI4", "CoevDI8",  "CoevMImax", "CoevMI4", "CoevMI8",
+                    #"CoevDI4_norm", "CoevMI4_norm",
                     "CoevDImax_norm", 'CoevMImax_norm',
                     #"LIPS_entropy", "LIPS_L*E", "LIPS_lipo",
-                    "LIPS_surface",
-                    "LIPS_surface_ranked",
+                    #"LIPS_surface",
+                    #"LIPS_surface_ranked",
+                    #"LIPS_surface_ranked_norm",
                     #"n_homologues",
-                    "n_homol_norm"
+                    "n_homol_norm",
+                    #"GxxxG",
+                    #"SmxxxSm",
+                    #"PolarxxxPolar"
                     ]
                     #"n_homologues", , "LIPS_surface_ranked",
                     #"
