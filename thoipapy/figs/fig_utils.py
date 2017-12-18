@@ -224,3 +224,18 @@ def get_test_and_train_set_lists(s):
         raise ValueError("train_datasets type is not correct {} ({})".format(s["train_datasets"], type(s["train_datasets"])))
 
     return test_set_list, train_set_list
+
+def get_set_lists(s):
+
+    if s["set_list"] == True:
+        set_list = ["1"]
+    elif s["set_list"] == False:
+        set_list = ["0"]
+    elif isinstance(s["set_list"], int):
+        set_list = [str(s["set_list"])]
+    elif isinstance(s["set_list"], str):
+        set_list = s["set_list"].split(",")
+    else:
+        raise ValueError("set_list type is not correct {} ({})".format(s["set_list"], type(s["set_list"])))
+
+    return set_list

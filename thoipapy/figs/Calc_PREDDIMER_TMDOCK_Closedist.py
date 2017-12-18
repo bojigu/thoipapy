@@ -8,7 +8,7 @@ import thoipapy
 
 
 def calc_closedist_from_PREDDIMER_TMDOCK_best_model(s):
-    pt_set_list = s["PREDDIMER_TMDOCK_set"].split(",")
+    pt_set_list = s["set_list"].split(",")
     for pt_set in pt_set_list:
         ptsetname = "set{:02d}".format(int(pt_set))
         ptset_path = thoipapy.common.get_path_of_protein_set(ptsetname, s["set_path"])
@@ -118,7 +118,9 @@ def closedist_calculate_from_dimer(s,pdb_file, closedist_out_csv):
 
     closest_dist_arr = Get_Closedist_between_ChianA_ChainB(hashclosedist)
     closest_dist_df = pd.DataFrame.from_records(closest_dist_arr, columns = ["residue_num","residue_name","closedist"])
-    closest_dist_df.sort_values(by=["residue_num"],kind='heapsort')
+    closest_dist_df.residue_num = closest_dist_df.residue_num.astype(int)
+    closest_dist_df=closest_dist_df.sort_values(by=["residue_num"])
+    closest_dist_df.reset_index(inplace=True,drop=True)
     closest_dist_df.to_csv(closedist_out_csv)
 
 
@@ -146,11 +148,27 @@ def Get_Closedist_between_ChianA_ChainB(hashclosedist):
     for k, v in sorted(hashA.items()):
         if hashB[k] < v:
             k = k.split(':')
+            k[1] = shorten(k[1])
             k.extend([v])
             closest_dist_arr.append(k)
         else:
             k = k.split(':')
+            k[1] = shorten(k[1])
             k.extend([v])
             closest_dist_arr.append(k)
 
     return closest_dist_arr
+
+
+def shorten(x):
+    d = {'CYS': 'C', 'ASP': 'D', 'SER': 'S', 'GLN': 'Q', 'LYS': 'K',
+         'ILE': 'I', 'PRO': 'P', 'THR': 'T', 'PHE': 'F', 'ASN': 'N',
+         'GLY': 'G', 'HIS': 'H', 'LEU': 'L', 'ARG': 'R', 'TRP': 'W',
+         'ALA': 'A', 'VAL': 'V', 'GLU': 'E', 'TYR': 'Y', 'MET': 'M'}
+    if len(x) % 3 != 0:
+        raise ValueError('Input length should be a multiple of three')
+
+    y = ''
+    for i in range(int(len(x)/3)):
+            y += d[x[3*i:3*i+3]]
+    return y

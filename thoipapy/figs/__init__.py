@@ -5,3 +5,4 @@ import thoipapy.figs.fig_utils
 import thoipapy.figs.Create_Bo_Curve_files
 import thoipapy.figs.Combine_Bo_Curve_files
 import thoipapy.figs.Calc_PREDDIMER_TMDOCK_Closedist
+import thoipapy.figs.combine_add_3_prediction

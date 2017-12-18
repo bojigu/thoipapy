@@ -1579,3 +1579,18 @@ def delete_BLAST_xml(blast_xml_file):
 def setup_biopol_plotly(username, api_key):
     plotly.tools.set_config_file(world_readable=False, sharing='private')
     plotly.tools.set_credentials_file(username=username, api_key=api_key)
+
+def get_n_of_gaps_at_start_and_end_of_seq(seq):
+    start = 0
+    end = 0
+    for aa in seq:
+        if aa == "-":
+            start += 1
+        else:
+            break
+    for aa in seq[::-1]:
+        if aa == "-":
+            end += 1
+        else:
+            break
+    return start, end
