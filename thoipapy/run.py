@@ -26,47 +26,13 @@ import platform
 import pandas as pd
 import re
 
-
-def slice_TMD_seq_pl_surr(df_set):
-    # note that due to uniprot-like indexing, the start index = start-1
-    return df_set['full_seq'][int(df_set['TMD_start_pl_surr'] - 1):int(df_set['TMD_end_pl_surr'])]
-
-
-def create_column_with_TMD_plus_surround_seq(df_set, num_of_sur_residues):
-    df_set["TMD_start_pl_surr"] = df_set.TMD_start - num_of_sur_residues
-    df_set.loc[df_set["TMD_start_pl_surr"] < 1, "TMD_start_pl_surr"] = 1
-    df_set["TMD_end_pl_surr"] = df_set.TMD_end + num_of_sur_residues
-    for i in df_set.index:
-        #acc = df_set.loc[i, "acc"]
-        if df_set.loc[i, "TMD_end_pl_surr"] > df_set.loc[i, "seqlen"]:
-            df_set.loc[i, "TMD_end_pl_surr"] = df_set.loc[i, "seqlen"]
-    TMD_seq_pl_surr_series = df_set.apply(slice_TMD_seq_pl_surr, axis=1)
-    return df_set, TMD_seq_pl_surr_series
-
 # read the command line arguments
 parser = argparse.ArgumentParser()
 
 parser.add_argument("-s",  # "-settingsfile",
                     help=r'Full path to your excel settings file.'
                          r'E.g. "\Path\to\your\settingsfile.xlsx"')
-parser.add_argument("-i",  # "-setting input fasta file location",
-                    help=r'Full path to your input file.'
-                         r'E.g. "\Path\to\your\input.fasta"')
-parser.add_argument("-tmd",  # "-setting input fasta file location",
-                    help=r'Full path to your input file contain the tmd sequence.'
-                         r'E.g. "\Path\to\your\P01908_tmd.txt"')
-parser.add_argument("-ts",  # "-setting tm start",
-                    help=r'integere tm start value'
-                         r'E.g. "219"')
-parser.add_argument("-te",  # "-setting tm end ",
-                    help=r'integer tm end value.'
-                         r'E.g. "231"')
-parser.add_argument("-of",  # "-setting output file path",
-                    help=r'Full path to your prediction output file.'
-                         r'E.g. "\Path\to\your output_file\"')
-parser.add_argument("-email_to",  # "-setting output email address",
-                    help=r'user email given on web server'
-                         r'E.g. "***REMOVED***"')
+
 if __name__ == "__main__":
 
     sys.stdout.write('\nRun thoipapy as follows:')
@@ -75,161 +41,42 @@ if __name__ == "__main__":
     # get the command-line arguments
     args = parser.parse_args()
     # args.s is the excel_settings_file input by the user
-    set_=common.create_settingdict(args.s)
-
-    # create output file, parsed file, and the output figure file names.
-    if args.of:
-        output_file_loc=os.path.join(args.of,"output.csv")
-        output_parse_file=os.path.join(args.of,"output_parse.csv")
-        output_png_loc=os.path.join(args.of,"output.png")
-
-    #tm_protein_name=set_["tm_protein_name"]
-    #Data_type=set_["Datatype"]
-
-    #tmp_lists=thoipapy.proteins.get_tmp_lists.extract_tmps_from_input_file(set_)
-    #test_tmp_lists=thoipapy.proteins.get_tmp_lists.extract_test_tmps_from_input_file(set_)
-
-    set_["tm_protein_name"]='input'
-    if args.i is not None:
-        set_["input_fasta_file"]=args.i
-        set_["tm_len"] = thoipapy.common.calculate_fasta_file_length(set_)
-    if args.ts is not None:
-        set_["TMD_start"]=args.ts
-    if args.te is not None:
-        set_["TMD_end"]=args.te
-    if args.tmd is not None:
-        set_["input_tmd_file"]=args.tmd
-        set_["TMD_start"], set_["TMD_end"] = common.tmd_positions_match_fasta(set_)
-    if args.email_to is not None:
-        set_["email_to"]=args.email_to
+    s = common.create_settingdict(args.s)
 
     ##############################################################################################
     #                                                                                            #
-    #                          setup routine currently copied from Yao module                    #
+    #                               setname, logging, results folder                             #
     #                                                                                            #
     ##############################################################################################
-    set_["data_dir"] = os.path.join(set_["base_dir"], "data_xy")
-    set_["figs_dir"] = os.path.join(set_["base_dir"], "figs")
-    # get list of all excel files in sets folder
-    #D:\\Dropbox\\tm_homodimer_dropbox\\sets
-    #sets_folder = os.path.join(set_["base_dir"], "sets")
-    sets_folder = set_["sets_folder"]
+    sets_folder = s["sets_folder"]
 
     # define set name, which should be in the excel file name
-    setname = "set{:02d}".format(set_["set_number"])
+    setname = "set{:02d}".format(s["set_number"])
     # add to the dictionary itself
-    set_["setname"] = setname
+    s["setname"] = setname
     # create a results folder for that set
-    set_["set_results_folder"] = os.path.join(set_["Results_folder"], setname)
-    if not os.path.isdir(set_["set_results_folder"]):
-        os.makedirs(set_["set_results_folder"])
+    s["set_results_folder"] = os.path.join(s["Results_folder"], setname)
+    if not os.path.isdir(s["set_results_folder"]):
+        os.makedirs(s["set_results_folder"])
 
-    logging = common.setup_keyboard_interrupt_and_error_logging(set_, setname)
+    logging = common.setup_keyboard_interrupt_and_error_logging(s, setname)
 
     set_path = thoipapy.common.get_path_of_protein_set(setname, sets_folder)
 
+    ##############################################################################################
+    #                                                                                            #
+    #                     open and process a set of protein sequences                            #
+    #                                                                                            #
+    ##############################################################################################
     # load the protein set (e.g. set01.xlsx) as a dataframe
     df_set = pd.read_excel(set_path, sheetname='proteins')
 
     # create list of uniprot accessions to run
     acc_list = df_set.acc.tolist()
-    sys.stdout.write("settings file : {}\nsettings : {}\nprotein set number {}, acc_list : {}\n".format(os.path.basename(args.s), set_, set_["set_number"], acc_list))
+    sys.stdout.write("settings file : {}\nsettings : {}\nprotein set number {}, acc_list : {}\n".format(os.path.basename(args.s), s, s["set_number"], acc_list))
     sys.stdout.flush()
 
-    ##############################################################################################
-    #                                                                                            #
-    #                          process set of protein sequences                                  #
-    #                                                                                            #
-    ##############################################################################################
-    # set a unique index temporari
-    #df_set.index = df_set.acc + "-" + df_set.database
-
-    df_set["seqlen"] = df_set.full_seq.str.len()
-    df_set["TMD_len"] = df_set.TMD_seq.str.len()
-    df_set["acc_db"] = df_set.acc + "-" + df_set.database
-
-    # df_set.loc["O75460", "TMD_seq"] = df_set.loc["O75460", "TMD_seq"] + "A"
-
-    for i in df_set.index:
-        acc = df_set.loc[i, "acc"]
-        TMD_seq = df_set.loc[i, "TMD_seq"]
-        full_seq = df_set.loc[i, "full_seq"]
-
-        # use regeg to get indices for start and end of TMD in seq
-        m = re.search(TMD_seq, full_seq)
-        if m:
-            # convert from python indexing to unprot indexing
-            df_set.loc[i, "TMD_start"] = m.start() + 1
-            df_set.loc[i, "TMD_end"] = m.end()
-        else:
-            raise IndexError("TMD seq not found in full_seq.\nacc = {}\nTMD_seq = {}\nfull_seq = {}".format(acc, TMD_seq, full_seq))
-
-    # first get TMD plus 5 surrounding residues (for TMD_lipo script)
-    num_of_sur_residues = 5
-    df_set, TMD_seq_pl_surr_series = create_column_with_TMD_plus_surround_seq(df_set, num_of_sur_residues)
-    df_set["TMD_seq_pl_surr5"] = TMD_seq_pl_surr_series
-
-    # Repeat for the actual surrounding number of residues chosen in the settings file
-    # this overwrites the indexing columns created for the surr5 above, except for the final sequence
-    num_of_sur_residues = set_["num_of_sur_residues"]
-    df_set, TMD_seq_pl_surr_series = create_column_with_TMD_plus_surround_seq(df_set, num_of_sur_residues)
-    df_set["TMD_seq_pl_surr"] = TMD_seq_pl_surr_series
-
-    # add the number of included residues in the surrounding seq to the left and right of the TMD
-    # e.g. 20 where the TMD is in the centre of the protein, otherwise <20 where TMD is near start or end of full seq
-    df_set["tm_surr_left"] = df_set.TMD_start - df_set.TMD_start_pl_surr
-    df_set["tm_surr_right"] = df_set.TMD_end_pl_surr - df_set.TMD_end
-
-    # save the full sequences in fasta format for CD-HIT, etc.
-    fasta_out = os.path.join(os.path.dirname(set_path), "fasta", "{}_full.fas".format(setname))
-    thoipapy.utils.make_sure_path_exists(fasta_out, isfile=True)
-    with open(fasta_out, "w") as f:
-        for n, acc in enumerate(df_set.index):
-            f.write(">{}-{}\n{}\n".format(n, df_set.loc[acc, "acc_db"], df_set.loc[acc, "full_seq"]))
-
-    fasta_out = os.path.join(os.path.dirname(set_path), "fasta", "{}_TMD.fas".format(setname))
-    thoipapy.utils.make_sure_path_exists(fasta_out, isfile=True)
-    with open(fasta_out, "w") as f:
-        for n, acc in enumerate(df_set.index):
-            f.write(">{}-{}\n{}\n".format(n, df_set.loc[acc, "acc_db"], df_set.loc[acc, "TMD_seq"]))
-
-    # open previously saved CD-hit results
-    cdhit_cluster_txt = os.path.join(os.path.dirname(set_path), "fasta", "{}.fas.1.clstr.sorted.txt".format(setname))
-    if os.path.isfile(cdhit_cluster_txt):
-        lines_with_ref_seq = []
-        with open(cdhit_cluster_txt, "r") as f:
-            for line in f:
-                if "*" in line:
-                    lines_with_ref_seq.append(line)
-
-        cluster_rep_lines_ser = pd.Series(lines_with_ref_seq)
-        # extracts the number between > and - (i.e., the index), sorts and returns as a list
-        # redundant sequences will be excluded
-        cluster_rep_list = cluster_rep_lines_ser.str.extract(">(\d*)-", expand=False).astype(int).sort_values().tolist()
-        df_set.loc[cluster_rep_list, "cdhit_cluster_rep"] = True
-        df_set["cdhit_cluster_rep"] = df_set["cdhit_cluster_rep"].fillna(False)
-    else:
-        logging.warning("No CD-HIT results found. Redundancy check for training and validation is not possible.")
-        df_set["cdhit_cluster_rep"] = "no_cdhit_results"
-
-    """  Rearrange the dataframe columns so that the order is as follows.
-    orig Bo file : ['acc', 'TMD_Length', 'TMD_Start', 'TMD_End', 'TMD_Sur_Left', 'TMD_Sur_Right']
-    updated file = ['acc', 'seqlen', 'TMD_start', 'TMD_end', 'tm_surr_left', 'tm_surr_right', 'database',  ....]
-
-    """
-    # reorder columns
-    df_set = thoipapy.utils.reorder_dataframe_columns(df_set, ['acc', 'seqlen', 'TMD_start', 'TMD_end', "tm_surr_left", "tm_surr_right", "database"])
-
-    # convert the floats to integers
-    df_set.iloc[:, 1:5] = df_set.iloc[:, 1:5].astype(int)
-
-    # save to csv, which is opened by other functions
-    list_of_tmd_start_end = os.path.join(set_["thoipapy_data_folder"], "Input_data", os.path.basename(set_path)[:-5] + "_processed.csv")
-    set_["list_of_tmd_start_end"] = list_of_tmd_start_end
-    thoipapy.utils.make_sure_path_exists(list_of_tmd_start_end, isfile=True)
-    df_set.set_index("acc").to_csv(list_of_tmd_start_end)
-    train_data_csv = os.path.join(set_["set_results_folder"], "{}_processed_input_sequences.csv".format(set_["setname"]))
-    df_set.set_index("acc").to_csv(train_data_csv)
+    dfset = thoipapy.common.process_set_protein_seqs(s, setname, df_set, set_path)
 
     # create a database label. Either crystal, NMR, ETRA or "mixed"
     unique_database_labels = df_set["database"].unique()
@@ -238,168 +85,209 @@ if __name__ == "__main__":
     else:
         database_for_full_set = "mixed"
 
-    # when only run one protein each time, set_["multiple_tmp_simultaneous"] is false, and create the query protein information file
-    # according to the arguments inputed by user
-    if not set_["multiple_tmp_simultaneous"]:
-        query_protein_tmd_file = os.path.join(set_["Protein_folder"], "Query_Protein_Tmd.csv")
-        query_protein_tmd_file_handle=open(query_protein_tmd_file,"w")
-        writer = csv.writer(query_protein_tmd_file_handle, delimiter=',', quoting = csv.QUOTE_NONE,lineterminator='\n')
-        writer.writerow(["Protein","TMD_len","TMD_Start","TMD_End"])
-        writer.writerow([set_["tm_protein_name"],set_["tm_len"],set_["TMD_start"],set_["TMD_end"]])
-        query_protein_tmd_file_handle.close()
-        set_["list_of_tmd_start_end"]=query_protein_tmd_file
+    ###################################################################################################
+    #                                                                                                 #
+    #                  calculate closedistance from NMR and crystal structures                        #
+    #                                                                                                 #
+    ###################################################################################################
 
-    #create new fasta file by only keep tmd and surrounded 20 residues for future blastp work
-    #this function works for both one query protein or multiple protiens simultaneously
-
-    #thoipapy.common.create_TMD_surround20_fasta_file(set_)
-
-
-                    ###################################################################################################
-                    #                                                                                                 #
-                    #                   homologues download with hhblits                                              #
-                    #                                                                                                 #
-                    ###################################################################################################
-
-    # this is not used, since we used NCBI blast instead
-    if set_["run_retrieve_homologues_with_hhblits"]:
-        thoipapy.hhblits.download.download_homologues_with_hhblits(set_, logging)
-
-        thoipapy.hhblits.download.parse_a3m_alignment(set_, logging)
-
-                    ###################################################################################################
-                    #                                                                                                 #
-                    #                   homologues download from NCBI                                                 #
-                    #                                                                                                 #
-                    ###################################################################################################
-
-
-    if set_["run_retrieve_NCBI_homologues_with_blastp"]:
-        thoipapy.NCBI_BLAST.download.download.download_homologues_from_ncbi_mult_prot(set_, df_set, logging)
-
-
-                    ###################################################################################################
-                    #                                                                                                 #
-                    #                   convert homologues xml file to csv                                            #
-                    #                                                                                                 #
-                    ###################################################################################################
-
-
-    if set_["run_parse_homologues_xml_into_csv"]:
-        thoipapy.NCBI_BLAST.parse.parser.parse_NCBI_xml_to_csv_mult_prot(set_, df_set, logging)
-
-    if set_["parse_csv_homologues_to_alignment"]:
-        thoipapy.NCBI_BLAST.parse.parser.extract_filtered_csv_homologues_to_alignments_mult_prot(set_, df_set, logging)
-
-
-                    ###################################################################################################
-                    #                                                                                                 #
-                    #                   Random Forest feature calculation                                             #
-                    #                                                                                                 #
-                    ###################################################################################################
-
-
-    #thoipapy.RF_features.feature_calculate.mem_a3m_homologues_filter(set_, logging)
-
-    if set_["pssm_feature_calculation"]:
-        thoipapy.RF_features.feature_calculate.create_PSSM_from_MSA_mult_prot(set_, df_set, logging)
-
-    if set_["calc_lipo_from_pssm"]:
-        thoipapy.RF_features.feature_calculate.lipo_from_pssm_mult_prot(set_, df_set, logging)
-
-    if set_["entropy_feature_calculation"]:
-        thoipapy.RF_features.feature_calculate.entropy_calculation_mult_prot(set_, df_set, logging)
-
-    if set_["cumulative_coevolution_feature_calculation"]:
-        if "Windows" in platform.system():
-            sys.stdout.write("\n Freecontact cannot be run in Windows! Skipping coevolution_calculation_with_freecontact_mult_prot.")
-            thoipapy.RF_features.feature_calculate.parse_freecontact_coevolution_mult_prot(set_, df_set, logging)
-        else:
-            thoipapy.RF_features.feature_calculate.coevolution_calculation_with_freecontact_mult_prot(set_, df_set, logging)
-            thoipapy.RF_features.feature_calculate.parse_freecontact_coevolution_mult_prot(set_, df_set, logging)
-
-    if set_["clac_relative_position"]:
-        thoipapy.RF_features.feature_calculate.calc_relative_position_mult_prot(set_, df_set, logging)
-
-    if set_["lips_score_feature_calculation"]:
-        thoipapy.RF_features.feature_calculate.LIPS_score_calculation_mult_prot(set_, df_set, logging)
-        thoipapy.RF_features.feature_calculate.parse_LIPS_score_mult_prot(set_, df_set, logging)
-
-    if set_["motifs_from_seq"]:
-        thoipapy.RF_features.feature_calculate.motifs_from_seq_mult_protein(set_, df_set, logging)
-
-    #thoipapy.RF_features.feature_calculate.convert_bind_data_to_csv(set_, logging)
-
-    if set_["add_experimental_data_to_combined_features"] and not set_["combine_feature_into_train_data"]:
-        raise ValueError("add_experimental_data_to_combined_features only runs if combine_feature_into_train_data is true in settings file.")
-
-    if set_["combine_feature_into_train_data"]:
-        # if database_for_full_set == "crystal" or database_for_full_set == "NMR":
-        #     thoipapy.RF_features.feature_calculate.combine_all_features_mult_prot(set_, df_set, logging)
-        #     thoipapy.RF_features.feature_calculate.add_experimental_data_to_combined_features_mult_prot(set_, df_set, logging)
-        #     #thoipapy.RF_features.feature_calculate.add_physical_parameters_to_features_mult_prot(set_, df_set, logging)
-        # if database_for_full_set == "ETRA":
-        #     #thoipapy.RF_features.feature_calculate.features_combine_to_testdata( set_, logging)
-        #     thoipapy.RF_features.feature_calculate.combine_all_features_mult_prot(set_, df_set, logging)
-        #     #thoipapy.RF_features.feature_calculate.adding_physical_parameters_to_test_data(set_, logging)
-        thoipapy.RF_features.feature_calculate.combine_all_features_mult_prot(set_, df_set, logging)
-        thoipapy.RF_features.feature_calculate.add_physical_parameters_to_features_mult_prot(set_, df_set, logging)
-        if set_["add_experimental_data_to_combined_features"]:
-            thoipapy.RF_features.feature_calculate.add_experimental_data_to_combined_features_mult_prot(set_, df_set, logging)
-        thoipapy.RF_features.feature_calculate.combine_all_train_data_for_random_forest(set_, df_set, logging)
-
-
-    if set_["run_random_forest"]:
-        thoipapy.RF_features.RF_Train_Test.train_random_forest_model(set_, logging)
-        #thoipapy.RF_features.RF_Train_Test.run_10fold_cross_validation(thoipapy,set_,logging)
-        #thoipapy.RF_features.RF_Train_Test.run_Rscipt_random_forest(set_, output_file_loc, logging)
-
-    if set_["predict_test_dataset_with_THOIPA"]:
-        thoipapy.RF_features.RF_Train_Test.predict_test_dataset_with_THOIPA(set_["setname"], set_["test_dataset"], set_, logging)
-
-
-    if set_["run_10fold_cross_validation"]:
-        thoipapy.RF_features.RF_Train_Test.run_10fold_cross_validation(set_, logging)
-
-    if set_["calculate_RF_variable_importance"]:
-        thoipapy.RF_features.RF_Train_Test.calculate_RF_variable_importance(set_, logging)
-
-
-    if set_["parse_prediciton_output"]:
-        thoipapy.RF_features.Output_Parse.parse_Predicted_Output(thoipapy,set_,output_file_loc,output_parse_file,logging)
-
-    if set_["Send_sine_curve_to_email"]:
-        sys.stdout.write('begining to run run sine curve fitting')
-        thoipapy.Sine_Curve.SineCurveFit.Save_Sine_Curve_Result(set_,output_file_loc,output_png_loc)
-        logging.info('the fitting of sine curve is done')
-
-                    ###################################################################################################
-                    #                                                                                                 #
-                    #                  Bind residues calculation for train data                                       #
-                    #                                                                                                 #
-                    ###################################################################################################
-
-
-    if set_["Atom_Close_Dist"]:
-        infor=thoipapy.Atom_Dist.Residu_Closest_Dist.homodimer_residue_closedist_calculate_from_complex(thoipapy, set_, logging)
+    if s["Atom_Close_Dist"]:
+        infor = thoipapy.Atom_Dist.Residu_Closest_Dist.homodimer_residue_closedist_calculate_from_complex(thoipapy, s, logging)
         print(infor)
 
-                    ###################################################################################################
-                    #                                                                                                 #
-                    #                  Bind residues calculation for train data                                       #
-                    #                                                                                                 #
-                    ###################################################################################################
+    ###################################################################################################
+    #                                                                                                 #
+    #                   homologues download from NCBI. parse, filter and save                         #
+    #                                                                                                 #
+    ###################################################################################################
 
-    if set_["Send_email_finished"]:
-        thoipapy.Send_Email.Send_Email_Smtp.send_email_when_finished(set_, thoipapy,output_parse_file,output_png_loc)
+    if s["run_retrieve_NCBI_homologues_with_blastp"]:
+        thoipapy.NCBI_BLAST.download.download.download_homologues_from_ncbi_mult_prot(s, df_set, logging)
+
+    if s["run_parse_homologues_xml_into_csv"]:
+        thoipapy.NCBI_BLAST.parse.parser.parse_NCBI_xml_to_csv_mult_prot(s, df_set, logging)
+
+    if s["parse_csv_homologues_to_alignment"]:
+        thoipapy.NCBI_BLAST.parse.parser.extract_filtered_csv_homologues_to_alignments_mult_prot(s, df_set, logging)
 
 
-                    ###################################################################################################
-                    #                                                                                                 #
-                    #                   THOIPApy Result analysis Figs creation                                        #
-                    #                                                                                                 #
-                    ###################################################################################################
-    if set_["fig_10fold_cross_validation"]:
-        thoipapy.RF_features.RF_Train_Test.fig_10fold_cross_validation(set_, logging)
-    if set_["fig_variable_importance"]:
-        thoipapy.RF_features.RF_Train_Test.fig_variable_importance(set_, logging)
+    ###################################################################################################
+    #                                                                                                 #
+    #                   Random Forest feature calculation                                             #
+    #                                                                                                 #
+    ###################################################################################################
+
+    if s["pssm_feature_calculation"]:
+        thoipapy.RF_features.feature_calculate.create_PSSM_from_MSA_mult_prot(s, df_set, logging)
+
+    if s["calc_lipo_from_pssm"]:
+        thoipapy.RF_features.feature_calculate.lipo_from_pssm_mult_prot(s, df_set, logging)
+
+    if s["entropy_feature_calculation"]:
+        thoipapy.RF_features.feature_calculate.entropy_calculation_mult_prot(s, df_set, logging)
+
+    if s["cumulative_coevolution_feature_calculation"]:
+        if "Windows" in platform.system():
+            sys.stdout.write("\n Freecontact cannot be run in Windows! Skipping coevolution_calculation_with_freecontact_mult_prot.")
+            thoipapy.RF_features.feature_calculate.parse_freecontact_coevolution_mult_prot(s, df_set, logging)
+        else:
+            thoipapy.RF_features.feature_calculate.coevolution_calculation_with_freecontact_mult_prot(s, df_set, logging)
+            thoipapy.RF_features.feature_calculate.parse_freecontact_coevolution_mult_prot(s, df_set, logging)
+
+    if s["clac_relative_position"]:
+        thoipapy.RF_features.feature_calculate.calc_relative_position_mult_prot(s, df_set, logging)
+
+    if s["lips_score_feature_calculation"]:
+        thoipapy.RF_features.feature_calculate.LIPS_score_calculation_mult_prot(s, df_set, logging)
+        thoipapy.RF_features.feature_calculate.parse_LIPS_score_mult_prot(s, df_set, logging)
+
+    if s["motifs_from_seq"]:
+        thoipapy.RF_features.feature_calculate.motifs_from_seq_mult_protein(s, df_set, logging)
+
+    if s["combine_feature_into_train_data"]:
+        thoipapy.RF_features.feature_calculate.combine_all_features_mult_prot(s, df_set, logging)
+        thoipapy.RF_features.feature_calculate.add_physical_parameters_to_features_mult_prot(s, df_set, logging)
+        thoipapy.RF_features.feature_calculate.add_experimental_data_to_combined_features_mult_prot(s, df_set, logging)
+        thoipapy.RF_features.feature_calculate.combine_all_train_data_for_random_forest(s, df_set, logging)
+
+
+    ###################################################################################################
+    #                                                                                                 #
+    #                                    model validation                                             #
+    #                                                                                                 #
+    ###################################################################################################
+
+    if s["run_10fold_cross_validation"]:
+        thoipapy.RF_features.RF_Train_Test.run_10fold_cross_validation(s, logging)
+        thoipapy.RF_features.RF_Train_Test.fig_10fold_cross_validation(s, logging)
+        thoipapy.RF_features.RF_Train_Test.calculate_RF_variable_importance(s, logging)
+        thoipapy.RF_features.RF_Train_Test.fig_variable_importance(s, logging)
+
+    if s["train_random_forest_model"]:
+        thoipapy.RF_features.RF_Train_Test.train_random_forest_model(s, logging)
+
+    if s["run_testset_trainset_validation"] == True:
+        #thoipapy.figs.Create_Bo_Curve_files.Test_Etra(s)
+        thoipapy.figs.Create_Bo_Curve_files.run_testset_trainset_validation(s, logging)
+
+    ###################################################################################################
+    #                                                                                                 #
+    #                                               figures                                           #
+    #                                                                                                 #
+    ###################################################################################################
+
+    Fontsize = s["Fontsize"]
+    Filter = s["Filter"]
+    Width= s["Width"]
+    Size= s["Size"]
+    Linewidth= s["Linewidth"]
+
+    if s["FigZB_07"] == True:
+        # barcharts of coevolution values for interface and non-interface
+        thoipapy.figs.Average_Fraction_DI.FigZB_07(Fontsize, Width, Size, s)
+
+    if s["FigZB_18"] == True:
+        # heatmap of prediction from THOIPA, PREDDIMER, TMDOCK
+        thoipapy.figs.Preddimer_TMdock_heatmap.FigZB_18(Fontsize,Width,Size)
+
+
+    #if s["combine_BO_curve_files_HARDLINKED"] == True:
+    #    thoipapy.figs.Combine_Bo_Curve_files.combine_BO_curve_files_HARDLINKED(s)
+
+    # DEPRECATED. USE COMPARE PREDICTORS
+    # if s["fig_plot_BO_curve_mult_train_datasets"] == True:
+    #     thoipapy.figs.Combine_Bo_Curve_files.fig_plot_BO_curve_mult_train_datasets(s)
+
+    if s["compare_predictors"] == True:
+        thoipapy.figs.Combine_Bo_Curve_files.compare_predictors(s)
+
+    if s["run_bocurve_comp_HARDLINKED"] == True:
+        thoipapy.figs.BoCurve_ThoipaBest_comp_LIPS_and_Nmr.run_bocurve_comp_HARDLINKED(Fontsize, Width, Size, s, Linewidth)
+
+    if s["calc_PREDDIMER_TMDOCK_closedist"] == True:
+        thoipapy.figs.Calc_PREDDIMER_TMDOCK_Closedist.calc_closedist_from_PREDDIMER_TMDOCK_best_model(s)
+
+    columns_kept_in_combined_file = [ 'Conservation', 'Polarity', 'CoevDImax_norm',
+                                     'CoevDI4_norm',
+                                     'CoevDI8_norm', 'CoevMImax_norm', 'CoevMI4_norm', 'CoevMI8_norm',
+                                     'CumDI4_norm', 'CumDI8_norm', 'CumMI4_norm', 'CumMI8_norm', 'RelPos_TMD',
+                                     'RelPos_fullseq', 'LIPS_L*E', 'LIPS_surface_ranked', 'Hydrophobicity_sAA',
+                                     'THOIPA', 'TMDOCK', 'PREDDIMER']
+    if s["add_predictions_to_combined_files"] == True:
+        thoipapy.figs.combine_add_3_prediction.combine_file_add_PREDDIMER_TMDOCK_THOIPA_prediction(s,columns_kept_in_combined_file)
+
+
+    ###################################################################################################
+    #                                                                                                 #
+    #            DEPRECATED SINGLE PROTEIN STUFF, REPLACED BY run_THOIPA_prediction.py                #
+    #                                                                                                 #
+    ###################################################################################################
+    running_single_protein = False
+    if running_single_protein:
+        """OLD PARSER ARGUMENTS
+        
+        parser.add_argument("-i",  # "-setting input fasta file location",
+                            help=r'Full path to your input file.'
+                                 r'E.g. "\Path\to\your\input.fasta"')
+        parser.add_argument("-tmd",  # "-setting input fasta file location",
+                            help=r'Full path to your input file contain the tmd sequence.'
+                                 r'E.g. "\Path\to\your\P01908_tmd.txt"')
+        parser.add_argument("-ts",  # "-setting tm start",
+                            help=r'integere tm start value'
+                                 r'E.g. "219"')
+        parser.add_argument("-te",  # "-setting tm end ",
+                            help=r'integer tm end value.'
+                                 r'E.g. "231"')
+        parser.add_argument("-of",  # "-setting output file path",
+                            help=r'Full path to your prediction output file.'
+                                 r'E.g. "\Path\to\your output_file\"')
+        parser.add_argument("-email_to",  # "-setting output email address",
+                            help=r'user email given on web server'
+                                 r'E.g. "***REMOVED***"')
+        """
+        # create output file, parsed file, and the output figure file names.
+        if args.of:
+            output_file_loc = os.path.join(args.of, "output.csv")
+            output_parse_file = os.path.join(args.of, "output_parse.csv")
+            output_png_loc = os.path.join(args.of, "output.png")
+
+        s["tm_protein_name"] = 'input'
+        if args.i is not None:
+            s["input_fasta_file"] = args.i
+            s["tm_len"] = thoipapy.common.calculate_fasta_file_length(s)
+        if args.ts is not None:
+            s["TMD_start"] = args.ts
+        if args.te is not None:
+            s["TMD_end"] = args.te
+        if args.tmd is not None:
+            s["input_tmd_file"] = args.tmd
+            s["TMD_start"], s["TMD_end"] = common.tmd_positions_match_fasta(s)
+        if args.email_to is not None:
+            s["email_to"] = args.email_to
+
+        # when only run one protein each time, s["multiple_tmp_simultaneous"] is false, and create the query protein information file
+        # according to the arguments inputed by user
+        if not s["multiple_tmp_simultaneous"]:
+            query_protein_tmd_file = os.path.join(s["Protein_folder"], "Query_Protein_Tmd.csv")
+            query_protein_tmd_file_handle = open(query_protein_tmd_file, "w")
+            writer = csv.writer(query_protein_tmd_file_handle, delimiter=',', quoting=csv.QUOTE_NONE, lineterminator='\n')
+            writer.writerow(["Protein", "TMD_len", "TMD_Start", "TMD_End"])
+            writer.writerow([s["tm_protein_name"], s["tm_len"], s["TMD_start"], s["TMD_end"]])
+            query_protein_tmd_file_handle.close()
+            s["list_of_tmd_start_end"] = query_protein_tmd_file
+
+        # create new fasta file by only keep tmd and surrounded 20 residues for future blastp work
+        # this function works for both one query protein or multiple proteins simultaneously
+        # thoipapy.common.create_TMD_surround20_fasta_file(s)
+
+        if s["parse_prediction_output"]:
+            thoipapy.RF_features.Output_Parse.parse_Predicted_Output(thoipapy,s,output_file_loc,output_parse_file,logging)
+
+        if s["Send_sine_curve_to_email"]:
+            sys.stdout.write('begining to run run sine curve fitting')
+            thoipapy.Sine_Curve.SineCurveFit.Save_Sine_Curve_Result(s,output_file_loc,output_png_loc)
+            logging.info('the fitting of sine curve is done')
+
+        if s["Send_email_finished"]:
+            thoipapy.Send_Email.Send_Email_Smtp.send_email_when_finished(s, thoipapy, output_parse_file, output_png_loc)
+

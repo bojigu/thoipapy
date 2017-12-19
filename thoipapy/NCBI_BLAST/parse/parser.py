@@ -10,12 +10,12 @@ import sys
 import tarfile
 from korbinian.utils import create_regex_string
 
-def parse_NCBI_xml_to_csv_mult_prot(set_, df_set, logging):
+def parse_NCBI_xml_to_csv_mult_prot(s, df_set, logging):
     """
     extract multiple sequence alignment and useful informations from xml homologues file
     Parameters
     ----------
-    set_
+    s
     logging
 
     Returns
@@ -37,9 +37,9 @@ def parse_NCBI_xml_to_csv_mult_prot(set_, df_set, logging):
         TMD_start = df_set.loc[i, "TMD_start"]
         TMD_end = df_set.loc[i, "TMD_end"]
         seqlen = df_set.loc[i, "seqlen"]
-        if set_["surres"] == "_surr0":
+        if s["surres"] == "_surr0":
             pass
-        elif set_["surres"] == "_surr5":
+        elif s["surres"] == "_surr5":
             # start 5 residues earlier
             TMD_start = TMD_start - 5 ###for fullseq
             if TMD_start <= 0:
@@ -49,19 +49,19 @@ def parse_NCBI_xml_to_csv_mult_prot(set_, df_set, logging):
             if TMD_end > seqlen:
                 TMD_end = seqlen # quals to the full sequence length
         else:
-            raise ValueError('set_["surres"] does not seem to be correct')
+            raise ValueError('s["surres"] does not seem to be correct')
 
-        BLAST_xml_tar = os.path.join(set_["xml_file_folder"], database, "{}.surr{}.BLAST.xml.tar.gz".format(acc, set_["num_of_sur_residues"]))
-        homo_out_dir = os.path.join(set_["homologues_folder"], "ncbi", database)
+        BLAST_xml_tar = os.path.join(s["xml_file_folder"], database, "{}.surr{}.BLAST.xml.tar.gz".format(acc, s["num_of_sur_residues"]))
+        homo_out_dir = os.path.join(s["homologues_folder"], "ncbi", database)
         if not os.path.isdir(homo_out_dir):
             os.makedirs(homo_out_dir)
-        BLAST_csv_tar = os.path.join(homo_out_dir, "{}.surr{}.BLAST.csv.tar.gz".format(acc, set_["num_of_sur_residues"]))
+        BLAST_csv_tar = os.path.join(homo_out_dir, "{}.surr{}.BLAST.csv.tar.gz".format(acc, s["num_of_sur_residues"]))
 
-        parse_NCBI_xml_to_csv(set_, acc, BLAST_xml_tar, BLAST_csv_tar, TMD_start, TMD_end, logging)
+        parse_NCBI_xml_to_csv(s, acc, BLAST_xml_tar, BLAST_csv_tar, TMD_start, TMD_end, logging)
 
     logging.info('~~~~~~~~~~~~                 finished parse_NCBI_xml_to_csv_mult_prot              ~~~~~~~~~~~~')
 
-def parse_NCBI_xml_to_csv(set_, acc, blast_xml_tar, BLAST_csv_tar, TMD_start, TMD_end, logging):
+def parse_NCBI_xml_to_csv(s, acc, blast_xml_tar, BLAST_csv_tar, TMD_start, TMD_end, logging):
     # remove the final ".tar.gz" to get the xml and csv filename
     BLAST_xml_file = blast_xml_tar[:-7]
     BLAST_csv_file = BLAST_csv_tar[:-7]
@@ -88,7 +88,7 @@ def parse_NCBI_xml_to_csv(set_, acc, blast_xml_tar, BLAST_csv_tar, TMD_start, TM
     with open(BLAST_csv_file, 'w') as homo_out_csv_file_handle:
         with open(BLAST_xml_file) as xml_result_handle:
             xml_record = NCBIXML.read(xml_result_handle)
-            E_VALUE_THRESH = set_["e_value_cutoff"]
+            E_VALUE_THRESH = s["e_value_cutoff"]
             hit_num = 0
             n_hsps_excluded_due_to_e_value_cutoff = 0
             for alignment in xml_record.alignments:
@@ -233,7 +233,7 @@ def save_seqs(array_of_seqs, filepath, query_TMD_seq):
             for seq in array_of_seqs:
                 f.write("{}\n".format(seq))
 
-def extract_filtered_csv_homologues_to_alignments_mult_prot(set_, df_set, logging):
+def extract_filtered_csv_homologues_to_alignments_mult_prot(s, df_set, logging):
 
     logging.info('start extract filtered csv homologues to alignments')
     out_dict = {}
@@ -247,33 +247,33 @@ def extract_filtered_csv_homologues_to_alignments_mult_prot(set_, df_set, loggin
         TMD_len = df_set.loc[i, "TMD_len"]
         query_TMD_seq_surr5 = df_set.loc[i, "TMD_seq_pl_surr5"]
 
-        homo_out_dir = os.path.join(set_["homologues_folder"], "ncbi", database)
-        BLAST_csv_tar = os.path.join(homo_out_dir, "{}.surr{}.BLAST.csv.tar.gz".format(acc, set_["num_of_sur_residues"]))
+        homo_out_dir = os.path.join(s["homologues_folder"], "ncbi", database)
+        BLAST_csv_tar = os.path.join(homo_out_dir, "{}.surr{}.BLAST.csv.tar.gz".format(acc, s["num_of_sur_residues"]))
 
-        alignments_dir = os.path.join(set_["homologues_folder"], "alignments", database)
+        alignments_dir = os.path.join(s["homologues_folder"], "alignments", database)
         if not os.path.isdir(alignments_dir):
             os.makedirs(alignments_dir)
 
-        fasta_all_TMD_seqs = os.path.join(alignments_dir, "{}.surr{}.gaps{}.redundant.fas".format(acc, set_["num_of_sur_residues"], set_["max_n_gaps_in_TMD_subject_seq"]))
-        path_uniq_TMD_seqs_for_PSSM_FREECONTACT = os.path.join(alignments_dir, "{}.surr{}.gaps{}.uniq.for_PSSM_FREECONTACT.txt".format(acc, set_["num_of_sur_residues"], set_["max_n_gaps_in_TMD_subject_seq"]))
-        path_uniq_TMD_seqs_no_gaps_for_LIPS = os.path.join(alignments_dir, "{}.surr{}.gaps0.uniq.for_LIPS.txt".format(acc, set_["num_of_sur_residues"]))
-        path_uniq_TMD_seqs_surr5_for_LIPO = os.path.join(alignments_dir, "{}.surr5.gaps{}.uniq.for_LIPO.txt".format(acc, set_["max_n_gaps_in_TMD_subject_seq"]))
+        fasta_all_TMD_seqs = os.path.join(alignments_dir, "{}.surr{}.gaps{}.redundant.fas".format(acc, s["num_of_sur_residues"], s["max_n_gaps_in_TMD_subject_seq"]))
+        path_uniq_TMD_seqs_for_PSSM_FREECONTACT = os.path.join(alignments_dir, "{}.surr{}.gaps{}.uniq.for_PSSM_FREECONTACT.txt".format(acc, s["num_of_sur_residues"], s["max_n_gaps_in_TMD_subject_seq"]))
+        path_uniq_TMD_seqs_no_gaps_for_LIPS = os.path.join(alignments_dir, "{}.surr{}.gaps0.uniq.for_LIPS.txt".format(acc, s["num_of_sur_residues"]))
+        path_uniq_TMD_seqs_surr5_for_LIPO = os.path.join(alignments_dir, "{}.surr5.gaps{}.uniq.for_LIPO.txt".format(acc, s["max_n_gaps_in_TMD_subject_seq"]))
 
 
-        single_prot_dict = extract_filtered_csv_homologues_to_alignments(set_, acc, TMD_len, fasta_all_TMD_seqs, path_uniq_TMD_seqs_for_PSSM_FREECONTACT,
+        single_prot_dict = extract_filtered_csv_homologues_to_alignments(s, acc, TMD_len, fasta_all_TMD_seqs, path_uniq_TMD_seqs_for_PSSM_FREECONTACT,
                                                                          path_uniq_TMD_seqs_no_gaps_for_LIPS, path_uniq_TMD_seqs_surr5_for_LIPO, BLAST_csv_tar,
                                                                          query_TMD_seq, query_TMD_seq_surr5, logging)
         out_dict[acc_db] = single_prot_dict
 
     df_align_results = pd.DataFrame(out_dict).T
     df_align_results.index.name = "acc"
-    align_results_csv = os.path.join(set_["set_results_folder"], "{}_alignment_summary.csv".format(set_["setname"]))
+    align_results_csv = os.path.join(s["set_results_folder"], "{}_alignment_summary.csv".format(s["setname"]))
     df_align_results.to_csv(align_results_csv)
 
     logging.info('finished extract filtered csv homologues to alignments for {} proteins. Output = {}'.format(df_align_results.shape[0], align_results_csv))
 
 
-def extract_filtered_csv_homologues_to_alignments(set_, acc, TMD_len, fasta_all_TMD_seqs, path_uniq_TMD_seqs_for_PSSM_FREECONTACT,
+def extract_filtered_csv_homologues_to_alignments(s, acc, TMD_len, fasta_all_TMD_seqs, path_uniq_TMD_seqs_for_PSSM_FREECONTACT,
                                                   path_uniq_TMD_seqs_no_gaps_for_LIPS, path_uniq_TMD_seqs_surr5_for_LIPO, BLAST_csv_tar,
                                                   query_TMD_seq, query_TMD_seq_surr5, logging):
     fasta_uniq_TMD_seqs_for_PSSM_FREECONTACT = path_uniq_TMD_seqs_for_PSSM_FREECONTACT[:-4] + ".fas"
@@ -307,7 +307,7 @@ def extract_filtered_csv_homologues_to_alignments(set_, acc, TMD_len, fasta_all_
                 df["end"] = df["end"].astype(int)
 
                 if df.empty:
-                    BLAST_xml_tar = "{}.surr{}.BLAST.xml.tar.gz".format(acc, set_["num_of_sur_residues"])
+                    BLAST_xml_tar = "{}.surr{}.BLAST.xml.tar.gz".format(acc, s["num_of_sur_residues"])
                     raise ValueError("{} extract_filtered_csv_homologues_to_alignments failed\n. None of the homologues contained the original TMD sequence.\n"
                                      "This can occur when the homologue xml file is old, and the sequences from BLAST and the protein set don't match. Delete the"
                                      "homologue xml file ({}), re-run NCBI blast, and try-again".format(acc, BLAST_xml_tar))
@@ -335,8 +335,8 @@ def extract_filtered_csv_homologues_to_alignments(set_, acc, TMD_len, fasta_all_
 
                 # filter by gaps in query, gaps in subject, and fraction identity of TMD
                 df.query("n_gaps_query_align_seq <= {} & n_gaps_subject_align_seq <= {} & X_in_subject_TMD_align_seq_surr5 == False & "
-                         "frac_ident_TMD > {}".format(int(set_["max_n_gaps_in_TMD_query_seq"]), int(set_["max_n_gaps_in_TMD_subject_seq"]),
-                                                      float(set_["min_identity_of_TMD_seq"])), inplace=True)
+                         "frac_ident_TMD > {}".format(int(s["max_n_gaps_in_TMD_query_seq"]), int(s["max_n_gaps_in_TMD_subject_seq"]),
+                                                      float(s["min_identity_of_TMD_seq"])), inplace=True)
 
                 # save all TMD sequences (NON-UNIQUE) for manual inspection of alignments only
                 n_total_filtered_seqs = df.shape[0]
@@ -383,13 +383,13 @@ def extract_filtered_csv_homologues_to_alignments(set_, acc, TMD_len, fasta_all_
     return single_prot_dict
 
 # DEPRECATED METHOD
-def extract_filtered_csv_homologues_to_alignments_orig_handle_method(set_,logging):
+def extract_filtered_csv_homologues_to_alignments_orig_handle_method(s,logging):
 
     logging.info('start extract filtered csv homologues to alignments')
-    min_identity_of_TMD_seq=set_["min_identity_of_TMD_seq"]
-    max_identity_of_TMD_seq=set_["max_identity_of_TMD_seq"]
-    max_n_gaps_in_TMD_subject_seq=set_["max_n_gaps_in_TMD_subject_seq"]
-    tmp_list_loc = set_["list_of_tmd_start_end"]
+    min_identity_of_TMD_seq=s["min_identity_of_TMD_seq"]
+    max_identity_of_TMD_seq=s["max_identity_of_TMD_seq"]
+    max_n_gaps_in_TMD_subject_seq=s["max_n_gaps_in_TMD_subject_seq"]
+    tmp_list_loc = s["list_of_tmd_start_end"]
     tmp_file_handle = open(tmp_list_loc, 'r')
     # skip header
     next(tmp_file_handle)
@@ -400,19 +400,19 @@ def extract_filtered_csv_homologues_to_alignments_orig_handle_method(set_,loggin
         alignment_dict={}
         alignment_dict1 = {}
         alignment_dict2 = {}
-        #homo_csv_file_loc = os.path.join(set_["homologues_folder"], "NoRedundPro/%s_homo.csv") % acc
-        homo_csv_file_loc = os.path.join(set_["homologues_folder"],"a3m",database, "%s_homo%s.csv") % (acc,set_["surres"])
+        #homo_csv_file_loc = os.path.join(s["homologues_folder"], "NoRedundPro/%s_homo.csv") % acc
+        homo_csv_file_loc = os.path.join(s["homologues_folder"],"a3m",database, "%s_homo%s.csv") % (acc,s["surres"])
         if (os.path.isfile(homo_csv_file_loc) and os.path.getsize(homo_csv_file_loc) > 0):  # whether protein homologues csv file exists
             df = pd.read_csv(homo_csv_file_loc)
-            #homo_filtered_out_csv_file = os.path.join(set_["homologues_folder"], "NoRedundPro/%s_homo_filtered_aln.fasta") % acc
-            homo_filtered_out_csv_file = os.path.join(set_["homologues_folder"],"a3m",database,
-                                                      "%s_homo_filtered_aln%s.fasta") % (acc,set_["surres"])
+            #homo_filtered_out_csv_file = os.path.join(s["homologues_folder"], "NoRedundPro/%s_homo_filtered_aln.fasta") % acc
+            homo_filtered_out_csv_file = os.path.join(s["homologues_folder"],"a3m",database,
+                                                      "%s_homo_filtered_aln%s.fasta") % (acc,s["surres"])
             homo_filtered_out_csv_file_handle=open(homo_filtered_out_csv_file, 'w')
-            #homo_filter_file = os.path.join(set_["homologues_folder"], "a3m/NoRedundPro/%s.a3m.mem.uniq.2gaps") % acc
-            homo_filter_file = os.path.join(set_["homologues_folder"],"a3m",database, "%s.a3m.mem.uniq.2gaps%s") % (acc,set_["surres"])
+            #homo_filter_file = os.path.join(s["homologues_folder"], "a3m/NoRedundPro/%s.a3m.mem.uniq.2gaps") % acc
+            homo_filter_file = os.path.join(s["homologues_folder"],"a3m",database, "%s.a3m.mem.uniq.2gaps%s") % (acc,s["surres"])
             homo_filter_file_handle = open(homo_filter_file, "w")
-            #homo_mem_lips_input_file = os.path.join(set_["homologues_folder"],"a3m/NoRedundPro/%s.mem.lips.input") % acc
-            homo_mem_lips_input_file = os.path.join(set_["homologues_folder"],"a3m",database,"%s.mem.lips.input%s") % (acc,set_["surres"])
+            #homo_mem_lips_input_file = os.path.join(s["homologues_folder"],"a3m/NoRedundPro/%s.mem.lips.input") % acc
+            homo_mem_lips_input_file = os.path.join(s["homologues_folder"],"a3m",database,"%s.mem.lips.input%s") % (acc,s["surres"])
             homo_mem_lips_input_file_handle = open(homo_mem_lips_input_file, "w")
             #with open(homo_filtered_out_csv_file, 'w') as homo_filtered_out_csv_file_handle:
 
@@ -448,16 +448,16 @@ def extract_filtered_csv_homologues_to_alignments_orig_handle_method(set_,loggin
                     mean_hydrophobicity=thoipapy.common.calc_lipophilicity(row["tm_sbjt_seq"])
                     ratio = SequenceMatcher(None, row["tm_query_seq"], row["tm_sbjt_seq"]).ratio()
                     gap_num = row["tm_sbjt_seq"].count("-")
-                    if not re.search("-", row["tm_sbjt_seq"]) and not re.search("X",row["tm_sbjt_seq"]) and ratio >= set_["min_identity_of_TMD_seq"] and ratio < set_["max_identity_of_TMD_seq"] :  ##No X and gap in each alignment
+                    if not re.search("-", row["tm_sbjt_seq"]) and not re.search("X",row["tm_sbjt_seq"]) and ratio >= s["min_identity_of_TMD_seq"] and ratio < s["max_identity_of_TMD_seq"] :  ##No X and gap in each alignment
                         if not row["tm_sbjt_seq"] in alignment_dict:
                             alignment_dict[row["tm_sbjt_seq"]]=1
                             homo_filtered_out_csv_file_handle.write(">" + row["description"] + "\n")
                             print("{}".format(row["tm_sbjt_seq"]), file=homo_filtered_out_csv_file_handle)
-                    if not re.search("-", row["tm_sbjt_seq"]) and not re.search("X",row["tm_sbjt_seq"]) and ratio >= set_["min_identity_of_TMD_seq"] and ratio < set_["max_identity_of_TMD_seq"] :  ##No X and gap in each alignment
+                    if not re.search("-", row["tm_sbjt_seq"]) and not re.search("X",row["tm_sbjt_seq"]) and ratio >= s["min_identity_of_TMD_seq"] and ratio < s["max_identity_of_TMD_seq"] :  ##No X and gap in each alignment
                         if not row["tm_sbjt_seq"] in alignment_dict1:
                             alignment_dict1[row["tm_sbjt_seq"]]=1
                             print("{}".format(row["tm_sbjt_seq"]), file=homo_mem_lips_input_file_handle)
-                    if (gap_num <= 2 and not re.search("X",row["tm_sbjt_seq"]) and ratio >= set_["min_identity_of_TMD_seq"] and ratio < set_["max_identity_of_TMD_seq"] ):  # gap number le 3 and no X in each alignment
+                    if (gap_num <= 2 and not re.search("X",row["tm_sbjt_seq"]) and ratio >= s["min_identity_of_TMD_seq"] and ratio < s["max_identity_of_TMD_seq"] ):  # gap number le 3 and no X in each alignment
                         if not row["tm_sbjt_seq"] in alignment_dict2:
                             alignment_dict2[row["tm_sbjt_seq"]]=1
                             print("{}".format(row["tm_sbjt_seq"]), file=homo_filter_file_handle)

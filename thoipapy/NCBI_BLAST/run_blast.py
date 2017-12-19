@@ -1,6 +1,6 @@
 from Bio.Blast import NCBIWWW
 
-def extract_NCBI_homolgous_as_xml(acc,set_,logging,pathdict):
+def extract_NCBI_homolgous_as_xml(acc,s,logging,pathdict):
     filename = "OLD script"
     protein=filename[-12:-6]
     #for uniprot_acc in dfset['Protein']:

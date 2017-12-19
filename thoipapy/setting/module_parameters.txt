@@ -1,4 +1,4 @@
-    set_ : dict
+    s : dict
         Settings dictionary
     df_set : pd.DataFrame
         Dataframe containing the list of proteins to process, including their TMD sequences and full-length sequences

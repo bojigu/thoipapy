@@ -16,12 +16,12 @@ import numpy as np
 import glob
 
 
-def calculate_fasta_file_length(set_):
+def calculate_fasta_file_length(s):
     """calculate the protein sequence length
 
     :param
-    set_: dict
-    set_["input_fasta_file"] : str
+    s: dict
+    s["input_fasta_file"] : str
         Path to the input fasta sequence file
 
     :return:
@@ -29,31 +29,31 @@ def calculate_fasta_file_length(set_):
             protein sequence length
     """
     seqLen=int()
-    FastaFile = open(set_["input_fasta_file"], 'r')
+    FastaFile = open(s["input_fasta_file"], 'r')
     for rec in SeqIO.parse(FastaFile, 'fasta'):
         seqLen = len(rec)
     FastaFile.close()
     return seqLen
 
-def create_TMD_surround20_fasta_file(set_, database):
+def create_TMD_surround20_fasta_file(s, database):
     """create fasta file with tmd and surround 20 residues as new sequence for further blastp.
     also the input protein list file will be updated by adding "TMD_Sur_Left" and "TMD_Sur_Right"
 
-    original set_["list_of_tmd_start_end"] looks like this:
+    original s["list_of_tmd_start_end"] looks like this:
     Protein,TMD_Length,TMD_Start,TMD_End
     O15455,904,705,722
     P07174,425,253,273
 
-    after, set_["list_of_tmd_start_end"] will looks like this:
+    after, s["list_of_tmd_start_end"] will looks like this:
     Protein,TMD_Length,TMD_Start,TMD_End,TMD_Sur_Left,TMD_Sur_Right
     O15455,904,705,722,20,20
     P07174,425,253,273,20,20
     P04629,796,424,439,20,20
 
-    :param set_:
+    :param s:
     :return: updated surr20.fasta files and the inputed protein list file.
     """
-    tmp_list_loc = set_["list_of_tmd_start_end"]
+    tmp_list_loc = s["list_of_tmd_start_end"]
 
     with open(tmp_list_loc, 'r+') as tmp_file_handle:
         lines=tmp_file_handle.readlines()
@@ -73,7 +73,7 @@ def create_TMD_surround20_fasta_file(set_, database):
             tmp_length = int(row.strip().split(",")[1])
             tmp_start = int(row.strip().split(",")[2])
             tmp_end = int(row.strip().split(",")[3])
-            tmp_protein_fasta = os.path.join(set_["Protein_folder"], database,"%s.fasta") % acc
+            tmp_protein_fasta = os.path.join(s["Protein_folder"], database,"%s.fasta") % acc
             line=""
             if os.path.isfile(tmp_protein_fasta):
                 fasta_text = ""
@@ -86,37 +86,37 @@ def create_TMD_surround20_fasta_file(set_, database):
                 fasta_text=re.sub('[\s+]', '', fasta_text)
                 f.close()
                 if tmp_start>20:
-                    set_["tmp_surr_left"]=20
+                    s["tmp_surr_left"]=20
                 else:
-                    set_["tmp_surr_left"] = tmp_start-1
+                    s["tmp_surr_left"] = tmp_start-1
                 if tmp_length-tmp_end>20:
-                    set_["tmp_surr_right"]=20
+                    s["tmp_surr_right"]=20
                 else:
-                    set_["tmp_surr_right"]=tmp_length-tmp_end
-                tmp_surr_string=fasta_text[(tmp_start-set_["tmp_surr_left"]-1):(tmp_end+set_["tmp_surr_right"])]
-                tmp_surr_fasta_file=os.path.join(set_["Protein_folder"], database, "%s.surr20.fasta") % acc
+                    s["tmp_surr_right"]=tmp_length-tmp_end
+                tmp_surr_string=fasta_text[(tmp_start-s["tmp_surr_left"]-1):(tmp_end+s["tmp_surr_right"])]
+                tmp_surr_fasta_file=os.path.join(s["Protein_folder"], database, "%s.surr20.fasta") % acc
                 tmp_surr_fasta_file_handle=open(tmp_surr_fasta_file,"w")
                 tmp_surr_fasta_file_handle.write("> %s TMD add surround 20 residues\n" % acc)
                 tmp_surr_fasta_file_handle.write(tmp_surr_string)
                 tmp_surr_fasta_file_handle.close()
             if len(row.strip().split(","))==4:
-                line=row.strip()+","+str(set_["tmp_surr_left"])+","+str(set_["tmp_surr_right"])+"\n"
+                line=row.strip()+","+str(s["tmp_surr_left"])+","+str(s["tmp_surr_right"])+"\n"
                 tmp_file_handle.write(line)
             else:
                 tmp_file_handle.write(row)
     tmp_file_handle.close()
-    #return set_["tmp_surr_left"],set_["tmp_surr_right"]
+    #return s["tmp_surr_left"],s["tmp_surr_right"]
 
-def tmd_positions_match_fasta(set_):
+def tmd_positions_match_fasta(s):
     """ calculate the tmd start and end positions in the protein sequence,
     the input tmd sequence will be matched with the full protein sequence.
 
-    :param set_: set the input tm sequence, and the full protein sequence
+    :param s: set the input tm sequence, and the full protein sequence
 
     :return: tmd start and end positions in the full sequence
     """
-    fasta_file_loc=set_["input_fasta_file"]
-    tmd_file_loc=set_["input_tmd_file"]
+    fasta_file_loc=s["input_fasta_file"]
+    tmd_file_loc=s["input_tmd_file"]
     fasta_text=""
     tmd_text=""
     with open(fasta_file_loc) as f:
@@ -213,34 +213,37 @@ def calc_lipophilicity(seq, method = "mean"):
 
 def create_settingdict(excel_file_with_settings):
     sheetnames = ["run_settings", "file_locations", "variables"]
-    set_ = {}
+    s = {"excel_file_with_settings" : excel_file_with_settings}
     for sheetname in sheetnames:
         # open excel file as pandas dataframe
         dfset = pd.read_excel(excel_file_with_settings, sheetname=sheetname)
         # exclude row with notes, set parameter as index
-        dfset = dfset[["parameter", "value"]].dropna()
+        dfset = dfset.dropna(subset=["parameter", "value"])
         dfset.set_index("parameter", inplace=True)
-        # convert true-like strings to True, and false-like strings to False
-        dfset.value = dfset.value.apply(convert_truelike_to_bool, convert_nontrue=False)
-        dfset.value = dfset.value.apply(convert_falselike_to_bool)
+        if "type" in dfset.columns:
+            cols_with_bool = dfset.loc[dfset.type == "bool"].index
+            # convert true-like strings to True, and false-like strings to False
+            dfset.loc[cols_with_bool, "value"] = dfset.loc[cols_with_bool, "value"].apply(convert_truelike_to_bool, convert_nontrue=False)
+            dfset.loc[cols_with_bool, "value"] = dfset.loc[cols_with_bool, "value"].apply(convert_falselike_to_bool)
         # convert to dictionary
         sheet_as_dict = dfset.to_dict()["value"]
         # join dictionaries together
-        set_.update(sheet_as_dict)
+        s.update(sheet_as_dict)
 
-    list_paths_to_normalise = ["data_harddirve","Protein_folder", "Train_proteins", "Experimental_proteins","homologues_folder",
-                               "output_oa3m_homologues","xml_file_folder", "filtered_homo_folder", "RF_features","feature_entropy",
-                               "feature_pssm","feature_cumulative_coevolution","feature_relative_position","feature_lips_score","feature_physical_parameters",
-                               "structure_bind","RF_loc","logfile_dir"]
+    list_paths_to_normalise = ['dropbox_dir', 'sets_folder', 'base_dir', 'thoipapy_data_folder', 'Protein_folder', 'Train_proteins', 'Experimental_proteins',
+                               'Results_folder', 'homologues_folder', 'output_oa3m_homologues', 'xml_file_folder', 'filtered_homo_folder', 'features_folder',
+                               'feature_entropy', 'feature_pssm', 'feature_lipophilicity', 'feature_cumulative_coevolution', 'feature_relative_position',
+                               'feature_lips_score', 'feature_physical_parameters', 'structure_bind', 'RF_loc', 'Rcode', 'Sine_Curve_loc', 'logfile_dir',
+                               'freecontact_dir', 'hhblits_dir', 'uniprot_database_dir', 'Rscript_dir']
     # normalise the paths for selected columns, so that they are appropriate for the operating system
     for path in list_paths_to_normalise:
-        if path in set_:
-            set_[path] = os.path.normpath(set_[path])
-            if not os.path.exists(set_[path]):
-                os.makedirs(set_[path])
-    return set_
+        if path in s:
+            s[path] = os.path.normpath(s[path])
+            # if not os.path.exists(s[path]):
+            #     os.makedirs(s[path])
+    return s
 
-def setup_keyboard_interrupt_and_error_logging(set_, setname):
+def setup_keyboard_interrupt_and_error_logging(s, setname):
     ''' -------Setup keyboard interrupt----------
     '''
     # import arcgisscripting
@@ -252,18 +255,18 @@ def setup_keyboard_interrupt_and_error_logging(set_, setname):
     date_string = strftime("%Y%m%d_%H_%M_%S")
 
     # designate the output logfile
-    logfile = os.path.join(set_["logfile_dir"],'%s_%s_logfile.log' % (setname, date_string))
+    logfile = os.path.join(s["logfile_dir"],'%s_%s_logfile.log' % (setname, date_string))
 
     # # if multiprocessing is used, disable logging except for critical messages.
-    # if set_["use_multiprocessing"]:
+    # if s["use_multiprocessing"]:
     #     level_console = "CRITICAL"
     #     level_logfile = "CRITICAL"
     # else:
-    #     level_console = set_["logging_level_console"]
-    #     level_logfile = set_["logging_level_logfile"]
+    #     level_console = s["logging_level_console"]
+    #     level_logfile = s["logging_level_logfile"]
 
-    level_console = set_["logging_level_console"]
-    level_logfile = set_["logging_level_logfile"]
+    level_console = s["logging_level_console"]
+    level_logfile = s["logging_level_logfile"]
 
     logging = thoipapy.common.setup_error_logging(logfile, level_console, level_logfile)
     return logging
@@ -397,3 +400,91 @@ def get_path_of_protein_set(setname, sets_folder):
         raise ValueError("More than one excel file in set folder contains '{}' in the filename.\nexcel files in folder = {}".format(setname, xlsx_list))
 
     return set_path
+
+def process_set_protein_seqs(s, setname, df_set, set_path):
+    df_set["seqlen"] = df_set.full_seq.str.len()
+    df_set["TMD_len"] = df_set.TMD_seq.str.len()
+    df_set["acc_db"] = df_set.acc + "-" + df_set.database
+
+    for i in df_set.index:
+        acc = df_set.loc[i, "acc"]
+        TMD_seq = df_set.loc[i, "TMD_seq"]
+        full_seq = df_set.loc[i, "full_seq"]
+
+        # use regeg to get indices for start and end of TMD in seq
+        m = re.search(TMD_seq, full_seq)
+        if m:
+            # convert from python indexing to unprot indexing
+            df_set.loc[i, "TMD_start"] = m.start() + 1
+            df_set.loc[i, "TMD_end"] = m.end()
+        else:
+            raise IndexError("TMD seq not found in full_seq.\nacc = {}\nTMD_seq = {}\nfull_seq = {}".format(acc, TMD_seq, full_seq))
+
+    # first get TMD plus 5 surrounding residues (for TMD_lipo script)
+    num_of_sur_residues = 5
+    df_set, TMD_seq_pl_surr_series = thoipapy.utils.create_column_with_TMD_plus_surround_seq(df_set, num_of_sur_residues)
+    df_set["TMD_seq_pl_surr5"] = TMD_seq_pl_surr_series
+
+    # Repeat for the actual surrounding number of residues chosen in the settings file
+    # this overwrites the indexing columns created for the surr5 above, except for the final sequence
+    num_of_sur_residues = s["num_of_sur_residues"]
+    df_set, TMD_seq_pl_surr_series = thoipapy.utils.create_column_with_TMD_plus_surround_seq(df_set, num_of_sur_residues)
+    df_set["TMD_seq_pl_surr"] = TMD_seq_pl_surr_series
+
+    # add the number of included residues in the surrounding seq to the left and right of the TMD
+    # e.g. 20 where the TMD is in the centre of the protein, otherwise <20 where TMD is near start or end of full seq
+    df_set["tm_surr_left"] = df_set.TMD_start - df_set.TMD_start_pl_surr
+    df_set["tm_surr_right"] = df_set.TMD_end_pl_surr - df_set.TMD_end
+
+    # save the full sequences in fasta format for CD-HIT, etc.
+    fasta_out = os.path.join(os.path.dirname(set_path), "fasta", "{}_full.fas".format(setname))
+    thoipapy.utils.make_sure_path_exists(fasta_out, isfile=True)
+    with open(fasta_out, "w") as f:
+        for n, acc in enumerate(df_set.index):
+            f.write(">{}-{}\n{}\n".format(n, df_set.loc[acc, "acc_db"], df_set.loc[acc, "full_seq"]))
+
+    fasta_out = os.path.join(os.path.dirname(set_path), "fasta", "{}_TMD.fas".format(setname))
+    thoipapy.utils.make_sure_path_exists(fasta_out, isfile=True)
+    with open(fasta_out, "w") as f:
+        for n, acc in enumerate(df_set.index):
+            f.write(">{}-{}\n{}\n".format(n, df_set.loc[acc, "acc_db"], df_set.loc[acc, "TMD_seq"]))
+
+    # open previously saved CD-hit results
+    cdhit_cluster_txt = os.path.join(os.path.dirname(set_path), "fasta", "{}.fas.1.clstr.sorted.txt".format(setname))
+    if os.path.isfile(cdhit_cluster_txt):
+        lines_with_ref_seq = []
+        with open(cdhit_cluster_txt, "r") as f:
+            for line in f:
+                if "*" in line:
+                    lines_with_ref_seq.append(line)
+
+        cluster_rep_lines_ser = pd.Series(lines_with_ref_seq)
+        # extracts the number between > and - (i.e., the index), sorts and returns as a list
+        # redundant sequences will be excluded
+        cluster_rep_list = cluster_rep_lines_ser.str.extract(">(\d*)-", expand=False).astype(int).sort_values().tolist()
+        df_set.loc[cluster_rep_list, "cdhit_cluster_rep"] = True
+        df_set["cdhit_cluster_rep"] = df_set["cdhit_cluster_rep"].fillna(False)
+    else:
+        logging.warning("No CD-HIT results found. Redundancy check for training and validation is not possible.")
+        df_set["cdhit_cluster_rep"] = "no_cdhit_results"
+
+    """  Rearrange the dataframe columns so that the order is as follows.
+    orig Bo file : ['acc', 'TMD_Length', 'TMD_Start', 'TMD_End', 'TMD_Sur_Left', 'TMD_Sur_Right']
+    updated file = ['acc', 'seqlen', 'TMD_start', 'TMD_end', 'tm_surr_left', 'tm_surr_right', 'database',  ....]
+
+    """
+    # reorder columns
+    df_set = thoipapy.utils.reorder_dataframe_columns(df_set, ['acc', 'seqlen', 'TMD_start', 'TMD_end', "tm_surr_left", "tm_surr_right", "database"])
+
+    # convert the floats to integers
+    df_set.iloc[:, 1:5] = df_set.iloc[:, 1:5].astype(int)
+
+    # save to csv, which is opened by other functions
+    list_of_tmd_start_end = os.path.join(s["thoipapy_data_folder"], "Input_data", os.path.basename(set_path)[:-5] + "_processed.csv")
+    s["list_of_tmd_start_end"] = list_of_tmd_start_end
+    thoipapy.utils.make_sure_path_exists(list_of_tmd_start_end, isfile=True)
+    df_set.set_index("acc").to_csv(list_of_tmd_start_end)
+    train_data_csv = os.path.join(s["set_results_folder"], "{}_processed_input_sequences.csv".format(s["setname"]))
+    df_set.set_index("acc").to_csv(train_data_csv)
+
+    return df_set

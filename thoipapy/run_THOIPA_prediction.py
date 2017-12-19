@@ -80,7 +80,7 @@ def run_THOIPA_prediction(protein_name, TMD_seq, full_seq, predictions_folder):
     TMD_end = m.end()
     logging.info("TMD found in full sequence. start = {}, end = {}".format(TMD_start, TMD_end))
 
-    surr = set_["num_of_sur_residues"]
+    surr = s["num_of_sur_residues"]
     TMD_start_pl_surr, TMD_end_pl_surr = get_start_end_pl_surr(TMD_start, TMD_end, seqlen, surr=surr)
     TMD_start_pl_5, TMD_end_pl_5 = get_start_end_pl_surr(TMD_start, TMD_end, seqlen, surr=5)
 
@@ -94,16 +94,16 @@ def run_THOIPA_prediction(protein_name, TMD_seq, full_seq, predictions_folder):
     logging.info("query_TMD_seq_surr5 : {}".format(query_TMD_seq_surr5))
     logging.info("TMD_seq_pl_surr : {}".format(TMD_seq_pl_surr))
 
-    expect_value = set_["expect_value"]
-    hit_list_size = set_["hit_list_size"]
+    expect_value = s["expect_value"]
+    hit_list_size = s["hit_list_size"]
     if not os.path.isfile(xml_tar_gz):
         download_homologues_from_ncbi(acc, TMD_seq_pl_surr, blast_xml_file, xml_txt, xml_tar_gz, expect_value, hit_list_size, logging)
 
     if not os.path.isfile(BLAST_csv_tar):
-        parse_NCBI_xml_to_csv(set_, acc, xml_tar_gz, BLAST_csv_tar, TMD_start, TMD_end, logging)
+        parse_NCBI_xml_to_csv(s, acc, xml_tar_gz, BLAST_csv_tar, TMD_start, TMD_end, logging)
 
     #if not os.path.isfile(path_uniq_TMD_seqs_for_PSSM_FREECONTACT):
-    extract_filtered_csv_homologues_to_alignments(set_, acc, len(TMD_seq), fasta_all_TMD_seqs, path_uniq_TMD_seqs_for_PSSM_FREECONTACT,
+    extract_filtered_csv_homologues_to_alignments(s, acc, len(TMD_seq), fasta_all_TMD_seqs, path_uniq_TMD_seqs_for_PSSM_FREECONTACT,
                                                       path_uniq_TMD_seqs_no_gaps_for_LIPS, path_uniq_TMD_seqs_surr5_for_LIPO, BLAST_csv_tar,
                                                       TMD_seq, query_TMD_seq_surr5, logging)
 
@@ -121,7 +121,7 @@ def run_THOIPA_prediction(protein_name, TMD_seq, full_seq, predictions_folder):
     thoipapy_module_path = os.path.dirname(os.path.abspath(thoipapy.__file__))
     hydrophob_scale_path = os.path.join(thoipapy_module_path, "setting", "hydrophobicity_scales.xlsx")
 
-    lipo_from_pssm(acc, pssm_surr5_csv, lipo_csv, tm_surr_left, tm_surr_right, set_["lipophilicity_scale"], logging, plot_linechart=True)
+    lipo_from_pssm(acc, pssm_surr5_csv, lipo_csv, tm_surr_left, tm_surr_right, s["lipophilicity_scale"], logging, plot_linechart=True)
                  # (acc, pssm_csv_surr5, lipo_csv, tm_surr_left, tm_surr_right, scalename, logging, plot_linechart = False)
 
     entropy_calculation(acc, path_uniq_TMD_seqs_for_PSSM_FREECONTACT, entropy_file, logging)
@@ -130,7 +130,7 @@ def run_THOIPA_prediction(protein_name, TMD_seq, full_seq, predictions_folder):
         logging.warning("\n Freecontact cannot be run in Windows! Skipping coevolution_calculation_with_freecontact."
                          "For testing, copy file from Linux and rename to {}".format(freecontact_file))
     else:
-        coevolution_calculation_with_freecontact(path_uniq_TMD_seqs_for_PSSM_FREECONTACT, freecontact_file, set_["freecontact_dir"], logging)
+        coevolution_calculation_with_freecontact(path_uniq_TMD_seqs_for_PSSM_FREECONTACT, freecontact_file, s["freecontact_dir"], logging)
 
     parse_freecontact_coevolution(acc, freecontact_file, freecontact_parsed_csv, logging)
 
@@ -167,7 +167,7 @@ if __name__ == "__main__":
     args = parser.parse_args()
     #settings_path = r"D:\Dropbox\tm_homodimer_dropbox\thoipapy_run_settings_MT_win10_work.xlsx"
     settings_path = args.s
-    set_ = thoipapy.common.create_settingdict(settings_path)
+    s = thoipapy.common.create_settingdict(settings_path)
     #test_protein, TMD_seq, full_seq = "1c17_A", "AAVMMGLAAIGAAIGIGILG", "MENLNMDLLYMAAAVMMGLAAIGAAIGIGILGGKFLEGAARQPDLIPLLRTQFFIVMGLVDAIPMIAVGLGLYVMFAVA"
     #test_protein, TMD_seq, full_seq = "Q12983", "FLKVFLPSLLLSHLLAIGLGIYIG", "MGDAAADPPGPALPCEFLRPGCGAPLSPGAQLGRGAPTSAFPPPAAEAHPAARRGLRSPQLPSGAMSQNGAPGMQEESLQGSWVELHFSNNGNGGSVPASVSIYNGDMEKILLDAQHESGRSSSKSSHCDSPPRSQTPQDTNRASETDTHSIGEKNSSQSEEDDIERRKEVESILKKNSDWIWDWSSRPENIPPKEFLFKHPKRTATLSMRNTSVMKKGGIFSAEFLKVFLPSLLLSHLLAIGLGIYIGRRLTTSTSTF"
 

@@ -30,6 +30,7 @@ from shutil import copyfile
 from time import strftime
 import plotly
 
+
 class Command(object):
     '''
     subprocess for running shell commands in win and linux
@@ -1633,3 +1634,18 @@ def get_list_residues_in_motif(seq, motif_ss, motif_len):
     # sys.stdout.write("".join([str(x) for x in list_residues_in_motif]), "list_residues_in_motif")
 
     return list_residues_in_motif
+
+def slice_TMD_seq_pl_surr(df_set):
+    # note that due to uniprot-like indexing, the start index = start-1
+    return df_set['full_seq'][int(df_set['TMD_start_pl_surr'] - 1):int(df_set['TMD_end_pl_surr'])]
+
+def create_column_with_TMD_plus_surround_seq(df_set, num_of_sur_residues):
+    df_set["TMD_start_pl_surr"] = df_set.TMD_start - num_of_sur_residues
+    df_set.loc[df_set["TMD_start_pl_surr"] < 1, "TMD_start_pl_surr"] = 1
+    df_set["TMD_end_pl_surr"] = df_set.TMD_end + num_of_sur_residues
+    for i in df_set.index:
+        #acc = df_set.loc[i, "acc"]
+        if df_set.loc[i, "TMD_end_pl_surr"] > df_set.loc[i, "seqlen"]:
+            df_set.loc[i, "TMD_end_pl_surr"] = df_set.loc[i, "seqlen"]
+    TMD_seq_pl_surr_series = df_set.apply(slice_TMD_seq_pl_surr, axis=1)
+    return df_set, TMD_seq_pl_surr_series

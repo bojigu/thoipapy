@@ -11,19 +11,16 @@ from sklearn.metrics import roc_curve, auc
 from sklearn.model_selection import StratifiedKFold
 import os
 import subprocess, threading
-# import sys
-# import glob
-import numpy as np
-# import eccpy.tools as tools
 from sklearn.externals import joblib
 import pickle
 import time
+from korbinian.utils import convert_truelike_to_bool, convert_falselike_to_bool
 
 # intersect function
 def intersect(a, b):
      return list(set(a) & set(b))
 
-def drop_cols_not_used_in_ML(df_data):
+def drop_cols_not_used_in_ML(df_data, s):
     """Remove columns not used in machine learning training or testing.
 
     This includes
@@ -51,43 +48,57 @@ def drop_cols_not_used_in_ML(df_data):
     #                 "CumDI4_norm", "CumDI8_norm", "CumMI4_norm", "CumMI8_norm"]#, "RelPos_TMD", "RelPos_fullseq"
     #                 #"CoevDImax_norm", "CoevDI8_norm", "CoevMImax_norm", "CoevMI8_norm", ]#
 
+    # cols_to_drop = ["acc_db", "residue_num", "residue_name", "interface", "interface_score", "Entropy",
+    #                 #"CumDI4", "CumDI8", "CumMI4", "CumMI8", "CumDI4_norm", "CumDI8_norm", "CumMI4_norm", "CumMI8_norm",
+    #                 #"Aromatic_sAA", "Polar_sAA", "Cbbranched_sAA", "Small_sAA",
+    #                 #"H", "E", "K", "D", "N",
+    #                 #"C", "S", "D", "E", "K", "R", "Q", "N",
+    #                 "CS", "DE", "KR", "QN",
+    #                 "RelPos_TMD", "RelPos_fullseq",
+    #                 "CoevDImax", "CoevDI4", "CoevDI8",  "CoevMImax", "CoevMI4", "CoevMI8",
+    #                 #"CoevDI4_norm", "CoevMI4_norm",
+    #                 "CoevDImax_norm", 'CoevMImax_norm',
+    #                 #"LIPS_entropy", "LIPS_L*E", "LIPS_lipo",
+    #                 #"LIPS_surface",
+    #                 #"LIPS_surface_ranked",
+    #                 #"LIPS_surface_ranked_norm",
+    #                 #"n_homologues",
+    #                 "n_homol_norm",
+    #                 #"GxxxG",
+    #                 #"SmxxxSm",
+    #                 #"PolarxxxPolar"
+    #                 ]
+    #                 #"n_homologues", , "LIPS_surface_ranked",
+    #                 #"
+    #                 #"CumDI4_norm", "CumDI8_norm", "CumMI4_norm", "CumMI8_norm"]#, "RelPos_TMD", "RelPos_fullseq"
+    #                 #"CoevDImax_norm", "CoevDI8_norm", "CoevMImax_norm", "CoevMI8_norm", ]#
 
-    cols_to_drop = ["acc_db", "residue_num", "residue_name", "interface", "interface_score", "Entropy",
-                    #"CumDI4", "CumDI8", "CumMI4", "CumMI8", "CumDI4_norm", "CumDI8_norm", "CumMI4_norm", "CumMI8_norm",
-                    #"Aromatic_sAA", "Polar_sAA", "Cbbranched_sAA", "Small_sAA",
-                    #"H", "E", "K", "D", "N",
-                    #"C", "S", "D", "E", "K", "R", "Q", "N",
-                    "CS", "DE", "KR", "QN",
-                    "RelPos_TMD", "RelPos_fullseq",
-                    "CoevDImax", "CoevDI4", "CoevDI8",  "CoevMImax", "CoevMI4", "CoevMI8",
-                    #"CoevDI4_norm", "CoevMI4_norm",
-                    "CoevDImax_norm", 'CoevMImax_norm',
-                    #"LIPS_entropy", "LIPS_L*E", "LIPS_lipo",
-                    #"LIPS_surface",
-                    #"LIPS_surface_ranked",
-                    #"LIPS_surface_ranked_norm",
-                    #"n_homologues",
-                    "n_homol_norm",
-                    #"GxxxG",
-                    #"SmxxxSm",
-                    #"PolarxxxPolar"
-                    ]
-                    #"n_homologues", , "LIPS_surface_ranked",
-                    #"
-                    #"CumDI4_norm", "CumDI8_norm", "CumMI4_norm", "CumMI8_norm"]#, "RelPos_TMD", "RelPos_fullseq"
-                    #"CoevDImax_norm", "CoevDI8_norm", "CoevMImax_norm", "CoevMI8_norm", ]#
+    # pd.Series(cols_to_drop).to_csv(r"D:\data_thoipapy\Results\set02\set02_dropped_features.csv")
+    #
+    #
+    # # got only those that are actually in the columns
+    # cols_to_drop = set(cols_to_drop).intersection(set(df_data.columns))
+    # df_data = df_data.drop(cols_to_drop, axis=1)
 
-    # got only those that are actually in the columns
-    cols_to_drop = set(cols_to_drop).intersection(set(df_data.columns))
-    df_data = df_data.drop(cols_to_drop, axis=1)
+    # read the features tab of the excel settings file
+    features_df = pd.read_excel(s["excel_file_with_settings"], sheetname="features")
+    # convert "WAHR" etc to true and false
+    features_df["include"] = features_df["include"].apply(convert_truelike_to_bool, convert_nontrue=False)
+    features_df["include"] = features_df["include"].apply(convert_falselike_to_bool)
+    # drop any features that are not labeled TRUE for inclusion
+    features_df = features_df.loc[features_df.include == True]
+    # filter df_data to only keep the desired feature columns
+    feature_list = features_df.feature.tolist()
+    df_data = df_data.loc[:, feature_list]
+
     return df_data
 
-def THOIPA_RF_classifier_with_settings(set_):
+def THOIPA_RF_classifier_with_settings(s):
     """ For tuning the RF parameters, they are always in one place, and determined by the settings file.
 
     Parameters
     ----------
-    set_
+    s
 
     Returns
     -------
@@ -95,22 +106,24 @@ def THOIPA_RF_classifier_with_settings(set_):
     """
 
     # convert max_features to python None if "None"
-    max_features = None if set_["max_features"] == "None" else set_["max_features"]
+    max_features = None if s["max_features"] == "None" else s["max_features"]
 
-    forest = RandomForestClassifier(n_estimators=set_["RF_number_of_estimators"], n_jobs=set_["n_jobs"], criterion=set_["criterion"],
-                                    min_samples_leaf=set_["min_samples_leaf"],
-                                    #max_depth=set_["max_depth"],
-                                    oob_score=True, max_features=max_features, bootstrap=bool(set_["bootstrap"]),
-                                    #random_state=set_["random_state"]
+    print(s["dropbox_dir"])
+
+    forest = RandomForestClassifier(n_estimators=s["RF_number_of_estimators"], n_jobs=s["n_CPU_cores"], criterion=s["criterion"],
+                                    min_samples_leaf=s["min_samples_leaf"],
+                                    #max_depth=s["max_depth"],
+                                    oob_score=True, max_features=max_features, bootstrap=bool(s["bootstrap"]),
+                                    #random_state=s["random_state"]
                                     )
     return forest
 
-def train_random_forest_model(set_, logging):
+def train_random_forest_model(s, logging):
     """Train the random forest model for a particular set.
 
     Parameters
     ----------
-    set_ : dict
+    s : dict
         Settings dictionary
     logging : logging.Logger
         Python object with settings for logging to console and file.
@@ -123,23 +136,23 @@ def train_random_forest_model(set_, logging):
     """
     logging.info('starting to predict etra data with THOIPA prediction model')
 
-    train_data_csv = os.path.join(set_["set_results_folder"], "{}_train_data.csv".format(set_["setname"]))
-    train_data_used_for_model_csv = train_data_csv[:-4] + "used_for_model.csv"
-    model_pkl = os.path.join(set_["set_results_folder"], "{}_rfmodel.pkl".format(set_["setname"]))
+    train_data_csv = os.path.join(s["set_results_folder"], "{}_train_data.csv".format(s["setname"]))
+    train_data_used_for_model_csv = os.path.join(s["set_results_folder"], "{}_train_data_used_for_model.csv".format(s["setname"]))
+    model_pkl = os.path.join(s["set_results_folder"], "{}_rfmodel.pkl".format(s["setname"]))
 
     df_data = pd.read_csv(train_data_csv, index_col=0)
 
-    df_data = df_data.loc[df_data.n_homologues >= set_["min_n_homol_training"]]
+    df_data = df_data.loc[df_data.n_homologues >= s["min_n_homol_training"]]
 
     y = df_data["interface"]
-    X = drop_cols_not_used_in_ML(df_data)
+    X = drop_cols_not_used_in_ML(df_data, s)
 
     X.to_csv(train_data_used_for_model_csv)
 
     if 1 not in y.tolist():
         raise ValueError("None of the residues are marked 1 for an interface residue!")
 
-    forest = THOIPA_RF_classifier_with_settings(set_)
+    forest = THOIPA_RF_classifier_with_settings(s)
     # save random forest model into local driver
     # pkl_file = r'D:\thoipapy\RandomForest\rfmodel.pkl'
     fit = forest.fit(X, y)
@@ -147,7 +160,7 @@ def train_random_forest_model(set_, logging):
 
     logging.info('finished training random forest algorithm ({})'.format(model_pkl))
 
-def predict_test_dataset_with_THOIPA(train_setname, test_setname, set_, logging):
+def predict_test_dataset_with_THOIPA_DEPRECATED(train_setname, test_setname, s, logging):
     """ Predict the interface of residues within one set (e.g. set03)
     with a trained model from another set (e.g. set04).
 
@@ -164,7 +177,7 @@ def predict_test_dataset_with_THOIPA(train_setname, test_setname, set_, logging)
         Name of the dataset used for training. E.g. "set04".
     test_setname : str
         Name of the dataset used for testing. E.g. "set03".
-    set_ : dict
+    s : dict
         Settings dictionary
     logging : logging.Logger
         Python object with settings for logging to console and file.
@@ -177,14 +190,14 @@ def predict_test_dataset_with_THOIPA(train_setname, test_setname, set_, logging)
         rows = range(0, number of AA in test set)
     """
 
-    model_pkl = os.path.join(set_["set_results_folder"], "{}_rfmodel.pkl".format(train_setname))
-    test_data_csv = os.path.join(set_["Results_folder"], test_setname, "{}_train_data.csv".format(test_setname))
-    THOIPA_pred_csv = os.path.join(set_["set_results_folder"], "trainset{}_testset{}_predictions.csv".format(train_setname[-2:], test_setname[-2:]))
+    model_pkl = os.path.join(s["set_results_folder"], "{}_rfmodel.pkl".format(train_setname))
+    test_data_csv = os.path.join(s["Results_folder"], test_setname, "{}_train_data.csv".format(test_setname))
+    THOIPA_pred_csv = os.path.join(s["set_results_folder"], "trainset{}_testset{}_predictions.csv".format(train_setname[-2:], test_setname[-2:]))
 
     fit = joblib.load(model_pkl)
 
     df_data = pd.read_csv(test_data_csv, index_col=0)
-    df_testdata = drop_cols_not_used_in_ML(df_data)
+    df_testdata = drop_cols_not_used_in_ML(df_data, s)
     tX = df_testdata
 
     tp = fit.predict_proba(tX)
@@ -197,22 +210,22 @@ def predict_test_dataset_with_THOIPA(train_setname, test_setname, set_, logging)
     df_out["THOIPA"] = tp[:, 1]  # tools.normalise_0_1(tp[:, 1])[0]
 
     df_out.to_csv(THOIPA_pred_csv)
-    logging.info('finished predict_test_dataset_with_THOIPA ({})'.format(THOIPA_pred_csv))
+    logging.info('finished predict_test_dataset_with_THOIPA_DEPRECATED ({})'.format(THOIPA_pred_csv))
 
     # # fit = joblib.load(pkl_file)
     #
     # # test etra data
-    # testdata_list = glob.glob(os.path.join(set_["thoipapy_data_folder"],"Features", "combined/etra", "*.surr{}.gaps{}.combined_features.csv".format( set_["num_of_sur_residues"], set_["max_n_gaps_in_TMD_subject_seq"])))
+    # testdata_list = glob.glob(os.path.join(s["thoipapy_data_folder"],"Features", "combined/etra", "*.surr{}.gaps{}.combined_features.csv".format( s["num_of_sur_residues"], s["max_n_gaps_in_TMD_subject_seq"])))
     #
     #
     # i = 0
     # for test_data in testdata_list:
     #     acc = test_data.split('\\')[-1][0:6]
     #     # if acc == "O75460":
-    #     dirupt_path = os.path.join(set_["base_dir"],"data_xy","Figure","Show_interface","Interface_xlsx", "{}.xlsx".format(acc))
+    #     dirupt_path = os.path.join(s["base_dir"],"data_xy","Figure","Show_interface","Interface_xlsx", "{}.xlsx".format(acc))
     #     ddf = pd.read_excel(dirupt_path, index_col=0)
     #     disruption = ddf.Disruption
-    #     thoipa_out = os.path.join(set_["thoipapy_data_folder"],"Features","combined/etra", "{}.thoipa_pred.csv".format(acc))
+    #     thoipa_out = os.path.join(s["thoipapy_data_folder"],"Features","combined/etra", "{}.thoipa_pred.csv".format(acc))
     #     tdf = pd.read_csv(test_data, sep=',', engine='python', index_col=0)
     #     tdf.index = tdf.index.astype(int) + 1
     #     aa = tdf.residue_name
@@ -231,16 +244,16 @@ def predict_test_dataset_with_THOIPA(train_setname, test_setname, set_, logging)
 
 
 
-def run_Rscipt_random_forest(set_, output_file_loc, logging):
+def run_Rscipt_random_forest(s, output_file_loc, logging):
     logging.info('begining to run random forest R code')
-    Rscript_loc = set_["Rscript_dir"]
-    Random_Forest_R_code_file=set_["Rcode"]
-    train_data_file=os.path.join(set_["RF_loc"],"NoRedundPro/TRAINDATA68.csv")
-    acc = set_["tm_protein_name"]
-    tmp_protein_test_data = os.path.join(set_["RF_loc"], "TestData/%s/%s.mem.2gap.physipara.testdata.csv") % (set_["Datatype"],acc)
+    Rscript_loc = s["Rscript_dir"]
+    Random_Forest_R_code_file=s["Rcode"]
+    train_data_file=os.path.join(s["RF_loc"],"NoRedundPro/TRAINDATA68.csv")
+    acc = s["tm_protein_name"]
+    tmp_protein_test_data = os.path.join(s["RF_loc"], "TestData/%s/%s.mem.2gap.physipara.testdata.csv") % (s["Datatype"],acc)
     #out_put_file_loc_handle=open(output_file_loc,"w")
     if os.path.isfile(tmp_protein_test_data):
-        prediction_output_file = os.path.join(set_["RF_loc"],"%s.pred.out") % acc
+        prediction_output_file = os.path.join(s["RF_loc"],"%s.pred.out") % acc
         prediction_output_file = os.path.join("/home/students/zeng/workspace/test2/out", "%s.pred.out") % acc
         prediction_output_file_handle=open(prediction_output_file,"w")
         exect_str = "{Rscript} {Random_Forest_R_code} {train_data} {test_data} {output}".format(Rscript=Rscript_loc, Random_Forest_R_code=Random_Forest_R_code_file,train_data=train_data_file,test_data=tmp_protein_test_data,output=output_file_loc)
@@ -281,7 +294,7 @@ def run_Rscipt_random_forest(set_, output_file_loc, logging):
 
 
 
-def run_10fold_cross_validation(set_, logging):
+def run_10fold_cross_validation(s, logging):
     """Run 10-fold cross-validation for a particular set of TMDs (e.g. set04).
 
     The SAME SET is used for both training and cross-validation.
@@ -296,7 +309,7 @@ def run_10fold_cross_validation(set_, logging):
 
     Parameters
     ----------
-    set_ : dict
+    s : dict
         Settings dictionary
     logging : logging.Logger
         Python object with settings for logging to console and file.
@@ -308,16 +321,17 @@ def run_10fold_cross_validation(set_, logging):
         Also contains the mean ROC curve, and the mean AUC.
     """
     logging.info('10-fold cross validation is running\n')
-    train_data_csv = os.path.join(set_["set_results_folder"], "{}_train_data.csv".format(set_["setname"]))
-    crossvalidation_csv = os.path.join(set_["set_results_folder"], "crossvalidation", "trainset{}_testset{}_crossvalidation.csv".format(set_["setname"][-2:], set_["setname"][-2:]))
-    crossvalidation_pkl = os.path.join(set_["set_results_folder"], "crossvalidation", "trainset{}_testset{}_crossvalidation.pkl".format(set_["setname"][-2:], set_["setname"][-2:]))
+    train_data_csv = os.path.join(s["set_results_folder"], "{}_train_data.csv".format(s["setname"]))
+    crossvalidation_csv = os.path.join(s["set_results_folder"], "crossvalidation", "trainset{}_testset{}_crossvalidation.csv".format(s["setname"][-2:], s["setname"][-2:]))
+    crossvalidation_pkl = os.path.join(s["set_results_folder"], "crossvalidation", "trainset{}_testset{}_crossvalidation.pkl".format(s["setname"][-2:], s["setname"][-2:]))
+    features_csv = os.path.join(s["set_results_folder"], "{}_test_features.csv".format(s["setname"]))
 
     thoipapy.utils.make_sure_path_exists(crossvalidation_csv, isfile=True)
 
     df_data = pd.read_csv(train_data_csv, index_col=0)
 
     # drop training data (full protein) that don't have enough homologues
-    df_data = df_data.loc[df_data.n_homologues >= set_["min_n_homol_training"]]
+    df_data = df_data.loc[df_data.n_homologues >= s["min_n_homol_training"]]
 
     #data = pd.read_csv('/scratch2/zeng/homotypic_data/data/RandomForest/PsEnCo/TrainData2',delimiter="\s",engine='python')
     # del data["Residue_id"]
@@ -326,7 +340,7 @@ def run_10fold_cross_validation(set_, logging):
     # features=data.columns[0:28]
     # X=data[features]
     # y=data["Bind"]
-    X = drop_cols_not_used_in_ML(df_data)
+    X = drop_cols_not_used_in_ML(df_data, s)
     y = df_data["interface"]
     #n_samples, n_features = X.shape
     #random_state = np.random.RandomState(0)
@@ -335,20 +349,20 @@ def run_10fold_cross_validation(set_, logging):
     #StratifiedKFold(n_splits=2, random_state=None, shuffle=False)
     #cv = StratifiedKFold(y, n_folds=6)
 
-    skf = StratifiedKFold(n_splits=set_["cross_validation_number_of_splits"])
+    skf = StratifiedKFold(n_splits=s["cross_validation_number_of_splits"])
     cv = list(skf.split(X, y))
 
     # # convert max_features to python None if "None"
-    # max_features = None if set_["max_features"] == "None" else set_["max_features"]
+    # max_features = None if s["max_features"] == "None" else s["max_features"]
     #
-    # forest = RandomForestClassifier(n_estimators=set_["RF_number_of_estimators"], n_jobs=set_["n_jobs"], criterion=set_["criterion"],
-    #                                 min_samples_leaf=set_["min_samples_leaf"],
-    #                                 #max_depth=set_["max_depth"],
-    #                                 oob_score=True, max_features=max_features, bootstrap=bool(set_["bootstrap"]),
-    #                                 #random_state=set_["random_state"]
+    # forest = RandomForestClassifier(n_estimators=s["RF_number_of_estimators"], n_jobs=s["n_CPU_cores"], criterion=s["criterion"],
+    #                                 min_samples_leaf=s["min_samples_leaf"],
+    #                                 #max_depth=s["max_depth"],
+    #                                 oob_score=True, max_features=max_features, bootstrap=bool(s["bootstrap"]),
+    #                                 #random_state=s["random_state"]
     #                                 )
 
-    forest = THOIPA_RF_classifier_with_settings(set_)
+    forest = THOIPA_RF_classifier_with_settings(s)
 
     mean_tpr = 0.0
     mean_fpr = np.linspace(0, 1, 100)
@@ -370,6 +384,7 @@ def run_10fold_cross_validation(set_, logging):
         mean_tpr[0] = 0.0
         roc_auc = auc(fpr, tpr)
         #plt.plot(fpr, tpr, lw=1, label='ROC fold %d (area = %0.2f)' % (i, roc_auc))
+    sys.stdout.write("\n"), sys.stdout.flush()
 
     print([estimator.tree_.max_depth for estimator in forest.estimators_])
 
@@ -392,9 +407,12 @@ def run_10fold_cross_validation(set_, logging):
     
     # df_xv.loc["mean_auc"] = mean_auc
     # df_xv.to_csv(crossvalidation_csv)
+    features_ser = pd.Series(X.columns)
+    features_ser.to_csv(features_csv)
+
     logging.info('10-fold cross validation is finished. Mean AUC = {:.3f}\nFeatures included:\n{}'.format(mean_auc, X.columns.tolist()))
 
-def fig_10fold_cross_validation(set_, logging):
+def fig_10fold_cross_validation(s, logging):
     """Create figure showing ROC curve for each fold in a 10-fold validation.
 
     The underlying data is created by run_10fold_cross_validation. If this has not been run,
@@ -402,15 +420,15 @@ def fig_10fold_cross_validation(set_, logging):
 
     Parameters
     ----------
-    set_ : dict
+    s : dict
         Settings dictionary
     logging : logging.Logger
         Python object with settings for logging to console and file.
     """
     plt.rcParams.update({'font.size': 7})
-    crossvalidation_csv = os.path.join(set_["set_results_folder"], "crossvalidation", "trainset{}_testset{}_crossvalidation.csv".format(set_["setname"][-2:], set_["setname"][-2:]))
-    crossvalidation_png = os.path.join(set_["set_results_folder"], "crossvalidation", "trainset{}_testset{}_ROC.png".format(set_["setname"][-2:], set_["setname"][-2:]))
-    crossvalidation_pkl = os.path.join(set_["set_results_folder"], "crossvalidation", "trainset{}_testset{}_crossvalidation.pkl".format(set_["setname"][-2:], set_["setname"][-2:]))
+    crossvalidation_csv = os.path.join(s["set_results_folder"], "crossvalidation", "trainset{}_testset{}_crossvalidation.csv".format(s["setname"][-2:], s["setname"][-2:]))
+    crossvalidation_png = os.path.join(s["set_results_folder"], "crossvalidation", "trainset{}_testset{}_ROC.png".format(s["setname"][-2:], s["setname"][-2:]))
+    crossvalidation_pkl = os.path.join(s["set_results_folder"], "crossvalidation", "trainset{}_testset{}_crossvalidation.pkl".format(s["setname"][-2:], s["setname"][-2:]))
 
     # open pickle file
     with open(crossvalidation_pkl, "rb") as f:
@@ -418,7 +436,7 @@ def fig_10fold_cross_validation(set_, logging):
 
     fig, ax = plt.subplots(figsize=(3.42, 3.42))
 
-    for i in range(set_["cross_validation_number_of_splits"]):
+    for i in range(s["cross_validation_number_of_splits"]):
         roc_auc = auc(xv_dict["fpr{}".format(i)], xv_dict["tpr{}".format(i)])
         ax.plot(xv_dict["fpr{}".format(i)], xv_dict["tpr{}".format(i)], lw=1, label='fold %d (area = %0.2f)' % (i, roc_auc), alpha=0.8)
 
@@ -466,12 +484,12 @@ def fig_10fold_cross_validation(set_, logging):
     #plt.show()
     # ADD SAVED PLOT
 
-def calculate_RF_variable_importance(set_, logging):
+def calculate_RF_variable_importance(s, logging):
     """Calculate the variable importance (mean decrease gini) for all variables in THOIPA.
 
     Parameters
     ----------
-    set_ : dict
+    s : dict
         Settings dictionary
     logging : logging.Logger
         Python object with settings for logging to console and file.
@@ -483,15 +501,15 @@ def calculate_RF_variable_importance(set_, logging):
         Also includes the standard deviation supplied by the random forest algorithm
     """
     #logging.info('RF_variable_importance_calculate is running\n')
-    train_data_csv = os.path.join(set_["set_results_folder"], "{}_train_data.csv".format(set_["setname"]))
+    train_data_csv = os.path.join(s["set_results_folder"], "{}_train_data.csv".format(s["setname"]))
 
-    variable_importance_csv = os.path.join(set_["set_results_folder"], "crossvalidation", "trainset{}_testset{}_variable_importance.csv".format(set_["setname"][-2:], set_["setname"][-2:]))
+    variable_importance_csv = os.path.join(s["set_results_folder"], "crossvalidation", "trainset{}_testset{}_variable_importance.csv".format(s["setname"][-2:], s["setname"][-2:]))
     thoipapy.utils.make_sure_path_exists(variable_importance_csv, isfile=True)
 
     df_data = pd.read_csv(train_data_csv, index_col=0)
-    X = drop_cols_not_used_in_ML(df_data)
+    X = drop_cols_not_used_in_ML(df_data, s)
     y = df_data["interface"]
-    forest = THOIPA_RF_classifier_with_settings(set_)
+    forest = THOIPA_RF_classifier_with_settings(s)
     forest.fit(X, y)
     importances_arr = forest.feature_importances_
     std_arr = np.std([tree.feature_importances_ for tree in forest.estimators_], axis=0)
@@ -519,7 +537,7 @@ def calculate_RF_variable_importance(set_, logging):
     df_imp.to_csv(variable_importance_csv)
 
 
-def fig_variable_importance(set_, logging):
+def fig_variable_importance(s, logging):
     """Create figures showing ML feature importance.
 
     Fig1 : Barchart all features
@@ -527,7 +545,7 @@ def fig_variable_importance(set_, logging):
 
     Parameters
     ----------
-    set_ : dict
+    s : dict
         Settings dictionary
     logging : logging.Logger
         Python object with settings for logging to console and file.
@@ -538,9 +556,9 @@ def fig_variable_importance(set_, logging):
     from korbinian.utils import create_colour_lists
     colour_dict = create_colour_lists()
 
-    variable_importance_csv = os.path.join(set_["set_results_folder"], "crossvalidation", "trainset{}_testset{}_variable_importance.csv".format(set_["setname"][-2:], set_["setname"][-2:]))
-    variable_importance_all_png = os.path.join(set_["set_results_folder"], "crossvalidation", "trainset{}_testset{}_variable_importance_all.png".format(set_["setname"][-2:], set_["setname"][-2:]))
-    variable_importance_top_png = os.path.join(set_["set_results_folder"], "crossvalidation", "trainset{}_testset{}_variable_importance_top.png".format(set_["setname"][-2:], set_["setname"][-2:]))
+    variable_importance_csv = os.path.join(s["set_results_folder"], "crossvalidation", "trainset{}_testset{}_variable_importance.csv".format(s["setname"][-2:], s["setname"][-2:]))
+    variable_importance_all_png = os.path.join(s["set_results_folder"], "crossvalidation", "trainset{}_testset{}_variable_importance_all.png".format(s["setname"][-2:], s["setname"][-2:]))
+    variable_importance_top_png = os.path.join(s["set_results_folder"], "crossvalidation", "trainset{}_testset{}_variable_importance_top.png".format(s["setname"][-2:], s["setname"][-2:]))
 
     df_imp = pd.read_csv(variable_importance_csv, index_col = 0)
 

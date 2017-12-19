@@ -9,14 +9,14 @@ def combine_file_add_PREDDIMER_TMDOCK_THOIPA_prediction(s,columns_kept_in_combin
     set_list = thoipapy.figs.fig_utils.get_set_lists(s)
     for set_number in set_list:
         setname = "set{:02d}".format(int(set_number))
-        set_path = thoipapy.common.get_path_of_protein_set(setname, s["set_path"])
+        set_path = thoipapy.common.get_path_of_protein_set(setname, s["sets_folder"])
         df_set = pd.read_excel(set_path,sheetname="proteins")
         for i in df_set.index:
             acc = df_set.loc[i, "acc"]
             #if acc == "O75460":
             database = df_set.loc[i, "database"]
-            train_data_file = os.path.join(s["thoipapy_feature_folder"],"combined",database,"{}.surr20.gaps5.combined_features.csv".format(acc))
-            THOIPA_prediction_file = os.path.join(s["thoipapy_folder"],"Predictions","testset_trainset",database,"{}.THOIPA.trainset04.csv".format(acc))
+            train_data_file = os.path.join(s["features_folder"],"combined",database,"{}.surr20.gaps5.combined_features.csv".format(acc))
+            THOIPA_prediction_file = os.path.join(s["thoipapy_data_folder"],"Predictions","testset_trainset",database,"{}.THOIPA.trainset04.csv".format(acc))
             PREDDIMER_prediction_file = os.path.join(s["PREDDIMER_TMDOCK_folder"],database,"{}.preddimer.closedist.csv".format(acc))
             TMDOCK_prediction_file = os.path.join(s["PREDDIMER_TMDOCK_folder"], database,"{}.tmdock.closedist.csv".format(acc))
             merged_data_xlsx_path = os.path.join(s["combined_floder"],database,"{}.combined.xlsx".format(acc))

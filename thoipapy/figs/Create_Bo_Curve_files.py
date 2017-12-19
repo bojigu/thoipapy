@@ -20,12 +20,12 @@ def Test_Etra(s):
     train_set_list = s["train_datasets"].split(",")
     for train_set in train_set_list:
         trainsetname = "set{:02d}".format(int(train_set))
-        traindata_set = os.path.join(s["Result_folder"], trainsetname, "{}_train_data.csv".format(trainsetname))
+        traindata_set = os.path.join(s["Results_folder"], trainsetname, "{}_train_data.csv".format(trainsetname))
         train_df =  pd.read_csv(traindata_set, sep=',', engine='python', index_col=0)
 
-        BO_curve_csv = os.path.join(s["thoipapy_folder"], "Results", "compare_testset_trainset", "data", "Train{}_Test{}.bocurve.csv".format(trainsetname, testsetname))
+        BO_curve_csv = os.path.join(s["thoipapy_data_folder"], "Results", "compare_testset_trainset", "data", "Train{}_Test{}.bocurve.csv".format(trainsetname, testsetname))
 
-        testset_path = thoipapy.common.get_path_of_protein_set(testsetname, s["set_path"])
+        testset_path = thoipapy.common.get_path_of_protein_set(testsetname, s["sets_folder"])
 
         testdataset_df = pd.read_excel(testset_path,sheetname="proteins")
         acc_list = testdataset_df.acc.tolist()
@@ -34,7 +34,7 @@ def Test_Etra(s):
         for i in testdataset_df.index:
             acc = testdataset_df.loc[i, "acc"]
             database = testdataset_df.loc[i, "database"]
-            testdata_combined_file = os.path.join(s["thoipapy_feature_folder"], "combined", database, "{}.surr20.gaps5.combined_features.csv".format(acc))
+            testdata_combined_file = os.path.join(s["features_folder"], "combined", database, "{}.surr20.gaps5.combined_features.csv".format(acc))
             test_df = pd.read_csv(testdata_combined_file, sep=',', engine='python', index_col=0)
 
             odf = save_THOIPA_pred_indiv_prot(acc, train_df, test_df)
@@ -46,9 +46,9 @@ def Test_Etra(s):
         dfc.to_csv(BO_curve_csv)
 
 
-def pred_interf_single_prot_using_sel_train_datasets(s):
-    if not os.path.exists(s["Bo_Curve_path"]):
-        os.makedirs(s["Bo_Curve_path"])
+def run_testset_trainset_validation(s, logging):
+    if not os.path.exists(os.path.join(s["thoipapy_data_folder"], "Results", "Bo_curve")):
+        os.makedirs(os.path.join(s["thoipapy_data_folder"], "Results", "Bo_curve"))
 
     # create list of test and train datasets
     # if only one is given, make a list with only one dataset
@@ -57,10 +57,10 @@ def pred_interf_single_prot_using_sel_train_datasets(s):
     validate_LIPS_for_testset(s)
     validate_LIPS_for_testset(s, LIPS_name="LIPS_surface_ranked", pred_col="LIPS_surface_ranked")
 
-    validate_THOIPA_for_testset_trainset_combination(s, test_set_list, train_set_list)
+    validate_THOIPA_for_testset_trainset_combination(s, test_set_list, train_set_list, logging)
 
 
-def validate_THOIPA_for_testset_trainset_combination(s, test_set_list, train_set_list):
+def validate_THOIPA_for_testset_trainset_combination(s, test_set_list, train_set_list, logging):
     """ Creates ROC and BO-curve for a particular testset-trainset combination.
 
     Parameters
@@ -91,16 +91,16 @@ def validate_THOIPA_for_testset_trainset_combination(s, test_set_list, train_set
     """
     for n, train_set in enumerate(train_set_list):
         trainsetname = "set{:02d}".format(int(train_set))
-        model_pkl = os.path.join(s["Result_folder"], trainsetname, "{}_rfmodel.pkl".format(trainsetname))
+        model_pkl = os.path.join(s["Results_folder"], trainsetname, "{}_rfmodel.pkl".format(trainsetname))
 
         for test_set in test_set_list:
             testsetname = "set{:02d}".format(int(test_set))
-            THOIPA_BO_curve_data_csv = os.path.join(s["thoipapy_folder"], "Results", "compare_testset_trainset", "data", "Test{}_Train{}.THOIPA".format(testsetname, trainsetname), "Test{}_Train{}.THOIPA.best_overlap_data.csv".format(testsetname, trainsetname))
-            THOIPA_ROC_pkl = os.path.join(s["thoipapy_folder"], "Results", "compare_testset_trainset", "data", "Test{}_Train{}.THOIPA".format(testsetname, trainsetname), "Test{}_Train{}.THOIPA.ROC_data.pkl".format(testsetname, trainsetname))
-            analyse_BO_curve_folder = os.path.join(s["thoipapy_folder"], "Results", "compare_testset_trainset", "data", "Test{}_Train{}.THOIPA".format(testsetname, trainsetname))
+            THOIPA_BO_curve_data_csv = os.path.join(s["thoipapy_data_folder"], "Results", "compare_testset_trainset", "data", "Test{}_Train{}.THOIPA".format(testsetname, trainsetname), "Test{}_Train{}.THOIPA.best_overlap_data.csv".format(testsetname, trainsetname))
+            THOIPA_ROC_pkl = os.path.join(s["thoipapy_data_folder"], "Results", "compare_testset_trainset", "data", "Test{}_Train{}.THOIPA".format(testsetname, trainsetname), "Test{}_Train{}.THOIPA.ROC_data.pkl".format(testsetname, trainsetname))
+            analyse_BO_curve_folder = os.path.join(s["thoipapy_data_folder"], "Results", "compare_testset_trainset", "data", "Test{}_Train{}.THOIPA".format(testsetname, trainsetname))
             thoipapy.utils.make_sure_path_exists(THOIPA_BO_curve_data_csv, isfile=True)
 
-            testset_path = thoipapy.common.get_path_of_protein_set(testsetname, s["set_path"])
+            testset_path = thoipapy.common.get_path_of_protein_set(testsetname, s["sets_folder"])
 
             testdataset_df = pd.read_excel(testset_path, sheetname="proteins")
             THOIPA_BO_data_df = pd.DataFrame()
@@ -115,15 +115,15 @@ def validate_THOIPA_for_testset_trainset_combination(s, test_set_list, train_set
                 acc = testdataset_df.loc[i, "acc"]
                 database = testdataset_df.loc[i, "database"]
                 acc_db = acc + "-" + database
-                testdata_combined_file = os.path.join(s["thoipapy_feature_folder"], "combined", database,
+                testdata_combined_file = os.path.join(s["features_folder"], "combined", database,
                                                       "{}.surr20.gaps5.combined_features.csv".format(acc))
-                THOIPA_pred_csv = os.path.join(os.path.dirname(s["thoipapy_feature_folder"]), "Predictions", "testset_trainset", database,
+                THOIPA_pred_csv = os.path.join(os.path.dirname(s["features_folder"]), "Predictions", "testset_trainset", database,
                                                       "{}.THOIPA.train{}.csv".format(acc, trainsetname))
-                combined_incl_THOIPA_csv = os.path.join(os.path.dirname(s["thoipapy_feature_folder"]), "Predictions", "testset_trainset", database,
+                combined_incl_THOIPA_csv = os.path.join(os.path.dirname(s["features_folder"]), "Predictions", "testset_trainset", database,
                                                       "{}.THOIPA_incl_combined.train{}.csv".format(acc, trainsetname))
                 thoipapy.utils.make_sure_path_exists(combined_incl_THOIPA_csv, isfile=True)
 
-                combined_incl_THOIPA_df = save_THOIPA_pred_indiv_prot(model_pkl, testdata_combined_file, THOIPA_pred_csv, combined_incl_THOIPA_csv)
+                combined_incl_THOIPA_df = save_THOIPA_pred_indiv_prot(model_pkl, testdata_combined_file, THOIPA_pred_csv, combined_incl_THOIPA_csv, logging)
 
                 #######################################################################################################
                 #                                                                                                     #
@@ -168,7 +168,7 @@ def validate_THOIPA_for_testset_trainset_combination(s, test_set_list, train_set
             #######################################################################################################
 
             THOIPA_BO_data_df.to_csv(THOIPA_BO_curve_data_csv)
-            names_excel_path = os.path.join(os.path.dirname(s["set_path"]), "ETRA_NMR_names.xlsx")
+            names_excel_path = os.path.join(os.path.dirname(s["sets_folder"]), "ETRA_NMR_names.xlsx")
 
             THOIPA_linechart_mean_obs_and_rand = analyse_bo_curve_underlying_data(THOIPA_BO_curve_data_csv, analyse_BO_curve_folder, names_excel_path)
 
@@ -200,7 +200,7 @@ def validate_THOIPA_for_testset_trainset_combination(s, test_set_list, train_set
             sys.stdout.write("\nTest{}_Train{} finished\n".format(testsetname, trainsetname))
             sys.stdout.flush()
 
-    sys.stdout.write("\npred_interf_single_prot_using_sel_train_datasets finished (all train and test datasets)")
+    sys.stdout.write("\nrun_testset_trainset_validation finished (all train and test datasets)")
     sys.stdout.flush()
 
 
@@ -213,12 +213,12 @@ def validate_LIPS_for_testset(s, LIPS_name = "LIPS_LE", pred_col="LIPS_L*E"):
 
     for test_set in test_set_list:
         testsetname = "set{:02d}".format(int(test_set))
-        LIPS_BO_curve_data_csv = os.path.join(s["thoipapy_folder"], "Results", "compare_testset_trainset", "data", "Test{}.{}".format(testsetname, LIPS_name), "Test{}.{}.best_overlap_data.csv".format(testsetname, LIPS_name))
-        LIPS_ROC_pkl = os.path.join(s["thoipapy_folder"], "Results", "compare_testset_trainset", "data", "Test{}.{}".format(testsetname, LIPS_name), "Test{}.{}.ROC_data.pkl".format(testsetname, LIPS_name))
-        analyse_BO_curve_folder = os.path.join(s["thoipapy_folder"], "Results", "compare_testset_trainset", "data", "Test{}.{}".format(testsetname, LIPS_name))
+        LIPS_BO_curve_data_csv = os.path.join(s["thoipapy_data_folder"], "Results", "compare_testset_trainset", "data", "Test{}.{}".format(testsetname, LIPS_name), "Test{}.{}.best_overlap_data.csv".format(testsetname, LIPS_name))
+        LIPS_ROC_pkl = os.path.join(s["thoipapy_data_folder"], "Results", "compare_testset_trainset", "data", "Test{}.{}".format(testsetname, LIPS_name), "Test{}.{}.ROC_data.pkl".format(testsetname, LIPS_name))
+        analyse_BO_curve_folder = os.path.join(s["thoipapy_data_folder"], "Results", "compare_testset_trainset", "data", "Test{}.{}".format(testsetname, LIPS_name))
         thoipapy.utils.make_sure_path_exists(LIPS_BO_curve_data_csv, isfile=True)
 
-        testset_path = thoipapy.common.get_path_of_protein_set(testsetname, s["set_path"])
+        testset_path = thoipapy.common.get_path_of_protein_set(testsetname, s["sets_folder"])
 
         testdataset_df = pd.read_excel(testset_path, sheetname="proteins")
         LIPS_BO_data_df = pd.DataFrame()
@@ -233,7 +233,7 @@ def validate_LIPS_for_testset(s, LIPS_name = "LIPS_LE", pred_col="LIPS_L*E"):
             database = testdataset_df.loc[i, "database"]
             acc_db = acc + "-" + database
 
-            testdata_combined_file = os.path.join(s["thoipapy_feature_folder"], "combined", database,
+            testdata_combined_file = os.path.join(s["features_folder"], "combined", database,
                                                   "{}.surr20.gaps5.combined_features.csv".format(acc))
 
             combined_df = pd.read_csv(testdata_combined_file, index_col=0)
@@ -245,7 +245,7 @@ def validate_LIPS_for_testset(s, LIPS_name = "LIPS_LE", pred_col="LIPS_L*E"):
             #######################################################################################################
             # SAVE LIPS PREDICTION DATA
             # this is somewhat inefficient, as it is conducted for every test dataset
-            LIPS_pred_csv = os.path.join(os.path.dirname(s["thoipapy_feature_folder"]), "Predictions", "testset_trainset", database, "{}.LIPS_pred.csv".format(acc, testsetname))
+            LIPS_pred_csv = os.path.join(os.path.dirname(s["features_folder"]), "Predictions", "testset_trainset", database, "{}.LIPS_pred.csv".format(acc, testsetname))
             LIPS_pred_df = combined_df[["residue_name", "residue_num", "LIPS_lipo", "LIPS_entropy", "LIPS_L*E", "LIPS_surface", "LIPS_surface_ranked"]]
             thoipapy.utils.make_sure_path_exists(LIPS_pred_csv, isfile=True)
             LIPS_pred_df.to_csv(LIPS_pred_csv)
@@ -286,7 +286,7 @@ def validate_LIPS_for_testset(s, LIPS_name = "LIPS_LE", pred_col="LIPS_L*E"):
         #######################################################################################################
 
         LIPS_BO_data_df.to_csv(LIPS_BO_curve_data_csv)
-        names_excel_path = os.path.join(os.path.dirname(s["set_path"]), "ETRA_NMR_names.xlsx")
+        names_excel_path = os.path.join(os.path.dirname(s["sets_folder"]), "ETRA_NMR_names.xlsx")
 
         LIPS_linechart_mean_obs_and_rand = analyse_bo_curve_underlying_data(LIPS_BO_curve_data_csv, analyse_BO_curve_folder, names_excel_path)
 
@@ -318,7 +318,7 @@ def validate_LIPS_for_testset(s, LIPS_name = "LIPS_LE", pred_col="LIPS_L*E"):
         sys.stdout.write("\nTest{} {} validation finished\n".format(testsetname, LIPS_name))
         sys.stdout.flush()
 
-    sys.stdout.write("\npred_interf_single_prot_using_sel_train_datasets finished (all train and test datasets)")
+    sys.stdout.write("\nrun_testset_trainset_validation finished (all train and test datasets)")
     sys.stdout.flush()
 
 
@@ -358,13 +358,13 @@ def create_ROC_fig_for_testset_trainset_combination(THOIPA_ROC_pkl):
     fig.savefig(ROC_png, dpi=240)
     fig.savefig(ROC_png[:-4] + ".pdf")
 
-def save_THOIPA_pred_indiv_prot(model_pkl, testdata_combined_file, THOIPA_pred_csv, test_combined_incl_pred):
+def save_THOIPA_pred_indiv_prot(model_pkl, testdata_combined_file, THOIPA_pred_csv, test_combined_incl_pred, logging):
 
     combined_incl_THOIPA_df = pd.read_csv(testdata_combined_file, sep=',', engine='python', index_col=0)
 
     #drop_cols_not_used_in_ML
     #X=train_df.drop(train_features_del,axis=1)
-    # X = thoipapy.RF_features.RF_Train_Test.drop_cols_not_used_in_ML(train_df)
+    # X = thoipapy.RF_features.RF_Train_Test.drop_cols_not_used_in_ML(train_df, s)
     # y = train_df["interface"]
     # clf = RandomForestClassifier(max_depth=5, n_estimators=10, max_features=1)
     # fit = clf.fit(X,y)
@@ -380,9 +380,19 @@ def save_THOIPA_pred_indiv_prot(model_pkl, testdata_combined_file, THOIPA_pred_c
     #Lips_score = test_df.LIPS_lipo * test_df.LIPS_entropy
 
     #tX=test_df.drop(test_features_del,axis=1)
-    test_X = thoipapy.RF_features.RF_Train_Test.drop_cols_not_used_in_ML(combined_incl_THOIPA_df)
+    test_X = thoipapy.RF_features.RF_Train_Test.drop_cols_not_used_in_ML(combined_incl_THOIPA_df, s)
 
-    prob_arr = fit.predict_proba(test_X)[:, 1]
+    try:
+        prob_arr = fit.predict_proba(test_X)[:, 1]
+    except ValueError:
+        train_data_used_for_model_csv = model_pkl[:-11] + "train_data_used_for_model.csv"
+        df_train_data_used_for_model_csv = pd.read_csv(train_data_used_for_model_csv)
+        train_cols = set(df_train_data_used_for_model_csv.columns)
+        test_cols = set(test_X.columns)
+        cols_not_in_train = test_cols - train_cols
+        cols_not_in_test = train_cols - test_cols
+        logging.warning("cols_not_in_train : {}\ncols_not_in_test : {}".format(cols_not_in_train, cols_not_in_test))
+        prob_arr = fit.predict_proba(test_X)[:, 1]
 
     # if hasattr(clf,'predict_proba'):
     #     prob_arr = fit.predict_proba(tX)[:,1]
@@ -402,7 +412,7 @@ def save_THOIPA_pred_indiv_prot(model_pkl, testdata_combined_file, THOIPA_pred_c
 # def save_THOIPA_pred_indiv_prot(acc, train_df, test_df, database):
 #     #drop_cols_not_used_in_ML
 #     #X=train_df.drop(train_features_del,axis=1)
-#     X = thoipapy.RF_features.RF_Train_Test.drop_cols_not_used_in_ML(train_df)
+#     X = thoipapy.RF_features.RF_Train_Test.drop_cols_not_used_in_ML(train_df, s)
 #     y = train_df["interface"]
 #     clf = RandomForestClassifier(max_depth=5, n_estimators=10, max_features=1)
 #     fit = clf.fit(X,y)
@@ -421,7 +431,7 @@ def save_THOIPA_pred_indiv_prot(model_pkl, testdata_combined_file, THOIPA_pred_c
 #     Lips_score = test_df.LIPS_lipo * test_df.LIPS_entropy
 #
 #     #tX=test_df.drop(test_features_del,axis=1)
-#     tX = thoipapy.RF_features.RF_Train_Test.drop_cols_not_used_in_ML(test_df)
+#     tX = thoipapy.RF_features.RF_Train_Test.drop_cols_not_used_in_ML(test_df, s)
 #
 #     if hasattr(clf,'predict_proba'):
 #         prob_pos = fit.predict_proba(tX)[:,1]

@@ -1,6 +1,6 @@
 import pandas as pd
 import numpy as np
-def parse_Predicted_Output(thoipapyset_,out_put_file_loc,output_parse_file,logging):
+def parse_Predicted_Output(s, thoipapys,out_put_file_loc,output_parse_file,logging):
     logging.info('starting to parsing prediction output file')
     orig_csv = out_put_file_loc
     test_out_csv = output_parse_file
@@ -12,7 +12,7 @@ def parse_Predicted_Output(thoipapyset_,out_put_file_loc,output_parse_file,loggi
     # add the position in the full sequence
     # for GpA, I've just added 91. I guess you'll use REGEX to find the position in the original sequence, and give an error.
     #df["Pos"] = df.index + 91
-    df["Pos"] = df.index + int(set_["TMD_start"])-1
+    df["Pos"] = df.index + int(s["TMD_start"])-1
     # reindex so that "Pos" is first
     df = df.reindex(columns = ["Pos", "AA", "Score"])
     # get the index of the top 7 predicted residues

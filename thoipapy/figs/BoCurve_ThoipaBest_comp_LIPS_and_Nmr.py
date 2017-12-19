@@ -182,9 +182,9 @@ def thoipabest_vs_thoipanmr(bo_curve_handle,overlap_num,output_basename_nmr,outp
 
     plt.close()
 
-def run_bocurve_comp( Fontsize, Width, Size, s,Linewidth):
+def run_bocurve_comp_HARDLINKED(Fontsize, Width, Size, s, Linewidth):
 
-    sys.stdout.write('\n~~~~~~~~~~~~                 starting run_bocurve_comp              ~~~~~~~~~~~~\n')
+    sys.stdout.write('\n~~~~~~~~~~~~                 starting run_bocurve_comp_HARDLINKED              ~~~~~~~~~~~~\n')
     sys.stdout.flush()
 
     Fontsize -= 7
@@ -228,6 +228,6 @@ def run_bocurve_comp( Fontsize, Width, Size, s,Linewidth):
     thoipabest_vs_LIPS(bo_curve_handle, overlap_num, output_basename_LIPS,output_basename_LIPS_png,Fontsize,Linewidth)
     thoipabest_vs_thoipanmr(bo_curve_handle, overlap_num, output_basename_nmr,output_basename_nmr_png,Fontsize,Linewidth)
 
-    sys.stdout.write('\n~~~~~~~~~~~~                 finished run_bocurve_comp              ~~~~~~~~~~~~')
+    sys.stdout.write('\n~~~~~~~~~~~~                 finished run_bocurve_comp_HARDLINKED              ~~~~~~~~~~~~')
     sys.stdout.flush()
 

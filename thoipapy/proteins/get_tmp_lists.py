@@ -3,13 +3,13 @@ import sys
 from Bio import SeqIO
 
 
-def calculate_fasta_file_length(set_):
+def calculate_fasta_file_length(s):
     """
-    :param set_:
+    :param s:
     :return: tmp_list
     """
     seqLen=int()
-    FastaFile = open(set_["nput_fasta_file"], 'r')
+    FastaFile = open(s["nput_fasta_file"], 'r')
     for rec in SeqIO.parse(FastaFile, 'fasta'):
         name = rec.id
         seq = rec.seq
@@ -18,13 +18,13 @@ def calculate_fasta_file_length(set_):
     return seqLen
 
 
-def extract_tmps_from_input_file(set_):
+def extract_tmps_from_input_file(s):
     """
-    :param set_:
+    :param s:
     :return: tmp_list
     """
     tmp_lists={}
-    tmp_list_loc = set_["list_of_tmd_start_end"]
+    tmp_list_loc = s["list_of_tmd_start_end"]
     tmp_file_handle = open(tmp_list_loc, 'r')
     for row in tmp_file_handle:
         tmp_protein_acc = row.strip().split("\t")[0]
@@ -38,13 +38,13 @@ def extract_tmps_from_input_file(set_):
     tmp_file_handle.close()
     return tmp_lists
 
-def extract_test_tmps_from_input_file(set_):
+def extract_test_tmps_from_input_file(s):
     """
-    :param set_:
+    :param s:
     :return: test tmp lists
     """
     tmp_lists={}
-    tmp_list_loc = set_["list_of_test_tmd_start_end"]
+    tmp_list_loc = s["list_of_test_tmd_start_end"]
     tmp_file_handle = open(tmp_list_loc, 'r')
     for row in tmp_file_handle:
         tmp_protein_acc = row.strip().split("\t")[0]

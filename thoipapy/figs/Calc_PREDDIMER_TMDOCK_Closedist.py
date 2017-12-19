@@ -11,23 +11,21 @@ def calc_closedist_from_PREDDIMER_TMDOCK_best_model(s):
     pt_set_list = s["set_list"].split(",")
     for pt_set in pt_set_list:
         ptsetname = "set{:02d}".format(int(pt_set))
-        ptset_path = thoipapy.common.get_path_of_protein_set(ptsetname, s["set_path"])
+        ptset_path = thoipapy.common.get_path_of_protein_set(ptsetname, s["sets_folder"])
         df_pt_set = pd.read_excel(ptset_path,sheetname="proteins")
         for i in df_pt_set.index:
             acc = df_pt_set.loc[i, "acc"]
             database = df_pt_set.loc[i, "database"]
             protein = acc
-            pdb_file_preddimer = os.path.join(s["PREDDIMER_TMDOCK_folder"],database,"{}.preddimer.pdb".format(protein))
-            pdb_file_tmdock = os.path.join(s["PREDDIMER_TMDOCK_folder"], database, "{}.tmdock.pdb".format(protein))
-            preddimer_closedist_file = os.path.join(s["PREDDIMER_TMDOCK_folder"],database,"{}.preddimer.closedist.csv".format(protein))
-            tmdock_closedist_file = os.path.join(s["PREDDIMER_TMDOCK_folder"], database,"{}.tmdock.closedist.csv".format(protein))
+            PREDDIMER_TMDOCK_folder = os.path.join(s["base_dir"], "figs", "FigBZ18-PreddimerTmdockComparison")
+            pdb_file_preddimer = os.path.join(PREDDIMER_TMDOCK_folder,database,"{}.preddimer.pdb".format(protein))
+            pdb_file_tmdock = os.path.join(PREDDIMER_TMDOCK_folder, database, "{}.tmdock.pdb".format(protein))
+            preddimer_closedist_file = os.path.join(PREDDIMER_TMDOCK_folder,database,"{}.preddimer.closedist.csv".format(protein))
+            tmdock_closedist_file = os.path.join(PREDDIMER_TMDOCK_folder, database,"{}.tmdock.closedist.csv".format(protein))
 
             closedist_calculate_from_dimer(s,pdb_file_preddimer,preddimer_closedist_file)
             closedist_calculate_from_dimer(s,pdb_file_tmdock,tmdock_closedist_file)
             sys.stdout.write("\nthe closedist calculation for preddimer and tmdock for protein: {} was finished".format(protein))
-
-
-
 
 
 def closedist_calculate_from_dimer(s,pdb_file, closedist_out_csv):

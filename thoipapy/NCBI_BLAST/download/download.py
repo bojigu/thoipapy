@@ -7,12 +7,12 @@ import time
 from time import strftime
 from thoipapy.utils import delete_BLAST_xml, make_sure_path_exists
 
-def download_homologues_from_ncbi_mult_prot(set_, df_set, logging):
+def download_homologues_from_ncbi_mult_prot(s, df_set, logging):
     """Runs download_homologues_from_ncbi for a set of proteins
 
     Parameters
     ----------
-    set_ : dict
+    s : dict
         Settings dictionary
     df_set : pd.DataFrame
         Dataframe containing the list of proteins to process, including their TMD sequences and full-length sequences
@@ -21,8 +21,8 @@ def download_homologues_from_ncbi_mult_prot(set_, df_set, logging):
     logging : logging.Logger
         Python object with settings for logging to console and file.
     """
-    expect_value = set_["expect_value"]
-    hit_list_size = int(set_["hit_list_size"])
+    expect_value = s["expect_value"]
+    hit_list_size = int(s["hit_list_size"])
 
     OS_description = platform.system()
 
@@ -31,7 +31,7 @@ def download_homologues_from_ncbi_mult_prot(set_, df_set, logging):
     if "Linux" in OS_description or "Windows" in OS_description:
         try:
             byteformat = "GB"
-            thoipapy_data_folder = set_["thoipapy_data_folder"]
+            thoipapy_data_folder = s["thoipapy_data_folder"]
 
             size = get_free_space(thoipapy_data_folder, byteformat)
             # logging.info('Hard disk remaining space = {}'.format(size))
@@ -61,23 +61,23 @@ def download_homologues_from_ncbi_mult_prot(set_, df_set, logging):
 
 
         # run online server NCBI blastp with biopython module
-        blast_xml_file = os.path.join(set_["xml_file_folder"], database, "{}.surr{}.BLAST.xml".format(acc, set_["num_of_sur_residues"]))
+        blast_xml_file = os.path.join(s["xml_file_folder"], database, "{}.surr{}.BLAST.xml".format(acc, s["num_of_sur_residues"]))
         xml_tar_gz = blast_xml_file[:-4] + ".xml.tar.gz"
         xml_txt = blast_xml_file[:-4] + "_details.txt"
 
         if not os.path.isfile(xml_tar_gz):
             run_download = True
         else:
-            if set_["rerun_existing_blast_results"]:
+            if s["rerun_existing_blast_results"]:
                 run_download = True
                 logging.info('{} starting download_homologues_from_ncbi_mult_prot (EXISTING xml.tar.gz FILE WILL BE OVERWRITTEN)'.format(acc))
-            elif set_["rerun_existing_blast_results"] in [False, 0]:
+            elif s["rerun_existing_blast_results"] in [False, 0]:
                 run_download = False
                 logging.info('{} download_homologues_from_ncbi_mult_prot skipped (EXISTING xml.tar.gz FILE)'.format(acc))
                 # skip protein
                 continue
             else:
-                raise ValueError('set_["rerun_existing_blast_results"] does not seem to be True or False')
+                raise ValueError('s["rerun_existing_blast_results"] does not seem to be True or False')
 
         if run_download:
             download_homologues_from_ncbi(acc, TMD_seq_pl_surr, blast_xml_file, xml_txt, xml_tar_gz, expect_value, hit_list_size, logging)

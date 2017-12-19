@@ -6,6 +6,7 @@ import os
 import matplotlib.pyplot as plt
 import sys
 import pickle
+from korbinian.utils import convert_truelike_to_bool, convert_falselike_to_bool
 
 def fig_plot_BO_curve_mult_train_datasets(s):
     """Plot the BO-curve for multiple training datasets.
@@ -41,7 +42,7 @@ def fig_plot_BO_curve_mult_train_datasets(s):
 
     mult_testname = "testsets({})_trainsets({})".format(test_dataset_str, train_dataset_str)
     print(mult_testname)
-    mult_THOIPA_dir = os.path.join(s["thoipapy_folder"], "Results", "compare_testset_trainset", "summaries", mult_testname)
+    mult_THOIPA_dir = os.path.join(s["thoipapy_data_folder"], "Results", "compare_testset_trainset", "summaries", mult_testname)
     thoipapy.utils.make_sure_path_exists(mult_THOIPA_dir)
 
     plot_BO_curve(s, train_set_list, test_set_list, mult_THOIPA_dir, mult_testname)
@@ -87,7 +88,7 @@ def plot_BO_curve(s,train_set_list, test_set_list, mult_THOIPA_dir, mult_testnam
         for test_set in test_set_list:
             testsetname = "set{:02d}".format(int(test_set))
             #/media/mark/sindy/m_data/THOIPA_data/Results/Bo_Curve/Testset03_Trainset01.THOIPA.validation/bo_curve_underlying_data_indiv_df.xlsx
-            bo_curve_underlying_data_indiv_xlsx = os.path.join(s["thoipapy_folder"], "Results", "compare_testset_trainset", "data", "Test{}_Train{}.THOIPA".format(testsetname, trainsetname), "bo_curve_underlying_data_indiv_df.xlsx")
+            bo_curve_underlying_data_indiv_xlsx = os.path.join(s["thoipapy_data_folder"], "Results", "compare_testset_trainset", "data", "Test{}_Train{}.THOIPA".format(testsetname, trainsetname), "bo_curve_underlying_data_indiv_df.xlsx")
 
             df = pd.read_excel(bo_curve_underlying_data_indiv_xlsx, sheetname=sheetname, index_col=0)
 
@@ -110,7 +111,7 @@ def plot_BO_curve(s,train_set_list, test_set_list, mult_THOIPA_dir, mult_testnam
     sys.stdout.write("\nfig_plot_BO_curve_mult_train_datasets finished ({})".format(BO_curve_png))
 
 
-def fig_plot_BO_curve_mult_predictors(s):
+def compare_predictors(s):
     """Plot the BO-curve for multiple prediction methods
 
     Takes the datasets listed in settings under fig_plot_BO_curve_mult_predictors_list
@@ -132,7 +133,7 @@ def fig_plot_BO_curve_mult_predictors(s):
     """
 
     plt.rcParams.update({'font.size': 7})
-    mult_pred_dir = os.path.join(s["thoipapy_folder"], "Results", "compare_predictors")
+    mult_pred_dir = os.path.join(s["thoipapy_data_folder"], "Results", "compare_predictors")
     BO_curve_png = os.path.join(mult_pred_dir, "BO_curve_mult_pred.png")
     AUBOC10_bar_png = os.path.join(mult_pred_dir, "AUBOC10_barchart_mult_pred.png")
     ROC_png = os.path.join(mult_pred_dir, "ROC.png")
@@ -142,16 +143,23 @@ def fig_plot_BO_curve_mult_predictors(s):
     fig, ax = plt.subplots(figsize=(3.42, 3.42))
 
     # list of predictors to compare, e.g. ["Testset03_Trainset04.THOIPA", "Testset03.LIPS"]
-    predictor_list = ast.literal_eval(s["fig_plot_BO_curve_mult_predictors_list"])
+    #predictor_list = ast.literal_eval(s["fig_plot_BO_curve_mult_predictors_list"])
+
+    predictors_df = pd.read_excel(s["excel_file_with_settings"], sheetname="predictors")
+    predictors_df["include"] = predictors_df["include"].apply(convert_truelike_to_bool, convert_nontrue=False)
+    predictors_df["include"] = predictors_df["include"].apply(convert_falselike_to_bool)
+    predictors_df = predictors_df.loc[predictors_df.include == True]
+    predictor_list = predictors_df.predictor.tolist()
+
     area_under_curve_dict = {}
     # create an empty dataframe to keep the pycharm IDE happy
     df = pd.DataFrame()
 
     for predictor_name in predictor_list:
-        bo_curve_underlying_data_indiv_xlsx = os.path.join(s["thoipapy_folder"], "Results", "compare_testset_trainset", "data", "{}".format(predictor_name), "bo_curve_underlying_data_indiv_df.xlsx")
+        bo_curve_underlying_data_indiv_xlsx = os.path.join(s["thoipapy_data_folder"], "Results", "compare_testset_trainset", "data", "{}".format(predictor_name), "bo_curve_underlying_data_indiv_df.xlsx")
 
         if not os.path.isfile(bo_curve_underlying_data_indiv_xlsx):
-            raise FileNotFoundError("bo_curve_underlying_data_indiv_xlsx does not exist ({}). Try running pred_interf_single_prot_using_sel_train_datasets in run_figs.py".format(bo_curve_underlying_data_indiv_xlsx))
+            raise FileNotFoundError("bo_curve_underlying_data_indiv_xlsx does not exist ({}). Try running run_testset_trainset_validation in run_figs.py".format(bo_curve_underlying_data_indiv_xlsx))
 
         df = pd.read_excel(bo_curve_underlying_data_indiv_xlsx, sheetname="df_o_minus_r", index_col=0)
 
@@ -188,7 +196,7 @@ def fig_plot_BO_curve_mult_predictors(s):
 
     for predictor_name in predictor_list:
         #"D:\data_thoipapy\Results\compare_testset_trainset\data\Testset03_Trainset04.THOIPA\Testset03_Trainset04.THOIPA.ROC_data.pkl"
-        ROC_pkl = os.path.join(s["thoipapy_folder"], "Results", "compare_testset_trainset", "data", predictor_name, "{}.ROC_data.pkl".format(predictor_name))
+        ROC_pkl = os.path.join(s["thoipapy_data_folder"], "Results", "compare_testset_trainset", "data", predictor_name, "{}.ROC_data.pkl".format(predictor_name))
 
         if os.path.isfile(ROC_pkl):
             with open(ROC_pkl, "rb") as f:
@@ -207,9 +215,9 @@ def fig_plot_BO_curve_mult_predictors(s):
     fig.savefig(ROC_png, dpi=240)
     fig.savefig(ROC_png[:-4] + ".pdf")
 
-    sys.stdout.write("\nfig_plot_BO_curve_mult_predictors finished ({})".format(BO_curve_png))
+    sys.stdout.write("\ncompare_predictors finished ({})".format(BO_curve_png))
 
-def combine_BO_curve_files(s):
+def combine_BO_curve_files_HARDLINKED(s):
 
     Train04_Test01_BoCurve_file = r"D:\THOIPA_data\Results\Bo_Curve\Trainset04_Testset01.bocurve.csv"
     df41 = pd.read_csv(Train04_Test01_BoCurve_file,index_col=0)

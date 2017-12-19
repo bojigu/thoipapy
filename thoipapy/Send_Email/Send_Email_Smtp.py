@@ -5,7 +5,7 @@ from email.mime.text import MIMEText
 from email.mime.base import MIMEBase
 from email import encoders
 
-def send_email_when_finished(set_, thoipapyoutput_file_loc,output_png_loc):
+def send_email_when_finished(s, thoipapyoutput_file_loc,output_png_loc):
     """ Sends an email to specified address when job is finished
 
     Parameters
@@ -22,7 +22,7 @@ def send_email_when_finished(set_, thoipapyoutput_file_loc,output_png_loc):
     #fromaddr = "***REMOVED***"
     fromaddr = "***REMOVED***"
     #toaddr = "***REMOVED***"
-    toaddr = set_["email_to"]
+    toaddr = s["email_to"]
 
     msg = MIMEMultipart()
 

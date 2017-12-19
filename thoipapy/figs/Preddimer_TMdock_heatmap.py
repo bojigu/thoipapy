@@ -11,6 +11,7 @@ from plotly import figure_factory as FF
 import glob
 import os
 import korbinian
+import thoipapy
 plt.rcParams["font.family"] = "Verdana"
 colour_dict = korbinian.utils.create_colour_lists()
 colour_lists = tools.create_colour_lists()
@@ -45,7 +46,9 @@ def FigZB_18(Fontsize,Width,Size):
         figXX : png
             example of notes describing output files
 
-        """
+    """
+    thoipapy.utils.setup_biopol_plotly(username=s["plotly_username"], api_key=s["plotly_api_key"])
+
     sys.stdout.write('\n~~~~~~~~~~~~                 starting FigZB_18              ~~~~~~~~~~~~\n')
     sys.stdout.flush()
 

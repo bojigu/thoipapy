@@ -30,9 +30,9 @@ def make_interpolater(left_min, left_max, right_min, right_max):
     return interp_fn
 
 
-def Save_Sine_Curve_Result(set_, output_file_loc, output_png_loc):
-    uniprot_acc=set_["tm_protein_name"]
-    #Pred_disruption=os.path.join(set_["Sine_Curve_loc"],"TMD16/%s_prediction.xls") %uniprot_acc
+def Save_Sine_Curve_Result(s, output_file_loc, output_png_loc):
+    uniprot_acc=s["tm_protein_name"]
+    #Pred_disruption=os.path.join(s["Sine_Curve_loc"],"TMD16/%s_prediction.xls") %uniprot_acc
     #Pred_disruption=r"/home/students/zeng/workspace/test2/out/58f795953dc45/output.csv"
     #Pred_disruption = r"Sine_Curve/TMD16/%s_prediction.xls" %uniprot_acc
     #prd_disruption = pd.read_csv(Pred_disruption)
