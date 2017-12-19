@@ -108,8 +108,6 @@ def THOIPA_RF_classifier_with_settings(s):
     # convert max_features to python None if "None"
     max_features = None if s["max_features"] == "None" else s["max_features"]
 
-    print(s["dropbox_dir"])
-
     forest = RandomForestClassifier(n_estimators=s["RF_number_of_estimators"], n_jobs=s["n_CPU_cores"], criterion=s["criterion"],
                                     min_samples_leaf=s["min_samples_leaf"],
                                     #max_depth=s["max_depth"],
@@ -333,41 +331,16 @@ def run_10fold_cross_validation(s, logging):
     # drop training data (full protein) that don't have enough homologues
     df_data = df_data.loc[df_data.n_homologues >= s["min_n_homol_training"]]
 
-    #data = pd.read_csv('/scratch2/zeng/homotypic_data/data/RandomForest/PsEnCo/TrainData2',delimiter="\s",engine='python')
-    # del data["Residue_id"]
-    # del data["Residue_name"]
-    #print(data.as_matrix(data.columns))
-    # features=data.columns[0:28]
-    # X=data[features]
-    # y=data["Bind"]
     X = drop_cols_not_used_in_ML(df_data, s)
     y = df_data["interface"]
-    #n_samples, n_features = X.shape
-    #random_state = np.random.RandomState(0)
-    #X = np.c_[X, random_state.randn(n_samples, 200 * n_features)]
-    #print(X.iloc[[20,22]])
-    #StratifiedKFold(n_splits=2, random_state=None, shuffle=False)
-    #cv = StratifiedKFold(y, n_folds=6)
 
     skf = StratifiedKFold(n_splits=s["cross_validation_number_of_splits"])
     cv = list(skf.split(X, y))
-
-    # # convert max_features to python None if "None"
-    # max_features = None if s["max_features"] == "None" else s["max_features"]
-    #
-    # forest = RandomForestClassifier(n_estimators=s["RF_number_of_estimators"], n_jobs=s["n_CPU_cores"], criterion=s["criterion"],
-    #                                 min_samples_leaf=s["min_samples_leaf"],
-    #                                 #max_depth=s["max_depth"],
-    #                                 oob_score=True, max_features=max_features, bootstrap=bool(s["bootstrap"]),
-    #                                 #random_state=s["random_state"]
-    #                                 )
 
     forest = THOIPA_RF_classifier_with_settings(s)
 
     mean_tpr = 0.0
     mean_fpr = np.linspace(0, 1, 100)
-    all_tpr = []
-    df_xv = pd.DataFrame()
     # save all outputs to a cross-validation dictionary, to be saved as a pickle file
     xv_dict = {}
 
@@ -382,16 +355,13 @@ def run_10fold_cross_validation(s, logging):
         xv_dict["tpr{}".format(i)] = tpr
         mean_tpr += interp(mean_fpr, fpr, tpr)
         mean_tpr[0] = 0.0
-        roc_auc = auc(fpr, tpr)
-        #plt.plot(fpr, tpr, lw=1, label='ROC fold %d (area = %0.2f)' % (i, roc_auc))
     sys.stdout.write("\n"), sys.stdout.flush()
 
-    print([estimator.tree_.max_depth for estimator in forest.estimators_])
+    logging.info([estimator.tree_.max_depth for estimator in forest.estimators_])
 
     duration = time.clock() - start
     logging.info("time taken for cross validation = {:.2f} (s in Windows, min in Linux?)".format(duration))
 
-    #plt.plot([0, 1], [0, 1], '--', color=(0.6, 0.6, 0.6), label='random')
     mean_tpr /= len(cv)
     mean_tpr[-1] = 1.0
 
@@ -405,11 +375,8 @@ def run_10fold_cross_validation(s, logging):
     with open(crossvalidation_pkl, "wb") as f:
         pickle.dump(xv_dict, f, protocol=pickle.HIGHEST_PROTOCOL)
     
-    # df_xv.loc["mean_auc"] = mean_auc
-    # df_xv.to_csv(crossvalidation_csv)
     features_ser = pd.Series(X.columns)
     features_ser.to_csv(features_csv)
-
     logging.info('10-fold cross validation is finished. Mean AUC = {:.3f}\nFeatures included:\n{}'.format(mean_auc, X.columns.tolist()))
 
 def fig_10fold_cross_validation(s, logging):
@@ -426,7 +393,6 @@ def fig_10fold_cross_validation(s, logging):
         Python object with settings for logging to console and file.
     """
     plt.rcParams.update({'font.size': 7})
-    crossvalidation_csv = os.path.join(s["set_results_folder"], "crossvalidation", "trainset{}_testset{}_crossvalidation.csv".format(s["setname"][-2:], s["setname"][-2:]))
     crossvalidation_png = os.path.join(s["set_results_folder"], "crossvalidation", "trainset{}_testset{}_ROC.png".format(s["setname"][-2:], s["setname"][-2:]))
     crossvalidation_pkl = os.path.join(s["set_results_folder"], "crossvalidation", "trainset{}_testset{}_crossvalidation.pkl".format(s["setname"][-2:], s["setname"][-2:]))
 
@@ -440,7 +406,6 @@ def fig_10fold_cross_validation(s, logging):
         roc_auc = auc(xv_dict["fpr{}".format(i)], xv_dict["tpr{}".format(i)])
         ax.plot(xv_dict["fpr{}".format(i)], xv_dict["tpr{}".format(i)], lw=1, label='fold %d (area = %0.2f)' % (i, roc_auc), alpha=0.8)
 
-    #mean_auc = auc(df_xv["false_positive_rate"], df_xv["true_positive_rate"])
     mean_auc = xv_dict["mean_auc"]
 
     ax.plot(xv_dict["false_positive_rate_mean"], xv_dict["true_positive_rate_mean"], color="k", label='mean (area = %0.2f)' % mean_auc, lw=1.5)
@@ -454,35 +419,124 @@ def fig_10fold_cross_validation(s, logging):
     fig.savefig(crossvalidation_png, dpi=240)
     fig.savefig(crossvalidation_png[:-4] + ".pdf")
 
-    # df_xv = pd.read_csv(crossvalidation_csv)
-    #
-    # #mean_auc = auc(df_xv["false_positive_rate"], df_xv["true_positive_rate"])
-    # mean_auc = df_xv.loc[0, "mean_auc"]
-    #
-    # fig, ax = plt.subplots(figsize=(4.2, 4.2))
-    #
-    # ax.plot([0, 1], [0, 1], '--', color=(0.6, 0.6, 0.6), label='random')
-    # ax.plot(xv_dict["false_positive_rate_mean"], xv_dict["true_positive_rate_mean"], 'k--',
-    #          label='Mean ROC (area = %0.2f)' % mean_auc, lw=2)
-    # ax.set_xlim([-0.05, 1.05])
-    # ax.set_ylim([-0.05, 1.05])
-    # ax.set_xlabel("False positive rate")
-    # ax.set_ylabel("True positive rate")
-    # ax.legend(loc="lower_right")
-    # fig.tight_layout()
-    # fig.savefig(crossvalidation_png)
+def run_LOO_validation(s, df_set, logging):
+    train_data_csv = os.path.join(s["set_results_folder"], "{}_train_data.csv".format(s["setname"]))
+    LOO_crossvalidation_pkl = os.path.join(s["set_results_folder"], "crossvalidation", "{}_LOO_crossvalidation.pkl".format(s["setname"]))
 
-    # plt.plot(df_xv["false_positive_rate"], df_xv["true_positive_rate"], 'k--',
-    #          label='Mean ROC (area = %0.2f)' % mean_auc, lw=2)
-    # plt.xlim([-0.05, 1.05])
-    # plt.ylim([-0.05, 1.05])
-    # plt.xlabel('False Positive Rate')
-    # plt.ylabel('True Positive Rate')
-    # plt.title('Receiver operating characteristic example')
-    # plt.legend(loc="lower right")
-    # plt.savefig(crossvalidation_png)
-    #plt.show()
-    # ADD SAVED PLOT
+    df_data = pd.read_csv(train_data_csv)
+
+    # drop training data (full protein) that don't have enough homologues
+    df_data = df_data.loc[df_data.n_homologues >= s["min_n_homol_training"]]
+
+    acc_db_list = df_data.acc_db.unique()
+    xv_dict = {}
+    mean_tpr = 0.0
+    mean_fpr = np.linspace(0, 1, 100)
+    start = time.clock()
+
+    for acc_db in df_set.acc_db:
+        if not acc_db in acc_db_list:
+            logging.warning("{} is in protein set, but not found in training data".format(acc_db))
+            # skip protein
+            continue
+        df_train = df_data.loc[df_data.acc_db != acc_db]
+        # df_train = df_data.loc[df_data.interface_score < 5.5]
+        df_test = df_data.loc[df_data.acc_db == acc_db]
+        X_train = thoipapy.RF_features.RF_Train_Test.drop_cols_not_used_in_ML(df_train, s)
+        y_train = df_train["interface"]
+        X_test = thoipapy.RF_features.RF_Train_Test.drop_cols_not_used_in_ML(df_test, s)
+        y_test = df_test["interface"]
+        forest = thoipapy.RF_features.RF_Train_Test.THOIPA_RF_classifier_with_settings(s)
+        probas_ = forest.fit(X_train, y_train).predict_proba(X_test)
+        fpr, tpr, thresholds = roc_curve(y_test, probas_[:, 1])
+        roc_auc = auc(fpr, tpr)
+        xv_dict[acc_db] = {"fpr": fpr, "tpr": tpr, "auc": roc_auc}
+
+        mean_tpr += interp(mean_fpr, fpr, tpr)
+        mean_tpr[0] = 0.0
+
+        logging.info("{} AUC : {:.2f}".format(acc_db, roc_auc))
+
+    logging.info([estimator.tree_.max_depth for estimator in forest.estimators_])
+
+    duration = time.clock() - start
+    logging.info("time taken for cross validation = {:.2f} (s in Windows, min in Linux?)".format(duration))
+
+    mean_tpr /= df_set.shape[0]
+    mean_tpr[-1] = 1.0
+
+    mean_auc = auc(mean_fpr, mean_tpr)
+
+    xv_dict["true_positive_rate_mean"] = mean_tpr
+    xv_dict["false_positive_rate_mean"] = mean_fpr
+    xv_dict["mean_auc"] = mean_auc
+
+    # save dict as pickle
+    thoipapy.utils.make_sure_path_exists(LOO_crossvalidation_pkl, isfile=True)
+    with open(LOO_crossvalidation_pkl, "wb") as f:
+        pickle.dump(xv_dict, f, protocol=pickle.HIGHEST_PROTOCOL)
+
+    logging.info('LOO crossvalidation is finished. Mean AUC = {:.3f}\n'.format(mean_auc))
+
+def create_LOO_validation_fig(s, df_set, logging):
+    """Create figure showing ROC curve for each fold in a 10-fold validation.
+
+    The underlying data is created by run_10fold_cross_validation. If this has not been run,
+    it will return a file-not-found error.
+
+    Parameters
+    ----------
+    s : dict
+        Settings dictionary
+    logging : logging.Logger
+        Python object with settings for logging to console and file.
+    """
+    plt.rcParams.update({'font.size': 7})
+    LOO_crossvalidation_pkl = os.path.join(s["set_results_folder"], "crossvalidation", "{}_LOO_crossvalidation.pkl".format(s["setname"]))
+    LOO_crossvalidation_ROC_png = os.path.join(s["set_results_folder"], "crossvalidation", "{}_LOO_crossvalidation_ROC.png".format(s["setname"]))
+    LOO_crossvalidation_AUC_bar_png = os.path.join(s["set_results_folder"], "crossvalidation", "{}_LOO_crossvalidation_AUC_bar.png".format(s["setname"]))
+
+    # open pickle file
+    with open(LOO_crossvalidation_pkl, "rb") as f:
+        xv_dict = pickle.load(f)
+
+    # due to problems on Bo's computer, set the figsize to double what
+    fig, ax = plt.subplots(figsize=(6.84, 6.84))
+    auc_dict = {}
+
+    for acc_db in df_set.acc_db:
+        if acc_db in xv_dict:
+            roc_auc = xv_dict[acc_db]["auc"]
+            auc_dict[acc_db] = roc_auc
+            ax.plot(xv_dict[acc_db]["fpr"], xv_dict[acc_db]["tpr"], lw=1, label='{} ({:.2f})'.format(acc_db, roc_auc), alpha=0.8)
+        else:
+            logging.warning("{} not in xv_dict after LOO validation".format(acc_db))
+
+    mean_auc = xv_dict["mean_auc"]
+
+    ax.plot(xv_dict["false_positive_rate_mean"], xv_dict["true_positive_rate_mean"], color="k", label='mean (area = %0.2f)' % mean_auc, lw=1.5)
+    ax.plot([0, 1], [0, 1], '--', color=(0.6, 0.6, 0.6), label='random')
+    ax.set_xlim([-0.05, 1.05])
+    ax.set_ylim([-0.05, 1.05])
+    ax.set_xlabel("False positive rate")
+    ax.set_ylabel("True positive rate")
+    ax.legend(loc="lower right")
+    fig.tight_layout()
+    fig.savefig(LOO_crossvalidation_ROC_png, dpi=240)
+    fig.savefig(LOO_crossvalidation_ROC_png[:-4] + ".pdf")
+
+
+    AUC_ser = pd.Series(auc_dict)
+    plt.close("all")
+    fig, ax = plt.subplots(figsize=(6.84, 6.84))
+    AUC_ser.plot(ax=ax, kind="bar")
+    ax.set_ylabel("performance (AUBOC10)")
+    fig.tight_layout()
+    fig.savefig(LOO_crossvalidation_AUC_bar_png, dpi=240)
+    fig.savefig(LOO_crossvalidation_AUC_bar_png[:-4] + ".pdf")
+
+
+
 
 def calculate_RF_variable_importance(s, logging):
     """Calculate the variable importance (mean decrease gini) for all variables in THOIPA.
@@ -565,33 +619,6 @@ def fig_variable_importance(s, logging):
     create_var_imp_plot(df_imp, colour_dict, variable_importance_all_png, df_imp.shape[0])
     create_var_imp_plot(df_imp, colour_dict, variable_importance_top_png, 30)
 
-    # UPDATE AS ABOVE
-    # data = pd.read_csv('/scratch2/zeng/homotypic_data/data/RandomForest/PsEnCo/TrainData2',delimiter="\s")
-    # del data["Residue_num"]
-    # del data["Residue_name"]
-    # #print(data.as_matrix(data.columns))
-    # features=data.columns[0:28]
-    # X=data[features]
-    # y=data["Bind"]
-    # forest = RandomForestClassifier(n_estimators=100)
-    # forest.fit(X, y)
-    # importances_arr = forest.feature_importances_
-    # std_arr = np.std_arr([tree.feature_importances_ for tree in forest.estimators_],
-    #              axis=0)
-    # indices = np.argsort(importances_arr)[::-1]
-    # print("Feature ranking:")
-    #
-    # for f in range(X.shape[1]):
-    #     print("%d. feature %d (%f)" % (f + 1, indices[f], importances_arr[indices[f]]))
-    # plt.figure()
-    # plt.title("Feature importances_arr")
-    # plt.bar(range(X.shape[1]), importances_arr[indices],
-    #        color="r", yerr=std_arr[indices], align="center")
-    # #plt.xticks(range(x.shape[1]), indices)
-    # plt.xticks(range(X.shape[1]), indices)
-    # plt.xticks(range(X.shape[1]), indices)
-    # plt.xlim([-1, X.shape[1]])
-    # plt.show()
 
 def create_var_imp_plot(df_imp, colour_dict, variable_importance_png, n_features_in_plot):
     """Plot function for fig_variable_importance, allowing a variable number of features.

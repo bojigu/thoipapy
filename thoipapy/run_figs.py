@@ -1,4 +1,5 @@
-print("FIGS.PY HAS BEEN DEPRECATED, and all functions moved to run.py")
+if __name__ == "__main__":
+    print("FIGS.PY HAS BEEN DEPRECATED, and all functions moved to run.py")
 #
 # import matplotlib.pyplot as plt
 # import thoipapy
