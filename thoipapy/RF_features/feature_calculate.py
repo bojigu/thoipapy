@@ -1506,14 +1506,7 @@ def combine_all_train_data_for_random_forest(s, df_set, logging):
 
     train_data_csv = os.path.join(s["set_results_folder"], "{}_train_data.csv".format(s["setname"]))
 
-    if "no_cdhit_results" in df_set.cdhit_cluster_rep:
-        logging.warning("No CD-HIT results were used to remove redundant seq,  but model is being trained anyway.")
-
-    n_prot_initial = df_set.shape[0]
-    # create model only using CD-HIT cluster representatives
-    df_set_nonred = df_set.loc[df_set.cdhit_cluster_rep != False]
-    n_prot_final = df_set_nonred.shape[0]
-    logging.info("n_prot_initial = {}, n_prot_final = {}, n_prot_dropped = {}".format(n_prot_initial, n_prot_final, n_prot_initial - n_prot_final))
+    df_set_nonred = thoipapy.utils.drop_redundant_proteins_from_list(df_set, logging)
 
     # set up a dataframe to hold the features for all proteins
     df_all = pd.DataFrame()

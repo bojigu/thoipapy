@@ -1649,3 +1649,80 @@ def create_column_with_TMD_plus_surround_seq(df_set, num_of_sur_residues):
             df_set.loc[i, "TMD_end_pl_surr"] = df_set.loc[i, "seqlen"]
     TMD_seq_pl_surr_series = df_set.apply(slice_TMD_seq_pl_surr, axis=1)
     return df_set, TMD_seq_pl_surr_series
+
+
+def create_namedict(names_excel_path, style="shortname [acc]"):
+    """ Create protein name dictionary from an excel file with detailed protein info.
+
+    e.g. namedict[P02724-NMR
+
+    Parameters
+    ----------
+    names_excel_path
+
+    Returns
+    -------
+
+    """
+    #################################################################
+    #             EXTRACT NAMES FROM NAMES EXCEL FILE               #
+    #################################################################
+    df_names = pd.read_excel(names_excel_path, index_col=0)
+    # restrict names dict to only that database
+    df_names["acc"] = df_names.index
+    df_names["acc_db"] = df_names.acc + "-" + df_names.database
+    df_names.set_index("acc_db", inplace=True)
+    #df_names = df_names.loc[df_names.database == database]
+    if style == "shortname [acc]":
+        df_names["label"] = df_names.shortname + " [" + df_names.acc + "]"
+    else:
+        raise ValueError("other styles not implemented")
+    namedict = df_names["label"].to_dict()
+    return namedict
+
+def pdf_subpath(png_path):
+    """Create a subfolder "pdf" where the png is saved.
+
+    Also checks that the path exists.
+
+    Parameters
+    ----------
+    png_path : str
+        Path to png file
+
+    Returns
+    -------
+
+    """
+    pdf_path = os.path.join(os.path.dirname(png_path), "pdf", os.path.basename(png_path)[:-4] + ".pdf")
+    make_sure_path_exists(pdf_path, isfile=True)
+    return pdf_path
+
+def drop_redundant_proteins_from_list(df_set, logging):
+    """Simply drops the proteins labeled "False" as CD-HIT cluster representatives.
+
+    Relies on the dataframe containing the cdhit_cluster_rep column.
+
+    Parameters
+    ----------
+    df_set : pd.DataFrame
+        Dataframe containing the list of proteins to process, including their TMD sequences and full-length sequences
+        index : range(0, ..)
+        columns : ['acc', 'seqlen', 'TMD_start', 'TMD_end', 'tm_surr_left', 'tm_surr_right', 'database',  ....]
+    logging : logging.Logger
+        Python object with settings for logging to console and file.
+
+    Returns
+    -------
+    df_set_nonred : pd.DataFrame
+        df_set with only non-redundant proteins, based on redundancy settings
+    """
+    if "no_cdhit_results" in df_set.cdhit_cluster_rep:
+        logging.warning("No CD-HIT results were used to remove redundant seq,  but model is being trained anyway.")
+
+    n_prot_initial = df_set.shape[0]
+    # create model only using CD-HIT cluster representatives
+    df_set_nonred = df_set.loc[df_set.cdhit_cluster_rep != False]
+    n_prot_final = df_set_nonred.shape[0]
+    logging.info("CDHIT redundancy reduction : n_prot_initial = {}, n_prot_final = {}, n_prot_dropped = {}".format(n_prot_initial, n_prot_final, n_prot_initial - n_prot_final))
+    return df_set_nonred

@@ -33,7 +33,7 @@ def fig_plot_BO_curve_mult_train_datasets(s):
 
     """
 
-    plt.rcParams.update({'font.size': 7})
+    #plt.rcParams.update({'font.size': 7})
 
     test_set_list, train_set_list = thoipapy.figs.fig_utils.get_test_and_train_set_lists(s)
 
@@ -80,25 +80,26 @@ def plot_BO_curve(s,train_set_list, test_set_list, mult_THOIPA_dir, mult_testnam
 
     BO_curve_png = os.path.join(mult_THOIPA_dir, "{}{}.png".format(mult_testname, suffix))
 
-    fig, ax = plt.subplots(figsize=(3.42, 3.42))
+    figsize = np.array([3.42, 3.42]) * 2 # DOUBLE the real size, due to problems on Bo computer with fontsizes
+    fig, ax = plt.subplots(figsize=figsize)
 
     for train_set in train_set_list:
         trainsetname = "set{:02d}".format(int(train_set))
 
         for test_set in test_set_list:
             testsetname = "set{:02d}".format(int(test_set))
-            #/media/mark/sindy/m_data/THOIPA_data/Results/Bo_Curve/Testset03_Trainset01.THOIPA.validation/bo_curve_underlying_data_indiv_df.xlsx
-            bo_curve_underlying_data_indiv_xlsx = os.path.join(s["thoipapy_data_folder"], "Results", "compare_testset_trainset", "data", "Test{}_Train{}.THOIPA".format(testsetname, trainsetname), "bo_curve_underlying_data_indiv_df.xlsx")
+            #/media/mark/sindy/m_data/THOIPA_data/Results/Bo_Curve/Testset03_Trainset01.THOIPA.validation/BO_curve_data.xlsx
+            BO_data_excel = os.path.join(s["thoipapy_data_folder"], "Results", "compare_testset_trainset", "data", "Test{}_Train{}.THOIPA".format(testsetname, trainsetname), "data", "BO_curve_data.xlsx")
 
-            df = pd.read_excel(bo_curve_underlying_data_indiv_xlsx, sheetname=sheetname, index_col=0)
+            df = pd.read_excel(BO_data_excel, sheetname=sheetname, index_col=0)
 
             df["mean_"] = df.mean(axis=1)
 
             # use the composite trapezoidal rule to get the area under the curve
             # https://docs.scipy.org/doc/numpy-1.13.0/reference/generated/numpy.trapz.html
-            area_under_curve = np.trapz(y=df["mean_"], x=df.index)
+            AUBOC10 = np.trapz(y=df["mean_"], x=df.index)
 
-            df["mean_"].plot(ax=ax, label="Test{}_Train{}(AUBOC10={:0.1f})".format(testsetname, trainsetname, area_under_curve))
+            df["mean_"].plot(ax=ax, label="Test{}_Train{}(AUBOC10={:0.1f})".format(testsetname, trainsetname, AUBOC10))
 
     ax.set_xlabel("sample size")
     ax.set_ylabel("performance\n(observed overlap - random overlap)")
@@ -107,7 +108,8 @@ def plot_BO_curve(s,train_set_list, test_set_list, mult_THOIPA_dir, mult_testnam
     ax.legend()
     fig.tight_layout()
     fig.savefig(BO_curve_png, dpi=240)
-    fig.savefig(BO_curve_png[:-4] + ".pdf")
+    #fig.savefig(BO_curve_png[:-4] + ".pdf")
+    fig.savefig(thoipapy.utils.pdf_subpath(BO_curve_png))
     sys.stdout.write("\nfig_plot_BO_curve_mult_train_datasets finished ({})".format(BO_curve_png))
 
 
@@ -132,7 +134,7 @@ def compare_predictors(s):
 
     """
 
-    plt.rcParams.update({'font.size': 7})
+    #plt.rcParams.update({'font.size': 7})
     mult_pred_dir = os.path.join(s["thoipapy_data_folder"], "Results", "compare_predictors")
     BO_curve_png = os.path.join(mult_pred_dir, "BO_curve_mult_pred.png")
     AUBOC10_bar_png = os.path.join(mult_pred_dir, "AUBOC10_barchart_mult_pred.png")
@@ -140,7 +142,8 @@ def compare_predictors(s):
 
     thoipapy.utils.make_sure_path_exists(mult_pred_dir)
 
-    fig, ax = plt.subplots(figsize=(3.42, 3.42))
+    figsize = np.array([3.42, 3.42]) * 2 # DOUBLE the real size, due to problems on Bo computer with fontsizes
+    fig, ax = plt.subplots(figsize=figsize)
 
     # list of predictors to compare, e.g. ["Testset03_Trainset04.THOIPA", "Testset03.LIPS"]
     #predictor_list = ast.literal_eval(s["fig_plot_BO_curve_mult_predictors_list"])
@@ -156,21 +159,21 @@ def compare_predictors(s):
     df = pd.DataFrame()
 
     for predictor_name in predictor_list:
-        bo_curve_underlying_data_indiv_xlsx = os.path.join(s["thoipapy_data_folder"], "Results", "compare_testset_trainset", "data", "{}".format(predictor_name), "bo_curve_underlying_data_indiv_df.xlsx")
+        BO_data_excel = os.path.join(s["thoipapy_data_folder"], "Results", "compare_testset_trainset", "data", "{}".format(predictor_name), "data", "BO_curve_data.xlsx")
 
-        if not os.path.isfile(bo_curve_underlying_data_indiv_xlsx):
-            raise FileNotFoundError("bo_curve_underlying_data_indiv_xlsx does not exist ({}). Try running run_testset_trainset_validation in run_figs.py".format(bo_curve_underlying_data_indiv_xlsx))
+        if not os.path.isfile(BO_data_excel):
+            raise FileNotFoundError("BO_data_excel does not exist ({}). Try running run_testset_trainset_validation in run_figs.py".format(BO_data_excel))
 
-        df = pd.read_excel(bo_curve_underlying_data_indiv_xlsx, sheetname="df_o_minus_r", index_col=0)
+        df = pd.read_excel(BO_data_excel, sheetname="df_o_minus_r", index_col=0)
 
         df["mean_"] = df.mean(axis=1)
 
         # use the composite trapezoidal rule to get the area under the curve
         # https://docs.scipy.org/doc/numpy-1.13.0/reference/generated/numpy.trapz.html
-        area_under_curve = np.trapz(y=df["mean_"], x=df.index)
-        area_under_curve_dict[predictor_name] = area_under_curve
+        AUBOC10 = np.trapz(y=df["mean_"], x=df.index)
+        area_under_curve_dict[predictor_name] = AUBOC10
 
-        df["mean_"].plot(ax=ax, label="{}(AUBOC10={:0.1f})".format(predictor_name, area_under_curve))
+        df["mean_"].plot(ax=ax, label="{}(AUBOC10={:0.1f})".format(predictor_name, AUBOC10))
 
     ax.set_xlabel("sample size")
     ax.set_ylabel("performance\n(observed overlap - random overlap)")
@@ -179,24 +182,28 @@ def compare_predictors(s):
     ax.legend()
     fig.tight_layout()
     fig.savefig(BO_curve_png, dpi=240)
-    fig.savefig(BO_curve_png[:-4] + ".pdf")
+    #fig.savefig(BO_curve_png[:-4] + ".pdf")
+    fig.savefig(thoipapy.utils.pdf_subpath(BO_curve_png))
 
     plt.close("all")
     AUBOC10_ser = pd.Series(area_under_curve_dict).sort_index()
-    fig, ax = plt.subplots(figsize=(3.42, 3.42))
+    figsize = np.array([3.42, 3.42]) * 2 # DOUBLE the real size, due to problems on Bo computer with fontsizes
+    fig, ax = plt.subplots(figsize=figsize)
     AUBOC10_ser.plot(ax=ax, kind="bar")
     ax.set_ylabel("performance (AUBOC10)")
     fig.tight_layout()
     fig.savefig(AUBOC10_bar_png, dpi=240)
-    fig.savefig(AUBOC10_bar_png[:-4] + ".pdf")
+    #fig.savefig(AUBOC10_bar_png[:-4] + ".pdf")
+    fig.savefig(thoipapy.utils.pdf_subpath(AUBOC10_bar_png))
 
     plt.close("all")
 
-    fig, ax = plt.subplots(figsize=(3.42, 3.42))
+    figsize = np.array([3.42, 3.42]) * 2 # DOUBLE the real size, due to problems on Bo computer with fontsizes
+    fig, ax = plt.subplots(figsize=figsize)
 
     for predictor_name in predictor_list:
         #"D:\data_thoipapy\Results\compare_testset_trainset\data\Testset03_Trainset04.THOIPA\Testset03_Trainset04.THOIPA.ROC_data.pkl"
-        ROC_pkl = os.path.join(s["thoipapy_data_folder"], "Results", "compare_testset_trainset", "data", predictor_name, "{}.ROC_data.pkl".format(predictor_name))
+        ROC_pkl = os.path.join(s["thoipapy_data_folder"], "Results", "compare_testset_trainset", "data", predictor_name, "data", "{}.ROC_data.pkl".format(predictor_name))
 
         if os.path.isfile(ROC_pkl):
             with open(ROC_pkl, "rb") as f:
@@ -213,7 +220,8 @@ def compare_predictors(s):
     ax.legend(loc="lower right")
     fig.tight_layout()
     fig.savefig(ROC_png, dpi=240)
-    fig.savefig(ROC_png[:-4] + ".pdf")
+    #fig.savefig(ROC_png[:-4] + ".pdf")
+    fig.savefig(thoipapy.utils.pdf_subpath(ROC_png))
 
     sys.stdout.write("\ncompare_predictors finished ({})".format(BO_curve_png))
 

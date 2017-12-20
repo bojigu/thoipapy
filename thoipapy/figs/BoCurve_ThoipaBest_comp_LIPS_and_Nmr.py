@@ -1,5 +1,6 @@
 import sys
 import pandas as pd
+import numpy as np
 from matplotlib import pyplot as plt
 #import tlabtools.tools as tools
 #import scipy.optimize
@@ -25,7 +26,8 @@ black = "k"
 TUMblue = colour_dict["TUM_colours"]['TUMBlue']
 
 def thoipabest_vs_LIPS(bo_curve_handle,overlap_num,output_basename_LIPS,output_basename_LIPS_png,Fontsize,Linewidth):
-    fig, ax = plt.subplots(figsize=(3.42, 3.42))
+    figsize = np.array([3.42, 3.42]) * 2 # DOUBLE the real size, due to problems on Bo computer with fontsizes
+    fig, ax = plt.subplots(figsize=figsize)
     ax1 = plt.subplot(311)
     # ax1 = plt.subplot(311)
     ax1.plot(overlap_num, bo_curve_handle['Tr4Te1Ratio'].values, color=blue5, linestyle="-", linewidth=1.0,label="THOIPA best")
@@ -104,7 +106,8 @@ def thoipabest_vs_LIPS(bo_curve_handle,overlap_num,output_basename_LIPS,output_b
 
 
 def thoipabest_vs_thoipanmr(bo_curve_handle,overlap_num,output_basename_nmr,output_basename_nmr_png,Fontsize,Linewidth):
-    fig, ax = plt.subplots(figsize=(3.42, 3.42))
+    figsize = np.array([3.42, 3.42]) * 2 # DOUBLE the real size, due to problems on Bo computer with fontsizes
+    fig, ax = plt.subplots(figsize=figsize)
     # plt.close()
     ax1 = plt.subplot(311)
     #ax1.plot(overlap_num, bo_curve_handle['ThoipaTrainRatio68'].values, color=blue5, linestyle="-", linewidth=1.0,label="train crystal/NMR")
