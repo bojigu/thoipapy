@@ -220,14 +220,9 @@ if __name__ == "__main__":
         if s["calc_PREDDIMER_TMDOCK_closedist"] == True:
             thoipapy.figs.Calc_PREDDIMER_TMDOCK_Closedist.calc_closedist_from_PREDDIMER_TMDOCK_best_model(s)
 
-        columns_kept_in_combined_file = [ 'Conservation', 'Polarity', 'CoevDImax_norm',
-                                         'CoevDI4_norm',
-                                         'CoevDI8_norm', 'CoevMImax_norm', 'CoevMI4_norm', 'CoevMI8_norm',
-                                         'CumDI4_norm', 'CumDI8_norm', 'CumMI4_norm', 'CumMI8_norm', 'RelPos_TMD',
-                                         'RelPos_fullseq', 'LIPS_L*E', 'LIPS_surface_ranked', 'Hydrophobicity_sAA',
-                                         'THOIPA', 'TMDOCK', 'PREDDIMER']
+
         if s["add_predictions_to_combined_files"] == True:
-            thoipapy.figs.combine_add_3_prediction.combine_file_add_PREDDIMER_TMDOCK_THOIPA_prediction(s,columns_kept_in_combined_file)
+            thoipapy.figs.combine_add_3_prediction.combine_file_add_PREDDIMER_TMDOCK_THOIPA_prediction(s, df_set, logging)
 
         # close the logger. A new one will be made for the next protein list.
         logging.info("FINISHED PROCESSING OF {}.".format(setname))

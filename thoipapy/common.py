@@ -411,7 +411,7 @@ def process_set_protein_seqs(s, setname, df_set, set_path):
         TMD_seq = df_set.loc[i, "TMD_seq"]
         full_seq = df_set.loc[i, "full_seq"]
 
-        # use regeg to get indices for start and end of TMD in seq
+        # use regex to get indices for start and end of TMD in seq
         m = re.search(TMD_seq, full_seq)
         if m:
             # convert from python indexing to unprot indexing

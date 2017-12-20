@@ -1211,6 +1211,7 @@ def combine_all_features_mult_prot(s, df_set, logging):
         acc = df_set.loc[i, "acc"]
         database = df_set.loc[i, "database"]
         TMD_seq = df_set.loc[i, "TMD_seq"]
+        TMD_start = df_set.loc[i, "TMD_start"]
         scalename = s["lipophilicity_scale"]
         lipo_csv = os.path.join(s["feature_lipophilicity"], database, "{}_{}_lipo.csv".format(acc, scalename))
         relative_position_file = os.path.join(s["feature_relative_position"], database, "%s.relative_position%s.csv") % (acc, s["surres"])
@@ -1223,9 +1224,9 @@ def combine_all_features_mult_prot(s, df_set, logging):
         alignments_dir = os.path.join(s["homologues_folder"], "alignments", database)
         alignment_summary_csv = os.path.join(alignments_dir, "{}.surr{}.gaps{}.alignment_summary.csv".format(acc, s["num_of_sur_residues"], s["max_n_gaps_in_TMD_subject_seq"]))
 
-        combine_all_features(acc, database, TMD_seq, feature_combined_file, entropy_file, pssm_csv, lipo_csv, freecontact_parsed_csv, relative_position_file, LIPS_parsed_csv, motifs_file, alignment_summary_csv, logging)
+        combine_all_features(acc, database, TMD_seq, TMD_start, feature_combined_file, entropy_file, pssm_csv, lipo_csv, freecontact_parsed_csv, relative_position_file, LIPS_parsed_csv, motifs_file, alignment_summary_csv, logging)
 
-def combine_all_features(acc, database, TMD_seq, feature_combined_file, entropy_file, pssm_csv, lipo_csv, freecontact_parsed_csv, relative_position_file, LIPS_parsed_csv, motifs_file, alignment_summary_csv, logging):
+def combine_all_features(acc, database, TMD_seq, TMD_start, feature_combined_file, entropy_file, pssm_csv, lipo_csv, freecontact_parsed_csv, relative_position_file, LIPS_parsed_csv, motifs_file, alignment_summary_csv, logging):
     thoipapy.utils.make_sure_path_exists(feature_combined_file, isfile=True)
 
     for n, filepath in enumerate([entropy_file, pssm_csv, lipo_csv, freecontact_parsed_csv, relative_position_file, LIPS_parsed_csv]):
@@ -1294,10 +1295,16 @@ def combine_all_features(acc, database, TMD_seq, feature_combined_file, entropy_
     else:
         df_features_single_protein["n_TMDs"] = 1
 
+    # add the residue number in the full protein sequence
+    # this assumes that the index is a range, starting from 0 to x,
+    # and that the residue_name exactly matches the original TMD_seq
+    df_features_single_protein["res_num_full_seq"] = df_features_single_protein.index + TMD_start
+
     df_features_single_protein = normalise_features(df_features_single_protein)
 
     df_features_single_protein.to_csv(feature_combined_file)
     logging.info("{} combine_all_features_mult_prot finished ({})".format(acc, feature_combined_file))
+
 
 def normalise_features(df_features_single_protein):
 

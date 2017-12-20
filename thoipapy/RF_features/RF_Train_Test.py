@@ -487,6 +487,7 @@ def run_LOO_validation(s, df_set, logging):
             df_test["interface_score"] = -1 * df_test["interface_score"]
 
         BO_df = thoipapy.figs.fig_utils.calc_best_overlap(acc_db, df_test, experiment_col="interface_score", pred_col=pred_colname)
+
         if BO_all_df.empty:
             BO_all_df = BO_df
         else:
