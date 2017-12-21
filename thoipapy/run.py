@@ -173,7 +173,7 @@ if __name__ == "__main__":
             thoipapy.RF_features.RF_Train_Test.fig_variable_importance(s, logging)
 
         if s["run_LOO_validation"]:
-            #thoipapy.RF_features.RF_Train_Test.run_LOO_validation(s, df_set, logging)
+            thoipapy.RF_features.RF_Train_Test.run_LOO_validation(s, df_set, logging)
             thoipapy.RF_features.RF_Train_Test.create_LOO_validation_fig(s, df_set, logging)
 
         if s["train_random_forest_model"]:
