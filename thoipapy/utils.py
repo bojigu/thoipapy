@@ -265,18 +265,24 @@ def create_column_with_TMD_plus_surround_seq(df_set, num_of_sur_residues):
     return df_set, TMD_seq_pl_surr_series
 
 
-def create_namedict(names_excel_path, style="shortname [acc]"):
+def create_namedict(names_excel_path, style="shortname [acc-db]"):
     """ Create protein name dictionary from an excel file with detailed protein info.
 
     e.g. namedict[P02724-NMR
 
     Parameters
     ----------
-    names_excel_path
+    names_excel_path : str
+        Path to excel file with manually edited protein names
+    style : str
+        Style of protein name in output dictionary. Current options are "shortname [acc-db]" or "shortname [acc]"
+        "shortname [acc-db]" = 'Q9Y286-ETRA': 'Siglec7 [Q9Y286-ETRA]'
+        "shortname [acc]" = 'Q9Y286-ETRA': 'Siglec7 [Q9Y286]'
 
     Returns
     -------
-
+    namedict : dict
+        Dictionary in format namedict[acc_db] = "formatted protein name"
     """
     #################################################################
     #             EXTRACT NAMES FROM NAMES EXCEL FILE               #
@@ -285,9 +291,11 @@ def create_namedict(names_excel_path, style="shortname [acc]"):
     # restrict names dict to only that database
     df_names["acc"] = df_names.index
     df_names["acc_db"] = df_names.acc + "-" + df_names.database
-    df_names.set_index("acc_db", inplace=True)
+    df_names.set_index("acc_db", inplace=True, drop=False)
     #df_names = df_names.loc[df_names.database == database]
-    if style == "shortname [acc]":
+    if style == "shortname [acc-db]":
+        df_names["label"] = df_names.shortname + " [" + df_names.acc_db + "]"
+    elif style == "shortname [acc]":
         df_names["label"] = df_names.shortname + " [" + df_names.acc + "]"
     else:
         raise ValueError("other styles not implemented")

@@ -68,7 +68,7 @@ if __name__ == "__main__":
             os.makedirs(s["set_results_folder"])
 
         logging = common.setup_keyboard_interrupt_and_error_logging(s, setname)
-        logging.info("STARTING PROCESSING OF SET01")
+        logging.info("STARTING PROCESSING OF {}.".format(setname))
 
         set_path = thoipapy.common.get_path_of_protein_set(setname, sets_folder)
 
@@ -173,14 +173,14 @@ if __name__ == "__main__":
             thoipapy.RF_features.RF_Train_Test.fig_variable_importance(s, logging)
 
         if s["run_LOO_validation"]:
-            thoipapy.RF_features.RF_Train_Test.run_LOO_validation(s, df_set, logging)
+            #thoipapy.RF_features.RF_Train_Test.run_LOO_validation(s, df_set, logging)
             thoipapy.RF_features.RF_Train_Test.create_LOO_validation_fig(s, df_set, logging)
 
         if s["train_random_forest_model"]:
             thoipapy.RF_features.RF_Train_Test.train_random_forest_model(s, logging)
 
         if s["run_testset_trainset_validation"] == True:
-            #thoipapy.figs.Create_Bo_Curve_files.Test_Etra_deprecated(s)
+            thoipapy.figs.Create_Bo_Curve_files.Test_Etra_deprecated(s)
             thoipapy.figs.Create_Bo_Curve_files.run_testset_trainset_validation(s, logging)
 
         ###################################################################################################

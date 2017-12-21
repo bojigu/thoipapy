@@ -1,5 +1,6 @@
 import warnings
 warnings.simplefilter(action='ignore', category=FutureWarning)
+import ast
 import pandas as pd
 import numpy as np
 import thoipapy
@@ -107,10 +108,14 @@ def THOIPA_RF_classifier_with_settings(s):
 
     # convert max_features to python None if "None"
     max_features = None if s["max_features"] == "None" else s["max_features"]
+    # default for min_samples_leaf is 1 (no filter)
+    min_samples_leaf = 1 if s["min_samples_leaf"] == "None" else s["min_samples_leaf"]
+    # default for min_samples_leaf is None (no restriction on tree size)
+    max_depth = None if s["max_depth"] == "None" else s["max_depth"]
 
     forest = RandomForestClassifier(n_estimators=s["RF_number_of_estimators"], n_jobs=s["n_CPU_cores"], criterion=s["criterion"],
-                                    min_samples_leaf=s["min_samples_leaf"],
-                                    #max_depth=s["max_depth"],
+                                    min_samples_leaf=min_samples_leaf,
+                                    max_depth=max_depth,
                                     oob_score=True, max_features=max_features, bootstrap=bool(s["bootstrap"]),
                                     #random_state=s["random_state"]
                                     )
@@ -423,7 +428,6 @@ def run_LOO_validation(s, df_set, logging):
     """
     logging.info('Leave-One-Out cross validation is running')
     names_excel_path = os.path.join(os.path.dirname(s["sets_folder"]), "ETRA_NMR_names.xlsx")
-    namedict = thoipapy.utils.create_namedict(names_excel_path)
 
     # drop redundant proteins according to CD-HIT
     df_set = thoipapy.utils.drop_redundant_proteins_from_list(df_set, logging)
@@ -433,9 +437,8 @@ def run_LOO_validation(s, df_set, logging):
     LOO_crossvalidation_pkl = os.path.join(s["set_results_folder"], "crossvalidation", "data", "{}_LOO_crossvalidation.pkl".format(s["setname"]))
     BO_all_data_csv = os.path.join(s["set_results_folder"], "crossvalidation", "data", "{}_LOO_BO_data.csv".format(s["setname"]))
     BO_curve_folder = os.path.join(s["set_results_folder"], "crossvalidation")
-    BO_data_excel = os.path.join(BO_curve_folder, "data", "BO_curve_data.xlsx")
-    BO_linechart_png = os.path.join(BO_curve_folder, "BO_linechart.png")
-    BO_barchart_png = os.path.join(BO_curve_folder, "AUBOC10_barchart.png")
+    BO_data_excel = os.path.join(BO_curve_folder, "data", "{}_BO_curve_data.xlsx".format(s["setname"]))
+
     thoipapy.utils.make_sure_path_exists(BO_data_excel, isfile=True)
 
     df_data = pd.read_csv(train_data_csv)
@@ -449,6 +452,7 @@ def run_LOO_validation(s, df_set, logging):
     mean_fpr = np.linspace(0, 1, 100)
     start = time.clock()
     BO_all_df = pd.DataFrame()
+    pred_colname = "THOIPA_{}_LOO".format(s["set_number"])
 
     for i in df_set.index:
         acc, acc_db, database  = df_set.loc[i, "acc"], df_set.loc[i, "acc_db"], df_set.loc[i, "database"]
@@ -468,9 +472,7 @@ def run_LOO_validation(s, df_set, logging):
         y_test = df_test["interface"]
         forest = thoipapy.RF_features.RF_Train_Test.THOIPA_RF_classifier_with_settings(s)
         prediction = forest.fit(X_train, y_train).predict_proba(X_test)[:, 1]
-
         # add the prediction to the combined file
-        pred_colname = "THOIPA_{}_LOO".format(s["set_number"])
         df_test[pred_colname] = prediction
         # save just the prediction alone to csv
         prediction_df = df_test[["residue_num", "residue_name", pred_colname]]
@@ -524,15 +526,8 @@ def run_LOO_validation(s, df_set, logging):
 
     #linechart_mean_obs_and_rand = thoipapy.figs.Create_Bo_Curve_files.analyse_bo_curve_underlying_data(BO_all_data_csv, crossvalidation_folder, names_excel_path)
     thoipapy.figs.Create_Bo_Curve_files.parse_BO_data_csv_to_excel(BO_all_data_csv, BO_data_excel, logging)
-    AUBOC10 = thoipapy.figs.Create_Bo_Curve_files.save_BO_linegraph_and_barchart(BO_data_excel, BO_linechart_png, BO_barchart_png, namedict, logging)
-    if "you_want_more_details" == "TRUE":
-        other_figs_path = os.path.join(BO_curve_folder, "other_figs")
-        thoipapy.figs.Create_Bo_Curve_files.save_extra_BO_figs(BO_data_excel, other_figs_path)
 
-    #sys.stdout.write("\nBO curve data analysed ({})".format(linechart_mean_obs_and_rand))
-
-    logging.info('{} LOO crossvalidation. AUC({:.2f}), AUBOC10({:.2f}). Time taken = {:.2f}.'.format(s["setname"], mean_auc, AUBOC10, duration))
-
+    logging.info('{} LOO crossvalidation. AUC({:.2f}). Time taken = {:.2f}.'.format(s["setname"], mean_auc, duration))
 
 def create_LOO_validation_fig(s, df_set, logging):
     """Create figure showing ROC curve for each fold in a 10-fold validation.
@@ -556,6 +551,13 @@ def create_LOO_validation_fig(s, df_set, logging):
     LOO_crossvalidation_AUC_bar_png = os.path.join(s["set_results_folder"], "crossvalidation", "{}_LOO_crossvalidation_AUC_bar.png".format(s["setname"]))
     AUC_csv = os.path.join(s["set_results_folder"], "crossvalidation", "data", "{}_LOO_AUC.csv".format(s["setname"]))
     BO_all_data_csv = os.path.join(s["set_results_folder"], "crossvalidation", "data", "{}_LOO_BO_data.csv".format(s["setname"]))
+    BO_curve_folder = os.path.join(s["set_results_folder"], "crossvalidation")
+    BO_data_excel = os.path.join(BO_curve_folder, "data", "{}_BO_curve_data.xlsx".format(s["setname"]))
+    BO_linechart_png = os.path.join(BO_curve_folder, "{}_BO_linechart.png".format(s["setname"]))
+    BO_barchart_png = os.path.join(BO_curve_folder, "{}_LOO_AUBOC10_barchart.png".format(s["setname"]))
+
+    names_excel_path = os.path.join(os.path.dirname(s["sets_folder"]), "ETRA_NMR_names.xlsx")
+    namedict = thoipapy.utils.create_namedict(names_excel_path)
 
     # open pickle file
     with open(LOO_crossvalidation_pkl, "rb") as f:
@@ -600,33 +602,14 @@ def create_LOO_validation_fig(s, df_set, logging):
     fig.savefig(LOO_crossvalidation_AUC_bar_png, dpi=240)
     fig.savefig(thoipapy.utils.pdf_subpath(LOO_crossvalidation_AUC_bar_png))
 
-    logging.info("create_LOO_validation_fig finished ({})".format(LOO_crossvalidation_AUC_bar_png))
+    AUBOC10 = thoipapy.figs.Create_Bo_Curve_files.save_BO_linegraph_and_barchart(s, BO_data_excel, BO_linechart_png, BO_barchart_png, namedict, logging, AUC_ser)
 
-    #
-    #
-    # plt.close("all")
-    # fig, ax = plt.subplots()
-    # ax2 = ax.twinx()
-    # df_o_minus_r.T.mean().plot(ax=ax, color="#0f7d9b", linestyle="-", label="new method (o-r)")
-    # ax.plot([1, 10], [0, 0], color="#0f7d9b", linestyle="--", label="new method random", alpha=0.5)
-    #
-    # df_o_over_r.T.mean().plot(ax=ax2, color="#9b2d0f", linestyle="-", label="old method (o/r)")
-    # ax2.plot([1, 10], [1, 1], color="#9b2d0f", linestyle="--", label="old method random", alpha=0.5)
-    #
-    # # ax.set_ylim(0)
-    # ax.grid(False)
-    # ax.set_ylabel("performance value\n(observed - random)", color="#0f7d9b")
-    # ax2.set_ylabel("performance value\n (observed / random)", color="#9b2d0f")
-    # ax.tick_params('y', colors="#0f7d9b")
-    # ax2.tick_params('y', colors="#9b2d0f")
-    # ax2.spines['left'].set_color("#0f7d9b")
-    # ax2.spines['right'].set_color("#9b2d0f")
-    #
-    # ax.legend()
-    # ax2.legend()
-    # # fig.legend()
-    # fig.tight_layout()
-    # fig.savefig(linechart_BO_curve_single_dataset, dpi=140)
+    if "you_want_more_details" == "TRUE":
+        other_figs_path = os.path.join(BO_curve_folder, "other_figs")
+        thoipapy.figs.Create_Bo_Curve_files.save_extra_BO_figs(BO_data_excel, other_figs_path)
+
+    logging.info('{} LOO crossvalidation. AUBOC10({:.2f}).'.format(s["setname"], AUBOC10))
+    logging.info("create_LOO_validation_fig finished ({})".format(LOO_crossvalidation_AUC_bar_png))
 
 
 def calculate_RF_variable_importance(s, logging):
@@ -702,8 +685,8 @@ def fig_variable_importance(s, logging):
     colour_dict = create_colour_lists()
 
     variable_importance_csv = os.path.join(s["set_results_folder"], "crossvalidation", "data", "trainset{}_testset{}_variable_importance.csv".format(s["setname"][-2:], s["setname"][-2:]))
-    variable_importance_all_png = os.path.join(s["set_results_folder"], "crossvalidation", "trainset{}_testset{}_variable_importance_all.png".format(s["setname"][-2:], s["setname"][-2:]))
-    variable_importance_top_png = os.path.join(s["set_results_folder"], "crossvalidation", "trainset{}_testset{}_variable_importance_top.png".format(s["setname"][-2:], s["setname"][-2:]))
+    variable_importance_all_png = os.path.join(s["set_results_folder"], "crossvalidation", "{}_10F_all_var_import.png".format(s["setname"]))
+    variable_importance_top_png = os.path.join(s["set_results_folder"], "crossvalidation", "{}_10F_top_var_import.png".format(s["setname"]))
 
     df_imp = pd.read_csv(variable_importance_csv, index_col = 0)
 
