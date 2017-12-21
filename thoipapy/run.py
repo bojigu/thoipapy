@@ -169,15 +169,19 @@ if __name__ == "__main__":
         if s["run_10fold_cross_validation"]:
             thoipapy.RF_features.RF_Train_Test.run_10fold_cross_validation(s, logging)
             thoipapy.RF_features.RF_Train_Test.create_10fold_cross_validation_fig(s, logging)
-            thoipapy.RF_features.RF_Train_Test.calculate_RF_variable_importance(s, logging)
-            thoipapy.RF_features.RF_Train_Test.fig_variable_importance(s, logging)
+
 
         if s["run_LOO_validation"]:
             thoipapy.RF_features.RF_Train_Test.run_LOO_validation(s, df_set, logging)
             thoipapy.RF_features.RF_Train_Test.create_LOO_validation_fig(s, df_set, logging)
 
+        if s["calculate_variable_importance"]:
+            thoipapy.RF_features.RF_Train_Test.calculate_variable_importance(s, logging)
+            thoipapy.RF_features.RF_Train_Test.fig_variable_importance(s, logging)
+
         if s["train_random_forest_model"]:
             thoipapy.RF_features.RF_Train_Test.train_random_forest_model(s, logging)
+
 
         if s["run_testset_trainset_validation"] == True:
             thoipapy.figs.Create_Bo_Curve_files.run_testset_trainset_validation(s, logging)

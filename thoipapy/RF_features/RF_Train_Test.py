@@ -7,7 +7,7 @@ import thoipapy
 import sys
 from scipy import interp
 import matplotlib.pyplot as plt
-from sklearn.ensemble import RandomForestClassifier
+from sklearn.ensemble import RandomForestClassifier, ExtraTreesClassifier
 from sklearn.metrics import roc_curve, auc
 from sklearn.model_selection import StratifiedKFold
 import os
@@ -94,7 +94,7 @@ def drop_cols_not_used_in_ML(df_data, s):
 
     return df_data
 
-def THOIPA_RF_classifier_with_settings(s):
+def THOIPA_classifier_with_settings(s, n_features):
     """ For tuning the RF parameters, they are always in one place, and determined by the settings file.
 
     Parameters
@@ -105,7 +105,6 @@ def THOIPA_RF_classifier_with_settings(s):
     -------
 
     """
-
     # convert max_features to python None if "None"
     max_features = None if s["max_features"] == "None" else s["max_features"]
     # default for min_samples_leaf is 1 (no filter)
@@ -113,12 +112,22 @@ def THOIPA_RF_classifier_with_settings(s):
     # default for min_samples_leaf is None (no restriction on tree size)
     max_depth = None if s["max_depth"] == "None" else s["max_depth"]
 
-    forest = RandomForestClassifier(n_estimators=s["RF_number_of_estimators"], n_jobs=s["n_CPU_cores"], criterion=s["criterion"],
+    # forest = RandomForestClassifier(n_estimators=s["RF_number_of_estimators"], n_jobs=s["n_CPU_cores"], criterion=s["criterion"],
+    #                                 min_samples_leaf=min_samples_leaf,
+    #                                 max_depth=max_depth,
+    #                                 oob_score=True, max_features=max_features, bootstrap=bool(s["bootstrap"]),
+    #                                 #random_state=s["random_state"]
+    #                                 )
+
+    forest = ExtraTreesClassifier(n_estimators=s["RF_number_of_estimators"], n_jobs=s["n_CPU_cores"], criterion=s["criterion"],
                                     min_samples_leaf=min_samples_leaf,
                                     max_depth=max_depth,
-                                    oob_score=True, max_features=max_features, bootstrap=bool(s["bootstrap"]),
-                                    #random_state=s["random_state"]
+                                    oob_score=bool(s["oob_estimation"]),
+                                    bootstrap=bool(s["bootstrap"]),
+                                    max_features=max_features,
+                                    random_state=s["random_state"]
                                     )
+
     return forest
 
 def train_random_forest_model(s, logging):
@@ -155,11 +164,15 @@ def train_random_forest_model(s, logging):
     if 1 not in y.tolist():
         raise ValueError("None of the residues are marked 1 for an interface residue!")
 
-    forest = THOIPA_RF_classifier_with_settings(s)
+    n_features = X.shape[1]
+    forest = THOIPA_classifier_with_settings(s, n_features)
     # save random forest model into local driver
     # pkl_file = r'D:\thoipapy\RandomForest\rfmodel.pkl'
     fit = forest.fit(X, y)
     joblib.dump(fit, model_pkl)
+
+    tree_depths = np.array([estimator.tree_.max_depth for estimator in forest.estimators_])
+    logging.info("tree depth mean = {} ({})".format(tree_depths.mean(), tree_depths))
 
     logging.info('finished training random forest algorithm ({})'.format(model_pkl))
 
@@ -310,7 +323,8 @@ def run_10fold_cross_validation(s, logging):
     skf = StratifiedKFold(n_splits=s["cross_validation_number_of_splits"])
     cv = list(skf.split(X, y))
 
-    forest = THOIPA_RF_classifier_with_settings(s)
+    n_features = X.shape[1]
+    forest = THOIPA_classifier_with_settings(s, n_features)
 
     mean_tpr = 0.0
     mean_fpr = np.linspace(0, 1, 100)
@@ -454,6 +468,9 @@ def run_LOO_validation(s, df_set, logging):
     BO_all_df = pd.DataFrame()
     pred_colname = "THOIPA_{}_LOO".format(s["set_number"])
 
+    n_features = thoipapy.RF_features.RF_Train_Test.drop_cols_not_used_in_ML(df_data, s).shape[1]
+    forest = thoipapy.RF_features.RF_Train_Test.THOIPA_classifier_with_settings(s, n_features)
+
     for i in df_set.index:
         acc, acc_db, database  = df_set.loc[i, "acc"], df_set.loc[i, "acc_db"], df_set.loc[i, "database"]
         prediction_csv = os.path.join(s["thoipapy_data_folder"], "Predictions", "leave_one_out", database, "{}.{}.LOO.prediction.csv".format(acc, s["setname"]))
@@ -470,7 +487,6 @@ def run_LOO_validation(s, df_set, logging):
         y_train = df_train["interface"]
         X_test = thoipapy.RF_features.RF_Train_Test.drop_cols_not_used_in_ML(df_test, s)
         y_test = df_test["interface"]
-        forest = thoipapy.RF_features.RF_Train_Test.THOIPA_RF_classifier_with_settings(s)
         prediction = forest.fit(X_train, y_train).predict_proba(X_test)[:, 1]
         # add the prediction to the combined file
         df_test[pred_colname] = prediction
@@ -496,7 +512,8 @@ def run_LOO_validation(s, df_set, logging):
             BO_all_df = pd.concat([BO_all_df, BO_df], axis=1, join="outer")
         logging.info("{} AUC : {:.2f}".format(acc_db, roc_auc))
 
-    logging.info([estimator.tree_.max_depth for estimator in forest.estimators_])
+    tree_depths = np.array([estimator.tree_.max_depth for estimator in forest.estimators_])
+    logging.info("tree depth mean = {} ({})".format(tree_depths.mean(), tree_depths))
 
     duration = time.clock() - start
 
@@ -612,7 +629,7 @@ def create_LOO_validation_fig(s, df_set, logging):
     logging.info("create_LOO_validation_fig finished ({})".format(LOO_crossvalidation_AUC_bar_png))
 
 
-def calculate_RF_variable_importance(s, logging):
+def calculate_variable_importance(s, logging):
     """Calculate the variable importance (mean decrease gini) for all variables in THOIPA.
 
     Parameters
@@ -631,13 +648,14 @@ def calculate_RF_variable_importance(s, logging):
     #logging.info('RF_variable_importance_calculate is running\n')
     train_data_csv = os.path.join(s["set_results_folder"], "{}_train_data.csv".format(s["setname"]))
 
-    variable_importance_csv = os.path.join(s["set_results_folder"], "crossvalidation", "data", "trainset{}_testset{}_variable_importance.csv".format(s["setname"][-2:], s["setname"][-2:]))
+    variable_importance_csv = os.path.join(s["set_results_folder"], "crossvalidation", "data", "{}_variable_importance.csv".format(s["setname"]))
     thoipapy.utils.make_sure_path_exists(variable_importance_csv, isfile=True)
 
     df_data = pd.read_csv(train_data_csv, index_col=0)
     X = drop_cols_not_used_in_ML(df_data, s)
     y = df_data["interface"]
-    forest = THOIPA_RF_classifier_with_settings(s)
+    n_features = X.shape[1]
+    forest = THOIPA_classifier_with_settings(s, n_features)
     forest.fit(X, y)
     importances_arr = forest.feature_importances_
     std_arr = np.std([tree.feature_importances_ for tree in forest.estimators_], axis=0)
@@ -684,7 +702,7 @@ def fig_variable_importance(s, logging):
     from korbinian.utils import create_colour_lists
     colour_dict = create_colour_lists()
 
-    variable_importance_csv = os.path.join(s["set_results_folder"], "crossvalidation", "data", "trainset{}_testset{}_variable_importance.csv".format(s["setname"][-2:], s["setname"][-2:]))
+    variable_importance_csv = os.path.join(s["set_results_folder"], "crossvalidation", "data", "{}_variable_importance.csv".format(s["setname"]))
     variable_importance_all_png = os.path.join(s["set_results_folder"], "crossvalidation", "{}_10F_all_var_import.png".format(s["setname"]))
     variable_importance_top_png = os.path.join(s["set_results_folder"], "crossvalidation", "{}_10F_top_var_import.png".format(s["setname"]))
 

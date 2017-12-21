@@ -6,6 +6,26 @@ import thoipapy
 
 
 def combine_file_add_PREDDIMER_TMDOCK_THOIPA_prediction(s, df_set, logging):
+    """Combines all available predictions for a particular testset.
+
+    The testset is determined by the original set_number, not the "test_datasets" list.
+
+    The combined predictions file is saved in the thoipapy/Merged folder, so as not to
+    be confused with the "combined" folder that holds only features and interface_score.
+
+    Parameters
+    ----------
+    s : dict
+        Settings dictionary
+    df_set : pd.DataFrame
+        Dataframe containing the list of proteins to process, including their TMD sequences and full-length sequences
+        index : range(0, ..)
+        columns : ['acc', 'seqlen', 'TMD_start', 'TMD_end', 'tm_surr_left', 'tm_surr_right', 'database',  ....]
+    logging : logging.Logger
+        Python object with settings for logging to console and file.
+
+
+    """
     # columns_kept_in_combined_file = ['residue_num', 'residue_name', 'conservation', 'lipo_Hessa', 'CoevDImax_norm',
     #                                  'CoevDI4_norm',
     #                                  'CoevDI8_norm', 'CoevMImax_norm', 'CoevMI4_norm', 'CoevMI8_norm',
