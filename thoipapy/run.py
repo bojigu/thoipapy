@@ -180,7 +180,6 @@ if __name__ == "__main__":
             thoipapy.RF_features.RF_Train_Test.train_random_forest_model(s, logging)
 
         if s["run_testset_trainset_validation"] == True:
-            thoipapy.figs.Create_Bo_Curve_files.Test_Etra_deprecated(s)
             thoipapy.figs.Create_Bo_Curve_files.run_testset_trainset_validation(s, logging)
 
         ###################################################################################################
