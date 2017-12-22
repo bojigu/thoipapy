@@ -178,8 +178,8 @@ def validate_THOIPA_for_testset_trainset_combination(s, test_set_list, train_set
 
             #THOIPA_linechart_mean_obs_and_rand = analyse_bo_curve_underlying_data(THOIPA_BO_curve_data_csv, BO_curve_folder, names_excel_path)
             parse_BO_data_csv_to_excel(THOIPA_BO_curve_data_csv, BO_data_excel, logging)
-
-            AUBOC10 = save_BO_linegraph_and_barchart(s, BO_data_excel, BO_linechart_png, BO_barchart_png, namedict, logging)
+            AUC_ser = pd.Series(xv_dict_THOIPA[acc_db]["auc"])
+            AUBOC10 = save_BO_linegraph_and_barchart(s, BO_data_excel, BO_linechart_png, BO_barchart_png, namedict, logging, AUC_ser)
 
             if "you_want_more_details" == "TRUE":
                 other_figs_path = os.path.join(BO_curve_folder, "other_figs")
@@ -303,8 +303,8 @@ def validate_LIPS_for_testset(s, logging, LIPS_name = "LIPS_LE", pred_col="LIPS_
 
         #parse_BO_data_csv_to_excel(LIPS_BO_curve_data_csv, BO_curve_folder, names_excel_path)
         parse_BO_data_csv_to_excel(LIPS_BO_curve_data_csv, BO_data_excel, logging)
-
-        AUBOC10 = save_BO_linegraph_and_barchart(s, BO_data_excel, BO_linechart_png, BO_barchart_png, namedict, logging)
+        AUC_ser = pd.Series(xv_dict_LIPS[acc_db]["auc"])
+        AUBOC10 = save_BO_linegraph_and_barchart(s, BO_data_excel, BO_linechart_png, BO_barchart_png, namedict, logging, AUC_ser)
 
         if "you_want_more_details" == "TRUE":
             other_figs_path = os.path.join(BO_curve_folder, "other_figs")

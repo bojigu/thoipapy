@@ -621,8 +621,9 @@ def create_LOO_validation_fig(s, df_set, logging):
 
     AUBOC10 = thoipapy.figs.Create_Bo_Curve_files.save_BO_linegraph_and_barchart(s, BO_data_excel, BO_linechart_png, BO_barchart_png, namedict, logging, AUC_ser)
 
-    if "you_want_more_details" == "TRUE":
+    if "TRUE" == "TRUE":
         other_figs_path = os.path.join(BO_curve_folder, "other_figs")
+        thoipapy.utils.make_sure_path_exists(other_figs_path)
         thoipapy.figs.Create_Bo_Curve_files.save_extra_BO_figs(BO_data_excel, other_figs_path)
 
     logging.info('{} LOO crossvalidation. AUBOC10({:.2f}).'.format(s["setname"], AUBOC10))
