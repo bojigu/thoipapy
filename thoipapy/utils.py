@@ -373,3 +373,88 @@ def add_res_num_full_seq_to_df(acc, df, TMD_seq, full_seq):
     else:
         raise IndexError("TMD seq not found in full_seq.\nacc = {}\nTMD_seq = {}\nfull_seq = {}".format(acc, TMD_seq, full_seq))
     return df
+
+def calculate_identity(sequenceA, sequenceB):
+    """
+    Returns the percentage of identical characters between two sequences.
+    Assumes the sequences are aligned.
+    """
+
+    sa, sb, sl = sequenceA, sequenceB, len(sequenceA)
+    matches = [sa[i] == sb[i] for i in range(sl)]
+    seq_id = (100 * sum(matches)) / sl
+
+    gapless_sl = sum([1 for i in range(sl) if (sa[i] != '-' and sb[i] != '-')])
+    gap_num = sum([1 for i in range(sl) if (sa[i] == '-' or sb[i] == '-')])
+    if gapless_sl > 0:
+        gap_id = (100 * sum(matches)) / gapless_sl
+    else:
+        gap_id = 0
+    return (seq_id, gap_id, gap_num)
+
+def join_two_algined_seqences(aligned_A, aligned_B):
+    '''
+    combine two aligned sequences, take the non-gap residue for the combined seqence
+    Parameters
+    ----------
+    aligned_A
+    aligned_B
+
+    Returns
+    -------
+
+    '''
+    aligned_AB = ""
+    for j in range(len(aligned_A)):
+        if aligned_A[j] == '-' and aligned_B[j] == '-':
+            sys.stdout.write(
+                "this homo pair should be considered removed:\n check {},{}".format(aligned_A,aligned_B))
+        if aligned_A[j] != '-':
+            aligned_AB = aligned_AB + aligned_A[j]
+            continue
+        if aligned_B[j] != '-':
+            aligned_AB = aligned_AB + aligned_B[j]
+            continue
+    return aligned_AB
+
+def shorten(x):
+    '''
+    convert 3-letter amino acid name to 1-letter form
+    Parameters
+    ----------
+    x : str , thrre letter aa sequence
+
+    Returns
+    y : str, one-letter aa sequence
+    -------
+
+    '''
+    d = {'CYS': 'C', 'ASP': 'D', 'SER': 'S', 'GLN': 'Q', 'LYS': 'K',
+         'ILE': 'I', 'PRO': 'P', 'THR': 'T', 'PHE': 'F', 'ASN': 'N',
+         'GLY': 'G', 'HIS': 'H', 'LEU': 'L', 'ARG': 'R', 'TRP': 'W',
+         'ALA': 'A', 'VAL': 'V', 'GLU': 'E', 'TYR': 'Y', 'MET': 'M',
+         'UNK' : 'U'}
+    if len(x) % 3 != 0:
+        raise ValueError('Input length should be a multiple of three')
+
+    y = ''
+    for i in range(int(len(x)/3)):
+            y += d[x[3*i:3*i+3]]
+    return y
+
+def Get_Closedist_between_ChianA_ChainB(hashclosedist):
+    i = 0
+    j = 0
+    hashA = {}
+    hashB = {}
+    closest_dist_arr = []
+
+    jk = ""
+    for k, v in sorted(hashclosedist.items()):
+        if re.search('NEN', k) or re.search('CEN', k):
+            continue
+        k = k.split(':')
+        k1 = '_'.join(k)
+        k2 = '_'.join([k1, str(v)])
+        jk = '+'.join([jk,  k2])
+    return jk

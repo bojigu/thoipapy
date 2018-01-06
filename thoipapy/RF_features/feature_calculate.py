@@ -470,7 +470,10 @@ def lipo_from_pssm(acc, pssm_csv_surr5, lipo_csv, tm_surr_left, tm_surr_right, s
 
     df_lipo = df_lipo[["residue_name","lipo_{}".format(scalename), "lipo_{}_mean_3_N_pos".format(scalename),"lipo_{}_mean_3_C_pos".format(scalename)]]
     #df_lipo.set_index("IND", inplace=True)
-    df_lipo=df_lipo[tm_surr_left:-tm_surr_right]
+    if tm_surr_right ==0 :
+        df_lipo = df_lipo[tm_surr_left:]
+    else:
+        df_lipo=df_lipo[tm_surr_left:-tm_surr_right]
 
     # print(acc, "\n", df_lipo,"\n\n")
     # with pd.ExcelWriter(lipo_excel) as writer:
@@ -483,15 +486,18 @@ def lipo_from_pssm(acc, pssm_csv_surr5, lipo_csv, tm_surr_left, tm_surr_right, s
     if plot_linechart:
         # plot a linechart with lipo, lipo_mean_3_N_pos, lipo_mean_3_C_pos
         fig, ax = plt.subplots()
-        df_lipo.plot(ax=ax)
-        ax.set_ylabel("lipophilicity, {} scale".format(scalename))
-        ax.set_xticks(range(len(df_lipo)))
-        ax.set_xticklabels(df_lipo.index, rotation=90)
-        ax.set_xlabel("")
-        ax.grid(False)
-        fig.tight_layout()
-        fig.savefig(lipo_linechart, dpi=200)
-        plt.close("all")
+        try:
+            df_lipo.plot(ax=ax)
+            ax.set_ylabel("lipophilicity, {} scale".format(scalename))
+            ax.set_xticks(range(len(df_lipo)))
+            ax.set_xticklabels(df_lipo.index, rotation=90)
+            ax.set_xlabel("")
+            ax.grid(False)
+            fig.tight_layout()
+            fig.savefig(lipo_linechart, dpi=200)
+            plt.close("all")
+        except:
+            logging.info("the acc :{} has no effective alignment".format(acc))
 
     logging.info("{} lipo_from_pssm_mult_prot finished using {} scale ({})".format(acc, scalename, lipo_csv))
     return acc, True, ""
@@ -1361,7 +1367,7 @@ def add_experimental_data_to_combined_features_mult_prot(s, df_set, logging):
             #experimental_data_file = os.path.join(s["base_dir"], "data_xy", "Figure", "Show_interface", "Interface_xlsx", "{}.xlsx".format(acc))
             experimental_data_file = os.path.join(s["dropbox_dir"], "ETRA_data", "Average_with_interface", "{}_mul_scan_average_data.xlsx".format(acc))
         else:
-            experimental_data_file = os.path.join(s["features_folder"], 'Structure', database, '{}.bind.closedist.csv'.format(acc))
+            experimental_data_file = os.path.join(s["features_folder"], 'Structure', database, '{}.{}pairmax.bind.closedist.csv'.format(acc,s['inter_pair_max']))
 
         add_experimental_data_to_combined_features(acc, database, TMD_seq, feature_combined_file, experimental_data_file, logging)
 

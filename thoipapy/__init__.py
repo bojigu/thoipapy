@@ -10,4 +10,5 @@ import thoipapy.Sine_Curve
 import thoipapy.utils
 import thoipapy.figs
 import thoipapy.run_figs
+import thoipapy.Get_Tmd_Homodimer
 

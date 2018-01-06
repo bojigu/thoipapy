@@ -155,6 +155,7 @@ def train_random_forest_model(s, logging):
     df_data = pd.read_csv(train_data_csv, index_col=0)
 
     df_data = df_data.loc[df_data.n_homologues >= s["min_n_homol_training"]]
+    df_data = df_data.dropna()
 
     y = df_data["interface"]
     X = drop_cols_not_used_in_ML(df_data, s)
@@ -313,6 +314,7 @@ def run_10fold_cross_validation(s, logging):
     thoipapy.utils.make_sure_path_exists(crossvalidation_pkl, isfile=True)
 
     df_data = pd.read_csv(train_data_csv, index_col=0)
+    df_data = df_data.dropna()
 
     # drop training data (full protein) that don't have enough homologues
     df_data = df_data.loc[df_data.n_homologues >= s["min_n_homol_training"]]

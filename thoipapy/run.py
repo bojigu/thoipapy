@@ -100,6 +100,16 @@ if __name__ == "__main__":
         #                                                                                                 #
         ###################################################################################################
 
+        if s["Get_Tmd_Homodimers"] :
+
+            #thoipapy.Get_Tmd_Homodimer.get_tmd_nr_homodimer.Download_xml_Get_alphahelix_Get_homo_pair(s, logging)
+            #thoipapy.Get_Tmd_Homodimer.get_tmd_nr_homodimer.Download_trpdb_Calc_inter_rr_pairs(s, logging)
+            #thoipapy.Get_Tmd_Homodimer.get_tmd_nr_homodimer.create_redundant_interact_homodimer_rm_shorttm(s, logging)
+            #thoipapy.Get_Tmd_Homodimer.get_tmd_nr_homodimer.extract_crystal_resolv035_interact_pairs_and_create_fasta_file(s, logging)
+            thoipapy.Get_Tmd_Homodimer.get_tmd_nr_homodimer.create_multiple_bind_closedist_file(s,logging)
+
+
+
         if s["Atom_Close_Dist"]:
             infor = thoipapy.Atom_Dist.Residu_Closest_Dist.homodimer_residue_closedist_calculate_from_complex(thoipapy, s, logging)
             print(infor)
