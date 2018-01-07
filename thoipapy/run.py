@@ -106,7 +106,8 @@ if __name__ == "__main__":
             #thoipapy.Get_Tmd_Homodimer.get_tmd_nr_homodimer.Download_trpdb_Calc_inter_rr_pairs(s, logging)
             #thoipapy.Get_Tmd_Homodimer.get_tmd_nr_homodimer.create_redundant_interact_homodimer_rm_shorttm(s, logging)
             #thoipapy.Get_Tmd_Homodimer.get_tmd_nr_homodimer.extract_crystal_resolv035_interact_pairs_and_create_fasta_file(s, logging)
-            thoipapy.Get_Tmd_Homodimer.get_tmd_nr_homodimer.create_multiple_bind_closedist_file(s,logging)
+            #thoipapy.Get_Tmd_Homodimer.get_tmd_nr_homodimer.create_multiple_bind_closedist_file(s,logging)
+            thoipapy.Get_Tmd_Homodimer.get_tmd_nr_homodimer.create_average_fraction_DI_file(s, logging)
 
 
 
