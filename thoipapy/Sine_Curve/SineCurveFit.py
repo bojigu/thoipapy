@@ -1,6 +1,7 @@
 import pandas as pd
 import numpy as np
 import matplotlib.pyplot as plt
+import sys
 #from __future__ import unicode_literals
 #from thoipapy.Sine_Curve.tlabassays.mathfunctions import sine, sine_perfect_helix, residuals
 from tlabassays.mathfunctions import sine, sine_perfect_helix, residuals
@@ -118,7 +119,7 @@ def Save_Sine_Curve_Result(s, output_file_loc, output_png_loc):
     #exp_top5_index=np.argsort(y_sin_disruption_scaled_data)[(len(y_sin_disruption_scaled_data)-5):(len(y_sin_disruption_scaled_data))]
     #comele_pred_sine=list(set(sine_peak_pred_index).intersection(pred_top5_index))
     #comele_exp_sine=list(set(sine_peak_exp_index).intersection(exp_top5_index))
-    print(uniprot_acc)
+    sys.stdout.write(uniprot_acc)
     # print(sine_peak_pred)
     # print(comele_pred_sine)
     # print(comele_exp_sine)

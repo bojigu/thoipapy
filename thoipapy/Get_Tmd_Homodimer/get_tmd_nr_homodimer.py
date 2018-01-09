@@ -179,7 +179,8 @@ def create_multiple_bind_closedist_file(s, logging):
 def create_single_bind_closedist_file(s, df_homo,i, inter_pair_max):
         pdb_id_chain = df_homo.iloc[i]['pdb_id'] + df_homo.iloc[i]['tm_numA']
         row = []
-        bind_closedist_file = os.path.join(s['structure_bind'], "crystal", "{}.{}pairmax.bind.closedist.csv".format(pdb_id_chain,inter_pair_max))
+        #bind_closedist_file = os.path.join(s['structure_bind'], "crystal", "{}.{}pairmax.bind.closedist.csv".format(pdb_id_chain,inter_pair_max))
+        bind_closedist_file = os.path.join(s['structure_bind'], "crystal", "{}.{}pair.bind.closedist.csv".format(pdb_id_chain,inter_pair_max))
         tm_seq = df_homo.iloc[i]['aligned_AB']
         full_seq = df_homo.iloc[i]['full_seqA']
         aligned_AB_startA = df_homo.iloc[i]['full_seqA'].index(tm_seq) + 1
