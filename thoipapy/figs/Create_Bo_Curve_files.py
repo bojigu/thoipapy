@@ -374,6 +374,7 @@ def create_ROC_fig_for_testset_trainset_combination(THOIPA_ROC_pkl):
 def save_THOIPA_pred_indiv_prot(s, model_pkl, testdata_combined_file, THOIPA_pred_csv, test_combined_incl_pred, logging):
 
     combined_incl_THOIPA_df = pd.read_csv(testdata_combined_file, sep=',', engine='python', index_col=0)
+    #combined_incl_THOIPA_df = combined_incl_THOIPA_df.dropna()
 
     #drop_cols_not_used_in_ML
     #X=train_df.drop(train_features_del,axis=1)

@@ -17,6 +17,7 @@ from weighslide import calculate_weighted_windows
 import thoipapy
 from math import isclose
 from shutil import copyfile
+import platform
 
 def calc_lipophilicity(seq, method = "mean"):
     """ Calculates the average hydrophobicity of a sequence according to the Hessa biological scale.
@@ -1414,6 +1415,7 @@ def combine_all_features_mult_prot(s, df_set, logging):
         database = df_set.loc[i, "database"]
         TMD_seq = df_set.loc[i, "TMD_seq"]
         TMD_start = df_set.loc[i, "TMD_start"]
+        full_seq = df_set.loc[i, "full_seq"]
         scalename = s["lipophilicity_scale"]
         lipo_csv = os.path.join(s["feature_lipophilicity"], database, "{}_{}_lipo.csv".format(acc, scalename))
         relative_position_file = os.path.join(s["feature_relative_position"], database, "%s.relative_position%s.csv") % (acc, s["surres"])
@@ -1426,9 +1428,9 @@ def combine_all_features_mult_prot(s, df_set, logging):
         alignments_dir = os.path.join(s["homologues_folder"], "alignments", database)
         alignment_summary_csv = os.path.join(alignments_dir, "{}.surr{}.gaps{}.alignment_summary.csv".format(acc, s["num_of_sur_residues"], s["max_n_gaps_in_TMD_subject_seq"]))
 
-        combine_all_features(acc, database, TMD_seq, TMD_start, feature_combined_file, entropy_file, pssm_csv, lipo_csv, freecontact_parsed_csv, relative_position_file, LIPS_parsed_csv, motifs_file, alignment_summary_csv, logging)
+        combine_all_features(s , full_seq,acc, database, TMD_seq, TMD_start, feature_combined_file, entropy_file, pssm_csv, lipo_csv, freecontact_parsed_csv, relative_position_file, LIPS_parsed_csv, motifs_file, alignment_summary_csv, logging)
 
-def combine_all_features(acc, database, TMD_seq, TMD_start, feature_combined_file, entropy_file, pssm_csv, lipo_csv, freecontact_parsed_csv, relative_position_file, LIPS_parsed_csv, motifs_file, alignment_summary_csv, logging):
+def combine_all_features(s , full_seq, acc, database, TMD_seq, TMD_start, feature_combined_file, entropy_file, pssm_csv, lipo_csv, freecontact_parsed_csv, relative_position_file, LIPS_parsed_csv, motifs_file, alignment_summary_csv, logging):
     thoipapy.utils.make_sure_path_exists(feature_combined_file, isfile=True)
 
     for n, filepath in enumerate([entropy_file, pssm_csv, lipo_csv, freecontact_parsed_csv, relative_position_file, LIPS_parsed_csv]):
@@ -1493,12 +1495,13 @@ def combine_all_features(acc, database, TMD_seq, TMD_start, feature_combined_fil
     df_features_single_protein["n_homologues"] = n_homologues
     # add if the protein is multipass or singlepass
     # TEMPORARY! NEEDS TO BE REPLACED WITH A TOPOLOGY PREDICTOR LATER
-    if database == "crystal":
-        df_features_single_protein["n_TMDs"] = 2
-    # elif database == "NMR":
-    #     df_features_single_protein["n_TMDs"] = 3
-    else:
-        df_features_single_protein["n_TMDs"] = 1
+    df_features_single_protein["n_TMDs"] = return_num_tmd(s, acc, database, full_seq)
+    # if database == "crystal":
+    #     df_features_single_protein["n_TMDs"] = 2
+    # # elif database == "NMR":
+    # #     df_features_single_protein["n_TMDs"] = 3
+    # else:
+    #     df_features_single_protein["n_TMDs"] = 1
 
     # add the residue number in the full protein sequence
     # this assumes that the index is a range, starting from 0 to x,
@@ -1510,6 +1513,32 @@ def combine_all_features(acc, database, TMD_seq, TMD_start, feature_combined_fil
     df_features_single_protein.to_csv(feature_combined_file)
     logging.info("{} combine_all_features_mult_prot finished ({})".format(acc, feature_combined_file))
 
+def return_num_tmd(s, acc,database,  full_seq):
+    full_seq_fasta_file = os.path.join(s["Protein_folder"], database, "{}.fasta".format(acc))
+    full_seq_phobius_output_file = os.path.join(s["Protein_folder"], database, "{}.phobius".format(acc))
+    utils.make_sure_path_exists(full_seq_fasta_file, isfile=True)
+    with open(full_seq_fasta_file, 'w') as f:
+        f.write(">{}\n{}".format(acc, full_seq))
+    f.close()
+    if "Windows" in platform.system():
+        sys.stdout.write("\n phobius currently not run for Windows! Skipping phobius prediction.")
+    else:
+        perl_dir = s["perl_dir"]
+        phobius_dir = s["phobius_dir"]
+        exect_str = "{} {} {}> {}".format(perl_dir, phobius_dir, full_seq_fasta_file, full_seq_phobius_output_file)
+        command = utils.Command(exect_str)
+        command.run(timeout=400)
+    if os.path.exists(full_seq_phobius_output_file):
+        tm_num = 0
+        with open(full_seq_phobius_output_file) as file:
+            for line in file:
+                if re.search('TRANSMEM', line):
+                    tm_num = tm_num + 1
+        return tm_num
+
+    else:
+        sys.stdout.write("no phobius output file found, try to check the reason")
+        return None
 
 def normalise_features(df_features_single_protein):
 
@@ -1559,7 +1588,7 @@ def add_experimental_data_to_combined_features_mult_prot(s, df_set, logging):
             experimental_data_file = os.path.join(s["dropbox_dir"], "ETRA_data", "Average_with_interface", "{}_mul_scan_average_data.xlsx".format(acc))
         else:
             #experimental_data_file = os.path.join(s["features_folder"], 'Structure', database, '{}.{}pairmax.bind.closedist.csv'.format(acc,s['inter_pair_max']))
-            experimental_data_file = os.path.join(s["features_folder"], 'Structure', database, '{}.{}pair.bind.closedist.csv'.format(acc,s['inter_pair_max']))
+            experimental_data_file = os.path.join(s["features_folder"], 'Structure', database, '{}.{}pairmax.bind.closedist.csv'.format(acc,s['inter_pair_max']))
 
         add_experimental_data_to_combined_features(acc, database, TMD_seq, feature_combined_file, experimental_data_file, logging)
 

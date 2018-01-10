@@ -158,6 +158,7 @@ def extract_crystal_resolv035_interact_pairs_and_create_fasta_file(s,logging):
 
     ##save cdhit60 represent 228 interpairs
     df_new = get_cdhit60_represent_interpair_df(df_rd, cdhit60_crystal035_fasta_file)
+
     cols = [c for c in df_new.columns if c[:7] != 'Unnamed']
     df_new = df_new[cols]
     df_new.to_csv(cdhit60_nr_represent228_pair_handle)
@@ -167,7 +168,8 @@ def extract_crystal_resolv035_interact_pairs_and_create_fasta_file(s,logging):
     set_file = os.path.join(s["sets_folder"],'set228_crystal.xlsx')
     create_inter_rr_number_bt1_set228_file(df_new, set_file)
 
-def create_multiple_bind_closedist_file(s, logging):
+def create_multiple_bind_closedist_file(s,df_set, logging):
+
     non_redundant_homodimer_file = os.path.join(s["pdbtm_homodimer_folder"], "xml","homodimer","cdhit_0.6_nr_represent_228_interpair.csv")
     df_homo = pd.read_csv(non_redundant_homodimer_file, engine="python")
     cols = [c for c in df_homo.columns if c[:7] != "Unnamed"]
@@ -180,7 +182,7 @@ def create_single_bind_closedist_file(s, df_homo,i, inter_pair_max):
         pdb_id_chain = df_homo.iloc[i]['pdb_id'] + df_homo.iloc[i]['tm_numA']
         row = []
         #bind_closedist_file = os.path.join(s['structure_bind'], "crystal", "{}.{}pairmax.bind.closedist.csv".format(pdb_id_chain,inter_pair_max))
-        bind_closedist_file = os.path.join(s['structure_bind'], "crystal", "{}.{}pair.bind.closedist.csv".format(pdb_id_chain,inter_pair_max))
+        bind_closedist_file = os.path.join(s['structure_bind'], "crystal", "{}.{}pairmax.bind.closedist.csv".format(pdb_id_chain,inter_pair_max))
         tm_seq = df_homo.iloc[i]['aligned_AB']
         full_seq = df_homo.iloc[i]['full_seqA']
         aligned_AB_startA = df_homo.iloc[i]['full_seqA'].index(tm_seq) + 1
@@ -258,7 +260,7 @@ def create_average_fraction_DI_file(s, logging):
     df_homo = pd.read_csv(non_redundant_homodimer_file, engine="python")
     cols = [c for c in df_homo.columns if c[:7] != "Unnamed"]
     df_homo = df_homo[cols]
-    crystal_288_average_fraction_file = os.path.join(s["pdbtm_homodimer_folder"], "xml", "homodimer", "results","crystal_288_vaerage_fraction_DI.csv")
+    crystal_288_average_fraction_file = os.path.join(s["pdbtm_homodimer_folder"], "xml", "homodimer", "results","crystal_228_average_fraction_DI.csv")
     utils.make_sure_path_exists(crystal_288_average_fraction_file,isfile=True)
     average_fraction_crystal288_file_handle = open(crystal_288_average_fraction_file, 'w', newline='')
     writer = csv.writer(average_fraction_crystal288_file_handle)
@@ -304,6 +306,8 @@ def create_average_fraction_DI_file(s, logging):
                     if int(arr[2]) - int(arr[0]) <= 8:
                         string = arr[0] + '_' + arr[2]
                         inter_within8_dict[string] = arr[5]
+                        string1 = arr[2] + '_' + arr[0]
+                        inter_within8_dict[string1] = arr[5]
             f.close()
 
         ## get the sum of DI for those interact rr pairs calculated from above interpair_dict_new, also the number of pairs which belongs to inter_within8_dict from freecontact file
