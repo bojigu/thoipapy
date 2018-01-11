@@ -1521,7 +1521,7 @@ def return_num_tmd(s, acc,database,  full_seq):
         f.write(">{}\n{}".format(acc, full_seq))
     f.close()
     if "Windows" in platform.system():
-        sys.stdout.write("\n phobius currently not run for Windows! Skipping phobius prediction.")
+        sys.stdout.write("\n phobius currently not run for Windows! Skipping phobius prediction.\n")
     else:
         perl_dir = s["perl_dir"]
         phobius_dir = s["phobius_dir"]
