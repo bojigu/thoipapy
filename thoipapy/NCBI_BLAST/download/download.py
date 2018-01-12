@@ -141,3 +141,55 @@ def download_homologues_from_ncbi(acc, TMD_seq_pl_surr, blast_xml_file, xml_txt,
 
     logging.info("Output file: {}. (time taken = {:0.3f} min)".format(xml_tar_gz, duration / 60))
 
+
+def download_10_homologues_from_ncbi(s, df_set, logging):
+    """Runs download_homologues_from_ncbi for a set of proteins
+
+    Parameters
+    ----------
+    s : dict
+        Settings dictionary
+    df_set : pd.DataFrame
+        Dataframe containing the list of proteins to process, including their TMD sequences and full-length sequences
+        index : range(0, ..)
+        columns : ['acc', 'seqlen', 'TMD_start', 'TMD_end', 'tm_surr_left', 'tm_surr_right', 'database',  ....]
+    logging : logging.Logger
+        Python object with settings for logging to console and file.
+    """
+    expect_value = 1
+    hit_list_size = 10
+
+    ##############################################################################################
+    #                                                                                            #
+    #      download homologues from protein lists file                                           #
+    #                                                                                            #
+    ##############################################################################################
+
+    for i in df_set.index:
+        acc = df_set.loc[i, "acc"]
+        full_seq = df_set.loc[i, "full_seq"]
+        database = df_set.loc[i, "database"]
+
+        # run online server NCBI blastp with biopython module
+        blast_xml_file = os.path.join(s["xml_file_folder"], "10_hits", database, "{}.surr{}.BLAST.xml".format(acc, s["num_of_sur_residues"]))
+        xml_tar_gz = blast_xml_file[:-4] + ".xml.tar.gz"
+        xml_txt = blast_xml_file[:-4] + "_details.txt"
+
+        if not os.path.isfile(xml_tar_gz):
+            run_download = True
+        else:
+            if s["rerun_existing_blast_results"]:
+                run_download = True
+                logging.info('{} starting download_homologues_from_ncbi_mult_prot (EXISTING xml.tar.gz FILE WILL BE OVERWRITTEN)'.format(acc))
+            elif s["rerun_existing_blast_results"] in [False, 0]:
+                run_download = False
+                logging.info('{} download_homologues_from_ncbi_mult_prot skipped (EXISTING xml.tar.gz FILE)'.format(acc))
+                # skip protein
+                continue
+            else:
+                raise ValueError('s["rerun_existing_blast_results"] does not seem to be True or False')
+
+        if run_download:
+            download_homologues_from_ncbi(acc, full_seq, blast_xml_file, xml_txt, xml_tar_gz, expect_value, hit_list_size, logging)
+
+    logging.info('homologues download was finished')

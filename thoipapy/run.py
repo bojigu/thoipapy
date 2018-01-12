@@ -232,9 +232,12 @@ if __name__ == "__main__":
         if s["calc_PREDDIMER_TMDOCK_closedist"] == True:
             thoipapy.figs.Calc_PREDDIMER_TMDOCK_Closedist.calc_closedist_from_PREDDIMER_TMDOCK_best_model(s)
 
-
         if s["add_predictions_to_combined_files"] == True:
             thoipapy.figs.combine_add_3_prediction.combine_file_add_PREDDIMER_TMDOCK_THOIPA_prediction(s, df_set, logging)
+
+        if "download_10_homologues_from_ncbi" in s:
+            if s["download_10_homologues_from_ncbi"] == True:
+                thoipapy.NCBI_BLAST.download.download.download_10_homologues_from_ncbi(s, df_set, logging)
 
         # close the logger. A new one will be made for the next protein list.
         logging.info("FINISHED PROCESSING OF {}.".format(setname))

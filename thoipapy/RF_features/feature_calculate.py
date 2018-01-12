@@ -140,27 +140,28 @@ def mem_a3m_homologues_filter(s,logging):
 
 
 def create_PSSM_from_MSA_mult_prot(s, df_set, logging):
-    logging.info('start pssm calculation')
-    #
-    # tmp_list_loc = s["list_of_tmd_start_end"]
-    # tmp_file_handle = open(tmp_list_loc, 'r')
-    # # skip header
-    # next(tmp_file_handle)
-    # for row in tmp_file_handle:
-    #     protein_name = row.strip().split(",")[0][0:6]
-    #     database = row.strip().split(",")[6]
-    #     # if protein_name=="4cbj_E":
-    #     TMD_start = int(row.strip().split(",")[2]) - 5  ###for fullseq
-    #     if (TMD_start <= 0):
-    #         TMD_start = 1
-    #     TMD_end = int(row.strip().split(",")[3]) + 5  ###for fullseq
-    #     if TMD_end > int(row.strip().split(",")[1]):
-    #         TMD_end = int(row.strip().split(",")[1])
+    """ Runs create_PSSM_from_MSA for each protein in a list.
 
+    Parameters
+    ----------
+    s : dict
+        Settings dictionary
+    df_set : pd.DataFrame
+        Dataframe containing the list of proteins to process, including their TMD sequences and full-length sequences
+        index : range(0, ..)
+        columns : ['acc', 'seqlen', 'TMD_start', 'TMD_end', 'tm_surr_left', 'tm_surr_right', 'database',  ....]
+    logging : logging.Logger
+        Python object with settings for logging to console and file.
+
+    Returns
+    -------
+
+    """
+    logging.info('start pssm calculation')
     for i in df_set.index:
         acc = df_set.loc[i, "acc"]
         database = df_set.loc[i, "database"]
-        alignments_dir = alignments_dir = os.path.join(s["homologues_folder"], "alignments", database)
+        alignments_dir = os.path.join(s["homologues_folder"], "alignments", database)
         path_uniq_TMD_seqs_for_PSSM_FREECONTACT = os.path.join(alignments_dir,"{}.surr{}.gaps{}.uniq.for_PSSM_FREECONTACT.txt".format(acc, s["num_of_sur_residues"],s["max_n_gaps_in_TMD_subject_seq"]))
         pssm_csv = os.path.join(s["feature_pssm"], database, "{}.surr{}.gaps{}.pssm.csv".format(acc, s["num_of_sur_residues"], s["max_n_gaps_in_TMD_subject_seq"]))
 
@@ -171,24 +172,27 @@ def create_PSSM_from_MSA_mult_prot(s, df_set, logging):
         pssm_csv_surr5 = os.path.join(s["feature_pssm"], database, "{}.surr5.gaps{}.pssm.csv".format(acc, s["max_n_gaps_in_TMD_subject_seq"]))
         create_PSSM_from_MSA(path_uniq_TMD_seqs_surr5_for_LIPO, pssm_csv_surr5, acc, logging)
 
-    #tmp_file_handle.close()
-
 def create_PSSM_from_MSA(path_uniq_TMD_seqs_for_PSSM_FREECONTACT, pssm_csv, acc, logging):
+    """Creates a PSSM from a multiple sequence alignment in FASTA format.
 
-    #homo_filter_fasta_file = os.path.join(s["output_oa3m_homologues"], database, "%s.a3m.mem.uniq.2gaps%s") % (acc, s["surres"])
+    Parameters
+    ----------
+    path_uniq_TMD_seqs_for_PSSM_FREECONTACT : str
+        Path to text file with list of TMD sequences
+    pssm_csv : str
+        Path to csv file with the PSSM for the TMD region.
+    acc : str
+        Protein accession (e.g. UniProt, PDB)
+    logging : logging.Logger
+        Python object with settings for logging to console and file.
 
+    """
     if os.path.isfile(path_uniq_TMD_seqs_for_PSSM_FREECONTACT):
-        #try:
         thoipapy.utils.make_sure_path_exists(pssm_csv, isfile=True)
         with open(pssm_csv, 'w') as pssm_file_handle:
             mat = []
-            # with csv.writer(pssm_file_handle, delimiter=',', quotechar='"',
-            #                     lineterminator='\n',
-            #                     quoting=csv.QUOTE_NONNUMERIC, doublequote=True) as writer:
             writer = csv.writer(pssm_file_handle)
             writer.writerow(['residue_num', 'residue_name', 'A', 'I', 'L', 'V', 'F', 'W', 'Y', 'N', 'C', 'Q', 'M', 'S', 'T', 'D', 'E', 'R', 'H', 'K', 'G', 'P'])
-            # if os.path.isfile(homo_filter_fasta_file):
-            # for line in open(homo_filter_fasta_file).readlines():
             with open(path_uniq_TMD_seqs_for_PSSM_FREECONTACT, "r") as f:
                 for line in f.readlines():
                     if not re.search("^>", line):
@@ -274,18 +278,23 @@ def lipo_from_pssm(acc, pssm_csv_surr5, lipo_csv, tm_surr_left, tm_surr_right, s
     2) uses the weighslide module to get the average lipophilicity of the 3 N-terminal aa to each position (e.g. lipo_Hessa_mean_3_N_pos)
        and the 3 C-terminal aa to each position (e.g. lipo_Hessa_mean_3_C_pos).
 
-
     Parameters
     ----------
-    s : dict
-        settings dictionary
     acc : str
         UniProt or PDB accession.
+    pssm_csv_surr5 : str
+        Path to the csv containing the PSSM using the alignment of the TMD plus and minus 5 residues
+    lipo_csv : str
+        Path to csv with the lipophilicity features
+    tm_surr_left : int
+        Number of surrounding residues to the N-terminus (left)
+    tm_surr_right : int
+        Number of surrounding residues to the C-terminus (right)
     scalename : str
         Name of hydrophobicity scale. Should match the excel file with the scales.
         Current options are KyteDoolittle, Wimley, Hessa, Elazar, Hopp-Woods, Cornette, Eisenberg, Rose, Janin, Engelman(GES)
-    hydrophob_scale_path : str
-        Path to excel file with hydrophobicity scales
+    logging : logging.Logger
+        Python object with settings for logging to console and file.
     plot_linechart : bool
         Whether to plot the linecharts showing the hydrophobicity.
         Plotting the figure slows down the processing time.
@@ -505,6 +514,19 @@ def lipo_from_pssm(acc, pssm_csv_surr5, lipo_csv, tm_surr_left, tm_surr_right, s
 
 
 def entropy_calculation_mult_prot(s, df_set, logging):
+    """ Runs entropy_calculation for a set of proteins
+
+    Parameters
+    ----------
+    s : dict
+        Settings dictionary
+    df_set : pd.DataFrame
+        Dataframe containing the list of proteins to process, including their TMD sequences and full-length sequences
+        index : range(0, ..)
+        columns : ['acc', 'seqlen', 'TMD_start', 'TMD_end', 'tm_surr_left', 'tm_surr_right', 'database',  ....]
+    logging : logging.Logger
+        Python object with settings for logging to console and file.
+    """
     logging.info('start entropy calculation')
 
     for i in df_set.index:
@@ -519,6 +541,19 @@ def entropy_calculation_mult_prot(s, df_set, logging):
 
 
 def entropy_calculation(acc, path_uniq_TMD_seqs_for_PSSM_FREECONTACT, entropy_file, logging):
+    """Calculates conservation of positions using entropy formula based on an input fasta alignment.
+
+    Parameters
+    ----------
+    acc : str
+        Protein accession (e.g. UniProt, PDB)
+    path_uniq_TMD_seqs_for_PSSM_FREECONTACT : str
+        Path to text file with list of TMD sequences
+    entropy_file : str
+        Path to csv file with entropy (conservation) data
+    logging : logging.Logger
+        Python object with settings for logging to console and file.
+    """
     if os.path.isfile(path_uniq_TMD_seqs_for_PSSM_FREECONTACT):
 
         if not os.path.isdir(os.path.dirname(entropy_file)):
@@ -556,6 +591,19 @@ def entropy_calculation(acc, path_uniq_TMD_seqs_for_PSSM_FREECONTACT, entropy_fi
 
 
 def coevolution_calculation_with_freecontact_mult_prot(s, df_set, logging):
+    """Runs coevolution_calculation_with_freecontact for a set of protein sequences.
+
+    Parameters
+    ----------
+    s : dict
+        Settings dictionary
+    df_set : pd.DataFrame
+        Dataframe containing the list of proteins to process, including their TMD sequences and full-length sequences
+        index : range(0, ..)
+        columns : ['acc', 'seqlen', 'TMD_start', 'TMD_end', 'tm_surr_left', 'tm_surr_right', 'database',  ....]
+    logging : logging.Logger
+        Python object with settings for logging to console and file.
+    """
     logging.info('start coevolution calculation using freecontact')
     freecontact_loc=s["freecontact_dir"]
 
@@ -568,16 +616,26 @@ def coevolution_calculation_with_freecontact_mult_prot(s, df_set, logging):
         coevolution_calculation_with_freecontact(path_uniq_TMD_seqs_for_PSSM_FREECONTACT, freecontact_file, freecontact_loc, logging)
 
 def coevolution_calculation_with_freecontact(path_uniq_TMD_seqs_for_PSSM_FREECONTACT, freecontact_file, freecontact_loc, logging):
+    """Runs freecontact from command line on a multiple sequence alignment in FASTA format.
+
+    Parameters
+    ----------
+    path_uniq_TMD_seqs_for_PSSM_FREECONTACT : str
+        Path to text file with list of TMD sequences
+    freecontact_file : str
+        Path to freecontact output file.
+    freecontact_loc : str
+        Path to the executable freecontact file (e.g. "freecontact" or "D:/programs/freecontact/bin/freecontact")
+    logging : logging.Logger
+        Python object with settings for logging to console and file.
+    """
     if os.path.isfile(path_uniq_TMD_seqs_for_PSSM_FREECONTACT):
         try:
-            # freecontact_file = os.path.join(s["feature_cumulative_coevolution"], "zpro/NoRedundPro/%s.mem.2gap.freecontact") % acc
             thoipapy.utils.make_sure_path_exists(freecontact_file, isfile=True)
-            # freecontact_file_handle = open(freecontact_file, 'w')
             exect_str = "grep -v '^>' {aln_file} |sed 's/[a-z]//g'|{freecontact} >{freecontact_output_file}".format(
                 aln_file=path_uniq_TMD_seqs_for_PSSM_FREECONTACT, freecontact=freecontact_loc, freecontact_output_file=freecontact_file)
 
             command = utils.Command(exect_str)
-            # command=Command(exect_str)
             command.run(timeout=400)
 
             logging.info("Output file: %s\n" % freecontact_file)
@@ -586,25 +644,19 @@ def coevolution_calculation_with_freecontact(path_uniq_TMD_seqs_for_PSSM_FREECON
     else:
         logging.warning("{} does not exist".format(path_uniq_TMD_seqs_for_PSSM_FREECONTACT))
 
-
-
-
 def parse_freecontact_coevolution_mult_prot(s, df_set, logging):
-    """
+    """Runs parse_freecontact_coevolution on a set of proteins.
 
     Parameters
     ----------
-
-    pathdict : dict
-
     s : dict
-        ......
+        Settings dictionary
+    df_set : pd.DataFrame
+        Dataframe containing the list of proteins to process, including their TMD sequences and full-length sequences
+        index : range(0, ..)
+        columns : ['acc', 'seqlen', 'TMD_start', 'TMD_end', 'tm_surr_left', 'tm_surr_right', 'database',  ....]
     logging : logging.Logger
-        ...
-
-    Returns
-    -------
-
+        Python object with settings for logging to console and file.
     """
     logging.info('cumulative co-evolutionary strength parsing')
 
@@ -622,6 +674,23 @@ def parse_freecontact_coevolution_mult_prot(s, df_set, logging):
     sys.stdout.write("\n")
 
 def parse_freecontact_coevolution(acc, freecontact_file, freecontact_parsed_csv, TMD_start, TMD_end, logging):
+    """Parses the freecontact output file to create a number of predictive coevolution features
+
+    Parameters
+    ----------
+    acc : str
+        Protein accession (e.g. UniProt, PDB)
+    freecontact_file : str
+        Path to freecontact output file.
+    freecontact_parsed_csv : str
+        Path to csv with coevolution features
+    TMD_start : int
+        TMD start in full sequence
+    TMD_end : int
+        TMD end in full sequence
+    logging : logging.Logger
+        Python object with settings for logging to console and file.
+    """
     #######################################################################################################
     #                                                                                                     #
     #                     Dictionary method to add initial coevolutionary scores                          #
@@ -923,14 +992,6 @@ def calc_relative_position_mult_prot(s, df_set, logging):
         columns : ['acc', 'seqlen', 'TMD_start', 'TMD_end', 'tm_surr_left', 'tm_surr_right', 'database',  ....]
     logging : logging.Logger
         Python object with settings for logging to console and file.
-
-    Returns
-    -------
-    Rp1 : float
-    position relative to the tmd
-    Rp2 : float
-    position relative to the full sequence
-
     """
     logging.info('start to calculate the relative positions')
 
@@ -952,6 +1013,23 @@ def calc_relative_position_mult_prot(s, df_set, logging):
 
 
 def calc_relative_position(acc, path_uniq_TMD_seqs_for_PSSM_FREECONTACT, relative_position_file, TMD_start, seqlen, logging):
+    """Calculate the residue relative position on the TMD
+
+    Parameters
+    ----------
+    acc : str
+        Protein accession (e.g. UniProt, PDB)
+    path_uniq_TMD_seqs_for_PSSM_FREECONTACT : str
+        Path to text file with list of TMD sequences
+    relative_position_file : str
+        Path to csv file with the relative position of each residue in the TMD and full protein sequence
+    TMD_start : int
+        Start of TMD in full sequence
+    seqlen : int
+        Length of full sequence
+    logging : logging.Logger
+        Python object with settings for logging to console and file.
+    """
     if os.path.isfile(path_uniq_TMD_seqs_for_PSSM_FREECONTACT):
         relative_position_file_handle = open(relative_position_file, 'w')
         mat = []
@@ -959,8 +1037,6 @@ def calc_relative_position(acc, path_uniq_TMD_seqs_for_PSSM_FREECONTACT, relativ
                             lineterminator='\n',
                             quoting=csv.QUOTE_NONNUMERIC, doublequote=True)
         writer.writerow(['residue_num', 'residue_name', 'RelPos_TMD', 'RelPos_fullseq'])
-        # if os.path.isfile(path_uniq_TMD_seqs_for_PSSM_FREECONTACT):
-        # for line in open(path_uniq_TMD_seqs_for_PSSM_FREECONTACT).readlines():
 
         with open(path_uniq_TMD_seqs_for_PSSM_FREECONTACT) as f:
             mat = []
@@ -980,7 +1056,7 @@ def calc_relative_position(acc, path_uniq_TMD_seqs_for_PSSM_FREECONTACT, relativ
 
 
 def LIPS_score_calculation_mult_prot(s, df_set, logging):
-    """
+    """Run LIPS_score_calculation for a list of proteins.
 
     Parameters
     ----------
@@ -1019,6 +1095,17 @@ def LIPS_score_calculation_mult_prot(s, df_set, logging):
 
 
 def LIPS_score_calculation(input_seq_file, LIPS_output_file):
+    """Python version of the LIPS algorithm by Adamian and Liang (2016) Prediction of transmembrane helix orientation in polytopic membrane protenis.
+
+    This script should give exactly the same output as the original perl algorithm.
+
+    Parameters
+    ----------
+    input_seq_file : str
+        Path to text file with a list of sequences
+    LIPS_output_file : str
+        Path to file with LIPS output result.
+    """
 
     thoipapy.utils.make_sure_path_exists(LIPS_output_file, isfile=True)
 
@@ -1265,6 +1352,19 @@ def LIPS_score_calculation(input_seq_file, LIPS_output_file):
             # LIPS_output_file_handle.write("%s" % i, "%10.3f" % avpim, "%8.3f" % ave, "%8.3f" % peim)
 
 def parse_LIPS_score_mult_prot(s, df_set, logging):
+    """Runs parse_LIPS_score for a list of sequences.
+
+    Parameters
+    ----------
+    s : dict
+        Settings dictionary
+    df_set : pd.DataFrame
+        Dataframe containing the list of proteins to process, including their TMD sequences and full-length sequences
+        index : range(0, ..)
+        columns : ['acc', 'seqlen', 'TMD_start', 'TMD_end', 'tm_surr_left', 'tm_surr_right', 'database',  ....]
+    logging : logging.Logger
+        Python object with settings for logging to console and file.
+    """
     logging.info('start parsing lips output to cons and lips scores')
 
     for i in df_set.index:
@@ -1276,6 +1376,19 @@ def parse_LIPS_score_mult_prot(s, df_set, logging):
         parse_LIPS_score(acc, LIPS_output_file, LIPS_parsed_csv, logging)
 
 def parse_LIPS_score(acc, LIPS_output_file, LIPS_parsed_csv, logging):
+    """Parse the LIPS output to create a CSV with features for input in machine learning algorithm.
+
+    Parameters
+    ----------
+    acc : str
+        Protein accession (e.g. UniProt, PDB)
+    LIPS_output_file : str
+        Path to file with LIPS output result.
+    LIPS_parsed_csv : str
+        Path to csv with LIPS output organised into features for machine learning.
+    logging : logging.Logger
+        Python object with settings for logging to console and file.
+    """
 
     thoipapy.utils.make_sure_path_exists(LIPS_parsed_csv, isfile=True)
 
@@ -1336,6 +1449,19 @@ def parse_LIPS_score(acc, LIPS_output_file, LIPS_parsed_csv, logging):
 
 
 def motifs_from_seq_mult_protein(s, df_set, logging):
+    """Runs motifs_from_seq for multiple proteins
+
+    Parameters
+    ----------
+    s : dict
+        Settings dictionary
+    df_set : pd.DataFrame
+        Dataframe containing the list of proteins to process, including their TMD sequences and full-length sequences
+        index : range(0, ..)
+        columns : ['acc', 'seqlen', 'TMD_start', 'TMD_end', 'tm_surr_left', 'tm_surr_right', 'database',  ....]
+    logging : logging.Logger
+        Python object with settings for logging to console and file.
+    """
     logging.info('start parsing lips output to cons and lips scores')
 
     for i in df_set.index:
@@ -1350,6 +1476,23 @@ def motifs_from_seq_mult_protein(s, df_set, logging):
         motifs_from_seq(TMD_seq, TMD_seq_pl_surr, tm_surr_left, tm_surr_right, motifs_file, logging)
 
 def motifs_from_seq(TMD_seq, TMD_seq_pl_surr, tm_surr_left, tm_surr_right, motifs_file, logging):
+    """Generate features related to the presence or absence of simple sequence motifs, such as GxxxG.
+
+    Parameters
+    ----------
+    TMD_seq : str
+        TMD sequence
+    TMD_seq_pl_surr : str
+        TMD sequence plus surrounding residues (e.g. 20 each side)
+    tm_surr_left : int
+        Number of surrounding residues to the N-terminus (left)
+    tm_surr_right : int
+        Number of surrounding residues to the C-terminus (right)
+    motifs_file : str
+        Path to csv containing the features related to sequence motifs
+    logging : logging.Logger
+        Python object with settings for logging to console and file.
+    """
 
     motif_dict = {"GxxxG" : {"motif_ss" : r"[G].{3}[G]", "motif_len" : 4},
                   "SmxxxSm": {"motif_ss": r"[GASC].{3}[GASC]", "motif_len": 4},
@@ -1371,13 +1514,25 @@ def motifs_from_seq(TMD_seq, TMD_seq_pl_surr, tm_surr_left, tm_surr_right, motif
         #sys.stdout.write("".join([str(x) for x in list_residues_in_motif])[tm_surr_left:len(TMD_seq_pl_surr) - tm_surr_right])
         # slice out the TMD region
         list_residues_in_motif_TMD_only = list_residues_in_motif[tm_surr_left: len(TMD_seq_pl_surr) - tm_surr_right]
-
         df_motifs[motif_name] = list_residues_in_motif_TMD_only
     df_motifs.to_csv(motifs_file, index=False)
     logging.info("motifs_from_seq finished ({})".format(motifs_file))
 
 
 def convert_bind_data_to_csv(s, df_set, logging):
+    """Convert bind data (interface-residue or non-interface-residue) to a csv, for all proteins in a list.
+
+    Parameters
+    ----------
+    s : dict
+        Settings dictionary
+    df_set : pd.DataFrame
+        Dataframe containing the list of proteins to process, including their TMD sequences and full-length sequences
+        index : range(0, ..)
+        columns : ['acc', 'seqlen', 'TMD_start', 'TMD_end', 'tm_surr_left', 'tm_surr_right', 'database',  ....]
+    logging : logging.Logger
+        Python object with settings for logging to console and file.
+    """
     for i in df_set.index:
         acc = df_set.loc[i, "acc"]
         bind_file = os.path.join(s["structure_bind"], "%s.4.0closedist") % acc
@@ -1409,6 +1564,19 @@ def convert_bind_data_to_csv(s, df_set, logging):
                          ###################################################################################################
 
 def combine_all_features_mult_prot(s, df_set, logging):
+    """Run combine_all_features for all proteins in a list.
+
+    Parameters
+    ----------
+    s : dict
+        Settings dictionary
+    df_set : pd.DataFrame
+        Dataframe containing the list of proteins to process, including their TMD sequences and full-length sequences
+        index : range(0, ..)
+        columns : ['acc', 'seqlen', 'TMD_start', 'TMD_end', 'tm_surr_left', 'tm_surr_right', 'database',  ....]
+    logging : logging.Logger
+        Python object with settings for logging to console and file.
+    """
     logging.info('Combining features into traindata')
     for i in df_set.index:
         acc = df_set.loc[i, "acc"]
@@ -1430,7 +1598,45 @@ def combine_all_features_mult_prot(s, df_set, logging):
 
         combine_all_features(s , full_seq,acc, database, TMD_seq, TMD_start, feature_combined_file, entropy_file, pssm_csv, lipo_csv, freecontact_parsed_csv, relative_position_file, LIPS_parsed_csv, motifs_file, alignment_summary_csv, logging)
 
-def combine_all_features(s , full_seq, acc, database, TMD_seq, TMD_start, feature_combined_file, entropy_file, pssm_csv, lipo_csv, freecontact_parsed_csv, relative_position_file, LIPS_parsed_csv, motifs_file, alignment_summary_csv, logging):
+def combine_all_features(s, full_seq, acc, database, TMD_seq, TMD_start, feature_combined_file, entropy_file, pssm_csv, lipo_csv, freecontact_parsed_csv, relative_position_file, LIPS_parsed_csv, motifs_file, alignment_summary_csv, logging):
+    """Combine all the training features for a particular protein.
+
+    Parameters
+    ----------
+    s : dict
+        Settings dictionary
+    full_seq : str
+        Full protein sequence
+    acc : str
+        Protein accession (e.g. UniProt, PDB)
+    database : str
+        Database name, e.g. "crystal", "NMR" or "ETRA".
+    TMD_seq : str
+        TMD sequence
+    TMD_start : int
+        Start of TMD in full sequence
+    feature_combined_file : str
+        Path to csv with all features combined
+    entropy_file : str
+        Path to csv file with entropy (conservation) data
+    pssm_csv : str
+        Path to csv file with the PSSM for the TMD region.
+    lipo_csv : str
+        Path to csv with the lipophilicity features
+    freecontact_parsed_csv : str
+        Path to csv with coevolution features
+    relative_position_file : str
+        Path to csv file with the relative position of each residue in the TMD and full protein sequence
+    LIPS_parsed_csv : str
+        Path to csv with LIPS output organised into features for machine learning.
+    motifs_file : str
+        Path to csv containing the features related to sequence motifs
+    alignment_summary_csv : str
+		Path to csv file containing the summary of the alignments and homologues
+		(e.g. how many homologues before and after filtering)
+    logging : logging.Logger
+        Python object with settings for logging to console and file.
+    """
     thoipapy.utils.make_sure_path_exists(feature_combined_file, isfile=True)
 
     for n, filepath in enumerate([entropy_file, pssm_csv, lipo_csv, freecontact_parsed_csv, relative_position_file, LIPS_parsed_csv]):
@@ -1495,7 +1701,7 @@ def combine_all_features(s , full_seq, acc, database, TMD_seq, TMD_start, featur
     df_features_single_protein["n_homologues"] = n_homologues
     # add if the protein is multipass or singlepass
     # TEMPORARY! NEEDS TO BE REPLACED WITH A TOPOLOGY PREDICTOR LATER
-    df_features_single_protein["n_TMDs"] = return_num_tmd(s, acc, database, full_seq)
+    df_features_single_protein["n_TMDs"] = return_num_tmd(s, acc, database, full_seq, logging)
     # if database == "crystal":
     #     df_features_single_protein["n_TMDs"] = 2
     # # elif database == "NMR":
@@ -1513,15 +1719,37 @@ def combine_all_features(s , full_seq, acc, database, TMD_seq, TMD_start, featur
     df_features_single_protein.to_csv(feature_combined_file)
     logging.info("{} combine_all_features_mult_prot finished ({})".format(acc, feature_combined_file))
 
-def return_num_tmd(s, acc,database,  full_seq):
+def return_num_tmd(s, acc,database, full_seq, logging):
+    """Calculate the number of TMDs for the protein using the phobius prediction algorithm.
+
+    Important when mixing crystal dataset (multipass) with single-pass protein datasets.
+    Gives the extra feature n_TMDs (number of TMDs) in the protein.
+
+    Helps the machine learning technique
+
+    Parameters
+    ----------
+    s : dict
+        Settings dictionary
+    acc : str
+        Protein accession number. (e.g. UniProt acc, PDB_acc + chain letter)
+    database : str
+        Database name, e.g. "crystal", "NMR" or "ETRA".
+    full_seq : str
+        Full protein sequence
+    logging : logging.Logger
+        Python object with settings for logging to console and file.
+    """
     full_seq_fasta_file = os.path.join(s["Protein_folder"], database, "{}.fasta".format(acc))
     full_seq_phobius_output_file = os.path.join(s["Protein_folder"], database, "{}.phobius".format(acc))
+    print(full_seq_phobius_output_file)
     utils.make_sure_path_exists(full_seq_fasta_file, isfile=True)
     with open(full_seq_fasta_file, 'w') as f:
         f.write(">{}\n{}".format(acc, full_seq))
     f.close()
     if "Windows" in platform.system():
-        sys.stdout.write("\n phobius currently not run for Windows! Skipping phobius prediction.\n")
+
+        logging.warning("phobius currently not run for Windows! Skipping phobius prediction.")
     else:
         perl_dir = s["perl_dir"]
         phobius_dir = s["phobius_dir"]
@@ -1535,12 +1763,26 @@ def return_num_tmd(s, acc,database,  full_seq):
                 if re.search('TRANSMEM', line):
                     tm_num = tm_num + 1
         return tm_num
-
     else:
         sys.stdout.write("no phobius output file found, try to check the reason")
         return None
 
 def normalise_features(df_features_single_protein):
+    """Normalise selected features.
+
+    Number of homologues -> normalised between 1 and 8
+    conservation -> as minus entropy
+    LIPS L*E -> calculated here
+    LIPS surface ranked -> calculated based on LIPS_surface and LIPS L*E
+    CS, DE, etc -> %C+%S, %D+%E, etc
+
+    Parameters
+    ----------
+    df_features_single_protein : pd.DataFrame
+        Dataframe with all features for a protein
+        Index : range index
+        Columns : "residue_num", "residue_name", "Entropy", etc
+    """
 
     # normalise number of homologues to 1,2 or 3
     df_features_single_protein["n_homol_norm"] = df_features_single_protein["n_homologues"].apply(normalise_number_of_homologues)
@@ -1560,6 +1802,13 @@ def normalise_features(df_features_single_protein):
     return df_features_single_protein
 
 def normalise_number_of_homologues(x):
+    """Convert non-linear number of homologues to an integer value.
+
+    Parameters
+    ----------
+    x : int
+        Number of homologues in fasta alignment of TMD region including gaps.
+    """
     if x <= 75:
         return 1
     elif x <= 100:
@@ -1578,6 +1827,20 @@ def normalise_number_of_homologues(x):
         return 8
 
 def add_experimental_data_to_combined_features_mult_prot(s, df_set, logging):
+    """Run add_experimental_data_to_combined_features for a list of proteins.
+
+    Parameters
+    ----------
+    s : dict
+        Settings dictionary
+    df_set : pd.DataFrame
+        Dataframe containing the list of proteins to process, including their TMD sequences and full-length sequences
+        index : range(0, ..)
+        columns : ['acc', 'seqlen', 'TMD_start', 'TMD_end', 'tm_surr_left', 'tm_surr_right', 'database',  ....]
+    logging : logging.Logger
+        Python object with settings for logging to console and file.
+
+    """
     for i in df_set.index:
         acc = df_set.loc[i, "acc"]
         database = df_set.loc[i, "database"]
@@ -1594,6 +1857,23 @@ def add_experimental_data_to_combined_features_mult_prot(s, df_set, logging):
 
 
 def add_experimental_data_to_combined_features(acc, database, TMD_seq, feature_combined_file, experimental_data_file, logging):
+    """Add the "bind" experimental data "interface_score" to the csv file with features.
+
+    Parameters
+    ----------
+	acc : str
+        Protein accession (e.g. UniProt, PDB)
+    database : str
+        Database name, e.g. "crystal", "NMR" or "ETRA".
+    TMD_seq : str
+        TMD sequence
+    feature_combined_file : str
+        Path to csv with all features combined
+    experimental_data_file : str
+        Path to csv file with the interface_score from experimental data.
+    logging : logging.Logger
+        Python object with settings for logging to console and file.
+    """
     df_combined = pd.read_csv(feature_combined_file, index_col=0)
 
     if not os.path.isfile(experimental_data_file):
@@ -1639,6 +1919,19 @@ def add_experimental_data_to_combined_features(acc, database, TMD_seq, feature_c
 
 
 def add_physical_parameters_to_features_mult_prot(s, df_set, logging):
+    """Run add_physical_parameters_to_features for multiple proteins.
+
+    Parameters
+    ----------
+    s : dict
+        Settings dictionary
+    df_set : pd.DataFrame
+        Dataframe containing the list of proteins to process, including their TMD sequences and full-length sequences
+        index : range(0, ..)
+        columns : ['acc', 'seqlen', 'TMD_start', 'TMD_end', 'tm_surr_left', 'tm_surr_right', 'database',  ....]
+    logging : logging.Logger
+        Python object with settings for logging to console and file.
+    """
     logging.info('adding physical parameters into traindata')
     for i in df_set.index:
         acc = df_set.loc[i, "acc"]
@@ -1646,11 +1939,21 @@ def add_physical_parameters_to_features_mult_prot(s, df_set, logging):
         feature_combined_file = os.path.join(s["features_folder"], "combined", database, "{}.surr{}.gaps{}.combined_features.csv".format(acc, s["num_of_sur_residues"], s["max_n_gaps_in_TMD_subject_seq"]))
         #feature_combined_file_incl_phys_param = os.path.join(s["features_folder"], "combined", database,
         #                                                     "{}.surr{}.gaps{}.combined_features_incl_phys_param.csv".format(acc, s["num_of_sur_residues"], s["max_n_gaps_in_TMD_subject_seq"]))
-
         add_physical_parameters_to_features(acc, feature_combined_file, logging)
 
 
 def add_physical_parameters_to_features(acc, feature_combined_file, logging):
+    """Add physical parameters (e.g. PI of amino acid) to the features.
+
+    Parameters
+    ----------
+	acc : str
+        Protein accession (e.g. UniProt, PDB)
+    feature_combined_file : str
+        Path to csv with all features combined
+    logging : logging.Logger
+        Python object with settings for logging to console and file.
+    """
     feature_combined_file_incl_phys_param = feature_combined_file[:-4] + "_incl_phys_param.csv"
     thoipapy_module_path = os.path.dirname(os.path.abspath(thoipapy.__file__))
     physical_parameter_file = os.path.join(thoipapy_module_path, "setting", "Physical_Property_csv.txt")
@@ -1713,7 +2016,7 @@ def add_physical_parameters_to_features(acc, feature_combined_file, logging):
 
 
 def combine_all_train_data_for_random_forest(s, df_set, logging):
-    """ Combing training (or test) data for multiple proteins
+    """Combine training (or test) data for multiple proteins
 
     Effectively stacks the CSVs on top of each other.
 
@@ -1734,7 +2037,6 @@ def combine_all_train_data_for_random_forest(s, df_set, logging):
         csv file with stacked feature data for multiple proteins
         index = range(0, ..)
         columns =
-
     """
     logging.info('creating train or test data for random forest')
 
