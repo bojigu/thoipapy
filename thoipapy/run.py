@@ -182,7 +182,7 @@ if __name__ == "__main__":
 
         if s["run_LOO_validation"]:
             thoipapy.RF_features.RF_Train_Test.run_LOO_validation(s, df_set, logging)
-            thoipapy.RF_features.RF_Train_Test.create_LOO_validation_fig(s, df_set, logging)
+            #thoipapy.RF_features.RF_Train_Test.create_LOO_validation_fig(s, df_set, logging)
 
         if s["calculate_variable_importance"]:
             thoipapy.RF_features.RF_Train_Test.calculate_variable_importance(s, logging)
@@ -234,6 +234,9 @@ if __name__ == "__main__":
 
         if s["add_predictions_to_combined_files"] == True:
             thoipapy.figs.combine_add_3_prediction.combine_file_add_PREDDIMER_TMDOCK_THOIPA_prediction(s, df_set, logging)
+
+        if s["create_AUC_BoAuc_fig_set5"] == True:
+            thoipapy.figs.combine_add_3_prediction.create_AUC_BoAUC_figs_THOIPA_PREDDIMER_TMDOCK(s, df_set, logging)
 
         if "download_10_homologues_from_ncbi" in s:
             if s["download_10_homologues_from_ncbi"] == True:

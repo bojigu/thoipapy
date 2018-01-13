@@ -57,6 +57,7 @@ def download_homologues_from_ncbi_mult_prot(s, df_set, logging):
     for i in df_set.index:
         acc = df_set.loc[i, "acc"]
         TMD_seq_pl_surr = df_set.loc[i, "TMD_seq_pl_surr"]
+        #TMD_seq_pl_surr = df_set.loc[i, "full_seq"]
         database = df_set.loc[i, "database"]
 
 

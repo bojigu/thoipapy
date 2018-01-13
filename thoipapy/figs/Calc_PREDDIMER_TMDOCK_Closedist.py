@@ -8,7 +8,14 @@ import thoipapy
 
 
 def calc_closedist_from_PREDDIMER_TMDOCK_best_model(s):
-    pt_set_list = s["set_list"].split(",")
+    if isinstance(s["set_list"], int):
+        pt_set_list = [str(s["set_list"])]
+    elif isinstance(s["set_list"], str):
+        pt_set_list = s["set_list"].split(",")
+    else:
+        raise ValueError("set list type is not correct {}".format(s["set_list"]))
+    print(pt_set_list)
+    #pt_set_list = s["set_list"].split(",")
     for pt_set in pt_set_list:
         ptsetname = "set{:02d}".format(int(pt_set))
         ptset_path = thoipapy.common.get_path_of_protein_set(ptsetname, s["sets_folder"])
@@ -23,9 +30,21 @@ def calc_closedist_from_PREDDIMER_TMDOCK_best_model(s):
             preddimer_closedist_file = os.path.join(PREDDIMER_TMDOCK_folder,database,"{}.preddimer.closedist.csv".format(protein))
             tmdock_closedist_file = os.path.join(PREDDIMER_TMDOCK_folder, database,"{}.tmdock.closedist.csv".format(protein))
 
-            closedist_calculate_from_dimer(s,pdb_file_preddimer,preddimer_closedist_file)
-            closedist_calculate_from_dimer(s,pdb_file_tmdock,tmdock_closedist_file)
-            sys.stdout.write("\nthe closedist calculation for preddimer and tmdock for protein: {} was finished".format(protein))
+            #closedist_calculate_from_dimer(s,pdb_file_preddimer,preddimer_closedist_file)
+            if os.path.isfile(pdb_file_tmdock):
+                closedist_calculate_from_dimer(s,pdb_file_tmdock,tmdock_closedist_file)
+                #sys.stdout.write("\nthe closedist calculation for preddimer and tmdock for protein: {} was finished".format(protein))
+            else:
+                sys.stdout.write("\nthe tmdock pdb file for protein {} not exists".format(protein))
+                sys.stdout.flush()
+                continue
+            if os.path.isfile(pdb_file_preddimer):
+                closedist_calculate_from_dimer(s,pdb_file_preddimer,preddimer_closedist_file)
+                #sys.stdout.write("\nthe closedist calculation for preddimer and tmdock for protein: {} was finished".format(protein))
+            else:
+                sys.stdout.write("\nthe preddimer pdb file for protein {} not exists".format(protein))
+                sys.stdout.flush()
+                continue
 
 
 def closedist_calculate_from_dimer(s,pdb_file, closedist_out_csv):

@@ -458,3 +458,12 @@ def Get_Closedist_between_ChianA_ChainB(hashclosedist):
         k2 = '_'.join([k1, str(v)])
         jk = '+'.join([jk,  k2])
     return jk
+
+def add_mutation_missed_residues_with_na(s,acc,database,df):
+    acc_combind_feature_file = os.path.join(s['features_folder'],"combined",database,"{}.surr{}.gaps{}.combined_features.csv".format(acc,s["num_of_sur_residues"],s["max_n_gaps_in_TMD_subject_seq"]))
+    df_feature = pd.read_csv(acc_combind_feature_file,engine="python",index_col=0)
+    not_df_index = [element for element in df_feature["residue_num"].values if element not in df.index.values ]
+    for element in not_df_index:
+        df.loc[element] = [df_feature.loc[element -1,"residue_name"], np.nan]
+    df = df.sort_index()
+    return df

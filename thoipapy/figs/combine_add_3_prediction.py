@@ -1,8 +1,11 @@
 import os
 import sys
 import pandas as pd
+import numpy as np
 from Bio import pairwise2
 import thoipapy
+from sklearn.metrics import roc_curve, auc
+from scipy import interp
 
 
 def combine_file_add_PREDDIMER_TMDOCK_THOIPA_prediction(s, df_set, logging):
@@ -35,7 +38,7 @@ def combine_file_add_PREDDIMER_TMDOCK_THOIPA_prediction(s, df_set, logging):
     # add the THOIPA prediction name to the list of columns to keep
     pred_colname = "THOIPA_{}_LOO".format(s["set_number"])
     # for simplicity, keep only the predictions. Since the index is unique, it can be added later to the combined file.
-    columns_kept_in_combined_file = ['residue_num', 'residue_name', pred_colname, 'TMDOCK', 'PREDDIMER']
+    columns_kept_in_combined_file = ['residue_num', 'residue_name', pred_colname, 'TMDOCK', 'PREDDIMER','interface','interface_score','LIPS_L*E']
 
     #set_list = thoipapy.figs.fig_utils.get_set_lists(s)
     PREDDIMER_TMDOCK_folder = os.path.join(s["base_dir"], "figs", "FigBZ18-PreddimerTmdockComparison")
@@ -45,8 +48,8 @@ def combine_file_add_PREDDIMER_TMDOCK_THOIPA_prediction(s, df_set, logging):
     #df_set = pd.read_excel(set_path, sheetname="proteins")
     for i in df_set.index:
         acc = df_set.loc[i, "acc"]
+        #if acc =="2axtM1":
         full_seq = df_set.loc[i, "full_seq"]
-        #if acc == "O75460":
         database = df_set.loc[i, "database"]
         train_data_file = os.path.join(s["features_folder"], "combined", database,"{}.surr20.gaps5.combined_features.csv".format(acc))
         #THOIPA_prediction_file = os.path.join(s["thoipapy_data_folder"], "Predictions", "testset_trainset",database, "{}.THOIPA.trainset04.csv".format(acc))
@@ -71,10 +74,14 @@ def combine_file_add_PREDDIMER_TMDOCK_THOIPA_prediction(s, df_set, logging):
                 df = pd.read_csv(file, index_col=0)
                 seq = df["residue_name"].str.cat()
                 if seq not in full_seq:
+                    print(prediction_name)
                     logging.warning("Sequence in residue_name column of dataframe is not found in the original df_set sequence."
-                                     "\nacc : {}\nfile number : {}\nTMD_seq : {}\nfull seq in df_set : {}".format(acc, n, seq, full_seq))
+                                     "\nacc : {}\nfile number : {}\nTMD_seq : {}\nfull seq in df_set : {}\n".format(acc, n, seq, full_seq))
+                    if prediction_name == [pred_colname]:
+                        df = thoipapy.utils.add_mutation_missed_residues_with_na(s,acc,database,df)
+                        seq = df["residue_name"].str.cat()
                     # skip protein
-                    continue
+                    #continue
 
                 # add the residue number in the full sequence
                 df = thoipapy.utils.add_res_num_full_seq_to_df(acc, df, seq, full_seq)
@@ -96,11 +103,69 @@ def combine_file_add_PREDDIMER_TMDOCK_THOIPA_prediction(s, df_set, logging):
 
                 n_files_merged += 1
         # keep the desired columns
-        columns_kept_in_combined_file = list(set(columns_kept_in_combined_file).intersection(set(dfm.columns)))
-        dfm = dfm[columns_kept_in_combined_file]
+        new_columns_kept_in_combined_file = list(set(columns_kept_in_combined_file).intersection(set(dfm.columns)))
+        dfm = dfm[new_columns_kept_in_combined_file]
         # save to "Merged" folder, so as not to get confused with the "combined" files
         dfm.to_csv(merged_data_csv_path)
         logging.info("{} predictions combined. n_files_merged : {}. ({})".format(acc, n_files_merged, merged_data_csv_path))
+
+def create_AUC_BoAUC_figs_THOIPA_PREDDIMER_TMDOCK(s,df_set,logging):
+    THOIPA_BO_data_df = pd.DataFrame()
+    xv_dict_THOIPA = {}
+    auc_dict = {}
+    mean_tpr = 0.0
+    mean_fpr = np.linspace(0, 1, 100)
+    names_excel_path = os.path.join(os.path.dirname(s["sets_folder"]), "ETRA_NMR_names.xlsx")
+    namedict = thoipapy.utils.create_namedict(names_excel_path)
+    THOIPA_BO_curve_data_csv = os.path.join(s["thoipapy_data_folder"], "Results", "compare_predictors",
+                                            "{}.THOIPA_BO_Curve_data.csv".format(s["setname"]))
+    THOIPA_BO_data_excel = os.path.join(s["thoipapy_data_folder"], "Results", "compare_predictors",
+                                        "{}.THOIPA_BO_curve_data.xlsx".format(s['setname']))
+    THOIPA_BO_linechart_png = os.path.join(s["thoipapy_data_folder"], "Results", "compare_predictors",
+                                           "{}.THOIPA_BO_linechart.png".format(s['setname']))
+    THOIPA_BO_barchart_png = os.path.join(s["thoipapy_data_folder"], "Results", "compare_predictors",
+                                          "{}.THOIPA_AUBOC10_barchart.png".format(s['setname']))
+    for i in df_set.index:
+        acc = df_set.loc[i, "acc"]
+        print(acc)
+        #if acc == "O75460" or acc == "P02724":
+        database = df_set.loc[i, "database"]
+        acc_db = acc + "-" + database
+        merged_data_csv_path = os.path.join(s["thoipapy_data_folder"], "Merged", database, "{}.merged.csv".format(acc))
+        merged_data_df = pd.read_csv(merged_data_csv_path,engine="python")
+        merged_data_df["LIPS_L*E"] = -1 * merged_data_df["LIPS_L*E"]
+
+        if database == "crystal" or database == "NMR":
+            # (it is closest distance and low value means high propencity of interfacial)
+            merged_data_df["interface_score"] = -1 * merged_data_df["interface_score"]
+        experiment_col = "interface_score"
+        pred_col = "PREDDIMER"
+        THOIPA_BO_single_prot_df = thoipapy.figs.fig_utils.calc_best_overlap(acc_db, merged_data_df,experiment_col,pred_col)
+        if THOIPA_BO_data_df.empty:
+            THOIPA_BO_data_df = THOIPA_BO_single_prot_df
+        else:
+            THOIPA_BO_data_df = pd.concat([THOIPA_BO_data_df, THOIPA_BO_single_prot_df], axis=1, join="outer")
+
+        df_for_roc = merged_data_df.dropna(subset=["interface_score"])
+
+        predictor_name = "THOIPA_{}_LOO".format(s["set_number"])
+
+        fpr, tpr, thresholds = roc_curve(df_for_roc.interface, df_for_roc[predictor_name])
+        auc_value = auc(fpr, tpr)
+        mean_tpr += interp(mean_fpr, fpr, tpr)
+        mean_tpr[0] = 0.0
+        auc_dict[acc_db] = auc_value
+        xv_dict_THOIPA[acc_db] = {"fpr": fpr, "tpr": tpr, "auc": auc_value}
+
+    THOIPA_BO_data_df.to_csv(THOIPA_BO_curve_data_csv)
+
+    # THOIPA_linechart_mean_obs_and_rand = analyse_bo_curve_underlying_data(THOIPA_BO_curve_data_csv, BO_curve_folder, names_excel_path)
+    thoipapy.figs.Create_Bo_Curve_files.parse_BO_data_csv_to_excel(THOIPA_BO_curve_data_csv, THOIPA_BO_data_excel, logging)
+    AUC_ser = pd.Series(auc_dict)
+    AUC_ser.sort_values(inplace=True, ascending=False)
+    AUBOC10 = thoipapy.figs.Create_Bo_Curve_files.save_BO_linegraph_and_barchart(s, THOIPA_BO_data_excel, THOIPA_BO_linechart_png, THOIPA_BO_barchart_png, namedict,
+                                             logging, AUC_ser)
+
 
 def merge_4_files_ALIGNMENT_METHOD(acc, full_seq, train_data_file, THOIPA_prediction_file, PREDDIMER_prediction_file, TMDOCK_prediction_file, merged_data_xlsx_path, columns_kept_in_combined_file):
     all_files_exist = True
@@ -136,10 +201,10 @@ def merge_4_files_ALIGNMENT_METHOD(acc, full_seq, train_data_file, THOIPA_predic
                              "acc : {}\nTMD_seq : {}\nfull seq in df_set : {}\nall TM sequences in list : {}".format(acc, seq, full_seq, seqlist))
             return None, None, None
 
-    df_train = thoipapy.utils.add_res_num_full_seq_to_df(df_train, df_train_seq, full_seq)
-    df_thoipa = thoipapy.utils.add_res_num_full_seq_to_df(df_thoipa, df_thoipa_seq, full_seq)
-    df_preddimer = thoipapy.utils.add_res_num_full_seq_to_df(df_preddimer, df_preddimer_seq, full_seq)
-    df_tmdock = thoipapy.utils.add_res_num_full_seq_to_df(df_tmdock, df_tmdock_seq, full_seq)
+    df_train = thoipapy.utils.add_res_num_full_seq_to_df(acc,df_train, df_train_seq, full_seq)
+    df_thoipa = thoipapy.utils.add_res_num_full_seq_to_df(acc,df_thoipa, df_thoipa_seq, full_seq)
+    df_preddimer = thoipapy.utils.add_res_num_full_seq_to_df(acc,df_preddimer, df_preddimer_seq, full_seq)
+    df_tmdock = thoipapy.utils.add_res_num_full_seq_to_df(acc,df_tmdock, df_tmdock_seq, full_seq)
 
     dfs = pd.DataFrame()
 
@@ -169,11 +234,12 @@ def merge_4_files_ALIGNMENT_METHOD(acc, full_seq, train_data_file, THOIPA_predic
     elif unique_seq_list.shape[0] > 2:
         # skip protein if there are more than 3 sequences
         # a multiple sequence alignment would be necessary
-        sys.stdout.write("4 sequences has more than 2 unique sequences, alignment not possible. protein skipped.")
+        sys.stdout.write("4 sequences has more than 2 unique sequences, alignment not possible. protein {} skipped.".format(acc))
         # skip protein
         return None, None, None
 
     elif unique_seq_list.shape[0] ==2:
+        print(unique_seq_list)
         sys.stdout.write("\n\nstarting reindexing of different TM lengths. ")
         # create a pairwise alignment are reindex dataframes
         for n, seq in enumerate(unique_seq_list):
