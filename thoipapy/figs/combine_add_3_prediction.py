@@ -6,6 +6,7 @@ from Bio import pairwise2
 import thoipapy
 from sklearn.metrics import roc_curve, auc
 from scipy import interp
+import matplotlib.pyplot as plt
 
 
 def combine_file_add_PREDDIMER_TMDOCK_THOIPA_prediction(s, df_set, logging):
@@ -110,61 +111,184 @@ def combine_file_add_PREDDIMER_TMDOCK_THOIPA_prediction(s, df_set, logging):
         logging.info("{} predictions combined. n_files_merged : {}. ({})".format(acc, n_files_merged, merged_data_csv_path))
 
 def create_AUC_BoAUC_figs_THOIPA_PREDDIMER_TMDOCK(s,df_set,logging):
-    THOIPA_BO_data_df = pd.DataFrame()
-    xv_dict_THOIPA = {}
-    auc_dict = {}
-    mean_tpr = 0.0
-    mean_fpr = np.linspace(0, 1, 100)
+
     names_excel_path = os.path.join(os.path.dirname(s["sets_folder"]), "ETRA_NMR_names.xlsx")
     namedict = thoipapy.utils.create_namedict(names_excel_path)
-    THOIPA_BO_curve_data_csv = os.path.join(s["thoipapy_data_folder"], "Results", "compare_predictors",
-                                            "{}.THOIPA_BO_Curve_data.csv".format(s["setname"]))
-    THOIPA_BO_data_excel = os.path.join(s["thoipapy_data_folder"], "Results", "compare_predictors",
-                                        "{}.THOIPA_BO_curve_data.xlsx".format(s['setname']))
-    THOIPA_BO_linechart_png = os.path.join(s["thoipapy_data_folder"], "Results", "compare_predictors",
-                                           "{}.THOIPA_BO_linechart.png".format(s['setname']))
-    THOIPA_BO_barchart_png = os.path.join(s["thoipapy_data_folder"], "Results", "compare_predictors",
-                                          "{}.THOIPA_AUBOC10_barchart.png".format(s['setname']))
-    for i in df_set.index:
-        acc = df_set.loc[i, "acc"]
-        print(acc)
-        #if acc == "O75460" or acc == "P02724":
-        database = df_set.loc[i, "database"]
-        acc_db = acc + "-" + database
-        merged_data_csv_path = os.path.join(s["thoipapy_data_folder"], "Merged", database, "{}.merged.csv".format(acc))
-        merged_data_df = pd.read_csv(merged_data_csv_path,engine="python")
-        merged_data_df["LIPS_L*E"] = -1 * merged_data_df["LIPS_L*E"]
+    predictor_name_list = ["THOIPA_{}_LOO".format(s["set_number"]),"PREDDIMER", "TMDOCK","LIPS_L*E"]
+    AUC_AUBOC_df = pd.DataFrame()
+    AUC_AUBOC_name_list = []
+    linechar_name_list = []
+    AUBOC10_list = []
+    df_o_minus_r_mean_df = pd.DataFrame()
+    auc_mean_list=[]
+    AUC_AUBOC_file = os.path.join(s["thoipapy_data_folder"], "Results", "compare_predictors",
+                                                "{}.4predictors_AUC_AUBOC.csv".format(s["setname"]))
+    predictors_AUC_barchart_png = os.path.join(s["thoipapy_data_folder"], "Results", "compare_predictors",
+                                                "{}.4predictors_AUC_bartchat.png".format(s["setname"]))
+    predictors_BOAUC10_barchart_png = os.path.join(s["thoipapy_data_folder"], "Results", "compare_predictors",
+                                                "{}.4predictors_BOAUC_bartchat.png".format(s["setname"]))
+    predictors_BOCURVE_linechat_png = os.path.join(s["thoipapy_data_folder"], "Results", "compare_predictors",
+                                                "{}.4predictors_BOCURVE_linechat.png".format(s["setname"]))
+    predictors_mean_auc_barchart_png = os.path.join(s["thoipapy_data_folder"], "Results", "compare_predictors",
+                                                "{}.4predictors_mean_auc_barchart.png".format(s["setname"]))
+    for predictor_name in predictor_name_list:
+        BO_data_df = pd.DataFrame()
+        xv_dict = {}
+        auc_dict = {}
+        mean_tpr = 0.0
+        mean_fpr = np.linspace(0, 1, 100)
+        BO_curve_data_csv = os.path.join(s["thoipapy_data_folder"], "Results", "compare_predictors",
+                                                "{}.{}_BO_Curve_data.csv".format(s["setname"],predictor_name.replace('*',"")))
+        BO_data_excel = os.path.join(s["thoipapy_data_folder"], "Results", "compare_predictors",
+                                            "{}.{}_BO_curve_data.xlsx".format(s['setname'],predictor_name.replace('*',"")))
+        BO_linechart_png = os.path.join(s["thoipapy_data_folder"], "Results", "compare_predictors",
+                                               "{}.{}_BO_linechart.png".format(s['setname'],predictor_name.replace('*',"")))
+        BO_barchart_png = os.path.join(s["thoipapy_data_folder"], "Results", "compare_predictors",
+                                              "{}.{}_AUBOC10_barchart.png".format(s['setname'],predictor_name.replace('*',"")))
+        col_list = []
+        for i in df_set.index:
+            acc = df_set.loc[i, "acc"]
+            #print(acc)
+            #if acc == "O75460" or acc == "P02724":
+            database = df_set.loc[i, "database"]
+            acc_db = acc + "-" + database
+            merged_data_csv_path = os.path.join(s["thoipapy_data_folder"], "Merged", database, "{}.merged.csv".format(acc))
+            merged_data_df = pd.read_csv(merged_data_csv_path,engine="python")
+            merged_data_df["LIPS_L*E"] = -1 * merged_data_df["LIPS_L*E"]
+            merged_data_df["PREDDIMER"] = -1 * merged_data_df["PREDDIMER"]
+            merged_data_df["TMDOCK"] = -1 * merged_data_df["TMDOCK"]
 
-        if database == "crystal" or database == "NMR":
-            # (it is closest distance and low value means high propencity of interfacial)
-            merged_data_df["interface_score"] = -1 * merged_data_df["interface_score"]
-        experiment_col = "interface_score"
-        pred_col = "PREDDIMER"
-        THOIPA_BO_single_prot_df = thoipapy.figs.fig_utils.calc_best_overlap(acc_db, merged_data_df,experiment_col,pred_col)
-        if THOIPA_BO_data_df.empty:
-            THOIPA_BO_data_df = THOIPA_BO_single_prot_df
-        else:
-            THOIPA_BO_data_df = pd.concat([THOIPA_BO_data_df, THOIPA_BO_single_prot_df], axis=1, join="outer")
+            if database == "crystal" or database == "NMR":
+                # (it is closest distance and low value means high propencity of interfacial)
+                merged_data_df["interface_score"] = -1 * merged_data_df["interface_score"]
+            experiment_col = "interface_score"
+            BO_single_prot_df = thoipapy.figs.fig_utils.calc_best_overlap(acc_db, merged_data_df,experiment_col,predictor_name)
+            if BO_data_df.empty:
+                BO_data_df = BO_single_prot_df
+            else:
+                BO_data_df = pd.concat([BO_data_df, BO_single_prot_df], axis=1, join="outer")
 
-        df_for_roc = merged_data_df.dropna(subset=["interface_score"])
+            df_for_roc = merged_data_df.dropna(subset=["interface_score",predictor_name])
 
-        predictor_name = "THOIPA_{}_LOO".format(s["set_number"])
+            fpr, tpr, thresholds = roc_curve(df_for_roc.interface, df_for_roc[predictor_name])
+            auc_value = auc(fpr, tpr)
+            mean_tpr += interp(mean_fpr, fpr, tpr)
+            mean_tpr[0] = 0.0
+            auc_dict[acc_db] = auc_value
+            xv_dict[acc_db] = {"fpr": fpr, "tpr": tpr, "auc": auc_value}
 
-        fpr, tpr, thresholds = roc_curve(df_for_roc.interface, df_for_roc[predictor_name])
-        auc_value = auc(fpr, tpr)
-        mean_tpr += interp(mean_fpr, fpr, tpr)
-        mean_tpr[0] = 0.0
-        auc_dict[acc_db] = auc_value
-        xv_dict_THOIPA[acc_db] = {"fpr": fpr, "tpr": tpr, "auc": auc_value}
+        BO_data_df.to_csv(BO_curve_data_csv)
 
-    THOIPA_BO_data_df.to_csv(THOIPA_BO_curve_data_csv)
+        # THOIPA_linechart_mean_obs_and_rand = analyse_bo_curve_underlying_data(THOIPA_BO_curve_data_csv, BO_curve_folder, names_excel_path)
+        thoipapy.figs.Create_Bo_Curve_files.parse_BO_data_csv_to_excel(BO_curve_data_csv, BO_data_excel, logging)
+        AUC_ser = pd.Series(auc_dict)
+        AUC_ser.sort_values(inplace=True, ascending=False)
+        auc_mean_list.append(AUC_ser.mean())
+        AUBOC10_ser = pd.read_excel(BO_data_excel, sheetname="AUBOC10", index_col=0)["AUBOC10"].copy()
+        df_o_minus_r = pd.read_excel(BO_data_excel, sheetname="df_o_minus_r", index_col=0)
+        df_o_minus_r.columns = pd.Series(df_o_minus_r.columns).replace(namedict)
+        df_o_minus_r_mean = df_o_minus_r.T.mean()
+        df_o_minus_r_mean_df= pd.concat([df_o_minus_r_mean_df,df_o_minus_r_mean],axis=1, join="outer")
+        AUBOC10 = np.trapz(y=df_o_minus_r_mean, x=df_o_minus_r_mean.index)
+        AUBOC10_list.append(AUBOC10)
+        linechar_name_list.append(predictor_name)
+        AUC_AUBOC_name_list.append("{}AUC".format(predictor_name))
+        AUC_AUBOC_name_list.append("{}AUBOC10".format(predictor_name))
+        thoipapy.figs.Create_Bo_Curve_files.save_BO_linegraph_and_barchart(s, BO_data_excel, BO_linechart_png, BO_barchart_png, namedict,
+                                                 logging, AUC_ser)
+        #print(type(AUC_ser))
+        #print(type(AUBOC10_ser))
+        AUC_AUBOC_df = pd.concat([AUC_AUBOC_df,AUC_ser, AUBOC10_ser], axis=1, join="outer")
+    print(auc_mean_list)
+    df_o_minus_r_mean_df.columns = linechar_name_list
+    AUC_AUBOC_df.columns = AUC_AUBOC_name_list
+    AUC_AUBOC_df.index.name = "acc_db"
+    print(df_o_minus_r_mean_df,AUBOC10_list)
+    #print(AUC_AUBOC_df)
+    AUC_AUBOC_df.to_csv(AUC_AUBOC_file)
+    create_4predictors_AUC_AUBOC10_barchart(AUC_AUBOC_df, predictors_AUC_barchart_png, predictors_BOAUC10_barchart_png, namedict)
+    create_4predictors_bocurve_linechart(df_o_minus_r_mean_df,AUBOC10_list,linechar_name_list,predictors_BOCURVE_linechat_png)
+    create_mean_AUC_barchart_comp(auc_mean_list, linechar_name_list, predictors_mean_auc_barchart_png)
 
-    # THOIPA_linechart_mean_obs_and_rand = analyse_bo_curve_underlying_data(THOIPA_BO_curve_data_csv, BO_curve_folder, names_excel_path)
-    thoipapy.figs.Create_Bo_Curve_files.parse_BO_data_csv_to_excel(THOIPA_BO_curve_data_csv, THOIPA_BO_data_excel, logging)
-    AUC_ser = pd.Series(auc_dict)
-    AUC_ser.sort_values(inplace=True, ascending=False)
-    AUBOC10 = thoipapy.figs.Create_Bo_Curve_files.save_BO_linegraph_and_barchart(s, THOIPA_BO_data_excel, THOIPA_BO_linechart_png, THOIPA_BO_barchart_png, namedict,
-                                             logging, AUC_ser)
+def create_mean_AUC_barchart_comp(auc_mean_list,linechar_name_list,predictors_mean_auc_barchart_png):
+    plt.close("all")
+    # plt.rcParams.update({'font.size': 8})
+    figsize = np.array([3.42, 3.42]) * 2  # DOUBLE the real size, due to problems on Bo computer with fontsizes
+    fig, ax = plt.subplots(figsize=figsize)
+    # replace the protein names
+    x = y_pos = np.arange(len(linechar_name_list))
+    plt.bar(x, auc_mean_list, width=0.6, color = 'rgbk', alpha=0.5)
+    plt.xticks(y_pos, linechar_name_list)
+    plt.ylabel("performance value\n(mean auc)")
+
+    #ax.set_ylabel("performance value\n(auc)")
+    ax.set_ylim(0, 0.65)
+    ax.legend()  # (["sample size = 5", "sample size = 10"])
+
+    fig.tight_layout()
+    ax.grid(False)
+    fig.savefig(predictors_mean_auc_barchart_png, dpi=240)
+
+
+def create_4predictors_bocurve_linechart(df_o_minus_r_mean_df,AUBOC10_list,linechar_name_list, predictors_BOCURVE_linechat_png):
+    # BO_linechart_png
+    plt.close("all")
+    figsize = np.array([3.42, 3.42]) * 2  # DOUBLE the real size, due to problems on Bo computer with fontsizes
+    fig, ax = plt.subplots(figsize=figsize)
+
+    for i,column in enumerate(df_o_minus_r_mean_df.columns):
+        # df_o_minus_r_mean_df.plot(ax=ax, color="#0f7d9b", linestyle="-", label="prediction (AUBOC10 : {:0.2f}".format(AUBOC10))
+        label_name = "{}(AUBOC:{:.2f})".format(linechar_name_list[i] ,AUBOC10_list[i])
+        df_o_minus_r_mean_df[column].plot(ax=ax,  linestyle="-",label=label_name)
+    ax.plot([1, 10], [0, 0], color="#0f7d9b", linestyle="--", label="random", alpha=0.5)
+    ax.grid(False)
+    ax.set_ylabel("performance value\n(observed - random)", color="#0f7d9b")
+    ax.tick_params('y', colors="#0f7d9b")
+
+    ax.spines['left'].set_color("#0f7d9b")
+    ax.legend()
+    fig.tight_layout()
+    fig.savefig(predictors_BOCURVE_linechat_png, dpi=140)
+
+def create_4predictors_AUC_AUBOC10_barchart(AUC_AUBOC_df, predictors_AUC_barchart_png, predictors_BOAUC10_barchart_png,namedict):
+    auc_list = AUC_AUBOC_df.columns[[0, 2, 4, 6]]
+    bo_auc_list = AUC_AUBOC_df.columns[[1, 3, 5, 7]]
+    AUC_AUBOC_df = AUC_AUBOC_df.sort_values(by=["THOIPA_5_LOOAUC"], ascending=False)
+    plt.close("all")
+    # plt.rcParams.update({'font.size': 8})
+    #figsize = np.array([3.42, 3.42]) * 2  # DOUBLE the real size, due to problems on Bo computer with fontsizes
+    figsize = np.array([9, 6])  # DOUBLE the real size, due to problems on Bo computer with fontsizes
+    fig, ax = plt.subplots(figsize=figsize)
+    # replace the protein names
+
+    AUC_AUBOC_df.index = pd.Series(AUC_AUBOC_df.index).replace(namedict)
+    AUC_AUBOC_df[auc_list].plot(kind="bar", ax=ax, alpha=0.7)
+
+    ax.set_ylabel("performance value\n(auc)")
+    ax.legend()  # (["sample size = 5", "sample size = 10"])
+
+    fig.tight_layout()
+    ax.grid(False)
+    fig.savefig(predictors_AUC_barchart_png, dpi=240)
+
+    AUC_AUBOC_df = AUC_AUBOC_df.sort_values(by=["THOIPA_5_LOOAUBOC10"], ascending=False)
+    plt.close("all")
+    # plt.rcParams.update({'font.size': 8})
+    #figsize = np.array([3.42, 3.42]) * 2  # DOUBLE the real size, due to problems on Bo computer with fontsizes
+    fig, ax = plt.subplots(figsize=figsize)
+    # replace the protein names
+
+    AUC_AUBOC_df.index = pd.Series(AUC_AUBOC_df.index).replace(namedict)
+    AUC_AUBOC_df[bo_auc_list].plot(kind="bar", ax=ax, alpha=0.7)
+
+    ax.set_ylabel("performance value\n(observed overlap - random overlap)")
+    ax.legend()  # (["sample size = 5", "sample size = 10"])
+
+    fig.tight_layout()
+    ax.grid(False)
+    fig.savefig(predictors_BOAUC10_barchart_png, dpi=240)
+
+
 
 
 def merge_4_files_ALIGNMENT_METHOD(acc, full_seq, train_data_file, THOIPA_prediction_file, PREDDIMER_prediction_file, TMDOCK_prediction_file, merged_data_xlsx_path, columns_kept_in_combined_file):
