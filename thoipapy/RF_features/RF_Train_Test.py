@@ -82,16 +82,24 @@ def drop_cols_not_used_in_ML(df_data, s):
     # df_data = df_data.drop(cols_to_drop, axis=1)
 
     # read the features tab of the excel settings file
-    features_df = pd.read_excel(s["excel_file_with_settings"], sheetname="features")
+    features_df = pd.read_excel(s["excel_file_with_settings"], sheetname="features", index_col=0)
+    features_df.drop("Notes", axis=0, inplace=True)
     # convert "WAHR" etc to true and false
     features_df["include"] = features_df["include"].apply(convert_truelike_to_bool, convert_nontrue=False)
     features_df["include"] = features_df["include"].apply(convert_falselike_to_bool)
+    # print any features that are not shared between the two lists
+
+    features_missing_from_excel = set(features_df.index) - set(df_data.columns)
+    unused_features_in_excel = set(df_data.columns) - set(features_df.index)
+    if len(features_missing_from_excel) > 1:
+        sys.stdout.write("features_missing_from_excel, {}".format(features_missing_from_excel))
+    if len(unused_features_in_excel) > 1:
+        sys.stdout.write("unused_features_in_excel, {}".format(unused_features_in_excel))
     # drop any features that are not labeled TRUE for inclusion
     features_df = features_df.loc[features_df.include == True]
     # filter df_data to only keep the desired feature columns
-    feature_list = features_df.feature.tolist()
+    feature_list = features_df.index.tolist()
     df_data = df_data.loc[:, feature_list]
-
     return df_data
 
 def THOIPA_classifier_with_settings(s, n_features):
@@ -457,7 +465,7 @@ def run_LOO_validation(s, df_set, logging):
 
     thoipapy.utils.make_sure_path_exists(BO_data_excel, isfile=True)
 
-    df_data = pd.read_csv(train_data_csv)
+    df_data = pd.read_csv(train_data_csv, index_col=0)
     df_data = df_data.dropna()
 
     # drop training data (full protein) that don't have enough homologues
