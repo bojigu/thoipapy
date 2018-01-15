@@ -475,6 +475,7 @@ def run_LOO_validation(s, df_set, logging):
     forest = thoipapy.RF_features.RF_Train_Test.THOIPA_classifier_with_settings(s, n_features)
 
     for i in df_set.index:
+
         acc, acc_db, database  = df_set.loc[i, "acc"], df_set.loc[i, "acc_db"], df_set.loc[i, "database"]
         THOIPA_prediction_csv = os.path.join(s["thoipapy_data_folder"], "Predictions", "leave_one_out", database, "{}.{}.{}.LOO.prediction.csv".format(acc, database, s["setname"]))
         thoipapy.utils.make_sure_path_exists(THOIPA_prediction_csv, isfile=True)

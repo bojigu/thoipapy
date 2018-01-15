@@ -1799,6 +1799,10 @@ def normalise_features(df_features_single_protein):
     df_features_single_protein["KR"] = df_features_single_protein["K"] + df_features_single_protein["R"]
     df_features_single_protein["QN"] = df_features_single_protein["Q"] + df_features_single_protein["N"]
 
+    # round the relative positions so there are 10 options (to 10%)
+    df_features_single_protein["RelPos_TMD"] = df_features_single_protein["RelPos_TMD"].round(1)
+    df_features_single_protein["RelPos_fullseq"] = df_features_single_protein["RelPos_fullseq"].round(1)
+
     return df_features_single_protein
 
 def normalise_number_of_homologues(x):
