@@ -476,26 +476,49 @@ def run_LOO_validation(s, df_set, logging):
 
     for i in df_set.index:
         acc, acc_db, database  = df_set.loc[i, "acc"], df_set.loc[i, "acc_db"], df_set.loc[i, "database"]
-        prediction_csv = os.path.join(s["thoipapy_data_folder"], "Predictions", "leave_one_out", database, "{}.{}.LOO.prediction.csv".format(acc, s["setname"]))
-        thoipapy.utils.make_sure_path_exists(prediction_csv, isfile=True)
+        THOIPA_prediction_csv = os.path.join(s["thoipapy_data_folder"], "Predictions", "leave_one_out", database, "{}.{}.{}.LOO.prediction.csv".format(acc, database, s["setname"]))
+        thoipapy.utils.make_sure_path_exists(THOIPA_prediction_csv, isfile=True)
+
+        #######################################################################################################
+        #                                                                                                     #
+        #      Train data is based on large training csv, after dropping the protein of interest              #
+        #                   (positions without closedist/disruption data will be excluded)                    #
+        #                                                                                                     #
+        #######################################################################################################
 
         if not acc_db in acc_db_list:
             logging.warning("{} is in protein set, but not found in training data".format(acc_db))
             # skip protein
             continue
         df_train = df_data.loc[df_data.acc_db != acc_db]
-        # df_train = df_data.loc[df_data.interface_score < 5.5]
-        df_test = df_data.loc[df_data.acc_db == acc_db]
         X_train = thoipapy.RF_features.RF_Train_Test.drop_cols_not_used_in_ML(df_train, s)
         y_train = df_train["interface"]
+
+        #######################################################################################################
+        #                                                                                                     #
+        #                  Test data is based on the combined features file for that protein and TMD          #
+        #                   (positions without closedist/disruption data will be INCLUDED)                    #
+        #                                                                                                     #
+        #######################################################################################################
+        #df_test = df_data.loc[df_data.acc_db == acc_db]
+        testdata_combined_file = os.path.join(s["features_folder"], "combined", database, "{}.surr20.gaps5.combined_features.csv".format(acc))
+        df_test = pd.read_csv(testdata_combined_file)
+
         X_test = thoipapy.RF_features.RF_Train_Test.drop_cols_not_used_in_ML(df_test, s)
-        y_test = df_test["interface"]
+        y_test = df_test["interface"].fillna(0).astype(int)
+
+        #######################################################################################################
+        #                                                                                                     #
+        #                  Run prediction and save output individually for each protein                       #
+        #                                                                                                     #
+        #######################################################################################################
+
         prediction = forest.fit(X_train, y_train).predict_proba(X_test)[:, 1]
         # add the prediction to the combined file
         df_test[pred_colname] = prediction
         # save just the prediction alone to csv
         prediction_df = df_test[["residue_num", "residue_name", pred_colname]]
-        prediction_df.to_csv(prediction_csv, index=False)
+        prediction_df.to_csv(THOIPA_prediction_csv, index=False)
 
         fpr, tpr, thresholds = roc_curve(y_test, prediction)
         roc_auc = auc(fpr, tpr)
@@ -515,6 +538,12 @@ def run_LOO_validation(s, df_set, logging):
             BO_all_df = pd.concat([BO_all_df, BO_df], axis=1, join="outer")
         logging.info("{} AUC : {:.2f}".format(acc_db, roc_auc))
 
+        #######################################################################################################
+        #                                                                                                     #
+        #                          Get tree info, mean AUC for all proteins, etc                              #
+        #                                                                                                     #
+        #######################################################################################################
+
     tree_depths = np.array([estimator.tree_.max_depth for estimator in forest.estimators_])
     logging.info("tree depth mean = {} ({})".format(tree_depths.mean(), tree_depths))
 
@@ -533,7 +562,6 @@ def run_LOO_validation(s, df_set, logging):
     thoipapy.utils.make_sure_path_exists(LOO_crossvalidation_pkl, isfile=True)
     with open(LOO_crossvalidation_pkl, "wb") as f:
         pickle.dump(xv_dict, f, protocol=pickle.HIGHEST_PROTOCOL)
-
 
     #######################################################################################################
     #                                                                                                     #

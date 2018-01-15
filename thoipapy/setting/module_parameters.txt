@@ -8,6 +8,12 @@
         Python object with settings for logging to console and file.
     acc : str
         Protein accession number. (e.g. UniProt acc, PDB_acc + chain letter)
+	acc : str
+        Protein accession (e.g. UniProt, PDB)
+    database : str
+        Database name, e.g. "crystal", "NMR" or "ETRA".
+    TMD_seq : str
+        TMD sequence
     TMD_seq_pl_surr : str
         TMD sequence plus surrouding residues (usually 20) for BLAST
     blast_xml_file : str
@@ -21,9 +27,6 @@
         Typically 10.
     hit_list_size : int
         Maximum number of BLAST hits.
-
-	s : dict
-        Settings dictionary for figures.
     train_set_list : list
         List of training datasets in selection
         E.g. ["set02", "set04"]
@@ -42,7 +45,7 @@
     suffix : str
         Suffix for figure
         E.g. "" or "_old_method_o_over_r"
-		
+	
     THOIPA_pred_csv : csv
         THOIPA result for this testset-trainset combination
         Columns = "residue_num", "residue_name", "THOIPA"
@@ -54,3 +57,40 @@
         keys = accessions
         values = dictionary with fpr, tpr etc for each protein
         Could not be saved easily as a dataframe, because the number of residues is different for each protein
+    path_uniq_TMD_seqs_for_PSSM_FREECONTACT : str
+        Path to text file with list of TMD sequences
+    pssm_csv : str
+        Path to csv file with the PSSM for the TMD region.
+
+        TMD sequence plus surrounding residues (e.g. 20 each side)
+    tm_surr_left : int
+        Number of surrounding residues to the N-terminus (left)
+    tm_surr_right : int
+        Number of surrounding residues to the C-terminus (right)
+    motifs_file : str
+        Path to csv containing the features related to sequence motifs
+    logging : logging.Logger
+        Python object with settings for logging to console and file.
+    TMD_start : int
+        Start of TMD in full sequence
+    seqlen : int
+        Length of full sequence
+		
+    entropy_file : str
+        Path to csv file with entropy (conservation) data
+    pssm_csv : str
+        Path to csv file with the PSSM for the TMD region.
+    lipo_csv : str
+        Path to csv with the lipophilicity features
+    freecontact_parsed_csv : str
+        Path to csv with coevolution features
+    relative_position_file : str
+        Path to csv file with the relative position of each residue in the TMD and full protein sequence
+    LIPS_parsed_csv : str
+        Path to csv with LIPS output organised into features for machine learning.
+    motifs_file : str
+        Path to csv containing the features related to sequence motifs
+    alignment_summary_csv : str
+		Path to csv file containing the summary of the alignments and homologues 
+		(e.g. how many homologues before and after filtering)
+		

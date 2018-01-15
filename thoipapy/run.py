@@ -235,7 +235,7 @@ if __name__ == "__main__":
         if s["add_predictions_to_combined_files"] == True:
             thoipapy.figs.combine_add_3_prediction.combine_file_add_PREDDIMER_TMDOCK_THOIPA_prediction(s, df_set, logging)
 
-        if s["create_AUC_BoAuc_fig_set5"] == True:
+        if s["create_AUC_BoAuc_fig_bestset"] == True:
             thoipapy.figs.combine_add_3_prediction.create_AUC_BoAUC_figs_THOIPA_PREDDIMER_TMDOCK(s, df_set, logging)
 
         if "download_10_homologues_from_ncbi" in s:

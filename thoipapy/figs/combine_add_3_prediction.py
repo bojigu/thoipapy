@@ -54,7 +54,8 @@ def combine_file_add_PREDDIMER_TMDOCK_THOIPA_prediction(s, df_set, logging):
         database = df_set.loc[i, "database"]
         train_data_file = os.path.join(s["features_folder"], "combined", database,"{}.surr20.gaps5.combined_features.csv".format(acc))
         #THOIPA_prediction_file = os.path.join(s["thoipapy_data_folder"], "Predictions", "testset_trainset",database, "{}.THOIPA.trainset04.csv".format(acc))
-        THOIPA_prediction_file = os.path.join(s["thoipapy_data_folder"], "Predictions", "leave_one_out", database, "{}.{}.LOO.prediction.csv".format(acc, s["setname"]))
+        #THOIPA_prediction_file = os.path.join(s["thoipapy_data_folder"], "Predictions", "leave_one_out", database, "{}.{}.LOO.prediction.csv".format(acc, s["setname"]))
+        THOIPA_prediction_csv = os.path.join(s["thoipapy_data_folder"], "Predictions", "leave_one_out", database, "{}.{}.{}.LOO.prediction.csv".format(acc, database, s["setname"]))
         PREDDIMER_prediction_file = os.path.join(PREDDIMER_TMDOCK_folder, database, "{}.preddimer.closedist.csv".format(acc))
         TMDOCK_prediction_file = os.path.join(PREDDIMER_TMDOCK_folder, database, "{}.tmdock.closedist.csv".format(acc))
         merged_data_csv_path = os.path.join(s["thoipapy_data_folder"], "Merged", database, "{}.merged.csv".format(acc))
@@ -66,7 +67,7 @@ def combine_file_add_PREDDIMER_TMDOCK_THOIPA_prediction(s, df_set, logging):
         dfm = pd.read_csv(train_data_file)
         # set the unique index, based on the residue number in the full sequence
         dfm.set_index("res_num_full_seq", inplace=True)
-        file_list = [THOIPA_prediction_file, PREDDIMER_prediction_file, TMDOCK_prediction_file]
+        file_list = [THOIPA_prediction_csv, PREDDIMER_prediction_file, TMDOCK_prediction_file]
         prediction_name_list = [pred_colname, "PREDDIMER", "TMDOCK"]
         n_files_merged = 0
         for n, file in enumerate(file_list):
@@ -77,7 +78,7 @@ def combine_file_add_PREDDIMER_TMDOCK_THOIPA_prediction(s, df_set, logging):
                 if seq not in full_seq:
                     print(prediction_name)
                     logging.warning("Sequence in residue_name column of dataframe is not found in the original df_set sequence."
-                                     "\nacc : {}\nfile number : {}\nTMD_seq : {}\nfull seq in df_set : {}\n".format(acc, n, seq, full_seq))
+                                     "\nacc : {}\nfile number : {}\nTMD_seq : {}\nfull seq in df_set : {}\nTHOIPA_prediction_csv:{}".format(acc, n, seq, full_seq, THOIPA_prediction_csv))
                     if prediction_name == [pred_colname]:
                         df = thoipapy.utils.add_mutation_missed_residues_with_na(s,acc,database,df)
                         seq = df["residue_name"].str.cat()
@@ -148,7 +149,6 @@ def create_AUC_BoAUC_figs_THOIPA_PREDDIMER_TMDOCK(s,df_set,logging):
         col_list = []
         for i in df_set.index:
             acc = df_set.loc[i, "acc"]
-            #print(acc)
             #if acc == "O75460" or acc == "P02724":
             database = df_set.loc[i, "database"]
             acc_db = acc + "-" + database
@@ -206,7 +206,8 @@ def create_AUC_BoAUC_figs_THOIPA_PREDDIMER_TMDOCK(s,df_set,logging):
     print(df_o_minus_r_mean_df,AUBOC10_list)
     #print(AUC_AUBOC_df)
     AUC_AUBOC_df.to_csv(AUC_AUBOC_file)
-    create_4predictors_AUC_AUBOC10_barchart(AUC_AUBOC_df, predictors_AUC_barchart_png, predictors_BOAUC10_barchart_png, namedict)
+    THOIPA_best_set = s["THOIPA_best_set"]
+    create_4predictors_AUC_AUBOC10_barchart(AUC_AUBOC_df, predictors_AUC_barchart_png, predictors_BOAUC10_barchart_png, namedict, THOIPA_best_set)
     create_4predictors_bocurve_linechart(df_o_minus_r_mean_df,AUBOC10_list,linechar_name_list,predictors_BOCURVE_linechat_png)
     create_mean_AUC_barchart_comp(auc_mean_list, linechar_name_list, predictors_mean_auc_barchart_png)
 
@@ -250,10 +251,14 @@ def create_4predictors_bocurve_linechart(df_o_minus_r_mean_df,AUBOC10_list,linec
     fig.tight_layout()
     fig.savefig(predictors_BOCURVE_linechat_png, dpi=140)
 
-def create_4predictors_AUC_AUBOC10_barchart(AUC_AUBOC_df, predictors_AUC_barchart_png, predictors_BOAUC10_barchart_png,namedict):
+def create_4predictors_AUC_AUBOC10_barchart(AUC_AUBOC_df, predictors_AUC_barchart_png, predictors_BOAUC10_barchart_png,namedict, THOIPA_best_set):
+    THOIPA_best_setnumber = int(THOIPA_best_set[3:])
+    #colname = "THOIPA_5_LOOAUC"
+    THOIPA_x_LOOAUC = "THOIPA_{}_LOOAUC".format(THOIPA_best_setnumber)
+    THOIPA_x_LOOAUBOC10 = "THOIPA_{}_LOOAUBOC10".format(THOIPA_best_setnumber)
     auc_list = AUC_AUBOC_df.columns[[0, 2, 4, 6]]
     bo_auc_list = AUC_AUBOC_df.columns[[1, 3, 5, 7]]
-    AUC_AUBOC_df = AUC_AUBOC_df.sort_values(by=["THOIPA_5_LOOAUC"], ascending=False)
+    AUC_AUBOC_df = AUC_AUBOC_df.sort_values(by=[THOIPA_x_LOOAUC], ascending=False)
     plt.close("all")
     # plt.rcParams.update({'font.size': 8})
     #figsize = np.array([3.42, 3.42]) * 2  # DOUBLE the real size, due to problems on Bo computer with fontsizes
@@ -271,7 +276,7 @@ def create_4predictors_AUC_AUBOC10_barchart(AUC_AUBOC_df, predictors_AUC_barchar
     ax.grid(False)
     fig.savefig(predictors_AUC_barchart_png, dpi=240)
 
-    AUC_AUBOC_df = AUC_AUBOC_df.sort_values(by=["THOIPA_5_LOOAUBOC10"], ascending=False)
+    AUC_AUBOC_df = AUC_AUBOC_df.sort_values(by=[THOIPA_x_LOOAUBOC10], ascending=False)
     plt.close("all")
     # plt.rcParams.update({'font.size': 8})
     #figsize = np.array([3.42, 3.42]) * 2  # DOUBLE the real size, due to problems on Bo computer with fontsizes
@@ -289,14 +294,12 @@ def create_4predictors_AUC_AUBOC10_barchart(AUC_AUBOC_df, predictors_AUC_barchar
     fig.savefig(predictors_BOAUC10_barchart_png, dpi=240)
 
 
-
-
 def merge_4_files_ALIGNMENT_METHOD(acc, full_seq, train_data_file, THOIPA_prediction_file, PREDDIMER_prediction_file, TMDOCK_prediction_file, merged_data_xlsx_path, columns_kept_in_combined_file):
     all_files_exist = True
     for path in [train_data_file, THOIPA_prediction_file,PREDDIMER_prediction_file,TMDOCK_prediction_file]:
         if not os.path.isfile(path):
             all_files_exist = False
-            print("{} does not exist".format(path))
+            sys.stdout.write("{} does not exist".format(path))
             break
     if not all_files_exist:
         sys.stdout.write("\n{} skipped. Input file missing.".format(acc))
@@ -363,7 +366,6 @@ def merge_4_files_ALIGNMENT_METHOD(acc, full_seq, train_data_file, THOIPA_predic
         return None, None, None
 
     elif unique_seq_list.shape[0] ==2:
-        print(unique_seq_list)
         sys.stdout.write("\n\nstarting reindexing of different TM lengths. ")
         # create a pairwise alignment are reindex dataframes
         for n, seq in enumerate(unique_seq_list):
