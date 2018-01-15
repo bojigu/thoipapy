@@ -91,12 +91,15 @@ def calc_best_overlap(acc_db, df, experiment_col="interface_score", pred_col="TH
     # NOTE THAT IT IS NECESSARY TO RUN ARGSORT TWICE TO ACHIEVE THIS
     # https://stackoverflow.com/questions/31910407/numpy-argsort-cant-see-whats-wrong
 
+    # drop any nan values in either the experimental column, or the prediction column
+    df_sel = df.dropna(subset=[experiment_col, pred_col])
+
     # rank of experimental values
-    df["exp_argsort"] = df[experiment_col].argsort().argsort()
+    df_sel["exp_argsort"] = df_sel[experiment_col].argsort().argsort()
     # rank of prediction values
-    df["pred_argsort"] = df[pred_col].argsort().argsort()
+    df_sel["pred_argsort"] = df_sel[pred_col].argsort().argsort()
     # sort by experimental values, so that iloc can be used below to select increasing sample sizes
-    df.sort_values("exp_argsort", inplace=True, ascending=False)
+    df_sel.sort_values("exp_argsort", inplace=True, ascending=False)
 
     """Dataframe now contains the rank of experiment and prediction data
     Sorted descending by experiment data.
@@ -142,8 +145,8 @@ def calc_best_overlap(acc_db, df, experiment_col="interface_score", pred_col="TH
         
         NOTE THAT IT IS POSSIBLE TO ADD TWO SHARED POSITIONS BETWEEN EXP. AND PRED. EVEN IF SAMPLE SIZE IS INCREASED BY 1
         """
-        exp_set = set(df.exp_argsort.iloc[:sample_size])
-        pred_set = set(df.pred_argsort.iloc[:sample_size])
+        exp_set = set(df_sel.exp_argsort.iloc[:sample_size])
+        pred_set = set(df_sel.pred_argsort.iloc[:sample_size])
         intersection_result = exp_set.intersection(pred_set)
         observed_overlap = len(intersection_result)
 

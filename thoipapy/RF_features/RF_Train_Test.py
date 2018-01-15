@@ -417,6 +417,176 @@ def create_10fold_cross_validation_fig(s, logging):
     #fig.savefig(crossvalidation_png[:-4] + ".pdf")
     fig.savefig(thoipapy.utils.pdf_subpath(crossvalidation_png))
 
+def run_LOO_validation_OLD_non_multiprocessing(s, df_set, logging):
+    """Run Leave-One-Out cross-validation for a particular set of TMDs (e.g. set04).
+
+    The SAME SET is used for both training and cross-validation.
+    Each protein is uniquely identified by the acc and the database (acc_db).
+    The test and training datasets are based on the following:
+        1) the df_set derived from the set of protein sequences, e.g. set03
+            - created manually
+        2) the train_data csv, e.g."D:\data_thoipapy\Results\set03\set03_train_data.csv".
+            - filtered according to redundancy etc by combine_all_train_data_for_random_forest()
+            - this requires a CD-HIT file for this dataset to remove redundant proteins
+    If the acc_db is not in BOTH of these locations, it will not be used for training and validation.
+
+    The training set (df_train) consists of all proteins except the one tested.
+    The test dataset (df_test) contains only the interface and features of the one test protein
+
+    Parameters
+    ----------
+    s : dict
+        Settings dictionary
+    df_set : pd.DataFrame
+        Dataframe containing the list of proteins to process, including their TMD sequences and full-length sequences
+        index : range(0, ..)
+        columns : ['acc', 'seqlen', 'TMD_start', 'TMD_end', 'tm_surr_left', 'tm_surr_right', 'database',  ....]
+    logging : logging.Logger
+        Python object with settings for logging to console and file.
+
+    Saved Files
+    -----------
+    crossvalidation_pkl : pickle
+        Pickled dictionary (xv_dict) containing the results for each fold of validation.
+        Also contains the mean ROC curve, and the mean AUC.
+    """
+    logging.info('Leave-One-Out cross validation is running')
+    names_excel_path = os.path.join(os.path.dirname(s["sets_folder"]), "ETRA_NMR_names.xlsx")
+
+    # drop redundant proteins according to CD-HIT
+    df_set = thoipapy.utils.drop_redundant_proteins_from_list(df_set, logging)
+
+    train_data_csv = os.path.join(s["set_results_folder"], "{}_train_data.csv".format(s["setname"]))
+    crossvalidation_folder = os.path.join(s["set_results_folder"], "crossvalidation")
+    LOO_crossvalidation_pkl = os.path.join(s["set_results_folder"], "crossvalidation", "data", "{}_LOO_crossvalidation.pkl".format(s["setname"]))
+    BO_all_data_csv = os.path.join(s["set_results_folder"], "crossvalidation", "data", "{}_LOO_BO_data.csv".format(s["setname"]))
+    BO_curve_folder = os.path.join(s["set_results_folder"], "crossvalidation")
+    BO_data_excel = os.path.join(BO_curve_folder, "data", "{}_BO_curve_data.xlsx".format(s["setname"]))
+
+    thoipapy.utils.make_sure_path_exists(BO_data_excel, isfile=True)
+
+    df_data = pd.read_csv(train_data_csv, index_col=0)
+    df_data = df_data.dropna()
+
+    # drop training data (full protein) that don't have enough homologues
+    df_data = df_data.loc[df_data.n_homologues >= s["min_n_homol_training"]]
+
+    acc_db_list = df_data.acc_db.unique()
+    xv_dict = {}
+    mean_tpr = 0.0
+    mean_fpr = np.linspace(0, 1, 100)
+    start = time.clock()
+    BO_all_df = pd.DataFrame()
+    pred_colname = "THOIPA_{}_LOO".format(s["set_number"])
+
+    n_features = thoipapy.RF_features.RF_Train_Test.drop_cols_not_used_in_ML(df_data, s).shape[1]
+    forest = thoipapy.RF_features.RF_Train_Test.THOIPA_classifier_with_settings(s, n_features)
+
+    for i in df_set.index:
+
+        acc, acc_db, database  = df_set.loc[i, "acc"], df_set.loc[i, "acc_db"], df_set.loc[i, "database"]
+        THOIPA_prediction_csv = os.path.join(s["thoipapy_data_folder"], "Predictions", "leave_one_out", database, "{}.{}.{}.LOO.prediction.csv".format(acc, database, s["setname"]))
+        thoipapy.utils.make_sure_path_exists(THOIPA_prediction_csv, isfile=True)
+
+        #######################################################################################################
+        #                                                                                                     #
+        #      Train data is based on large training csv, after dropping the protein of interest              #
+        #                   (positions without closedist/disruption data will be excluded)                    #
+        #                                                                                                     #
+        #######################################################################################################
+
+        if not acc_db in acc_db_list:
+            logging.warning("{} is in protein set, but not found in training data".format(acc_db))
+            # skip protein
+            continue
+        df_train = df_data.loc[df_data.acc_db != acc_db]
+        X_train = thoipapy.RF_features.RF_Train_Test.drop_cols_not_used_in_ML(df_train, s)
+        y_train = df_train["interface"]
+
+        #######################################################################################################
+        #                                                                                                     #
+        #                  Test data is based on the combined features file for that protein and TMD          #
+        #                   (positions without closedist/disruption data will be INCLUDED)                    #
+        #                                                                                                     #
+        #######################################################################################################
+        #df_test = df_data.loc[df_data.acc_db == acc_db]
+        testdata_combined_file = os.path.join(s["features_folder"], "combined", database, "{}.surr20.gaps5.combined_features.csv".format(acc))
+        df_test = pd.read_csv(testdata_combined_file)
+
+        X_test = thoipapy.RF_features.RF_Train_Test.drop_cols_not_used_in_ML(df_test, s)
+        y_test = df_test["interface"].fillna(0).astype(int)
+
+        #######################################################################################################
+        #                                                                                                     #
+        #                  Run prediction and save output individually for each protein                       #
+        #                                                                                                     #
+        #######################################################################################################
+
+        prediction = forest.fit(X_train, y_train).predict_proba(X_test)[:, 1]
+        # add the prediction to the combined file
+        df_test[pred_colname] = prediction
+        # save just the prediction alone to csv
+        prediction_df = df_test[["residue_num", "residue_name", pred_colname]]
+        prediction_df.to_csv(THOIPA_prediction_csv, index=False)
+
+        fpr, tpr, thresholds = roc_curve(y_test, prediction)
+        roc_auc = auc(fpr, tpr)
+        xv_dict[acc_db] = {"fpr": fpr, "tpr": tpr, "auc": roc_auc}
+        mean_tpr += interp(mean_fpr, fpr, tpr)
+        mean_tpr[0] = 0.0
+
+        if database == "crystal" or database == "NMR":
+            # (it is closest distance and low value means high propencity of interfacial)
+            df_test["interface_score"] = -1 * df_test["interface_score"]
+
+        BO_df = thoipapy.figs.fig_utils.calc_best_overlap(acc_db, df_test, experiment_col="interface_score", pred_col=pred_colname)
+
+        if BO_all_df.empty:
+            BO_all_df = BO_df
+        else:
+            BO_all_df = pd.concat([BO_all_df, BO_df], axis=1, join="outer")
+        logging.info("{} AUC : {:.2f}".format(acc_db, roc_auc))
+
+        #######################################################################################################
+        #                                                                                                     #
+        #                          Get tree info, mean AUC for all proteins, etc                              #
+        #                                                                                                     #
+        #######################################################################################################
+
+    tree_depths = np.array([estimator.tree_.max_depth for estimator in forest.estimators_])
+    logging.info("tree depth mean = {} ({})".format(tree_depths.mean(), tree_depths))
+
+    duration = time.clock() - start
+
+    mean_tpr /= df_set.shape[0]
+    mean_tpr[-1] = 1.0
+
+    mean_auc = auc(mean_fpr, mean_tpr)
+
+    xv_dict["true_positive_rate_mean"] = mean_tpr
+    xv_dict["false_positive_rate_mean"] = mean_fpr
+    xv_dict["mean_auc"] = mean_auc
+
+    # save dict as pickle
+    thoipapy.utils.make_sure_path_exists(LOO_crossvalidation_pkl, isfile=True)
+    with open(LOO_crossvalidation_pkl, "wb") as f:
+        pickle.dump(xv_dict, f, protocol=pickle.HIGHEST_PROTOCOL)
+
+    #######################################################################################################
+    #                                                                                                     #
+    #      Processing BO CURVE data, saving to csv and running the BO curve analysis script               #
+    #                                                                                                     #
+    #######################################################################################################
+
+    BO_all_df.to_csv(BO_all_data_csv)
+    names_excel_path = os.path.join(os.path.dirname(s["sets_folder"]), "ETRA_NMR_names.xlsx")
+
+    #linechart_mean_obs_and_rand = thoipapy.figs.Create_Bo_Curve_files.analyse_bo_curve_underlying_data(BO_all_data_csv, crossvalidation_folder, names_excel_path)
+    thoipapy.figs.Create_Bo_Curve_files.parse_BO_data_csv_to_excel(BO_all_data_csv, BO_data_excel, logging)
+
+    logging.info('{} LOO crossvalidation. AUC({:.2f}). Time taken = {:.2f}.'.format(s["setname"], mean_auc, duration))
+
+
 def run_LOO_validation(s, df_set, logging):
     """Run Leave-One-Out cross-validation for a particular set of TMDs (e.g. set04).
 

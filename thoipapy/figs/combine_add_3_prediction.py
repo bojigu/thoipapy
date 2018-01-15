@@ -89,7 +89,7 @@ def combine_file_add_PREDDIMER_TMDOCK_THOIPA_prediction(s, df_set, logging):
                 df = thoipapy.utils.add_res_num_full_seq_to_df(acc, df, seq, full_seq)
 
                 if n == 0:
-                    print(df.columns)
+                    #print(df.columns)
                     # the thoipa prediction file has the residue_num as the index, similar to the features
                     df.drop(["residue_name"], axis=1, inplace=True)
                 else:
@@ -162,13 +162,13 @@ def create_AUC_BoAUC_figs_THOIPA_PREDDIMER_TMDOCK(s,df_set,logging):
                 # (it is closest distance and low value means high propencity of interfacial)
                 merged_data_df["interface_score"] = -1 * merged_data_df["interface_score"]
             experiment_col = "interface_score"
-            BO_single_prot_df = thoipapy.figs.fig_utils.calc_best_overlap(acc_db, merged_data_df,experiment_col,predictor_name)
+            BO_single_prot_df = thoipapy.figs.fig_utils.calc_best_overlap(acc_db, merged_data_df, experiment_col, predictor_name)
             if BO_data_df.empty:
                 BO_data_df = BO_single_prot_df
             else:
                 BO_data_df = pd.concat([BO_data_df, BO_single_prot_df], axis=1, join="outer")
 
-            df_for_roc = merged_data_df.dropna(subset=["interface_score",predictor_name])
+            df_for_roc = merged_data_df.dropna(subset=["interface_score", predictor_name])
 
             fpr, tpr, thresholds = roc_curve(df_for_roc.interface, df_for_roc[predictor_name])
             auc_value = auc(fpr, tpr)
