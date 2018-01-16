@@ -652,12 +652,13 @@ def run_LOO_validation(s, df_set, logging):
     n_features = thoipapy.RF_features.RF_Train_Test.drop_cols_not_used_in_ML(df_data, s).shape[1]
     forest = thoipapy.RF_features.RF_Train_Test.THOIPA_classifier_with_settings(s, n_features)
 
-    for i in df_set.index:
+    val_list = []
 
+    for n, i in enumerate(df_set.index):
         acc, acc_db, database  = df_set.loc[i, "acc"], df_set.loc[i, "acc_db"], df_set.loc[i, "database"]
         THOIPA_prediction_csv = os.path.join(s["thoipapy_data_folder"], "Predictions", "leave_one_out", database, "{}.{}.{}.LOO.prediction.csv".format(acc, database, s["setname"]))
+        testdata_combined_file = os.path.join(s["features_folder"], "combined", database, "{}.surr20.gaps5.combined_features.csv".format(acc))
         thoipapy.utils.make_sure_path_exists(THOIPA_prediction_csv, isfile=True)
-
         #######################################################################################################
         #                                                                                                     #
         #      Train data is based on large training csv, after dropping the protein of interest              #
@@ -673,58 +674,22 @@ def run_LOO_validation(s, df_set, logging):
         X_train = thoipapy.RF_features.RF_Train_Test.drop_cols_not_used_in_ML(df_train, s)
         y_train = df_train["interface"]
 
-        #######################################################################################################
-        #                                                                                                     #
-        #                  Test data is based on the combined features file for that protein and TMD          #
-        #                   (positions without closedist/disruption data will be INCLUDED)                    #
-        #                                                                                                     #
-        #######################################################################################################
-        #df_test = df_data.loc[df_data.acc_db == acc_db]
-        testdata_combined_file = os.path.join(s["features_folder"], "combined", database, "{}.surr20.gaps5.combined_features.csv".format(acc))
-        df_test = pd.read_csv(testdata_combined_file)
+        d = {}
+        d["testdata_combined_file"], d["THOIPA_prediction_csv"] = testdata_combined_file, THOIPA_prediction_csv
+        d["X_train"], d["y_train"] = X_train, y_train
+        d["forest"], d["pred_colname"] = forest, pred_colname
+        d["acc_db"], d["database"] = acc_db, database
+        d["n"] = n
 
-        X_test = thoipapy.RF_features.RF_Train_Test.drop_cols_not_used_in_ML(df_test, s)
-        y_test = df_test["interface"].fillna(0).astype(int)
+        auc_dict, BO_df = LOO_single_prot(d)
+        val_tuple = (auc_dict, BO_df)
+        val_list.append(val_tuple)
 
-        #######################################################################################################
-        #                                                                                                     #
-        #                  Run prediction and save output individually for each protein                       #
-        #                                                                                                     #
-        #######################################################################################################
-
-        prediction = forest.fit(X_train, y_train).predict_proba(X_test)[:, 1]
-        # add the prediction to the combined file
-        df_test[pred_colname] = prediction
-        # save just the prediction alone to csv
-        prediction_df = df_test[["residue_num", "residue_name", pred_colname]]
-        prediction_df.to_csv(THOIPA_prediction_csv, index=False)
-
-        fpr, tpr, thresholds = roc_curve(y_test, prediction)
-        roc_auc = auc(fpr, tpr)
-        xv_dict[acc_db] = {"fpr": fpr, "tpr": tpr, "auc": roc_auc}
-        mean_tpr += interp(mean_fpr, fpr, tpr)
-        mean_tpr[0] = 0.0
-
-        if database == "crystal" or database == "NMR":
-            # (it is closest distance and low value means high propencity of interfacial)
-            df_test["interface_score"] = -1 * df_test["interface_score"]
-
-        BO_df = thoipapy.figs.fig_utils.calc_best_overlap(acc_db, df_test, experiment_col="interface_score", pred_col=pred_colname)
-
-        if BO_all_df.empty:
-            BO_all_df = BO_df
-        else:
-            BO_all_df = pd.concat([BO_all_df, BO_df], axis=1, join="outer")
-        logging.info("{} AUC : {:.2f}".format(acc_db, roc_auc))
-
-        #######################################################################################################
-        #                                                                                                     #
-        #                          Get tree info, mean AUC for all proteins, etc                              #
-        #                                                                                                     #
-        #######################################################################################################
-
-    tree_depths = np.array([estimator.tree_.max_depth for estimator in forest.estimators_])
-    logging.info("tree depth mean = {} ({})".format(tree_depths.mean(), tree_depths))
+    #######################################################################################################
+    #                                                                                                     #
+    #                          Get tree info, mean AUC for all proteins, etc                              #
+    #                                                                                                     #
+    #######################################################################################################
 
     duration = time.clock() - start
 
@@ -755,6 +720,66 @@ def run_LOO_validation(s, df_set, logging):
     thoipapy.figs.Create_Bo_Curve_files.parse_BO_data_csv_to_excel(BO_all_data_csv, BO_data_excel, logging)
 
     logging.info('{} LOO crossvalidation. AUC({:.2f}). Time taken = {:.2f}.'.format(s["setname"], mean_auc, duration))
+
+def LOO_single_prot(d):
+    testdata_combined_file, THOIPA_prediction_csv = d["testdata_combined_file"], d["THOIPA_prediction_csv"]
+    X_train, y_train = d["X_train"], d["y_train"]
+    forest, pred_colname = d["forest"], d["pred_colname"]
+    acc_db, database = d["acc_db"], d["database"]
+    n = d["n"]
+    #######################################################################################################
+    #                                                                                                     #
+    #                  Test data is based on the combined features file for that protein and TMD          #
+    #                   (positions without closedist/disruption data will be INCLUDED)                    #
+    #                                                                                                     #
+    #######################################################################################################
+    # df_test = df_data.loc[df_data.acc_db == acc_db]
+    df_test = pd.read_csv(testdata_combined_file)
+
+    X_test = thoipapy.RF_features.RF_Train_Test.drop_cols_not_used_in_ML(df_test, s)
+    y_test = df_test["interface"].fillna(0).astype(int)
+
+    #######################################################################################################
+    #                                                                                                     #
+    #                  Run prediction and save output individually for each protein                       #
+    #                                                                                                     #
+    #######################################################################################################
+
+    prediction = forest.fit(X_train, y_train).predict_proba(X_test)[:, 1]
+    # add the prediction to the combined file
+    df_test[pred_colname] = prediction
+    # save just the prediction alone to csv
+    prediction_df = df_test[["residue_num", "residue_name", pred_colname]]
+    prediction_df.to_csv(THOIPA_prediction_csv, index=False)
+
+    fpr, tpr, thresholds = roc_curve(y_test, prediction)
+    roc_auc = auc(fpr, tpr)
+
+    auc_dict = {"fpr": fpr, "tpr": tpr, "auc": roc_auc}
+    # xv_dict[acc_db] = auc_dict
+    # mean_tpr += interp(mean_fpr, fpr, tpr)
+    # mean_tpr[0] = 0.0
+
+    if database == "crystal" or database == "NMR":
+        # (it is closest distance and low value means high propencity of interfacial)
+        df_test["interface_score"] = -1 * df_test["interface_score"]
+
+    BO_df = thoipapy.figs.fig_utils.calc_best_overlap(acc_db, df_test, experiment_col="interface_score", pred_col=pred_colname)
+
+    # if BO_all_df.empty:
+    #     BO_all_df = BO_df
+    # else:
+    #     BO_all_df = pd.concat([BO_all_df, BO_df], axis=1, join="outer")
+    if n == 0:
+        tree_depths = np.array([estimator.tree_.max_depth for estimator in forest.estimators_])
+        sys.stdout.write("tree depth mean = {} ({})".format(tree_depths.mean(), tree_depths))
+    sys.stdout.write("{} AUC : {:.2f}".format(acc_db, roc_auc))
+    sys.stdout.flush()
+
+
+
+    return auc_dict, BO_df
+
 
 def create_LOO_validation_fig(s, df_set, logging):
     """Create figure showing ROC curve for each fold in a 10-fold validation.
