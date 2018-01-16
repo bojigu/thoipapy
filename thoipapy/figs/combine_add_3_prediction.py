@@ -39,7 +39,7 @@ def combine_file_add_PREDDIMER_TMDOCK_THOIPA_prediction(s, df_set, logging):
     # add the THOIPA prediction name to the list of columns to keep
     pred_colname = "THOIPA_{}_LOO".format(s["set_number"])
     # for simplicity, keep only the predictions. Since the index is unique, it can be added later to the combined file.
-    columns_kept_in_combined_file = ['residue_num', 'residue_name', pred_colname, 'TMDOCK', 'PREDDIMER','interface','interface_score','LIPS_L*E']
+    columns_kept_in_combined_file = ['residue_num', 'residue_name', pred_colname, 'TMDOCK', 'PREDDIMER','interface','interface_score','LIPS_L*E', 'LIPS_surface_ranked']
 
     #set_list = thoipapy.figs.fig_utils.get_set_lists(s)
     PREDDIMER_TMDOCK_folder = os.path.join(s["base_dir"], "figs", "FigBZ18-PreddimerTmdockComparison")
@@ -76,7 +76,7 @@ def combine_file_add_PREDDIMER_TMDOCK_THOIPA_prediction(s, df_set, logging):
                 df = pd.read_csv(file, index_col=0)
                 seq = df["residue_name"].str.cat()
                 if seq not in full_seq:
-                    print(prediction_name)
+                    logging.warning(prediction_name)
                     logging.warning("Sequence in residue_name column of dataframe is not found in the original df_set sequence."
                                      "\nacc : {}\nfile number : {}\nTMD_seq : {}\nfull seq in df_set : {}\nTHOIPA_prediction_csv:{}".format(acc, n, seq, full_seq, THOIPA_prediction_csv))
                     if prediction_name == [pred_colname]:
@@ -89,7 +89,7 @@ def combine_file_add_PREDDIMER_TMDOCK_THOIPA_prediction(s, df_set, logging):
                 df = thoipapy.utils.add_res_num_full_seq_to_df(acc, df, seq, full_seq)
 
                 if n == 0:
-                    #print(df.columns)
+                    #logging.info(df.columns)
                     # the thoipa prediction file has the residue_num as the index, similar to the features
                     df.drop(["residue_name"], axis=1, inplace=True)
                 else:
@@ -113,9 +113,11 @@ def combine_file_add_PREDDIMER_TMDOCK_THOIPA_prediction(s, df_set, logging):
 
 def create_AUC_BoAUC_figs_THOIPA_PREDDIMER_TMDOCK(s,df_set,logging):
 
+    logging.info("start create_AUC_BoAUC_figs_THOIPA_PREDDIMER_TMDOCK")
+
     names_excel_path = os.path.join(os.path.dirname(s["sets_folder"]), "ETRA_NMR_names.xlsx")
     namedict = thoipapy.utils.create_namedict(names_excel_path)
-    predictor_name_list = ["THOIPA_{}_LOO".format(s["set_number"]),"PREDDIMER", "TMDOCK","LIPS_L*E"]
+    predictor_name_list = ["THOIPA_{}_LOO".format(s["set_number"]),"PREDDIMER", "TMDOCK", "LIPS_surface_ranked"] #"LIPS_L*E",
     AUC_AUBOC_df = pd.DataFrame()
     AUC_AUBOC_name_list = []
     linechar_name_list = []
@@ -125,9 +127,9 @@ def create_AUC_BoAUC_figs_THOIPA_PREDDIMER_TMDOCK(s,df_set,logging):
     AUC_AUBOC_file = os.path.join(s["thoipapy_data_folder"], "Results", "compare_predictors",
                                                 "{}.4predictors_AUC_AUBOC.csv".format(s["setname"]))
     predictors_AUC_barchart_png = os.path.join(s["thoipapy_data_folder"], "Results", "compare_predictors",
-                                                "{}.4predictors_AUC_bartchat.png".format(s["setname"]))
+                                                "{}.4predictors_AUC_barchart.png".format(s["setname"]))
     predictors_BOAUC10_barchart_png = os.path.join(s["thoipapy_data_folder"], "Results", "compare_predictors",
-                                                "{}.4predictors_BOAUC_bartchat.png".format(s["setname"]))
+                                                "{}.4predictors_BOAUC_barchart.png".format(s["setname"]))
     predictors_BOCURVE_linechat_png = os.path.join(s["thoipapy_data_folder"], "Results", "compare_predictors",
                                                 "{}.4predictors_BOCURVE_linechat.png".format(s["setname"]))
     predictors_mean_auc_barchart_png = os.path.join(s["thoipapy_data_folder"], "Results", "compare_predictors",
@@ -146,8 +148,9 @@ def create_AUC_BoAUC_figs_THOIPA_PREDDIMER_TMDOCK(s,df_set,logging):
                                                "{}.{}_BO_linechart.png".format(s['setname'],predictor_name.replace('*',"")))
         BO_barchart_png = os.path.join(s["thoipapy_data_folder"], "Results", "compare_predictors",
                                               "{}.{}_AUBOC10_barchart.png".format(s['setname'],predictor_name.replace('*',"")))
-        col_list = []
         for i in df_set.index:
+            sys.stdout.write(".")
+            sys.stdout.flush()
             acc = df_set.loc[i, "acc"]
             #if acc == "O75460" or acc == "P02724":
             database = df_set.loc[i, "database"]
@@ -157,6 +160,10 @@ def create_AUC_BoAUC_figs_THOIPA_PREDDIMER_TMDOCK(s,df_set,logging):
             merged_data_df["LIPS_L*E"] = -1 * merged_data_df["LIPS_L*E"]
             merged_data_df["PREDDIMER"] = -1 * merged_data_df["PREDDIMER"]
             merged_data_df["TMDOCK"] = -1 * merged_data_df["TMDOCK"]
+
+            # Mark_is_testing_something = True
+            # if Mark_is_testing_something:
+            #     merged_data_df = merged_data_df.dropna(subset=["interface_score", "PREDDIMER"])
 
             if database == "crystal" or database == "NMR":
                 # (it is closest distance and low value means high propencity of interfacial)
@@ -168,7 +175,7 @@ def create_AUC_BoAUC_figs_THOIPA_PREDDIMER_TMDOCK(s,df_set,logging):
             else:
                 BO_data_df = pd.concat([BO_data_df, BO_single_prot_df], axis=1, join="outer")
 
-            df_for_roc = merged_data_df.dropna(subset=["interface_score", predictor_name])
+            df_for_roc = merged_data_df.dropna(subset=["interface", predictor_name])
 
             fpr, tpr, thresholds = roc_curve(df_for_roc.interface, df_for_roc[predictor_name])
             auc_value = auc(fpr, tpr)
@@ -192,8 +199,8 @@ def create_AUC_BoAUC_figs_THOIPA_PREDDIMER_TMDOCK(s,df_set,logging):
         AUBOC10 = np.trapz(y=df_o_minus_r_mean, x=df_o_minus_r_mean.index)
         AUBOC10_list.append(AUBOC10)
         linechar_name_list.append(predictor_name)
-        AUC_AUBOC_name_list.append("{}AUC".format(predictor_name))
-        AUC_AUBOC_name_list.append("{}AUBOC10".format(predictor_name))
+        AUC_AUBOC_name_list.append("{}-AUC".format(predictor_name))
+        AUC_AUBOC_name_list.append("{}-AUBOC10".format(predictor_name))
         thoipapy.figs.Create_Bo_Curve_files.save_BO_linegraph_and_barchart(s, BO_data_excel, BO_linechart_png, BO_barchart_png, namedict,
                                                  logging, AUC_ser)
         #print(type(AUC_ser))
@@ -203,13 +210,15 @@ def create_AUC_BoAUC_figs_THOIPA_PREDDIMER_TMDOCK(s,df_set,logging):
     df_o_minus_r_mean_df.columns = linechar_name_list
     AUC_AUBOC_df.columns = AUC_AUBOC_name_list
     AUC_AUBOC_df.index.name = "acc_db"
-    print(df_o_minus_r_mean_df,AUBOC10_list)
+    print(df_o_minus_r_mean_df, AUBOC10_list)
     #print(AUC_AUBOC_df)
     AUC_AUBOC_df.to_csv(AUC_AUBOC_file)
     THOIPA_best_set = s["THOIPA_best_set"]
     create_4predictors_AUC_AUBOC10_barchart(AUC_AUBOC_df, predictors_AUC_barchart_png, predictors_BOAUC10_barchart_png, namedict, THOIPA_best_set)
     create_4predictors_bocurve_linechart(df_o_minus_r_mean_df,AUBOC10_list,linechar_name_list,predictors_BOCURVE_linechat_png)
     create_mean_AUC_barchart_comp(auc_mean_list, linechar_name_list, predictors_mean_auc_barchart_png)
+
+    logging.info("finished create_AUC_BoAUC_figs_THOIPA_PREDDIMER_TMDOCK")
 
 def create_mean_AUC_barchart_comp(auc_mean_list,linechar_name_list,predictors_mean_auc_barchart_png):
     plt.close("all")
@@ -254,10 +263,13 @@ def create_4predictors_bocurve_linechart(df_o_minus_r_mean_df,AUBOC10_list,linec
 def create_4predictors_AUC_AUBOC10_barchart(AUC_AUBOC_df, predictors_AUC_barchart_png, predictors_BOAUC10_barchart_png,namedict, THOIPA_best_set):
     THOIPA_best_setnumber = int(THOIPA_best_set[3:])
     #colname = "THOIPA_5_LOOAUC"
-    THOIPA_x_LOOAUC = "THOIPA_{}_LOOAUC".format(THOIPA_best_setnumber)
-    THOIPA_x_LOOAUBOC10 = "THOIPA_{}_LOOAUBOC10".format(THOIPA_best_setnumber)
-    auc_list = AUC_AUBOC_df.columns[[0, 2, 4, 6]]
-    bo_auc_list = AUC_AUBOC_df.columns[[1, 3, 5, 7]]
+    THOIPA_x_LOOAUC = "THOIPA_{}_LOO-AUC".format(THOIPA_best_setnumber)
+    THOIPA_x_LOOAUBOC10 = "THOIPA_{}_LOO-AUBOC10".format(THOIPA_best_setnumber)
+    # auc_list = AUC_AUBOC_df.columns[[0, 2, 4, 6]]
+    # bo_auc_list = AUC_AUBOC_df.columns[[1, 3, 5, 7]]
+
+    auc_list = AUC_AUBOC_df.columns[::2]
+    bo_auc_list = AUC_AUBOC_df.columns[1::2]
     AUC_AUBOC_df = AUC_AUBOC_df.sort_values(by=[THOIPA_x_LOOAUC], ascending=False)
     plt.close("all")
     # plt.rcParams.update({'font.size': 8})
