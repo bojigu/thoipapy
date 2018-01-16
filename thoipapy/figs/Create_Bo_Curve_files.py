@@ -378,7 +378,7 @@ def save_THOIPA_pred_indiv_prot(s, model_pkl, testdata_combined_file, THOIPA_pre
 
     #drop_cols_not_used_in_ML
     #X=train_df.drop(train_features_del,axis=1)
-    # X = thoipapy.RF_features.RF_Train_Test.drop_cols_not_used_in_ML(train_df, s)
+    # X = thoipapy.RF_features.RF_Train_Test.drop_cols_not_used_in_ML(train_df, s["excel_file_with_settings"])
     # y = train_df["interface"]
     # clf = RandomForestClassifier(max_depth=5, n_estimators=10, max_features=1)
     # fit = clf.fit(X,y)
@@ -394,7 +394,7 @@ def save_THOIPA_pred_indiv_prot(s, model_pkl, testdata_combined_file, THOIPA_pre
     #Lips_score = test_df.LIPS_lipo * test_df.LIPS_entropy
 
     #tX=test_df.drop(test_features_del,axis=1)
-    test_X = thoipapy.RF_features.RF_Train_Test.drop_cols_not_used_in_ML(combined_incl_THOIPA_df, s)
+    test_X = thoipapy.RF_features.RF_Train_Test.drop_cols_not_used_in_ML(combined_incl_THOIPA_df, s["excel_file_with_settings"])
 
     try:
         prob_arr = fit.predict_proba(test_X)[:, 1]
@@ -426,7 +426,7 @@ def save_THOIPA_pred_indiv_prot(s, model_pkl, testdata_combined_file, THOIPA_pre
 # def save_THOIPA_pred_indiv_prot(acc, train_df, test_df, database):
 #     #drop_cols_not_used_in_ML
 #     #X=train_df.drop(train_features_del,axis=1)
-#     X = thoipapy.RF_features.RF_Train_Test.drop_cols_not_used_in_ML(train_df, s)
+#     X = thoipapy.RF_features.RF_Train_Test.drop_cols_not_used_in_ML(train_df, s["excel_file_with_settings"])
 #     y = train_df["interface"]
 #     clf = RandomForestClassifier(max_depth=5, n_estimators=10, max_features=1)
 #     fit = clf.fit(X,y)
@@ -445,7 +445,7 @@ def save_THOIPA_pred_indiv_prot(s, model_pkl, testdata_combined_file, THOIPA_pre
 #     Lips_score = test_df.LIPS_lipo * test_df.LIPS_entropy
 #
 #     #tX=test_df.drop(test_features_del,axis=1)
-#     tX = thoipapy.RF_features.RF_Train_Test.drop_cols_not_used_in_ML(test_df, s)
+#     tX = thoipapy.RF_features.RF_Train_Test.drop_cols_not_used_in_ML(test_df, s["excel_file_with_settings"])
 #
 #     if hasattr(clf,'predict_proba'):
 #         prob_pos = fit.predict_proba(tX)[:,1]
@@ -686,6 +686,8 @@ def parse_BO_data_csv_to_excel(bo_data_csv, BO_data_excel, logging):
         o_minus_r_ser = df_o_minus_r[acc_db]
         AUBOC10_df.loc[acc_db, "AUBOC10"] = np.trapz(o_minus_r_ser, o_minus_r_ser.index)
 
+    mean_AUBOC10 = AUBOC10_df["AUBOC10"].mean()
+    logging.info("---mean_AUBOC10({:.2f})---".format(mean_AUBOC10))
     #################################################################
     #           SAVE PARSED DATAFRAMES TO AN EXCEL FILE             #
     #################################################################

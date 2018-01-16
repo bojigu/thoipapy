@@ -83,9 +83,9 @@ def calc_best_overlap(acc_db, df, experiment_col="interface_score", pred_col="TH
     tm_len = df.shape[0]
 
     if experiment_col not in df.columns:
-        raise IndexError("{} {} is not in the columns.\n column list = {}".format(acc_db, experiment_col, df.columns))
+        raise IndexError("{} {} is not in the columns.\ntry re-running add_predictions_to_combined_files\ncolumn list = {}".format(acc_db, experiment_col, df.columns))
     if pred_col not in df.columns:
-        raise IndexError("{} {} is not in the columns.\n column list = {}".format(acc_db, pred_col, df.columns))
+        raise IndexError("{} {} is not in the columns.\ntry re-running add_predictions_to_combined_files\ncolumn list = {}".format(acc_db, pred_col, df.columns))
 
     # Give the rank of the values
     # NOTE THAT IT IS NECESSARY TO RUN ARGSORT TWICE TO ACHIEVE THIS

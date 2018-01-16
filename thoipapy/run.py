@@ -182,7 +182,9 @@ if __name__ == "__main__":
 
         if s["run_LOO_validation"]:
             thoipapy.RF_features.RF_Train_Test.run_LOO_validation(s, df_set, logging)
-            #thoipapy.RF_features.RF_Train_Test.create_LOO_validation_fig(s, df_set, logging)
+            if "create_LOO_validation_figs" in s:
+                if s["create_LOO_validation_figs"]:
+                    thoipapy.RF_features.RF_Train_Test.create_LOO_validation_fig(s, df_set, logging)
 
         if s["calculate_variable_importance"]:
             thoipapy.RF_features.RF_Train_Test.calculate_variable_importance(s, logging)

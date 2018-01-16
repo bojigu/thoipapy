@@ -15,13 +15,14 @@ import subprocess, threading
 from sklearn.externals import joblib
 import pickle
 import time
-from korbinian.utils import convert_truelike_to_bool, convert_falselike_to_bool
+from korbinian.utils import convert_truelike_to_bool, convert_falselike_to_bool, Log_Only_To_Console
+from multiprocessing import Pool
 
 # intersect function
 def intersect(a, b):
      return list(set(a) & set(b))
 
-def drop_cols_not_used_in_ML(df_data, s):
+def drop_cols_not_used_in_ML(df_data, excel_file_with_settings):
     """Remove columns not used in machine learning training or testing.
 
     This includes
@@ -82,7 +83,7 @@ def drop_cols_not_used_in_ML(df_data, s):
     # df_data = df_data.drop(cols_to_drop, axis=1)
 
     # read the features tab of the excel settings file
-    features_df = pd.read_excel(s["excel_file_with_settings"], sheetname="features", index_col=0)
+    features_df = pd.read_excel(excel_file_with_settings, sheetname="features", index_col=0)
     features_df.drop("Notes", axis=0, inplace=True)
     # convert "WAHR" etc to true and false
     features_df["include"] = features_df["include"].apply(convert_truelike_to_bool, convert_nontrue=False)
@@ -166,7 +167,7 @@ def train_random_forest_model(s, logging):
     df_data = df_data.dropna()
 
     y = df_data["interface"]
-    X = drop_cols_not_used_in_ML(df_data, s)
+    X = drop_cols_not_used_in_ML(df_data, s["excel_file_with_settings"])
 
     X.to_csv(train_data_used_for_model_csv)
 
@@ -222,7 +223,7 @@ def predict_test_dataset_with_THOIPA_DEPRECATED(train_setname, test_setname, s, 
     fit = joblib.load(model_pkl)
 
     df_data = pd.read_csv(test_data_csv, index_col=0)
-    df_testdata = drop_cols_not_used_in_ML(df_data, s)
+    df_testdata = drop_cols_not_used_in_ML(df_data, s["excel_file_with_settings"])
     tX = df_testdata
 
     tp = fit.predict_proba(tX)
@@ -327,7 +328,7 @@ def run_10fold_cross_validation(s, logging):
     # drop training data (full protein) that don't have enough homologues
     df_data = df_data.loc[df_data.n_homologues >= s["min_n_homol_training"]]
 
-    X = drop_cols_not_used_in_ML(df_data, s)
+    X = drop_cols_not_used_in_ML(df_data, s["excel_file_with_settings"])
     y = df_data["interface"]
 
     skf = StratifiedKFold(n_splits=s["cross_validation_number_of_splits"])
@@ -479,7 +480,7 @@ def run_LOO_validation_OLD_non_multiprocessing(s, df_set, logging):
     BO_all_df = pd.DataFrame()
     pred_colname = "THOIPA_{}_LOO".format(s["set_number"])
 
-    n_features = thoipapy.RF_features.RF_Train_Test.drop_cols_not_used_in_ML(df_data, s).shape[1]
+    n_features = thoipapy.RF_features.RF_Train_Test.drop_cols_not_used_in_ML(df_data, s["excel_file_with_settings"]).shape[1]
     forest = thoipapy.RF_features.RF_Train_Test.THOIPA_classifier_with_settings(s, n_features)
 
     for i in df_set.index:
@@ -500,7 +501,7 @@ def run_LOO_validation_OLD_non_multiprocessing(s, df_set, logging):
             # skip protein
             continue
         df_train = df_data.loc[df_data.acc_db != acc_db]
-        X_train = thoipapy.RF_features.RF_Train_Test.drop_cols_not_used_in_ML(df_train, s)
+        X_train = thoipapy.RF_features.RF_Train_Test.drop_cols_not_used_in_ML(df_train, s["excel_file_with_settings"])
         y_train = df_train["interface"]
 
         #######################################################################################################
@@ -513,7 +514,7 @@ def run_LOO_validation_OLD_non_multiprocessing(s, df_set, logging):
         testdata_combined_file = os.path.join(s["features_folder"], "combined", database, "{}.surr20.gaps5.combined_features.csv".format(acc))
         df_test = pd.read_csv(testdata_combined_file)
 
-        X_test = thoipapy.RF_features.RF_Train_Test.drop_cols_not_used_in_ML(df_test, s)
+        X_test = thoipapy.RF_features.RF_Train_Test.drop_cols_not_used_in_ML(df_test, s["excel_file_with_settings"])
         y_test = df_test["interface"].fillna(0).astype(int)
 
         #######################################################################################################
@@ -584,7 +585,8 @@ def run_LOO_validation_OLD_non_multiprocessing(s, df_set, logging):
     #linechart_mean_obs_and_rand = thoipapy.figs.Create_Bo_Curve_files.analyse_bo_curve_underlying_data(BO_all_data_csv, crossvalidation_folder, names_excel_path)
     thoipapy.figs.Create_Bo_Curve_files.parse_BO_data_csv_to_excel(BO_all_data_csv, BO_data_excel, logging)
 
-    logging.info('{} LOO crossvalidation. AUC({:.2f}). Time taken = {:.2f}.'.format(s["setname"], mean_auc, duration))
+    logging.info('{} LOO crossvalidation. Time taken = {:.2f}.'.format(s["setname"], duration))
+    logging.info('---AUC({:.2f})---'.format(mean_auc))
 
 
 def run_LOO_validation(s, df_set, logging):
@@ -643,17 +645,22 @@ def run_LOO_validation(s, df_set, logging):
 
     acc_db_list = df_data.acc_db.unique()
     xv_dict = {}
-    mean_tpr = 0.0
-    mean_fpr = np.linspace(0, 1, 100)
     start = time.clock()
-    BO_all_df = pd.DataFrame()
     pred_colname = "THOIPA_{}_LOO".format(s["set_number"])
 
-    n_features = thoipapy.RF_features.RF_Train_Test.drop_cols_not_used_in_ML(df_data, s).shape[1]
+    n_features = thoipapy.RF_features.RF_Train_Test.drop_cols_not_used_in_ML(df_data, s["excel_file_with_settings"]).shape[1]
     forest = thoipapy.RF_features.RF_Train_Test.THOIPA_classifier_with_settings(s, n_features)
 
-    val_list = []
+    #list of all dictionaries for each protein, for multiprocessing
+    d_list = []
 
+    if s["use_multiprocessing"]:
+        # TURN LOGGING OFF BEFORE MULTIPROCESSING
+        logger = Log_Only_To_Console()
+    else:
+        logger = logging
+
+    val_list = []
     for n, i in enumerate(df_set.index):
         acc, acc_db, database  = df_set.loc[i, "acc"], df_set.loc[i, "acc_db"], df_set.loc[i, "database"]
         THOIPA_prediction_csv = os.path.join(s["thoipapy_data_folder"], "Predictions", "leave_one_out", database, "{}.{}.{}.LOO.prediction.csv".format(acc, database, s["setname"]))
@@ -670,37 +677,83 @@ def run_LOO_validation(s, df_set, logging):
             logging.warning("{} is in protein set, but not found in training data".format(acc_db))
             # skip protein
             continue
-        df_train = df_data.loc[df_data.acc_db != acc_db]
-        X_train = thoipapy.RF_features.RF_Train_Test.drop_cols_not_used_in_ML(df_train, s)
-        y_train = df_train["interface"]
+        # df_train = df_data.loc[df_data.acc_db != acc_db]
+        # X_train = thoipapy.RF_features.RF_Train_Test.drop_cols_not_used_in_ML(df_train, s["excel_file_with_settings"])
+        # y_train = df_train["interface"]
+
+        #######################################################################################################
+        #                                                                                                     #
+        #         Pack all variables into a dictionary compatible with multiprocessing Pool                   #
+        #                                                                                                     #
+        #######################################################################################################
 
         d = {}
         d["testdata_combined_file"], d["THOIPA_prediction_csv"] = testdata_combined_file, THOIPA_prediction_csv
-        d["X_train"], d["y_train"] = X_train, y_train
+        #d["X_train"], d["y_train"] = X_train, y_train
+        d["df_data"] = df_data
+        d["excel_file_with_settings"] = s["excel_file_with_settings"]
         d["forest"], d["pred_colname"] = forest, pred_colname
         d["acc_db"], d["database"] = acc_db, database
-        d["n"] = n
+        d["n"], d["logger"], d["excel_file_with_settings"] = n, logger, s["excel_file_with_settings"]
 
-        auc_dict, BO_df = LOO_single_prot(d)
-        val_tuple = (auc_dict, BO_df)
-        val_list.append(val_tuple)
+        if s["use_multiprocessing"]:
+            d_list.append(d)
+        else:
+            auc_dict, BO_df = LOO_single_prot(d)
+            val_tuple = (auc_dict, BO_df)
+            val_list.append(val_tuple)
+
+    if s["use_multiprocessing"]:
+        with Pool(processes=s["multiple_tmp_simultaneous"]) as pool:
+            val_list = pool.map(LOO_single_prot, d_list)
 
     #######################################################################################################
     #                                                                                                     #
-    #                          Get tree info, mean AUC for all proteins, etc                              #
+    #                            Get mean AUC etc for all proteins in list                                #
     #                                                                                                     #
     #######################################################################################################
-
     duration = time.clock() - start
+    sys.stdout.write("\n")
 
+    # copied from original mean_tpr code
+    mean_tpr = 0.0
+    mean_fpr = np.linspace(0, 1, 100)
+
+    BO_all_df = pd.DataFrame()
+    all_auc = []
+    xv_dict = {}
+    acc_db_list = df_set.acc_db.tolist()
+
+    #iterate through the output tuple (auc_dict, BO_df)
+    for nn, t in enumerate(val_list):
+        acc_db = acc_db_list[nn]
+        auc_dict = t[0]
+        all_auc.append(auc_dict["auc"])
+        BO_df = t[1]
+        # join the data for all BO curves together
+        if nn == 0:
+            BO_all_df = BO_df
+        else:
+            BO_all_df = pd.concat([BO_all_df, BO_df], axis=1, join="outer")
+        mean_tpr += interp(mean_fpr, auc_dict["fpr"], auc_dict["tpr"])
+        mean_tpr[0] = 0.0
+
+        xv_dict[acc_db] = {"fpr": auc_dict["fpr"], "tpr": auc_dict["tpr"], "auc": auc_dict["auc"]}
+
+    # copied from original mean_tpr code
     mean_tpr /= df_set.shape[0]
     mean_tpr[-1] = 1.0
+    mean_auc_from_joined_data = auc(mean_fpr, mean_tpr)
 
-    mean_auc = auc(mean_fpr, mean_tpr)
+    # calculate mean of each protein AUC separately
+    mean_auc_all_prot = np.array(all_auc).mean()
+    xv_dict["mean_auc_all_prot"] = mean_auc_all_prot
 
+    # add to dict that can be used for figure creation later
     xv_dict["true_positive_rate_mean"] = mean_tpr
     xv_dict["false_positive_rate_mean"] = mean_fpr
-    xv_dict["mean_auc"] = mean_auc
+    xv_dict["mean_auc_from_joined_data"] = mean_auc_from_joined_data
+    xv_dict["mean_auc_all_prot"] = mean_auc_all_prot
 
     # save dict as pickle
     thoipapy.utils.make_sure_path_exists(LOO_crossvalidation_pkl, isfile=True)
@@ -714,19 +767,27 @@ def run_LOO_validation(s, df_set, logging):
     #######################################################################################################
 
     BO_all_df.to_csv(BO_all_data_csv)
-    names_excel_path = os.path.join(os.path.dirname(s["sets_folder"]), "ETRA_NMR_names.xlsx")
+    #names_excel_path = os.path.join(os.path.dirname(s["sets_folder"]), "ETRA_NMR_names.xlsx")
 
     #linechart_mean_obs_and_rand = thoipapy.figs.Create_Bo_Curve_files.analyse_bo_curve_underlying_data(BO_all_data_csv, crossvalidation_folder, names_excel_path)
     thoipapy.figs.Create_Bo_Curve_files.parse_BO_data_csv_to_excel(BO_all_data_csv, BO_data_excel, logging)
 
-    logging.info('{} LOO crossvalidation. AUC({:.2f}). Time taken = {:.2f}.'.format(s["setname"], mean_auc, duration))
+    logging.info('{} LOO crossvalidation. Time taken = {:.2f}.'.format(s["setname"], duration))
+    logging.info('---AUC({:.2f})({:.2f})---'.format(mean_auc_all_prot, mean_auc_from_joined_data))
 
 def LOO_single_prot(d):
     testdata_combined_file, THOIPA_prediction_csv = d["testdata_combined_file"], d["THOIPA_prediction_csv"]
-    X_train, y_train = d["X_train"], d["y_train"]
+    #X_train, y_train = d["X_train"], d["y_train"]
+    df_data = d["df_data"]
+    excel_file_with_settings = d["excel_file_with_settings"]
     forest, pred_colname = d["forest"], d["pred_colname"]
     acc_db, database = d["acc_db"], d["database"]
-    n = d["n"]
+
+    df_train = df_data.loc[df_data.acc_db != acc_db]
+    X_train = thoipapy.RF_features.RF_Train_Test.drop_cols_not_used_in_ML(df_train, excel_file_with_settings)
+    y_train = df_train["interface"]
+
+    n, logger, excel_file_with_settings = d["n"], d["logger"], d["excel_file_with_settings"]
     #######################################################################################################
     #                                                                                                     #
     #                  Test data is based on the combined features file for that protein and TMD          #
@@ -736,7 +797,7 @@ def LOO_single_prot(d):
     # df_test = df_data.loc[df_data.acc_db == acc_db]
     df_test = pd.read_csv(testdata_combined_file)
 
-    X_test = thoipapy.RF_features.RF_Train_Test.drop_cols_not_used_in_ML(df_test, s)
+    X_test = thoipapy.RF_features.RF_Train_Test.drop_cols_not_used_in_ML(df_test, excel_file_with_settings)
     y_test = df_test["interface"].fillna(0).astype(int)
 
     #######################################################################################################
@@ -772,11 +833,8 @@ def LOO_single_prot(d):
     #     BO_all_df = pd.concat([BO_all_df, BO_df], axis=1, join="outer")
     if n == 0:
         tree_depths = np.array([estimator.tree_.max_depth for estimator in forest.estimators_])
-        sys.stdout.write("tree depth mean = {} ({})".format(tree_depths.mean(), tree_depths))
-    sys.stdout.write("{} AUC : {:.2f}".format(acc_db, roc_auc))
-    sys.stdout.flush()
-
-
+        logger.info("tree depth mean = {} ({})".format(tree_depths.mean(), tree_depths))
+    logger.info("{} AUC : {:.2f}".format(acc_db, roc_auc))
 
     return auc_dict, BO_df
 
@@ -828,9 +886,9 @@ def create_LOO_validation_fig(s, df_set, logging):
         else:
             logging.warning("{} not in xv_dict after LOO validation".format(acc_db))
 
-    mean_auc = xv_dict["mean_auc"]
+    mean_auc_all_prot = xv_dict["mean_auc_all_prot"]
 
-    ax.plot(xv_dict["false_positive_rate_mean"], xv_dict["true_positive_rate_mean"], color="k", label='mean (area = %0.2f)' % mean_auc, lw=1.5)
+    ax.plot(xv_dict["false_positive_rate_mean"], xv_dict["true_positive_rate_mean"], color="k", label='mean (area = %0.2f)' % mean_auc_all_prot, lw=1.5)
     ax.plot([0, 1], [0, 1], '--', color=(0.6, 0.6, 0.6), label='random')
     ax.set_xlim([-0.05, 1.05])
     ax.set_ylim([-0.05, 1.05])
@@ -889,7 +947,8 @@ def calculate_variable_importance(s, logging):
 
     df_data = pd.read_csv(train_data_csv, index_col=0)
     df_data = df_data.dropna()
-    X = drop_cols_not_used_in_ML(df_data, s)
+
+    X = drop_cols_not_used_in_ML(df_data, s["excel_file_with_settings"])
     y = df_data["interface"]
     n_features = X.shape[1]
     forest = THOIPA_classifier_with_settings(s, n_features)
