@@ -149,6 +149,8 @@ def create_AUC_BoAUC_figs_THOIPA_PREDDIMER_TMDOCK(s,df_set,logging):
                                                "{}.{}_BO_linechart.png".format(s['setname'],predictor_name.replace('*',"")))
         BO_barchart_png = os.path.join(s["thoipapy_data_folder"], "Results", "compare_predictors",
                                               "{}.{}_AUBOC10_barchart.png".format(s['setname'],predictor_name.replace('*',"")))
+        df_o_minus_r_mean_csv = os.path.join(s["thoipapy_data_folder"], "Results", "compare_predictors",
+                                              "{}.df_o_minus_r_mean.csv".format(s['setname']))
         for i in df_set.index:
             sys.stdout.write(".")
             sys.stdout.flush()
@@ -216,9 +218,9 @@ def create_AUC_BoAUC_figs_THOIPA_PREDDIMER_TMDOCK(s,df_set,logging):
     AUC_AUBOC_df.to_csv(AUC_AUBOC_file)
     THOIPA_best_set = s["THOIPA_best_set"]
     create_4predictors_AUC_AUBOC10_barchart(AUC_AUBOC_df, predictors_AUC_barchart_png, predictors_BOAUC10_barchart_png, namedict, THOIPA_best_set)
-    create_4predictors_bocurve_linechart(df_o_minus_r_mean_df,AUBOC10_list,linechar_name_list,predictors_BOCURVE_linechart_png)
+    create_4predictors_bocurve_linechart(df_o_minus_r_mean_df, AUBOC10_list, linechar_name_list, predictors_BOCURVE_linechart_png)
     create_mean_AUC_barchart_comp(auc_mean_list, linechar_name_list, predictors_mean_auc_barchart_png)
-
+    df_o_minus_r_mean_df.to_csv(df_o_minus_r_mean_csv)
     logging.info("finished create_AUC_BoAUC_figs_THOIPA_PREDDIMER_TMDOCK")
 
 def create_mean_AUC_barchart_comp(auc_mean_list,linechar_name_list,predictors_mean_auc_barchart_png):

@@ -138,9 +138,6 @@ if __name__ == "__main__":
         if s["pssm_feature_calculation"]:
             thoipapy.RF_features.feature_calculate.create_PSSM_from_MSA_mult_prot(s, df_set, logging)
 
-        if s["calc_lipo_from_pssm"]:
-            thoipapy.RF_features.feature_calculate.lipo_from_pssm_mult_prot(s, df_set, logging)
-
         if s["entropy_feature_calculation"]:
             thoipapy.RF_features.feature_calculate.entropy_calculation_mult_prot(s, df_set, logging)
 
@@ -154,6 +151,9 @@ if __name__ == "__main__":
 
         if s["clac_relative_position"]:
             thoipapy.RF_features.feature_calculate.calc_relative_position_mult_prot(s, df_set, logging)
+
+        if s["calc_lipo_from_pssm"]:
+            thoipapy.RF_features.feature_calculate.lipo_from_pssm_mult_prot(s, df_set, logging)
 
         if s["lips_score_feature_calculation"]:
             thoipapy.RF_features.feature_calculate.LIPS_score_calculation_mult_prot(s, df_set, logging)

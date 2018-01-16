@@ -699,7 +699,8 @@ def parse_freecontact_coevolution(acc, freecontact_file, freecontact_parsed_csv,
 
     if not os.path.isfile(freecontact_file):
         logging.warning("{} parse_freecontact_coevolution failed, {} not found.".format(acc, freecontact_file))
-        return
+        raise FileNotFoundError("{} parse_freecontact_coevolution failed, {} not found.".format(acc, freecontact_file))
+        #return
 
     dict_di = {}
     dict_mi = {}
@@ -1762,6 +1763,9 @@ def return_num_tmd(s, acc, database, full_seq, logging):
             for line in file:
                 if re.search('TRANSMEM', line):
                     tm_num = tm_num + 1
+
+        if tm_num > 4:
+            tm_num = 4
         return tm_num
     else:
         #sys.stdout.write("no phobius output file found, try to check the reason")
