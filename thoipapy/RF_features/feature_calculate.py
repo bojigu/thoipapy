@@ -435,25 +435,25 @@ def lipo_from_pssm(acc, pssm_csv_surr5, lipo_csv, tm_surr_left, tm_surr_right, s
     """
 
     df_lipo = pd.DataFrame()
-    df_lipo["lipo_{}".format(scalename)] = dfh.sum(axis=1)
+    df_lipo["polarity".format(scalename)] = dfh.sum(axis=1)
     #df_lipo["IND"] = df_lipo.index
     df_lipo.index = range(df_lipo.shape[0])
     # take mean over a window that includes the 3 N-terminal residues to the original position
     window = [1, 1, 1, "x", 0, 0, 0]
-    lipo_mean_3_N_pos = calculate_weighted_windows(df_lipo["lipo_{}".format(scalename)], window, statistic="mean", full_output=False)
+    polarity_i1_i3_N = calculate_weighted_windows(df_lipo["polarity".format(scalename)], window, statistic="mean", full_output=False)
     # take mean over a window that includes the 3 N-terminal residues to the original position
     window = [0, 0, 0, "x", 1, 1, 1]
-    lipo_mean_3_C_pos = calculate_weighted_windows(df_lipo["lipo_{}".format(scalename)], window, statistic="mean", full_output=False)
+    polarity_i1_i3_C = calculate_weighted_windows(df_lipo["polarity".format(scalename)], window, statistic="mean", full_output=False)
 
     # replace positions with nan that could not be properly calculated
-    # this inlcludes the first 3 positions of lipo_mean_3_N_pos, and last 3 positions of lipo_mean_3_C_pos
+    # this inlcludes the first 3 positions of polarity_i1_i3_N, and last 3 positions of polarity_i1_i3_C
     # these nan positions should be OUTSIDE THE TMD
-    lipo_mean_3_N_pos.iloc[0:3] = np.nan
-    lipo_mean_3_C_pos.iloc[-3:] = np.nan
+    polarity_i1_i3_N.iloc[0:3] = np.nan
+    polarity_i1_i3_C.iloc[-3:] = np.nan
 
     """df_lipo now looks like this.
 
-              lipo_hessa  IND  lipo_mean_3_N_pos  lipo_mean_3_C_pos
+              lipo_hessa  IND  polarity_i1_i3_N  polarity_i1_i3_C
     position                                                                   
     0          -0.339400   V1                      NaN                 1.231000
     1           0.890600   S2                      NaN                 0.632300
@@ -465,20 +465,19 @@ def lipo_from_pssm(acc, pssm_csv_surr5, lipo_csv, tm_surr_left, tm_surr_right, s
     29         -0.437800  L30                 0.530000                      NaN
     30         -0.298367  V31                 0.688400                      NaN
     31          1.919388  P32                 0.586478                      NaN
-
     """
 
-    df_lipo["lipo_{}_mean_3_N_pos".format(scalename)] = lipo_mean_3_N_pos
-    df_lipo["lipo_{}_mean_3_C_pos".format(scalename)] = lipo_mean_3_C_pos
+    df_lipo["polarity_i1-i3_N".format(scalename)] = polarity_i1_i3_N
+    df_lipo["polarity_i1-i3_C".format(scalename)] = polarity_i1_i3_C
 
     df_lipo["residue_num"] = df["aa_pos"].values
     df_lipo["residue_name"] = df["residue_name"].values
     #df_lipo.index = range(df_lipo.shape[0])
     #df_lipo.index=[int(i) -tm_surr_left for i in df_lipo.index]
     df_lipo["residue_num"] = [int(i) - tm_surr_left for i in df_lipo["residue_num"]]
-    df_lipo.index =df_lipo["residue_num"]
+    df_lipo.index = df_lipo["residue_num"]
 
-    df_lipo = df_lipo[["residue_name","lipo_{}".format(scalename), "lipo_{}_mean_3_N_pos".format(scalename),"lipo_{}_mean_3_C_pos".format(scalename)]]
+    df_lipo = df_lipo[["residue_name", "polarity".format(scalename), "polarity_i1-i3_N".format(scalename),"polarity_i1-i3_C".format(scalename)]]
     #df_lipo.set_index("IND", inplace=True)
     if tm_surr_right ==0 :
         df_lipo = df_lipo[tm_surr_left:]
@@ -491,10 +490,17 @@ def lipo_from_pssm(acc, pssm_csv_surr5, lipo_csv, tm_surr_left, tm_surr_right, s
     #     dfa.to_excel(writer, sheet_name="dfa")
     #     df_lipo.to_excel(writer, sheet_name="df_lipo")
 
+    # convert to positive values.
+    # lowest value in Hessa scale is -0.6 for Ile
+    lowest_polarity_value = 0.6
+    columns = ["polarity", "polarity_i1-i3_N", "polarity_i1-i3_C"]
+    for col in columns:
+        df_lipo[col] = df_lipo[col] + lowest_polarity_value
+
     df_lipo.to_csv(lipo_csv)
 
     if plot_linechart:
-        # plot a linechart with lipo, lipo_mean_3_N_pos, lipo_mean_3_C_pos
+        # plot a linechart with lipo, polarity_i1_i3_N, polarity_i1_i3_C
         fig, ax = plt.subplots()
         try:
             df_lipo.plot(ax=ax)
@@ -755,19 +761,19 @@ def parse_freecontact_coevolution(acc, freecontact_file, freecontact_parsed_csv,
     CumMI4 = [0] * tmd_length
     CumDI8 = [0] * tmd_length
     CumMI8 = [0] * tmd_length
-    CoevDI4 = [0] * tmd_length
-    CoevMI4 = [0] * tmd_length
-    CoevDI8 = [0] * tmd_length
-    CoevMI8 = [0] * tmd_length
-    CoevDImax = [0] * tmd_length  # the sum of the top 8
-    CoevMImax = [0] * tmd_length
+    coev_all_top4_DI = [0] * tmd_length
+    coev_all_top4_MI = [0] * tmd_length
+    coev_all_top8_DI = [0] * tmd_length
+    coev_all_top8_MI = [0] * tmd_length
+    coev_all_max_DI_1 = [0] * tmd_length  # the sum of the top 8
+    coev_all_max_MI_1 = [0] * tmd_length
     for key in dict_di_list:
-        CoevDI4[int(key) - 1] = sum(map(float, sorted(dict_di_list[key], reverse=True)[0:4])) / 4
-        CoevMI4[int(key) - 1] = sum(map(float, sorted(dict_mi_list[key], reverse=True)[0:4])) / 4
-        CoevDI8[int(key) - 1] = sum(map(float, sorted(dict_di_list[key], reverse=True)[0:8])) / 8
-        CoevMI8[int(key) - 1] = sum(map(float, sorted(dict_mi_list[key], reverse=True)[0:8])) / 8
-        CoevDImax[int(key) - 1] = sorted(dict_di_list[key], reverse=True)[0]
-        CoevMImax[int(key) - 1] = sorted(dict_mi_list[key], reverse=True)[0]
+        coev_all_top4_DI[int(key) - 1] = sum(map(float, sorted(dict_di_list[key], reverse=True)[0:4])) / 4
+        coev_all_top4_MI[int(key) - 1] = sum(map(float, sorted(dict_mi_list[key], reverse=True)[0:4])) / 4
+        coev_all_top8_DI[int(key) - 1] = sum(map(float, sorted(dict_di_list[key], reverse=True)[0:8])) / 8
+        coev_all_top8_MI[int(key) - 1] = sum(map(float, sorted(dict_mi_list[key], reverse=True)[0:8])) / 8
+        coev_all_max_DI_1[int(key) - 1] = sorted(dict_di_list[key], reverse=True)[0]
+        coev_all_max_MI_1[int(key) - 1] = sorted(dict_mi_list[key], reverse=True)[0]
         # sys.stdout.write(str(key)+"corresponding to"+str(dict_di_list[key]))
     dict_di_value_sort = sorted(dict_di.items(), key=lambda x: x[1], reverse=True)[0:tmd_length]
     dict_mi_value_sort = sorted(dict_mi.items(), key=lambda x: x[1], reverse=True)[0:tmd_length]
@@ -791,11 +797,11 @@ def parse_freecontact_coevolution(acc, freecontact_file, freecontact_parsed_csv,
     writer = csv.writer(freecontact_parsed_csv_handle, delimiter=',', quotechar='"',
                         lineterminator='\n',
                         quoting=csv.QUOTE_NONNUMERIC, doublequote=True)
-    writer.writerow(["residue_num", "residue_name", "CoevDImax", "CoevDI4", "CoevDI8", "CumDI4", "CumDI8", "CoevMImax", "CoevMI4", "CoevMI8", "CumMI4", "CumMI8"])
+    writer.writerow(["residue_num", "residue_name", "coev_all_max_DI_1", "coev_all_top4_DI", "coev_all_top8_DI", "CumDI4", "CumDI8", "coev_all_max_MI_1", "coev_all_top4_MI", "coev_all_top8_MI", "CumMI4", "CumMI8"])
     for index in range(len(CumDI8)):
         csv_header_for_cumulative_strength_file = [(index + 1), dict_residuenum_residuename[(index + 1)],
-                                                   CoevDImax[index], CoevDI4[index], CoevDI8[index], CumDI4[index], CumDI8[index], CoevMImax[index], CoevMI4[index],
-                                                   CoevMI8[index], CumMI4[index], CumMI8[index]]
+                                                   coev_all_max_DI_1[index], coev_all_top4_DI[index], coev_all_top8_DI[index], CumDI4[index], CumDI8[index], coev_all_max_MI_1[index], coev_all_top4_MI[index],
+                                                   coev_all_top8_MI[index], CumMI4[index], CumMI8[index]]
         # writer = csv.writer(freecontact_parsed_csv_handle, delimiter=',', quotechar='"', lineterminator='\n',
         # quoting=csv.QUOTE_NONNUMERIC, doublequote=True)
         writer.writerow(csv_header_for_cumulative_strength_file)
@@ -883,8 +889,8 @@ def parse_freecontact_coevolution(acc, freecontact_file, freecontact_parsed_csv,
         """
 
         # calculate max and mean over all connections (within TMD) for that residue position
-        df_out["coevXImax"] = dfp.max(axis=1)
-        df_out["coevXImean"] = dfp.mean(axis=1)
+        df_out["coev_all_max_XI"] = dfp.max(axis=1)
+        df_out["coev_all_mean_XI"] = dfp.mean(axis=1)
 
         for pos in range(TMD_start, TMD_end + 1):
             #iterate from i-1 and i+1 to i-5 and i+5
@@ -893,17 +899,17 @@ def parse_freecontact_coevolution(acc, freecontact_file, freecontact_parsed_csv,
                 i_plus = pos + n
                 # select the two datapoints (e.g. i-4 and i+4 relative to i)
                 sel_XI_ser = dfp.loc[pos, [i_minus, i_plus]]
-                df_out.loc[pos, "coevXIm{}p{}_mean".format(n, n)] = sel_XI_ser.mean()
+                df_out.loc[pos, "coev_i{}_XI".format(n)] = sel_XI_ser.mean()
 
                 if n == 4:
                     # add the direct connection between i-4 and i+4 (excluding i)
                     sel_XI_ser["m4_to_p4_value"] = dfp.loc[i_plus, i_minus]
-                    df_out.loc[pos, "coevXIp4m4_incl_cx_mean"] = sel_XI_ser.mean()
+                    df_out.loc[pos, "coev_i4_cx_XI"] = sel_XI_ser.mean()
 
                     # calculate mean and max of all pairwise values between i and from i-4 to i+4 (total of 8 values)
                     m4_to_p4_ser = dfp.loc[pos, i_minus:i_plus]
-                    df_out.loc[pos, "coevXIm4_to_p4_mean"] = m4_to_p4_ser.mean()
-                    df_out.loc[pos, "coevXIm4_to_p4_max"] = m4_to_p4_ser.max()
+                    df_out.loc[pos, "coev_i1-i4_XI"] = m4_to_p4_ser.mean()
+                    df_out.loc[pos, "coev_i1-i4_max_XI"] = m4_to_p4_ser.max()
 
         # HEPTAD MOTIF
         a, b, c, d, e, f, g = 1, np.nan, np.nan, 1, 1, np.nan, 1
@@ -958,8 +964,8 @@ def parse_freecontact_coevolution(acc, freecontact_file, freecontact_parsed_csv,
 
         # label the best face as 1, and all other residues as 0
         index_positions_highest_face = set(index_positions_highest_face).intersection(set(df_out.index))
-        df_out.loc[index_positions_highest_face, "XI_highest_face"] = 1
-        df_out["XI_highest_face"] = df_out["XI_highest_face"].fillna(0).astype(int)
+        df_out.loc[index_positions_highest_face, "highest_face_XI"] = 1
+        df_out["highest_face_XI"] = df_out["highest_face_XI"].fillna(0).astype(int)
 
         # replace the XI in the column names with either MI or DI
         new_column_names = pd.Series(df_out.columns).str.replace("XI", XI)
@@ -969,14 +975,18 @@ def parse_freecontact_coevolution(acc, freecontact_file, freecontact_parsed_csv,
     column_list = ["residue_num", "residue_name"]
     coev_colname_list = df_out.columns.tolist()[len(column_list):]
 
-    # Normalise each. Add as new ColumnName_norm
-    for col in coev_colname_list:
-        df_out["{}_norm".format(col)] = normalise_0_1(df_out[col])[0]
-
     # Specifically overwrite normalised values for Cum metrics. Convert to 0 or 1.
     coev_cum_colname_list = ["CumDI4", "CumDI8", "CumMI4", "CumMI8"]
     for col in coev_cum_colname_list:
-        df_out["{}_norm".format(col)] = df_out[col].apply(lambda x : 1 if x > 0 else 0)
+        df_out[col] = df_out[col].apply(lambda x : 1 if x > 0 else 0)
+
+    # Normalise each. Add as new ColumnName_norm
+    for col in coev_colname_list:
+        if "DI" in col:
+            df_out["{}_norm".format(col)] = normalise_0_1(df_out[col])[0]
+        elif "MI" in col:
+            df_out["{}_nonnorm".format(col)] = df_out[col]
+            df_out[col] = normalise_0_1(df_out[col])[0]
 
     df_out.to_csv(freecontact_parsed_csv)
 
@@ -1433,7 +1443,7 @@ def parse_LIPS_score(acc, LIPS_output_file, LIPS_parsed_csv, logging):
 
                 writer = csv.writer(LIPS_parsed_csv_handle, delimiter=',', quotechar='"', lineterminator='\n',
                                     quoting=csv.QUOTE_NONNUMERIC, doublequote=True)
-                writer.writerow(["residue_num", "residue_name", "LIPS_lipo", "LIPS_entropy", "LIPS_surface"])
+                writer.writerow(["residue_num", "residue_name", "LIPS_polarity", "LIPS_entropy", "LIPS_surface"])
                 for k, v in sorted(dict.items()):
                     v1 = v.split()
                     v1.insert(0, k)
@@ -1792,13 +1802,23 @@ def normalise_features(df_features_single_protein):
 
     # normalise number of homologues to 1,2 or 3
     df_features_single_protein["n_homol_norm"] = df_features_single_protein["n_homologues"].apply(normalise_number_of_homologues)
-    # convert entropy to conservation
-    df_features_single_protein["conservation"] = -df_features_single_protein["Entropy"]
+    # convert entropy to conservation by inverting, and adding 3 to give positive values
+    # low values are poorly conserved. High values are highly conserved.
+    df_features_single_protein["conservation"] = - df_features_single_protein["Entropy"] + 3
     # calculate LIPS L*E for later BO curve, etc
-    df_features_single_protein["LIPS_L*E"] = df_features_single_protein.LIPS_lipo * df_features_single_protein.LIPS_entropy
+    df_features_single_protein["LIPS_L*E"] = df_features_single_protein.LIPS_polarity * df_features_single_protein.LIPS_entropy
     # rank the LIPS score by adding a fraction of the L*E to the predicted interface (0 or 1)
     df_features_single_protein["LIPS_surface_ranked"] = df_features_single_protein["LIPS_surface"] - (df_features_single_protein["LIPS_L*E"] / 20)
     df_features_single_protein["LIPS_surface_ranked_norm"] = normalise_0_1(df_features_single_protein["LIPS_surface_ranked"])[0]
+
+    # create our own conservation + polarity and conservation*polarity
+    df_features_single_protein["cons+polarity"] = df_features_single_protein["conservation"] + df_features_single_protein["polarity"]
+    df_features_single_protein["cons*polarity"] = df_features_single_protein["conservation"] * df_features_single_protein["polarity"]
+
+    # add the mean polarity or conservation of positions i, i+4 and i-4
+    window = [1,0,0,0,1,0,0,0,1]
+    df_features_single_protein["cons_i4"] = calculate_weighted_windows(df_features_single_protein["conservation"], window, statistic="mean", full_output=False)
+    df_features_single_protein["polar_i4"] = calculate_weighted_windows(df_features_single_protein["polarity"], window, statistic="mean", full_output=False)
 
     df_features_single_protein["CS"] = df_features_single_protein["C"] + df_features_single_protein["S"]
     df_features_single_protein["DE"] = df_features_single_protein["D"] + df_features_single_protein["E"]

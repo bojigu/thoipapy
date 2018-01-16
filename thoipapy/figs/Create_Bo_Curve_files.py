@@ -257,7 +257,7 @@ def validate_LIPS_for_testset(s, logging, LIPS_name = "LIPS_LE", pred_col="LIPS_
             # SAVE LIPS PREDICTION DATA
             # this is somewhat inefficient, as it is conducted for every test dataset
             LIPS_pred_csv = os.path.join(os.path.dirname(s["features_folder"]), "Predictions", "testset_trainset", database, "{}.LIPS_pred.csv".format(acc, testsetname))
-            LIPS_pred_df = combined_df[["residue_name", "residue_num", "LIPS_lipo", "LIPS_entropy", "LIPS_L*E", "LIPS_surface", "LIPS_surface_ranked"]]
+            LIPS_pred_df = combined_df[["residue_name", "residue_num", "LIPS_polarity", "LIPS_entropy", "LIPS_L*E", "LIPS_surface", "LIPS_surface_ranked"]]
             thoipapy.utils.make_sure_path_exists(LIPS_pred_csv, isfile=True)
             LIPS_pred_df.to_csv(LIPS_pred_csv)
 
@@ -378,7 +378,7 @@ def save_THOIPA_pred_indiv_prot(s, model_pkl, testdata_combined_file, THOIPA_pre
 
     #drop_cols_not_used_in_ML
     #X=train_df.drop(train_features_del,axis=1)
-    # X = thoipapy.RF_features.RF_Train_Test.drop_cols_not_used_in_ML(train_df, s["excel_file_with_settings"])
+    # X = thoipapy.RF_features.RF_Train_Test.drop_cols_not_used_in_ML(logging, train_df, s["excel_file_with_settings"])
     # y = train_df["interface"]
     # clf = RandomForestClassifier(max_depth=5, n_estimators=10, max_features=1)
     # fit = clf.fit(X,y)
@@ -391,10 +391,10 @@ def save_THOIPA_pred_indiv_prot(s, model_pkl, testdata_combined_file, THOIPA_pre
     #     interface_score = ddf.Disruption
     #     interface_score = interface_score      #(it is closest experimental disruption and high value means high propencity of interfacial)
 
-    #Lips_score = test_df.LIPS_lipo * test_df.LIPS_entropy
+    #Lips_score = test_df.LIPS_polarity * test_df.LIPS_entropy
 
     #tX=test_df.drop(test_features_del,axis=1)
-    test_X = thoipapy.RF_features.RF_Train_Test.drop_cols_not_used_in_ML(combined_incl_THOIPA_df, s["excel_file_with_settings"])
+    test_X = thoipapy.RF_features.RF_Train_Test.drop_cols_not_used_in_ML(logging, combined_incl_THOIPA_df, s["excel_file_with_settings"])
 
     try:
         prob_arr = fit.predict_proba(test_X)[:, 1]
@@ -426,7 +426,7 @@ def save_THOIPA_pred_indiv_prot(s, model_pkl, testdata_combined_file, THOIPA_pre
 # def save_THOIPA_pred_indiv_prot(acc, train_df, test_df, database):
 #     #drop_cols_not_used_in_ML
 #     #X=train_df.drop(train_features_del,axis=1)
-#     X = thoipapy.RF_features.RF_Train_Test.drop_cols_not_used_in_ML(train_df, s["excel_file_with_settings"])
+#     X = thoipapy.RF_features.RF_Train_Test.drop_cols_not_used_in_ML(logging, train_df, s["excel_file_with_settings"])
 #     y = train_df["interface"]
 #     clf = RandomForestClassifier(max_depth=5, n_estimators=10, max_features=1)
 #     fit = clf.fit(X,y)
@@ -442,10 +442,10 @@ def save_THOIPA_pred_indiv_prot(s, model_pkl, testdata_combined_file, THOIPA_pre
 #     #     interface_score = ddf.Disruption
 #     #     interface_score = interface_score      #(it is closest experimental disruption and high value means high propencity of interfacial)
 #     test_df.index = test_df.index.astype(int) + 1
-#     Lips_score = test_df.LIPS_lipo * test_df.LIPS_entropy
+#     Lips_score = test_df.LIPS_polarity * test_df.LIPS_entropy
 #
 #     #tX=test_df.drop(test_features_del,axis=1)
-#     tX = thoipapy.RF_features.RF_Train_Test.drop_cols_not_used_in_ML(test_df, s["excel_file_with_settings"])
+#     tX = thoipapy.RF_features.RF_Train_Test.drop_cols_not_used_in_ML(logging, test_df, s["excel_file_with_settings"])
 #
 #     if hasattr(clf,'predict_proba'):
 #         prob_pos = fit.predict_proba(tX)[:,1]

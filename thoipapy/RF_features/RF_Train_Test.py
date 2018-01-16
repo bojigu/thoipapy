@@ -22,7 +22,7 @@ from multiprocessing import Pool
 def intersect(a, b):
      return list(set(a) & set(b))
 
-def drop_cols_not_used_in_ML(df_data, excel_file_with_settings):
+def drop_cols_not_used_in_ML(logging, df_data, excel_file_with_settings):
     """Remove columns not used in machine learning training or testing.
 
     This includes
@@ -43,59 +43,23 @@ def drop_cols_not_used_in_ML(df_data, excel_file_with_settings):
         Dataframe with either the training or test dataset
         columns :
     """
-
-    # columns in combined file that are not used in machine-learning training or testing
-    # cols_to_drop = ["acc_db", "residue_num", "residue_name", "interface", "interface_score", "Entropy", "n_homologues", "LIPS_entropy", "LIPS_L*E", "LIPS_surface_ranked",
-    #                 "CoevDImax", "CoevDI4", "CoevDI8",  "CoevMImax", "CoevMI4", "CoevMI8", "CumDI4", "CumDI8","CoevDI4_norm", "CoevMI4_norm",
-    #                 "CumDI4_norm", "CumDI8_norm", "CumMI4_norm", "CumMI8_norm"]#, "RelPos_TMD", "RelPos_fullseq"
-    #                 #"CoevDImax_norm", "CoevDI8_norm", "CoevMImax_norm", "CoevMI8_norm", ]#
-
-    # cols_to_drop = ["acc_db", "residue_num", "residue_name", "interface", "interface_score", "Entropy",
-    #                 #"CumDI4", "CumDI8", "CumMI4", "CumMI8", "CumDI4_norm", "CumDI8_norm", "CumMI4_norm", "CumMI8_norm",
-    #                 #"Aromatic_sAA", "Polar_sAA", "Cbbranched_sAA", "Small_sAA",
-    #                 #"H", "E", "K", "D", "N",
-    #                 #"C", "S", "D", "E", "K", "R", "Q", "N",
-    #                 "CS", "DE", "KR", "QN",
-    #                 "RelPos_TMD", "RelPos_fullseq",
-    #                 "CoevDImax", "CoevDI4", "CoevDI8",  "CoevMImax", "CoevMI4", "CoevMI8",
-    #                 #"CoevDI4_norm", "CoevMI4_norm",
-    #                 "CoevDImax_norm", 'CoevMImax_norm',
-    #                 #"LIPS_entropy", "LIPS_L*E", "LIPS_lipo",
-    #                 #"LIPS_surface",
-    #                 #"LIPS_surface_ranked",
-    #                 #"LIPS_surface_ranked_norm",
-    #                 #"n_homologues",
-    #                 "n_homol_norm",
-    #                 #"GxxxG",
-    #                 #"SmxxxSm",
-    #                 #"PolarxxxPolar"
-    #                 ]
-    #                 #"n_homologues", , "LIPS_surface_ranked",
-    #                 #"
-    #                 #"CumDI4_norm", "CumDI8_norm", "CumMI4_norm", "CumMI8_norm"]#, "RelPos_TMD", "RelPos_fullseq"
-    #                 #"CoevDImax_norm", "CoevDI8_norm", "CoevMImax_norm", "CoevMI8_norm", ]#
-
-    # pd.Series(cols_to_drop).to_csv(r"D:\data_thoipapy\Results\set02\set02_dropped_features.csv")
-    #
-    #
-    # # got only those that are actually in the columns
-    # cols_to_drop = set(cols_to_drop).intersection(set(df_data.columns))
-    # df_data = df_data.drop(cols_to_drop, axis=1)
-
     # read the features tab of the excel settings file
     features_df = pd.read_excel(excel_file_with_settings, sheetname="features", index_col=0)
     features_df.drop("Notes", axis=0, inplace=True)
     # convert "WAHR" etc to true and false
     features_df["include"] = features_df["include"].apply(convert_truelike_to_bool, convert_nontrue=False)
     features_df["include"] = features_df["include"].apply(convert_falselike_to_bool)
-    # print any features that are not shared between the two lists
 
-    features_missing_from_excel = set(features_df.index) - set(df_data.columns)
-    unused_features_in_excel = set(df_data.columns) - set(features_df.index)
+    # print any features that are not shared between the two lists
+    unused_features_in_excel = set(features_df.index) - set(df_data.columns)
+    features_missing_from_excel = set(df_data.columns) - set(features_df.index)
+
     if len(features_missing_from_excel) > 1:
-        sys.stdout.write("features_missing_from_excel, {}".format(features_missing_from_excel))
+        logging.info("\nfeatures_missing_from_excel, {}".format(features_missing_from_excel))
+        if "Unnamed: 0" in features_missing_from_excel:
+            raise IndexError("Unnamed column is in dataframe. Try opening csv with index_col=0.")
     if len(unused_features_in_excel) > 1:
-        sys.stdout.write("unused_features_in_excel, {}".format(unused_features_in_excel))
+        logging.info("\nunused_features_in_excel, {}".format(unused_features_in_excel))
     # drop any features that are not labeled TRUE for inclusion
     features_df = features_df.loc[features_df.include == True]
     # filter df_data to only keep the desired feature columns
@@ -167,7 +131,7 @@ def train_random_forest_model(s, logging):
     df_data = df_data.dropna()
 
     y = df_data["interface"]
-    X = drop_cols_not_used_in_ML(df_data, s["excel_file_with_settings"])
+    X = drop_cols_not_used_in_ML(logging, df_data, s["excel_file_with_settings"])
 
     X.to_csv(train_data_used_for_model_csv)
 
@@ -223,7 +187,7 @@ def predict_test_dataset_with_THOIPA_DEPRECATED(train_setname, test_setname, s, 
     fit = joblib.load(model_pkl)
 
     df_data = pd.read_csv(test_data_csv, index_col=0)
-    df_testdata = drop_cols_not_used_in_ML(df_data, s["excel_file_with_settings"])
+    df_testdata = drop_cols_not_used_in_ML(logging, df_data, s["excel_file_with_settings"])
     tX = df_testdata
 
     tp = fit.predict_proba(tX)
@@ -328,7 +292,7 @@ def run_10fold_cross_validation(s, logging):
     # drop training data (full protein) that don't have enough homologues
     df_data = df_data.loc[df_data.n_homologues >= s["min_n_homol_training"]]
 
-    X = drop_cols_not_used_in_ML(df_data, s["excel_file_with_settings"])
+    X = drop_cols_not_used_in_ML(logging, df_data, s["excel_file_with_settings"])
     y = df_data["interface"]
 
     skf = StratifiedKFold(n_splits=s["cross_validation_number_of_splits"])
@@ -480,7 +444,7 @@ def run_LOO_validation_OLD_non_multiprocessing(s, df_set, logging):
     BO_all_df = pd.DataFrame()
     pred_colname = "THOIPA_{}_LOO".format(s["set_number"])
 
-    n_features = thoipapy.RF_features.RF_Train_Test.drop_cols_not_used_in_ML(df_data, s["excel_file_with_settings"]).shape[1]
+    n_features = thoipapy.RF_features.RF_Train_Test.drop_cols_not_used_in_ML(logging, df_data, s["excel_file_with_settings"]).shape[1]
     forest = thoipapy.RF_features.RF_Train_Test.THOIPA_classifier_with_settings(s, n_features)
 
     for i in df_set.index:
@@ -501,7 +465,7 @@ def run_LOO_validation_OLD_non_multiprocessing(s, df_set, logging):
             # skip protein
             continue
         df_train = df_data.loc[df_data.acc_db != acc_db]
-        X_train = thoipapy.RF_features.RF_Train_Test.drop_cols_not_used_in_ML(df_train, s["excel_file_with_settings"])
+        X_train = thoipapy.RF_features.RF_Train_Test.drop_cols_not_used_in_ML(logging, df_train, s["excel_file_with_settings"])
         y_train = df_train["interface"]
 
         #######################################################################################################
@@ -514,7 +478,7 @@ def run_LOO_validation_OLD_non_multiprocessing(s, df_set, logging):
         testdata_combined_file = os.path.join(s["features_folder"], "combined", database, "{}.surr20.gaps5.combined_features.csv".format(acc))
         df_test = pd.read_csv(testdata_combined_file)
 
-        X_test = thoipapy.RF_features.RF_Train_Test.drop_cols_not_used_in_ML(df_test, s["excel_file_with_settings"])
+        X_test = thoipapy.RF_features.RF_Train_Test.drop_cols_not_used_in_ML(logging, df_test, s["excel_file_with_settings"])
         y_test = df_test["interface"].fillna(0).astype(int)
 
         #######################################################################################################
@@ -648,7 +612,7 @@ def run_LOO_validation(s, df_set, logging):
     start = time.clock()
     pred_colname = "THOIPA_{}_LOO".format(s["set_number"])
 
-    n_features = thoipapy.RF_features.RF_Train_Test.drop_cols_not_used_in_ML(df_data, s["excel_file_with_settings"]).shape[1]
+    n_features = thoipapy.RF_features.RF_Train_Test.drop_cols_not_used_in_ML(logging, df_data, s["excel_file_with_settings"]).shape[1]
     forest = thoipapy.RF_features.RF_Train_Test.THOIPA_classifier_with_settings(s, n_features)
 
     #list of all dictionaries for each protein, for multiprocessing
@@ -678,7 +642,7 @@ def run_LOO_validation(s, df_set, logging):
             # skip protein
             continue
         # df_train = df_data.loc[df_data.acc_db != acc_db]
-        # X_train = thoipapy.RF_features.RF_Train_Test.drop_cols_not_used_in_ML(df_train, s["excel_file_with_settings"])
+        # X_train = thoipapy.RF_features.RF_Train_Test.drop_cols_not_used_in_ML(logging, df_train, s["excel_file_with_settings"])
         # y_train = df_train["interface"]
 
         #######################################################################################################
@@ -778,13 +742,13 @@ def run_LOO_validation(s, df_set, logging):
 def LOO_single_prot(d):
     testdata_combined_file, THOIPA_prediction_csv = d["testdata_combined_file"], d["THOIPA_prediction_csv"]
     #X_train, y_train = d["X_train"], d["y_train"]
-    df_data = d["df_data"]
+    df_data, logger = d["df_data"], d["logger"]
     excel_file_with_settings = d["excel_file_with_settings"]
     forest, pred_colname = d["forest"], d["pred_colname"]
     acc_db, database = d["acc_db"], d["database"]
 
     df_train = df_data.loc[df_data.acc_db != acc_db]
-    X_train = thoipapy.RF_features.RF_Train_Test.drop_cols_not_used_in_ML(df_train, excel_file_with_settings)
+    X_train = thoipapy.RF_features.RF_Train_Test.drop_cols_not_used_in_ML(logger, df_train, excel_file_with_settings)
     y_train = df_train["interface"]
 
     n, logger, excel_file_with_settings = d["n"], d["logger"], d["excel_file_with_settings"]
@@ -797,7 +761,7 @@ def LOO_single_prot(d):
     # df_test = df_data.loc[df_data.acc_db == acc_db]
     df_test = pd.read_csv(testdata_combined_file)
 
-    X_test = thoipapy.RF_features.RF_Train_Test.drop_cols_not_used_in_ML(df_test, excel_file_with_settings)
+    X_test = thoipapy.RF_features.RF_Train_Test.drop_cols_not_used_in_ML(logger, df_test, excel_file_with_settings)
     y_test = df_test["interface"].fillna(0).astype(int)
 
     #######################################################################################################
@@ -947,7 +911,7 @@ def calculate_variable_importance(s, logging):
     df_data = pd.read_csv(train_data_csv, index_col=0)
     df_data = df_data.dropna()
 
-    X = drop_cols_not_used_in_ML(df_data, s["excel_file_with_settings"])
+    X = drop_cols_not_used_in_ML(logging, df_data, s["excel_file_with_settings"])
     y = df_data["interface"]
     n_features = X.shape[1]
     forest = THOIPA_classifier_with_settings(s, n_features)
