@@ -922,7 +922,6 @@ def create_LOO_validation_fig(s, df_set, logging):
     logging.info('{} LOO crossvalidation. AUBOC10({:.2f}).'.format(s["setname"], AUBOC10))
     logging.info("create_LOO_validation_fig finished ({})".format(LOO_crossvalidation_AUC_bar_png))
 
-
 def calculate_variable_importance(s, logging):
     """Calculate the variable importance (mean decrease gini) for all variables in THOIPA.
 
