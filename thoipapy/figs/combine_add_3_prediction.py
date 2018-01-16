@@ -142,6 +142,7 @@ def create_AUC_BoAUC_figs_THOIPA_PREDDIMER_TMDOCK(s,df_set,logging):
         mean_fpr = np.linspace(0, 1, 100)
         BO_curve_data_csv = os.path.join(s["thoipapy_data_folder"], "Results", "compare_predictors",
                                                 "{}.{}_BO_Curve_data.csv".format(s["setname"],predictor_name.replace('*',"")))
+        thoipapy.utils.make_sure_path_exists(BO_curve_data_csv, isfile=True)
         BO_data_excel = os.path.join(s["thoipapy_data_folder"], "Results", "compare_predictors",
                                             "{}.{}_BO_curve_data.xlsx".format(s['setname'],predictor_name.replace('*',"")))
         BO_linechart_png = os.path.join(s["thoipapy_data_folder"], "Results", "compare_predictors",

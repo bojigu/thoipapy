@@ -330,6 +330,7 @@ def setup_error_logging(logfile, level_console="DEBUG", level_logfile="DEBUG", p
     config['handlers']['file']['level'] = level_logfile
 
     #create a blank logging file
+    thoipapy.utils.make_sure_path_exists(logfile, isfile=True)
     with open(logfile, 'w') as f:
         pass
 

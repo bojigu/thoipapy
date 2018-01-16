@@ -1719,7 +1719,7 @@ def combine_all_features(s, full_seq, acc, database, TMD_seq, TMD_start, feature
     df_features_single_protein.to_csv(feature_combined_file)
     logging.info("{} combine_all_features_mult_prot finished ({})".format(acc, feature_combined_file))
 
-def return_num_tmd(s, acc,database, full_seq, logging):
+def return_num_tmd(s, acc, database, full_seq, logging):
     """Calculate the number of TMDs for the protein using the phobius prediction algorithm.
 
     Important when mixing crystal dataset (multipass) with single-pass protein datasets.
@@ -1764,8 +1764,10 @@ def return_num_tmd(s, acc,database, full_seq, logging):
                     tm_num = tm_num + 1
         return tm_num
     else:
-        sys.stdout.write("no phobius output file found, try to check the reason")
-        return None
+        #sys.stdout.write("no phobius output file found, try to check the reason")
+        #return None
+        raise FileNotFoundError("{} Phobius output not found ({})".format(acc, full_seq_phobius_output_file))
+
 
 def normalise_features(df_features_single_protein):
     """Normalise selected features.

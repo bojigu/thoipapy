@@ -152,7 +152,8 @@ def parse_NCBI_xml_to_csv(s, acc, blast_xml_tar, BLAST_csv_tar, TMD_start, TMD_e
                         n_hsps_excluded_due_to_e_value_cutoff += 1
                         #sys.stdout.write("|")
 
-    logging.info("n_hsps_excluded_due_to_e_value_cutoff = {}".format(n_hsps_excluded_due_to_e_value_cutoff))
+    if n_hsps_excluded_due_to_e_value_cutoff > 0:
+        logging.info("n_hsps_excluded_due_to_e_value_cutoff = {}".format(n_hsps_excluded_due_to_e_value_cutoff))
 
     # delete the extracted xml file
     thoipapy.utils.delete_BLAST_xml(BLAST_xml_file)
