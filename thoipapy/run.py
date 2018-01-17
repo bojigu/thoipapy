@@ -240,6 +240,10 @@ if __name__ == "__main__":
         if s["create_AUC_BoAuc_fig_bestset"] == True:
             thoipapy.figs.combine_add_3_prediction.create_AUC_BoAUC_figs_THOIPA_PREDDIMER_TMDOCK(s, df_set, logging)
 
+        if s["create_merged_heatmap"] == True:
+            thoipapy.figs.merged_heatmap.create_merged_heatmap(s, df_set, logging)
+
+
         if "download_10_homologues_from_ncbi" in s:
             if s["download_10_homologues_from_ncbi"] == True:
                 thoipapy.NCBI_BLAST.download.download.download_10_homologues_from_ncbi(s, df_set, logging)

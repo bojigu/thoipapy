@@ -39,7 +39,7 @@ def combine_file_add_PREDDIMER_TMDOCK_THOIPA_prediction(s, df_set, logging):
     # add the THOIPA prediction name to the list of columns to keep
     pred_colname = "THOIPA_{}_LOO".format(s["set_number"])
     # for simplicity, keep only the predictions. Since the index is unique, it can be added later to the combined file.
-    columns_kept_in_combined_file = ['residue_num', 'residue_name', pred_colname, 'TMDOCK', 'PREDDIMER','interface','interface_score','LIPS_L*E', 'LIPS_surface_ranked']
+    columns_kept_in_combined_file = ['residue_num', 'residue_name', pred_colname, 'TMDOCK', 'PREDDIMER','interface','interface_score',"LIPS_surface_ranked", 'LIPS_L*E',"polarity","Conservation","coev_i4_DI"]
 
     #set_list = thoipapy.figs.fig_utils.get_set_lists(s)
     PREDDIMER_TMDOCK_folder = os.path.join(s["base_dir"], "figs", "FigBZ18-PreddimerTmdockComparison")
@@ -67,6 +67,7 @@ def combine_file_add_PREDDIMER_TMDOCK_THOIPA_prediction(s, df_set, logging):
         dfm = pd.read_csv(train_data_file)
         # set the unique index, based on the residue number in the full sequence
         dfm.set_index("res_num_full_seq", inplace=True)
+        dfm["Conservation"] = -1 * dfm["Entropy"]
         file_list = [THOIPA_prediction_csv, PREDDIMER_prediction_file, TMDOCK_prediction_file]
         prediction_name_list = [pred_colname, "PREDDIMER", "TMDOCK"]
         n_files_merged = 0
@@ -225,17 +226,18 @@ def create_AUC_BoAUC_figs_THOIPA_PREDDIMER_TMDOCK(s,df_set,logging):
 
 def create_mean_AUC_barchart_comp(auc_mean_list,linechar_name_list,predictors_mean_auc_barchart_png):
     plt.close("all")
-    # plt.rcParams.update({'font.size': 8})
-    figsize = np.array([3.42, 3.42]) * 2  # DOUBLE the real size, due to problems on Bo computer with fontsizes
+    # plt.rcParams.update({'font.size': 2})
+    mean_auc_name = [linechar_name_list[0],'\n{}\n'.format(linechar_name_list[1]),linechar_name_list[2],'\n{}\n'.format(linechar_name_list[3])]
+    figsize = np.array([3.42, 3.42])   # DOUBLE the real size, due to problems on Bo computer with fontsizes
     fig, ax = plt.subplots(figsize=figsize)
     # replace the protein names
     x = y_pos = np.arange(len(linechar_name_list))
     plt.bar(x, auc_mean_list, width=0.6, color = 'rgbk', alpha=0.5)
-    plt.xticks(y_pos, linechar_name_list)
+    plt.xticks(y_pos, mean_auc_name,fontsize=6)
     plt.ylabel("performance value\n(mean auc)")
 
     #ax.set_ylabel("performance value\n(auc)")
-    ax.set_ylim(0, 0.65)
+    ax.set_ylim(0, 0.70)
     ax.legend()  # (["sample size = 5", "sample size = 10"])
 
     fig.tight_layout()
@@ -247,12 +249,12 @@ def create_4predictors_bocurve_linechart(df_o_minus_r_mean_df,AUBOC10_list,linec
     # BO_linechart_png
     plt.close("all")
     figsize = np.array([3.42, 3.42]) * 2  # DOUBLE the real size, due to problems on Bo computer with fontsizes
+    color_list = 'rgbk'
     fig, ax = plt.subplots(figsize=figsize)
-
     for i,column in enumerate(df_o_minus_r_mean_df.columns):
         # df_o_minus_r_mean_df.plot(ax=ax, color="#0f7d9b", linestyle="-", label="prediction (AUBOC10 : {:0.2f}".format(AUBOC10))
         label_name = "{}(AUBOC:{:.2f})".format(linechar_name_list[i] ,AUBOC10_list[i])
-        df_o_minus_r_mean_df[column].plot(ax=ax,  linestyle="-",label=label_name)
+        df_o_minus_r_mean_df[column].plot(ax=ax,  linestyle="-",label=label_name, color = color_list[i])
     ax.plot([1, 10], [0, 0], color="#0f7d9b", linestyle="--", label="random", alpha=0.5)
     ax.grid(False)
     ax.set_ylabel("performance value\n(observed - random)", color="#0f7d9b")

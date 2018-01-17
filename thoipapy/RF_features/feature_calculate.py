@@ -1856,6 +1856,7 @@ def normalise_number_of_homologues(x):
     else:
         return 8
 
+
 def add_experimental_data_to_combined_features_mult_prot(s, df_set, logging):
     """Run add_experimental_data_to_combined_features for a list of proteins.
 

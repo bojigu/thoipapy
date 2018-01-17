@@ -957,7 +957,7 @@ def fig_variable_importance(s, logging):
     """
     plt.style.use('seaborn-whitegrid')
     plt.rcParams['errorbar.capsize'] = 1
-    plt.rcParams.update({'font.size': 8})
+    plt.rcParams.update({'font.size':4})
     from korbinian.utils import create_colour_lists
     colour_dict = create_colour_lists()
 
@@ -981,7 +981,7 @@ def create_var_imp_plot(df_imp, colour_dict, variable_importance_png, n_features
     # determine the plot height by the number of features
     # currently set for 30
     plot_height = 4 * n_features_in_plot / 30
-    figsize = np.array([3.42, plot_height])
+    figsize = np.array([4.42, plot_height])
     fig, ax = plt.subplots(figsize=figsize)
 
     TUMblue = colour_dict["TUM_colours"]['TUMBlue']
