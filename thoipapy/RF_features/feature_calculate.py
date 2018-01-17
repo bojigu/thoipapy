@@ -797,7 +797,7 @@ def parse_freecontact_coevolution(acc, freecontact_file, freecontact_parsed_csv,
     writer = csv.writer(freecontact_parsed_csv_handle, delimiter=',', quotechar='"',
                         lineterminator='\n',
                         quoting=csv.QUOTE_NONNUMERIC, doublequote=True)
-    writer.writerow(["residue_num", "residue_name", "coev_all_max_DI_1", "coev_all_top4_DI", "coev_all_top8_DI", "CumDI4", "CumDI8", "coev_all_max_MI_1", "coev_all_top4_MI", "coev_all_top8_MI", "CumMI4", "CumMI8"])
+    writer.writerow(["residue_num", "residue_name", "coev_all_max_DI", "coev_all_top4_DI", "coev_all_top8_DI", "CumDI4", "CumDI8", "coev_all_max_MI", "coev_all_top4_MI", "coev_all_top8_MI", "CumMI4", "CumMI8"])
     for index in range(len(CumDI8)):
         csv_header_for_cumulative_strength_file = [(index + 1), dict_residuenum_residuename[(index + 1)],
                                                    coev_all_max_DI_1[index], coev_all_top4_DI[index], coev_all_top8_DI[index], CumDI4[index], CumDI8[index], coev_all_max_MI_1[index], coev_all_top4_MI[index],
@@ -889,7 +889,8 @@ def parse_freecontact_coevolution(acc, freecontact_file, freecontact_parsed_csv,
         """
 
         # calculate max and mean over all connections (within TMD) for that residue position
-        df_out["coev_all_max_XI"] = dfp.max(axis=1)
+        # DEPRECATED. SAME AS ABOVE.
+        #df_out["coev_all_max_XI"] = dfp.max(axis=1)
         df_out["coev_all_mean_XI"] = dfp.mean(axis=1)
 
         for pos in range(TMD_start, TMD_end + 1):
