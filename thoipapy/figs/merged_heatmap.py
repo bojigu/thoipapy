@@ -6,6 +6,7 @@ import numpy as np
 import pandas as pd
 import seaborn as sns
 from matplotlib import pyplot as plt
+from eccpy.tools import normalise_between_2_values
 
 def create_merged_heatmap(s, df_set, logging):
     """Create heatmap from merged disruption, combined_prediction, and features in  traindata.csv files.
@@ -31,45 +32,54 @@ def create_merged_heatmap(s, df_set, logging):
     #################################################################
     #             EXTRACT NAMES FROM NAMES EXCEL FILE               #
     #################################################################
-    names_excel_path = os.path.join(s["dropbox_dir"],"ETRA_NMR_names.xlsx")
-    df_names = pd.read_excel(names_excel_path, index_col=0)
-    # restrict names dict to only that database
 
-    dfh_cols = ["res_num_full_seq", "residue_name","interface", "interface_score", "THOIPA_5_LOO", "PREDDIMER", "TMDOCK", "LIPS_surface_ranked", "Conservation", "polarity", "coev_i4_DI"]
+
+    dfh_cols = ["res_num_full_seq", "residue_name","interface", "interface_score", "THOIPA_5_LOO", "PREDDIMER", "TMDOCK", "LIPS_surface_ranked", "conservation", "polarity", "coev_i4_DI"]
     for i in df_set.index:
         acc = df_set.loc[i, "acc"]
-        #if acc =="2axtM1":
+        #if acc =="1orqC4":
         database = df_set.loc[i, "database"]
+        names_excel_path = os.path.join(s["dropbox_dir"], "ETRA_NMR_names.xlsx")
+        df_names = pd.read_excel(names_excel_path, index_col=0)
+        # restrict names dict to only that database
         df_names = df_names.loc[df_names.database == database]
         if acc in df_names.index:
             savename = "{}_{}".format(acc, df_names.loc[acc, "shortname"])
             fig_label = df_names.loc[acc, "concatname"]
+            print(savename,fig_label)
         else:
-            savename = acc
-            fig_label = acc
+            savename = acc + "_{}".format(database)
+            fig_label = acc + "_{}".format(database)
         create_single_merged_heatmap(s, acc, database,savename, fig_label,dfh_cols)
 
 def create_single_merged_heatmap(s, acc, database,savename, fig_label, dfh_cols):
         merged_data_csv_path = os.path.join(s["thoipapy_data_folder"], "Merged", database, "{}.merged.csv".format(acc))
         dfm = pd.read_csv(merged_data_csv_path, engine = "python")
-        dfm["LIPS_L*E"] = -1 * dfm["LIPS_L*E"]
-        dfm["PREDDIMER"] = -1 * dfm["PREDDIMER"]
-        dfm["TMDOCK"] = -1 * dfm["TMDOCK"]
-        if database == "crystal" or database == "NMR":
-            # (it is closest distance and low value means high propencity of interfacial)
-            dfm["interface_score"] = -1 * dfm["interface_score"]
-
-        heatmap_path = os.path.join(s["thoipapy_data_folder"], "heatmap",database, "{}.png".format(savename))
-        heatmap_pdf_path = os.path.join(s["thoipapy_data_folder"], "heatmap",database,"pdf","{}.pdf".format(savename))
-        heatmap_data_xlsx_path = os.path.join(s["thoipapy_data_folder"], "heatmap",database,"xlsx","{}_merged.xlsx".format(savename))
+        heatmap_path = os.path.join(s["thoipapy_data_folder"], "heatmap",database, "{}.png".format(acc))
+        heatmap_pdf_path = os.path.join(s["thoipapy_data_folder"], "heatmap",database,"pdf","{}.pdf".format(acc))
+        heatmap_data_xlsx_path = os.path.join(s["thoipapy_data_folder"], "heatmap",database,"xlsx","{}_merged.xlsx".format(acc))
         thoipapy.utils.make_sure_path_exists(heatmap_pdf_path, isfile=True)
         thoipapy.utils.make_sure_path_exists(heatmap_data_xlsx_path, isfile=True)
         # create dfh, dataframe for heatmap
         dfh = dfm[dfh_cols].copy()
+        dfh = dfh.rename(columns={"THOIPA_5_LOO": "THOIPA", "LIPS_surface_ranked":"LIPS"})
+        dfh_cols= ["THOIPA" if x== "THOIPA_5_LOO" else x for x in dfh_cols]
+        dfh_cols = ["LIPS" if x == "LIPS_surface_ranked" else x for x in dfh_cols]
         dfh.dropna(inplace=True)
         dfh.reset_index(drop=True, inplace=True)
         # normalise all the data columns between 0 and 1
         cols_to_plot = dfh_cols[2:]
+        dfh["PREDDIMER"] = normalise_between_2_values(dfh["PREDDIMER"], 0.5, 10, invert=True)
+        #dfm["PREDDIMER"] = -1 * dfm["PREDDIMER"]
+        dfh["TMDOCK"] = normalise_between_2_values(dfh["TMDOCK"], 0.5, 10, invert=True)
+        #dfm["TMDOCK"] = -1 * dfm["TMDOCK"]
+        if database == "crystal" or database == "NMR":
+            # normalize crystal and NMR closedistance to between 0 and 1 with invert, min and max values were set as 2 and 10 angstrom
+            dfh["interface_score"] = normalise_between_2_values(dfh["interface_score"],2,10,invert=True)
+            #dfm["interface_score"] = -1 * dfm["interface_score"]
+        elif database == "ETRA":
+            ###normalize ETRA experimental disruption value to the range of 0 to 1 without invert, the min and max values were set as -0.4 and 0.4
+            dfh["interface_score"] = normalise_between_2_values(dfh["interface_score"], -0.4, 0.4)
         for col in cols_to_plot:
             dfh[col] = eccpy.tools.normalise_0_1(dfh[col])[0]
 
