@@ -53,6 +53,9 @@ def combine_file_add_PREDDIMER_TMDOCK_THOIPA_prediction(s, df_set, logging):
         full_seq = df_set.loc[i, "full_seq"]
         database = df_set.loc[i, "database"]
         train_data_file = os.path.join(s["features_folder"], "combined", database,"{}.surr20.gaps5.combined_features.csv".format(acc))
+        combined_data_file = os.path.join(s["base_dir"], "data_zb","THOIPA_data","Features","combined",database,
+                                       "{}.surr20.gaps5.combined_features.csv".format(acc))
+        thoipapy.utils.make_sure_path_exists(combined_data_file,isfile=True)
         #THOIPA_prediction_file = os.path.join(s["thoipapy_data_folder"], "Predictions", "testset_trainset",database, "{}.THOIPA.trainset04.csv".format(acc))
         #THOIPA_prediction_file = os.path.join(s["thoipapy_data_folder"], "Predictions", "leave_one_out", database, "{}.{}.LOO.prediction.csv".format(acc, s["setname"]))
         THOIPA_prediction_csv = os.path.join(s["thoipapy_data_folder"], "Predictions", "leave_one_out", database, "{}.{}.{}.LOO.prediction.csv".format(acc, database, s["setname"]))
@@ -106,6 +109,7 @@ def combine_file_add_PREDDIMER_TMDOCK_THOIPA_prediction(s, df_set, logging):
 
                 n_files_merged += 1
         # keep the desired columns
+        dfm.to_csv(combined_data_file)
         new_columns_kept_in_combined_file = list(set(columns_kept_in_combined_file).intersection(set(dfm.columns)))
         dfm = dfm[new_columns_kept_in_combined_file]
         # save to "Merged" folder, so as not to get confused with the "combined" files
