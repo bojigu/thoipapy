@@ -603,48 +603,34 @@ def parse_BO_data_csv_to_excel(bo_data_csv, BO_data_excel, logging, predictor_na
 
     """ORIGINAL BO DATA CSV LOOKS LIKE THIS
     Top1 = sample size 1
-    Ono = overlap in data
-    Rno = random overlap based on that sequence length and sample size
-    Pono = p-value for finding that overlap
+    observed_overlap = overlap in data
+    random_overlap = random overlap based on that sequence length and sample size
+    p_value_from_obs_overlap = p-value for finding that overlap
 
-         Unnamed: 1  O75460  P02724  P05106  P06583  P08514  P0A6S5  P23470  P35590  Q08345  Q12983  Q16827  Q16832  Q6ZRP7  Q7L4S7  Q8NI60  Q92729  Q9Y286  Ratio (Average(Ono)/Average(Rno))
-    NaN         Ono    0.00    0.00    0.00    0.00    0.00    0.00    0.00    0.00    1.00    0.00    0.00    1.00    1.00    1.00    0.00    0.00    0.00                                NaN
-    Top1        Rno    0.05    0.04    0.05    0.04    0.05    0.06    0.04    0.04    0.05    0.04    0.04    0.05    0.06    0.05    0.06    0.04    0.05                               5.01
-    NaN        Pono    0.95    0.96    0.95    0.96    0.95    0.94    0.96    0.96    0.05    0.96    0.96    0.05    0.06    0.05    0.94    0.96    0.95                                NaN
-    NaN         Ono    1.00    1.00    0.00    1.00    0.00    0.00    1.00    0.00    1.00    1.00    0.00    1.00    2.00    2.00    0.00    0.00    1.00                                NaN
-    Top2        Rno    0.19    0.17    0.21    0.15    0.19    0.24    0.17    0.17    0.19    0.17    0.16    0.19    0.25    0.20    0.24    0.17    0.20                               3.68
+                               parameters  1orqC4-crystal  1xioA4-crystal  2axtM1-crystal  2h8aA2-crystal  2j58A1-crystal  2wpdJ1-crystal  3dwwA2-crystal  3h9vA2-crystal  3rifA2-crystal     ...       Q12913-ETRA  Q12983-ETRA  Q16827-ETRA  Q16832-ETRA  Q6ZRP7-ETRA  Q7L4S7-ETRA  Q8NI60-ETRA  Q92729-ETRA  Q99IB8-ETRA  Q9Y286-ETRA
+    sample_size                                                                                                                                                                               ...                                                                                                                                       
+    Top1                 observed_overlap        0.000000            0.00            0.00            1.00            0.00        0.000000        0.000000        0.000000        0.000000     ...              1.00     1.000000         0.00     0.000000     0.000000         0.00     0.000000     0.000000     1.000000         0.00
+    Top1                   random_overlap        0.035714            0.05            0.05            0.05            0.05        0.045455        0.043478        0.034483        0.043478     ...              0.05     0.041667         0.04     0.047619     0.047619         0.05     0.047619     0.041667     0.047619         0.05
+    Top1         p_value_from_obs_overlap        0.964286            0.95            0.95            0.05            0.95        0.954545        0.956522        0.965517        0.956522     ...              0.05     0.041667         0.96     0.952381     0.952381         0.95     0.952381     0.958333     0.047619         0.95
+    Top2                 observed_overlap        0.000000            0.00            0.00            2.00            0.00        1.000000        0.000000        0.000000        1.000000     ...              1.00     1.000000         0.00     1.000000     0.000000         2.00     2.000000     1.000000     1.000000         2.00
+    Top2                   random_overlap        0.142857            0.20            0.20            0.20            0.20        0.181818        0.173913        0.137931        0.173913     ...              0.20     0.166667         0.16     0.190476     0.190476         0.20     0.190476     0.166667     0.190476         0.20
     """
 
     dfb.index = dfb.index + "_" + dfb.parameters
-    print(dfb.index)
 
-    # # create an index based on sample size [1 1 1 2 2 2  etc..
-    # ind = []
-    # for i in range(1, int((len(dfb) / 3)) + 1):
-    #     ind += list(np.array([1, 1, 1]) * i)
-    # dfb.index = ind
-    # dfb.index.name = "sample size"
-    # print(dfb.index)
+    """NOW INDICES ARE UNIQUE
 
-    """NOW INDICES ARE BASED ON SAMPLE SIZE
+                                             parameters  1orqC4-crystal  1xioA4-crystal  2axtM1-crystal  2h8aA2-crystal  2j58A1-crystal  2wpdJ1-crystal  3dwwA2-crystal  3h9vA2-crystal  3rifA2-crystal     ...       Q12913-ETRA  Q12983-ETRA  Q16827-ETRA  Q16832-ETRA  Q6ZRP7-ETRA  Q7L4S7-ETRA  Q8NI60-ETRA  Q92729-ETRA  Q99IB8-ETRA  Q9Y286-ETRA
+    parameters                                                                                                                                                                                                  ...                                                                                                                                       
+    Top1_observed_overlap                  observed_overlap        0.000000            0.00            0.00            1.00            0.00        0.000000        0.000000        0.000000        0.000000     ...              1.00     1.000000         0.00     0.000000     0.000000         0.00     0.000000     0.000000     1.000000         0.00
+    Top1_random_overlap                      random_overlap        0.035714            0.05            0.05            0.05            0.05        0.045455        0.043478        0.034483        0.043478     ...              0.05     0.041667         0.04     0.047619     0.047619         0.05     0.047619     0.041667     0.047619         0.05
+    Top1_p_value_from_obs_overlap  p_value_from_obs_overlap        0.964286            0.95            0.95            0.05            0.95        0.954545        0.956522        0.965517        0.956522     ...              0.05     0.041667         0.96     0.952381     0.952381         0.95     0.952381     0.958333     0.047619         0.95
+    Top2_observed_overlap                  observed_overlap        0.000000            0.00            0.00            2.00            0.00        1.000000        0.000000        0.000000        1.000000     ...              1.00     1.000000         0.00     1.000000     0.000000         2.00     2.000000     1.000000     1.000000         2.00
+    Top2_random_overlap                      random_overlap        0.142857            0.20            0.20            0.20            0.20        0.181818        0.173913        0.137931        0.173913     ...              0.20     0.166667         0.16     0.190476     0.190476         0.20     0.190476     0.166667     0.190476         0.20
 
-                Unnamed: 1  O75460  P02724  P05106  P06583  P08514  P0A6S5  P23470  P35590  Q08345  Q12983  Q16827  Q16832  Q6ZRP7  Q7L4S7  Q8NI60  Q92729  Q9Y286  Ratio (Average(Ono)/Average(Rno))
-    sample size                                                                                                                                                                                      
-    1                  Ono    0.00    0.00    0.00    0.00    0.00    0.00    0.00    0.00    1.00    0.00    0.00    1.00    1.00    1.00    0.00    0.00    0.00                                NaN
-    1                  Rno    0.05    0.04    0.05    0.04    0.05    0.06    0.04    0.04    0.05    0.04    0.04    0.05    0.06    0.05    0.06    0.04    0.05                               5.01
-    1                 Pono    0.95    0.96    0.95    0.96    0.95    0.94    0.96    0.96    0.05    0.96    0.96    0.05    0.06    0.05    0.94    0.96    0.95                                NaN
-    2                  Ono    1.00    1.00    0.00    1.00    0.00    0.00    1.00    0.00    1.00    1.00    0.00    1.00    2.00    2.00    0.00    0.00    1.00                                NaN
-    2                  Rno    0.19    0.17    0.21    0.15    0.19    0.24    0.17    0.17    0.19    0.17    0.16    0.19    0.25    0.20    0.24    0.17    0.20      
     """
     cols_to_drop = set(["parameters", "Ratio (Average(Ono)/Average(Rno))"]).intersection(set(dfb.columns))
     dfb.drop(cols_to_drop, axis=1, inplace=True)
-    # obs_cols = dfb.loc[dfb.parameters == "observed_overlap"].index
-    # rand_cols = dfb.loc[dfb.parameters == "random_overlap"].index
-    # p_cols = dfb.loc[dfb.parameters == "p_value_from_obs_overlap"].index
-    #
-    # obs_cols = dfb.loc[dfb.parameters == "observed_overlap"].index
-    # rand_cols = dfb.loc[dfb.parameters == "random_overlap"].index
-    # p_cols = dfb.loc[dfb.parameters == "p_value_from_obs_overlap"].index
 
     # split into separate dataframes. Relabel index to match sample size.
     # dataframe of observed overlaps
@@ -657,46 +643,38 @@ def parse_BO_data_csv_to_excel(bo_data_csv, BO_data_excel, logging, predictor_na
     dfp = dfb[dfb.index.str.contains("p_value_from_obs_overlap")]
     dfp.index = range(1, dfp.shape[0] + 1)
 
-    # dfobs = dfb.iloc[::3, 1:-1].astype(int)
-    # # dataframe of random calculated overlaps
-    # dfrand = dfb.iloc[1::3, 1:-1]
-    # # dataframe of p-values
-    # dfp = dfb.iloc[2::3, 1:-1]
-
     """FOR EXAMPLE df_obs NOW LOOKS LIKE THIS, WITH A ROW FOR EACH SAMPLE SIZE:
 
-                 O75460  P02724  P05106  P06583  P08514  P0A6S5  P23470  P35590  Q08345  Q12983  Q16827  Q16832  Q6ZRP7  Q7L4S7  Q8NI60  Q92729  Q9Y286
-    sample size                                                                                                                                        
-    1                 0       0       0       0       0       0       0       0       1       0       0       1       1       1       0       0       0
-    2                 1       1       0       1       0       0       1       0       1       1       0       1       2       2       0       0       1
-    3                 1       1       1       2       1       0       1       0       2       2       0       2       2       2       0       0       2
-    4                 2       2       1       2       1       0       2       1       3       2       1       3       2       2       0       1       2
-    5                 3       3       2       3       2       1       2       2       4       4       2       4       3       2       1       2       3"""
+       1orqC4-crystal  1xioA4-crystal  2axtM1-crystal  2h8aA2-crystal  2j58A1-crystal  2wpdJ1-crystal  3dwwA2-crystal  3h9vA2-crystal  3rifA2-crystal  3spcA2-crystal     ...       Q12913-ETRA  Q12983-ETRA  Q16827-ETRA  Q16832-ETRA  Q6ZRP7-ETRA  Q7L4S7-ETRA  Q8NI60-ETRA  Q92729-ETRA  Q99IB8-ETRA  Q9Y286-ETRA
+    1               0               0               0               1               0               0               0               0               0               0     ...                 1            1            0            0            0            0            0            0            1            0
+    2               0               0               0               2               0               1               0               0               1               0     ...                 1            1            0            1            0            2            2            1            1            2
+    3               1               0               0               3               1               1               0               0               1               0     ...                 3            3            0            2            0            2            2            1            1            2
+    4               1               0               0               3               1               1               0               0               3               0     ...                 3            4            1            4            0            2            3            2            2            2
+    5               1               0               0               4               2               2               2               0               4               0     ...                 3            4            1            4            1            2            3            3            3            2
+    """
 
     df_o_minus_r = dfobs - dfrand
     df_o_over_r = dfobs / dfrand
 
     """df_o_minus_r is negative where the result is lower than random
 
-                 O75460  P02724  P05106  P06583  P08514  P0A6S5  P23470  P35590  Q08345  Q12983  Q16827  Q16832  Q6ZRP7  Q7L4S7  Q8NI60  Q92729  Q9Y286
-    sample size                                                                                                                                        
-    1             -0.05   -0.04   -0.05   -0.04   -0.05   -0.06   -0.04   -0.04    0.95   -0.04   -0.04    0.95    0.94    0.95   -0.06   -0.04   -0.05
-    2              0.81    0.83   -0.21    0.85   -0.19   -0.24    0.83   -0.17    0.81    0.83   -0.16    0.81    1.75    1.80   -0.24   -0.17    0.80
-    3              0.57    0.61    0.53    1.65    0.57   -0.53    0.61   -0.37    1.57    1.63   -0.36    1.57    1.44    1.55   -0.53   -0.37    1.55
-    4              1.24    1.30    0.16    1.38    0.24   -0.94    1.30    0.33    2.24    1.33    0.36    2.24    1.00    1.20   -0.94    0.33    1.20
-    5              1.81    1.91    0.68    2.04    0.81   -0.47    0.91    0.96    2.81    2.96    1.00    2.81    1.44    0.75   -0.47    0.96    1.75
+       1orqC4-crystal  1xioA4-crystal  2axtM1-crystal  2h8aA2-crystal  2j58A1-crystal  2wpdJ1-crystal  3dwwA2-crystal  3h9vA2-crystal  3rifA2-crystal  3spcA2-crystal     ...       Q12913-ETRA  Q12983-ETRA  Q16827-ETRA  Q16832-ETRA  Q6ZRP7-ETRA  Q7L4S7-ETRA  Q8NI60-ETRA  Q92729-ETRA  Q99IB8-ETRA  Q9Y286-ETRA
+    1       -0.035714           -0.05           -0.05            0.95           -0.05       -0.045455       -0.043478       -0.034483       -0.043478       -0.034483     ...              0.95     0.958333        -0.04    -0.047619    -0.047619        -0.05    -0.047619    -0.041667     0.952381        -0.05
+    2       -0.142857           -0.20           -0.20            1.80           -0.20        0.818182       -0.173913       -0.137931        0.826087       -0.137931     ...              0.80     0.833333        -0.16     0.809524    -0.190476         1.80     1.809524     0.833333     0.809524         1.80
+    3        0.678571           -0.45           -0.45            2.55            0.55        0.590909       -0.391304       -0.310345        0.608696       -0.310345     ...              2.55     2.625000        -0.36     1.571429    -0.428571         1.55     1.571429     0.625000     0.571429         1.55
+    4        0.428571           -0.80           -0.80            2.20            0.20        0.272727       -0.695652       -0.551724        2.304348       -0.551724     ...              2.20     3.333333         0.36     3.238095    -0.761905         1.20     2.238095     1.333333     1.238095         1.20
+    5        0.107143           -1.25           -1.25            2.75            0.75        0.863636        0.913043       -0.862069        2.913043       -0.862069     ...              1.75     2.958333         0.00     2.809524    -0.190476         0.75     1.809524     1.958333     1.809524         0.75
 
 
     df_o_over_r is where the result is lower than random.
-    This is not quite a fair comparison, as the zeros are caused by 0 overlap / signigicant random overlap
+    This is probably not quite a fair comparison, as the zeros are caused by 0 overlap / signigicant random overlap
 
-                   O75460    P02724    P05106    P06583    P08514    P0A6S5    P23470    P35590     Q08345    Q12983  Q16827     Q16832     Q6ZRP7     Q7L4S7    Q8NI60    Q92729    Q9Y286
-    sample size                                                                                                                                                                            
-    1            0.000000  0.000000  0.000000  0.000000  0.000000  0.000000  0.000000  0.000000  20.000000  0.000000  0.0000  20.000000  16.666667  20.000000  0.000000  0.000000  0.000000
-    2            5.263158  5.882353  0.000000  6.666667  0.000000  0.000000  5.882353  0.000000   5.263158  5.882353  0.0000   5.263158   8.000000  10.000000  0.000000  0.000000  5.000000
-    3            2.325581  2.564103  2.127660  5.714286  2.325581  0.000000  2.564103  0.000000   4.651163  5.405405  0.0000   4.651163   3.571429   4.444444  0.000000  0.000000  4.444444
-    4            2.631579  2.857143  1.190476  3.225806  1.315789  0.000000  2.857143  1.492537   3.947368  2.985075  1.5625   3.947368   2.000000   2.500000  0.000000  1.492537  2.500000
-    5            2.521008  2.752294  1.515152  3.125000  1.680672  0.680272  1.834862  1.923077   3.361345  3.846154  2.0000   3.361345   1.923077   1.600000  0.680272  1.923077  2.400000
+       1orqC4-crystal  1xioA4-crystal  2axtM1-crystal  2h8aA2-crystal  2j58A1-crystal  2wpdJ1-crystal  3dwwA2-crystal  3h9vA2-crystal  3rifA2-crystal  3spcA2-crystal     ...       Q12913-ETRA  Q12983-ETRA  Q16827-ETRA  Q16832-ETRA  Q6ZRP7-ETRA  Q7L4S7-ETRA  Q8NI60-ETRA  Q92729-ETRA  Q99IB8-ETRA  Q9Y286-ETRA
+    1        0.000000             0.0             0.0       20.000000        0.000000        0.000000            0.00             0.0        0.000000             0.0     ...         20.000000        24.00       0.0000     0.000000         0.00     0.000000     0.000000     0.000000    21.000000     0.000000
+    2        0.000000             0.0             0.0       10.000000        0.000000        5.500000            0.00             0.0        5.750000             0.0     ...          5.000000         6.00       0.0000     5.250000         0.00    10.000000    10.500000     6.000000     5.250000    10.000000
+    3        3.111111             0.0             0.0        6.666667        2.222222        2.444444            0.00             0.0        2.555556             0.0     ...          6.666667         8.00       0.0000     4.666667         0.00     4.444444     4.666667     2.666667     2.333333     4.444444
+    4        1.750000             0.0             0.0        3.750000        1.250000        1.375000            0.00             0.0        4.312500             0.0     ...          3.750000         6.00       1.5625     5.250000         0.00     2.500000     3.937500     3.000000     2.625000     2.500000
+    5        1.120000             0.0             0.0        3.200000        1.600000        1.760000            1.84             0.0        3.680000             0.0     ...          2.400000         3.84       1.0000     3.360000         0.84     1.600000     2.520000     2.880000     2.520000     1.600000
     """
     #######################################################################################################
     #                                                                                                     #
@@ -706,12 +684,11 @@ def parse_BO_data_csv_to_excel(bo_data_csv, BO_data_excel, logging, predictor_na
 
     AUBOC10_df = pd.DataFrame()
     for acc_db in df_o_minus_r.columns:
-        print("acc_db in parse_BO_data_csv_to_excel", acc_db)
         o_minus_r_ser = df_o_minus_r[acc_db]
         AUBOC10_df.loc[acc_db, "AUBOC10"] = np.trapz(o_minus_r_ser, o_minus_r_ser.index)
 
     mean_AUBOC10 = AUBOC10_df["AUBOC10"].mean()
-    logging.info("---{} mean_AUBOC10({:.2f}) n={} ---".format(predictor_name, mean_AUBOC10, AUBOC10_df.shape[0]))
+    logging.info("---{: >24} mean_AUBOC10({:.2f}) n={} ---".format(predictor_name, mean_AUBOC10, AUBOC10_df.shape[0]))
     #################################################################
     #           SAVE PARSED DATAFRAMES TO AN EXCEL FILE             #
     #################################################################

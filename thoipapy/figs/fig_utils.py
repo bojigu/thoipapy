@@ -80,7 +80,6 @@ def calc_best_overlap(acc_db, df, experiment_col="interface_score", pred_col="TH
     odf: output dataframe
 
     """
-    tm_len = df.shape[0]
 
     if experiment_col not in df.columns:
         raise IndexError("{} {} is not in the columns.\ntry re-running add_predictions_to_combined_files\ncolumn list = {}".format(acc_db, experiment_col, df.columns))
@@ -93,6 +92,10 @@ def calc_best_overlap(acc_db, df, experiment_col="interface_score", pred_col="TH
 
     # drop any nan values in either the experimental column, or the prediction column
     df_sel = df.dropna(subset=[experiment_col, pred_col])
+
+    # get the TMD length from the number of rows with data, after dropping nan
+    # as PREDDIMER has longer TMDs, this will result in different statistics regarding the overlaps
+    tm_len = df_sel.shape[0]
 
     # rank of experimental values
     df_sel["exp_argsort"] = df_sel[experiment_col].argsort().argsort()

@@ -162,7 +162,7 @@ def compare_predictors(s):
         BO_data_excel = os.path.join(s["thoipapy_data_folder"], "Results", "compare_testset_trainset", "data", "{}".format(predictor_name), "data", "BO_curve_data.xlsx")
 
         if not os.path.isfile(BO_data_excel):
-            raise FileNotFoundError("BO_data_excel does not exist ({}). Try running run_testset_trainset_validation in run_figs.py".format(BO_data_excel))
+            raise FileNotFoundError("BO_data_excel does not exist ({}). Try running run_testset_trainset_validation".format(BO_data_excel))
 
         df = pd.read_excel(BO_data_excel, sheetname="df_o_minus_r", index_col=0)
 

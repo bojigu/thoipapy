@@ -162,7 +162,6 @@ def create_AUC_BoAUC_figs_THOIPA_PREDDIMER_TMDOCK(s,df_set,logging):
             sys.stdout.flush()
             acc = df_set.loc[i, "acc"]
 
-            #if acc == "O75460" or acc == "P02724":
             database = df_set.loc[i, "database"]
             acc_db = acc + "-" + database
             merged_data_csv_path = os.path.join(s["thoipapy_data_folder"], "Merged", database, "{}.merged.csv".format(acc))
@@ -176,7 +175,7 @@ def create_AUC_BoAUC_figs_THOIPA_PREDDIMER_TMDOCK(s,df_set,logging):
             #     merged_data_df = merged_data_df.dropna(subset=["interface_score", "PREDDIMER"])
 
             if database == "crystal" or database == "NMR":
-                # (it is closest distance and low value means high propencity of interfacial)
+                # (it is closest distance and low value means high propensity of interfacial)
                 merged_data_df["interface_score"] = -1 * merged_data_df["interface_score"]
             experiment_col = "interface_score"
             BO_single_prot_df = thoipapy.figs.fig_utils.calc_best_overlap(acc_db, merged_data_df, experiment_col, predictor_name)
@@ -195,19 +194,13 @@ def create_AUC_BoAUC_figs_THOIPA_PREDDIMER_TMDOCK(s,df_set,logging):
             xv_dict[acc_db] = {"fpr": fpr, "tpr": tpr, "auc": auc_value}
 
         BO_data_df.to_csv(BO_curve_data_csv)
-
         # THOIPA_linechart_mean_obs_and_rand = analyse_bo_curve_underlying_data(THOIPA_BO_curve_data_csv, BO_curve_folder, names_excel_path)
         thoipapy.figs.Create_Bo_Curve_files.parse_BO_data_csv_to_excel(BO_curve_data_csv, BO_data_excel, logging, predictor_name)
         AUC_ser = pd.Series(auc_dict)
-        print(AUC_ser.tail())
         AUC_ser.sort_values(inplace=True, ascending=False)
-        print(AUC_ser.tail())
         auc_mean_list.append(AUC_ser.mean())
-        print(BO_data_excel)
         AUBOC10_ser = pd.read_excel(BO_data_excel, sheetname="AUBOC10", index_col=0)["AUBOC10"].copy()
-        print(AUBOC10_ser.head())
-        print(AUBOC10_ser.tail())
-        print("AUBOC10_ser.shape", AUBOC10_ser.shape)
+
         df_o_minus_r = pd.read_excel(BO_data_excel, sheetname="df_o_minus_r", index_col=0)
         df_o_minus_r.columns = pd.Series(df_o_minus_r.columns).replace(namedict)
         df_o_minus_r_mean = df_o_minus_r.T.mean()
@@ -219,9 +212,7 @@ def create_AUC_BoAUC_figs_THOIPA_PREDDIMER_TMDOCK(s,df_set,logging):
         AUC_AUBOC_name_list.append("{}-AUBOC10".format(predictor_name))
         thoipapy.figs.Create_Bo_Curve_files.save_BO_linegraph_and_barchart(s, BO_data_excel, BO_linechart_png, BO_barchart_png, namedict,
                                                  logging, AUC_ser)
-        die
-        #print(type(AUC_ser))
-        #print(type(AUBOC10_ser))
+
         AUC_AUBOC_df = pd.concat([AUC_AUBOC_df,AUC_ser, AUBOC10_ser], axis=1, join="outer")
     #sys.stdout.write(auc_mean_list)
     df_o_minus_r_mean_df.columns = linechar_name_list

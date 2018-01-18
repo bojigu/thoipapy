@@ -215,7 +215,7 @@ def run_Rscipt_random_forest(s, output_file_loc, logging):
         prediction_output_file = os.path.join("/home/students/zeng/workspace/test2/out", "%s.pred.out") % acc
         prediction_output_file_handle=open(prediction_output_file,"w")
         exect_str = "{Rscript} {Random_Forest_R_code} {train_data} {test_data} {output}".format(Rscript=Rscript_loc, Random_Forest_R_code=Random_Forest_R_code_file,train_data=train_data_file,test_data=tmp_protein_test_data,output=output_file_loc)
-        print(exect_str)
+        sys.stdout.write(exect_str)
         class Command(object):
             def __init__(self, cmd):
                 self.cmd = cmd
@@ -223,23 +223,23 @@ def run_Rscipt_random_forest(s, output_file_loc, logging):
 
             def run(self, timeout):
                 def target():
-                    print('Thread started')
+                    sys.stdout.write('Thread started')
                     self.process = subprocess.Popen(self.cmd,shell=True,stdout=subprocess.PIPE)
                     #subprocess.call(self.cmd,shell=True,stdout=prediction_output_file_handle)
                     subprocess.call(self.cmd, shell=True)
                     #self.process.communicate()
-                    # print(self.process.communicate())
-                    print('Thread finished')
+                    # sys.stdout.write(self.process.communicate())
+                    sys.stdout.write('Thread finished')
 
                 thread = threading.Thread(target=target)
                 thread.start()
 
                 thread.join(timeout)
                 if thread.is_alive():
-                    print('Terminating process')
+                    sys.stdout.write('Terminating process')
                     self.process.terminate()
                     thread.join()
-                print(self.process.returncode)
+                    sys.stdout.write(self.process.returncode)
 
         command = Command(exect_str)
         # command=Command(exect_str)
@@ -593,7 +593,6 @@ def run_LOO_validation(s, df_set, logging):
     df_set = thoipapy.utils.drop_redundant_proteins_from_list(df_set, logging)
 
     train_data_csv = os.path.join(s["set_results_folder"], "{}_train_data.csv".format(s["setname"]))
-    crossvalidation_folder = os.path.join(s["set_results_folder"], "crossvalidation")
     LOO_crossvalidation_pkl = os.path.join(s["set_results_folder"], "crossvalidation", "data", "{}_LOO_crossvalidation.pkl".format(s["setname"]))
     BO_all_data_csv = os.path.join(s["set_results_folder"], "crossvalidation", "data", "{}_LOO_BO_data.csv".format(s["setname"]))
     BO_curve_folder = os.path.join(s["set_results_folder"], "crossvalidation")
@@ -608,7 +607,6 @@ def run_LOO_validation(s, df_set, logging):
     df_data = df_data.loc[df_data.n_homologues >= s["min_n_homol_training"]]
 
     acc_db_list = df_data.acc_db.unique()
-    xv_dict = {}
     start = time.clock()
     pred_colname = "THOIPA_{}_LOO".format(s["set_number"])
 
@@ -689,11 +687,11 @@ def run_LOO_validation(s, df_set, logging):
     acc_db_list = df_set.acc_db.tolist()
 
     #iterate through the output tuple (auc_dict, BO_df)
-    for nn, t in enumerate(val_list):
+    for nn, val_tuple in enumerate(val_list):
         acc_db = acc_db_list[nn]
-        auc_dict = t[0]
+        auc_dict = val_tuple[0]
         all_auc.append(auc_dict["auc"])
-        BO_df = t[1]
+        BO_df = val_tuple[1]
         # join the data for all BO curves together
         if nn == 0:
             BO_all_df = BO_df
