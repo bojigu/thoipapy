@@ -240,7 +240,7 @@ def lipo_from_pssm_mult_prot(s, df_set, logging):
 
     # set name of hydrophobicity scale
     # current options are KyteDoolittle, Wimley, Hessa, Elazar, Hopp-Woods, Cornette, Eisenberg, Rose, Janin, Engelman(GES)
-    scalename = "Hessa"
+    scalename = s["lipophilicity_scale"]
     failed_acc_list = []
     plot_linechart = True
 
@@ -444,6 +444,9 @@ def lipo_from_pssm(acc, pssm_csv_surr5, lipo_csv, tm_surr_left, tm_surr_right, s
     # take mean over a window that includes the 3 N-terminal residues to the original position
     window = [0, 0, 0, "x", 1, 1, 1]
     polarity_i1_i3_C = calculate_weighted_windows(df_lipo["polarity".format(scalename)], window, statistic="mean", full_output=False)
+    window = [1, 1, 1]
+    polarity_i_i1 = calculate_weighted_windows(df_lipo["polarity".format(scalename)], window, statistic="mean", full_output=False)
+
 
     # replace positions with nan that could not be properly calculated
     # this inlcludes the first 3 positions of polarity_i1_i3_N, and last 3 positions of polarity_i1_i3_C
@@ -451,24 +454,20 @@ def lipo_from_pssm(acc, pssm_csv_surr5, lipo_csv, tm_surr_left, tm_surr_right, s
     polarity_i1_i3_N.iloc[0:3] = np.nan
     polarity_i1_i3_C.iloc[-3:] = np.nan
 
-    """df_lipo now looks like this.
-
-              lipo_hessa  IND  polarity_i1_i3_N  polarity_i1_i3_C
-    position                                                                   
-    0          -0.339400   V1                      NaN                 1.231000
-    1           0.890600   S2                      NaN                 0.632300
-    2           2.073000   P3                      NaN                -0.019160
-    3           0.729400   G4                 0.437367                -0.120600
-    ....
-
-    28          2.495600  R29                 0.131967                 0.197203
-    29         -0.437800  L30                 0.530000                      NaN
-    30         -0.298367  V31                 0.688400                      NaN
-    31          1.919388  P32                 0.586478                      NaN
-    """
-
     df_lipo["polarity_i1-i3_N".format(scalename)] = polarity_i1_i3_N
     df_lipo["polarity_i1-i3_C".format(scalename)] = polarity_i1_i3_C
+    df_lipo["polarity_i_i1".format(scalename)] = polarity_i_i1
+
+    """df_lipo now looks like this.
+
+              polarity  polarity_i1-i3_N  polarity_i1-i3_C  polarity_i_i1
+    position                                                             
+    0         0.587961               NaN          0.752395       1.051956
+    1         1.515952               NaN          0.216839       1.055965
+    2         1.063982               NaN          0.039074       0.752395
+    3        -0.322749          0.527983          0.214767       0.289119
+    4         0.126125          0.376197          0.171906       0.065124
+    """
 
     df_lipo["residue_num"] = df["aa_pos"].values
     df_lipo["residue_name"] = df["residue_name"].values
@@ -477,23 +476,17 @@ def lipo_from_pssm(acc, pssm_csv_surr5, lipo_csv, tm_surr_left, tm_surr_right, s
     df_lipo["residue_num"] = [int(i) - tm_surr_left for i in df_lipo["residue_num"]]
     df_lipo.index = df_lipo["residue_num"]
 
-    df_lipo = df_lipo[["residue_name", "polarity".format(scalename), "polarity_i1-i3_N".format(scalename),"polarity_i1-i3_C".format(scalename)]]
+    df_lipo = df_lipo[["residue_name", "polarity".format(scalename), "polarity_i1-i3_N".format(scalename),"polarity_i1-i3_C".format(scalename), "polarity_i_i1".format(scalename)]]
     #df_lipo.set_index("IND", inplace=True)
     if tm_surr_right ==0 :
         df_lipo = df_lipo[tm_surr_left:]
     else:
         df_lipo=df_lipo[tm_surr_left:-tm_surr_right]
 
-    # print(acc, "\n", df_lipo,"\n\n")
-    # with pd.ExcelWriter(lipo_excel) as writer:
-    #     df.to_excel(writer, sheet_name="df")
-    #     dfa.to_excel(writer, sheet_name="dfa")
-    #     df_lipo.to_excel(writer, sheet_name="df_lipo")
-
     # convert to positive values.
     # lowest value in Hessa scale is -0.6 for Ile
     lowest_polarity_value = 0.6
-    columns = ["polarity", "polarity_i1-i3_N", "polarity_i1-i3_C"]
+    columns = ["polarity", "polarity_i1-i3_N", "polarity_i1-i3_C", "polarity_i_i1"]
     for col in columns:
         df_lipo[col] = df_lipo[col] + lowest_polarity_value
 
@@ -983,11 +976,16 @@ def parse_freecontact_coevolution(acc, freecontact_file, freecontact_parsed_csv,
 
     # Normalise each. Add as new ColumnName_norm
     for col in coev_colname_list:
-        if "DI" in col:
-            df_out["{}_norm".format(col)] = normalise_0_1(df_out[col])[0]
-        elif "MI" in col:
-            df_out["{}_nonnorm".format(col)] = df_out[col]
-            df_out[col] = normalise_0_1(df_out[col])[0]
+        # if "DI" in col:
+        #     df_out["{}_norm".format(col)] = normalise_0_1(df_out[col])[0]
+        # elif "MI" in col:
+        #     df_out["{}_nonnorm".format(col)] = df_out[col]
+        #     df_out[col] = normalise_0_1(df_out[col])[0]
+
+        # ASSUME NORMALISED VALUES ARE TO BE USED IN ALL CASES
+        df_out["{}_nonnorm".format(col)] = df_out[col]
+        df_out[col] = normalise_0_1(df_out[col])[0]
+
 
     df_out.to_csv(freecontact_parsed_csv)
 
@@ -1825,6 +1823,7 @@ def normalise_features(df_features_single_protein):
     df_features_single_protein["DE"] = df_features_single_protein["D"] + df_features_single_protein["E"]
     df_features_single_protein["KR"] = df_features_single_protein["K"] + df_features_single_protein["R"]
     df_features_single_protein["QN"] = df_features_single_protein["Q"] + df_features_single_protein["N"]
+    df_features_single_protein["LIV"] = df_features_single_protein["L"] + df_features_single_protein["I"] + df_features_single_protein["V"]
 
     # round the relative positions so there are 10 options (to 10%)
     df_features_single_protein["RelPos_TMD"] = df_features_single_protein["RelPos_TMD"].round(1)
@@ -2108,7 +2107,7 @@ def add_physical_parameters_to_features(acc, feature_combined_file, logging):
                     if re.search("residue_num", row1):
                         array1 = row1.rstrip().split(",")
                         array1[42:14] = ["Hydrophobicity_sAA", "Charge_sAA", "PI_sAA", "LIPSI_sAA", "LIPSM_sAA", "Hydrophobic_sAA", "Aliphatic_sAA", "Aromatic_sAA", "Polar_sAA", "Negative_sAA", "Positive_sAA", "Small_sAA", "Cbbranched_sAA",
-                                         "Mass_sAA", "Volume_sAA"]
+                                         "residue_mass", "Volume_sAA"]#Mass_sAA
                         # array2 = array1[0:31]
                         # array2.extend(["Hydrophobicity", "Charge", "PI", "LIPS", "LIPSM", "Hydrophobic", "Aliphatic", "Aromatic", "Polar","Negative", "Positive", "Small", "Cbbranched", "Mass", "Volumn", array1[30].rstrip()])
                         writer.writerow(array1)
