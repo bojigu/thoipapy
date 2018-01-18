@@ -598,7 +598,7 @@ def save_THOIPA_pred_indiv_prot(s, model_pkl, testdata_combined_file, THOIPA_pre
     #     df_o_over_r.to_excel(writer, sheet_name="df_o_over_r")
 
 
-def parse_BO_data_csv_to_excel(bo_data_csv, BO_data_excel, logging):
+def parse_BO_data_csv_to_excel(bo_data_csv, BO_data_excel, logging, predictor_name=""):
     dfb = pd.read_csv(bo_data_csv, index_col=0)
 
     """ORIGINAL BO DATA CSV LOOKS LIKE THIS
@@ -615,12 +615,16 @@ def parse_BO_data_csv_to_excel(bo_data_csv, BO_data_excel, logging):
     Top2        Rno    0.19    0.17    0.21    0.15    0.19    0.24    0.17    0.17    0.19    0.17    0.16    0.19    0.25    0.20    0.24    0.17    0.20                               3.68
     """
 
-    # create an index based on sample size [1 1 1 2 2 2  etc..
-    ind = []
-    for i in range(1, int((len(dfb) / 3)) + 1):
-        ind += list(np.array([1, 1, 1]) * i)
-    dfb.index = ind
-    dfb.index.name = "sample size"
+    dfb.index = dfb.index + "_" + dfb.parameters
+    print(dfb.index)
+
+    # # create an index based on sample size [1 1 1 2 2 2  etc..
+    # ind = []
+    # for i in range(1, int((len(dfb) / 3)) + 1):
+    #     ind += list(np.array([1, 1, 1]) * i)
+    # dfb.index = ind
+    # dfb.index.name = "sample size"
+    # print(dfb.index)
 
     """NOW INDICES ARE BASED ON SAMPLE SIZE
 
@@ -632,13 +636,32 @@ def parse_BO_data_csv_to_excel(bo_data_csv, BO_data_excel, logging):
     2                  Ono    1.00    1.00    0.00    1.00    0.00    0.00    1.00    0.00    1.00    1.00    0.00    1.00    2.00    2.00    0.00    0.00    1.00                                NaN
     2                  Rno    0.19    0.17    0.21    0.15    0.19    0.24    0.17    0.17    0.19    0.17    0.16    0.19    0.25    0.20    0.24    0.17    0.20      
     """
-    # split into separate dataframes
+    cols_to_drop = set(["parameters", "Ratio (Average(Ono)/Average(Rno))"]).intersection(set(dfb.columns))
+    dfb.drop(cols_to_drop, axis=1, inplace=True)
+    # obs_cols = dfb.loc[dfb.parameters == "observed_overlap"].index
+    # rand_cols = dfb.loc[dfb.parameters == "random_overlap"].index
+    # p_cols = dfb.loc[dfb.parameters == "p_value_from_obs_overlap"].index
+    #
+    # obs_cols = dfb.loc[dfb.parameters == "observed_overlap"].index
+    # rand_cols = dfb.loc[dfb.parameters == "random_overlap"].index
+    # p_cols = dfb.loc[dfb.parameters == "p_value_from_obs_overlap"].index
+
+    # split into separate dataframes. Relabel index to match sample size.
     # dataframe of observed overlaps
-    dfobs = dfb.iloc[::3, 1:-1].astype(int)
+    dfobs = dfb[dfb.index.str.contains("observed_overlap")].astype(int)
+    dfobs.index = range(1, dfobs.shape[0] + 1)
     # dataframe of random calculated overlaps
-    dfrand = dfb.iloc[1::3, 1:-1]
+    dfrand = dfb[dfb.index.str.contains("random_overlap")]
+    dfrand.index = range(1, dfrand.shape[0] + 1)
     # dataframe of p-values
-    dfp = dfb.iloc[2::3, 1:-1]
+    dfp = dfb[dfb.index.str.contains("p_value_from_obs_overlap")]
+    dfp.index = range(1, dfp.shape[0] + 1)
+
+    # dfobs = dfb.iloc[::3, 1:-1].astype(int)
+    # # dataframe of random calculated overlaps
+    # dfrand = dfb.iloc[1::3, 1:-1]
+    # # dataframe of p-values
+    # dfp = dfb.iloc[2::3, 1:-1]
 
     """FOR EXAMPLE df_obs NOW LOOKS LIKE THIS, WITH A ROW FOR EACH SAMPLE SIZE:
 
@@ -683,11 +706,12 @@ def parse_BO_data_csv_to_excel(bo_data_csv, BO_data_excel, logging):
 
     AUBOC10_df = pd.DataFrame()
     for acc_db in df_o_minus_r.columns:
+        print("acc_db in parse_BO_data_csv_to_excel", acc_db)
         o_minus_r_ser = df_o_minus_r[acc_db]
         AUBOC10_df.loc[acc_db, "AUBOC10"] = np.trapz(o_minus_r_ser, o_minus_r_ser.index)
 
     mean_AUBOC10 = AUBOC10_df["AUBOC10"].mean()
-    logging.info("---mean_AUBOC10({:.2f})---".format(mean_AUBOC10))
+    logging.info("---{} mean_AUBOC10({:.2f}) n={} ---".format(predictor_name, mean_AUBOC10, AUBOC10_df.shape[0]))
     #################################################################
     #           SAVE PARSED DATAFRAMES TO AN EXCEL FILE             #
     #################################################################

@@ -156,10 +156,12 @@ def create_AUC_BoAUC_figs_THOIPA_PREDDIMER_TMDOCK(s,df_set,logging):
                                               "{}.{}_AUBOC10_barchart.png".format(s['setname'],predictor_name.replace('*',"")))
         df_o_minus_r_mean_csv = os.path.join(s["thoipapy_data_folder"], "Results", "compare_predictors",
                                               "{}.df_o_minus_r_mean.csv".format(s['setname']))
+
         for i in df_set.index:
             sys.stdout.write(".")
             sys.stdout.flush()
             acc = df_set.loc[i, "acc"]
+
             #if acc == "O75460" or acc == "P02724":
             database = df_set.loc[i, "database"]
             acc_db = acc + "-" + database
@@ -195,11 +197,17 @@ def create_AUC_BoAUC_figs_THOIPA_PREDDIMER_TMDOCK(s,df_set,logging):
         BO_data_df.to_csv(BO_curve_data_csv)
 
         # THOIPA_linechart_mean_obs_and_rand = analyse_bo_curve_underlying_data(THOIPA_BO_curve_data_csv, BO_curve_folder, names_excel_path)
-        thoipapy.figs.Create_Bo_Curve_files.parse_BO_data_csv_to_excel(BO_curve_data_csv, BO_data_excel, logging)
+        thoipapy.figs.Create_Bo_Curve_files.parse_BO_data_csv_to_excel(BO_curve_data_csv, BO_data_excel, logging, predictor_name)
         AUC_ser = pd.Series(auc_dict)
+        print(AUC_ser.tail())
         AUC_ser.sort_values(inplace=True, ascending=False)
+        print(AUC_ser.tail())
         auc_mean_list.append(AUC_ser.mean())
+        print(BO_data_excel)
         AUBOC10_ser = pd.read_excel(BO_data_excel, sheetname="AUBOC10", index_col=0)["AUBOC10"].copy()
+        print(AUBOC10_ser.head())
+        print(AUBOC10_ser.tail())
+        print("AUBOC10_ser.shape", AUBOC10_ser.shape)
         df_o_minus_r = pd.read_excel(BO_data_excel, sheetname="df_o_minus_r", index_col=0)
         df_o_minus_r.columns = pd.Series(df_o_minus_r.columns).replace(namedict)
         df_o_minus_r_mean = df_o_minus_r.T.mean()
@@ -211,15 +219,16 @@ def create_AUC_BoAUC_figs_THOIPA_PREDDIMER_TMDOCK(s,df_set,logging):
         AUC_AUBOC_name_list.append("{}-AUBOC10".format(predictor_name))
         thoipapy.figs.Create_Bo_Curve_files.save_BO_linegraph_and_barchart(s, BO_data_excel, BO_linechart_png, BO_barchart_png, namedict,
                                                  logging, AUC_ser)
+        die
         #print(type(AUC_ser))
         #print(type(AUBOC10_ser))
         AUC_AUBOC_df = pd.concat([AUC_AUBOC_df,AUC_ser, AUBOC10_ser], axis=1, join="outer")
-    print(auc_mean_list)
+    #sys.stdout.write(auc_mean_list)
     df_o_minus_r_mean_df.columns = linechar_name_list
     AUC_AUBOC_df.columns = AUC_AUBOC_name_list
     AUC_AUBOC_df.index.name = "acc_db"
-    print(df_o_minus_r_mean_df, AUBOC10_list)
-    #print(AUC_AUBOC_df)
+    #sys.stdout.write(df_o_minus_r_mean_df, AUBOC10_list)
+    #sys.stdout.write(AUC_AUBOC_df)
     AUC_AUBOC_df.to_csv(AUC_AUBOC_file)
     THOIPA_best_set = s["THOIPA_best_set"]
     create_4predictors_AUC_AUBOC10_barchart(AUC_AUBOC_df, predictors_AUC_barchart_png, predictors_BOAUC10_barchart_png, namedict, THOIPA_best_set)
