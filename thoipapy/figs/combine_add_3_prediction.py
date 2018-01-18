@@ -53,7 +53,7 @@ def combine_file_add_PREDDIMER_TMDOCK_THOIPA_prediction(s, df_set, logging):
         full_seq = df_set.loc[i, "full_seq"]
         database = df_set.loc[i, "database"]
         train_data_file = os.path.join(s["features_folder"], "combined", database,"{}.surr20.gaps5.combined_features.csv".format(acc))
-        combined_data_file = os.path.join(s["base_dir"], "data_zb","THOIPA_data","Features","combined",database,
+        combined_data_file = os.path.join(s["dropbox_dir"], "THOIPA_data","Features","combined",database,
                                        "{}.surr20.gaps5.combined_features.csv".format(acc))
         thoipapy.utils.make_sure_path_exists(combined_data_file,isfile=True)
         #THOIPA_prediction_file = os.path.join(s["thoipapy_data_folder"], "Predictions", "testset_trainset",database, "{}.THOIPA.trainset04.csv".format(acc))
@@ -109,7 +109,7 @@ def combine_file_add_PREDDIMER_TMDOCK_THOIPA_prediction(s, df_set, logging):
 
                 n_files_merged += 1
         # keep the desired columns
-        dfm.to_csv(combined_data_file)
+        #dfm.to_csv(combined_data_file)
         new_columns_kept_in_combined_file = list(set(columns_kept_in_combined_file).intersection(set(dfm.columns)))
         dfm = dfm[new_columns_kept_in_combined_file]
         # save to "Merged" folder, so as not to get confused with the "combined" files
@@ -468,3 +468,46 @@ def merge_4_files_ALIGNMENT_METHOD(acc, full_seq, train_data_file, THOIPA_predic
 
     sys.stdout.write("\n{} finished. Merged data saved to {}".format(acc, merged_data_xlsx_path))
     sys.stdout.flush()
+
+def create_ROC_Curve_comp_4predictors(s,df_set,logging):
+
+    logging.info("start create_ROC_Curve_figs_THOIPA_PREDDIMER_TMDOCK_LIPS")
+    pred_colname = "THOIPA_{}_LOO".format(s["set_number"])
+    prediction_name_list = [pred_colname, "PREDDIMER", "TMDOCK", "LIPS_surface_ranked"]
+    ROC_4predictor_png = os.path.join(s["thoipapy_data_folder"], "Results", "compare_predictors",
+                                               "{}_ROC_4predictors.png".format(s['setname']))
+    figsize = np.array([3.42, 3.42]) * 2  # DOUBLE the real size, due to problems on Bo computer with fontsizes
+    fig, ax = plt.subplots(figsize=figsize)
+    for n, predictor in enumerate(prediction_name_list):
+        mean_tpr = 0.0
+        mean_fpr = np.linspace(0, 1, 100)
+        for i in df_set.index:
+            acc = df_set.loc[i, "acc"]
+            database = df_set.loc[i, "database"]
+            merged_data_csv_path = os.path.join(s["thoipapy_data_folder"], "Merged", database,
+                                                "{}.merged.csv".format(acc))
+            dfm = pd.read_csv(merged_data_csv_path, engine="python", index_col=0)
+            dfm.dropna(inplace=True)
+            interface = dfm["interface"].values
+            if n ==0 or n == 3:
+                predict = dfm[predictor].values
+            else:
+                predict = -1 * dfm[predictor].values
+            fpr, tpr, thresholds = roc_curve(interface, predict)
+            mean_tpr += interp(mean_fpr, fpr, tpr)
+            mean_tpr[0] = 0.0
+        mean_tpr /= len(df_set.index)
+        mean_tpr[-1] = 1.0
+        mean_auc = auc(mean_fpr, mean_tpr)
+
+        ax.plot(mean_fpr, mean_tpr, lw=1,label="{} (area = {:.2f})".format(predictor, mean_auc), alpha=0.8)
+    ax.plot([0, 1], [0, 1], '--', color=(0.6, 0.6, 0.6), label='random')
+    ax.set_xlim([-0.05, 1.05])
+    ax.set_ylim([-0.05, 1.05])
+    ax.set_xlabel("False positive rate")
+    ax.set_ylabel("True positive rate")
+    ax.legend(loc="lower right")
+    fig.tight_layout()
+    fig.savefig(ROC_4predictor_png, dpi=240)
+    # fig.savefig(crossvalidation_png[:-4] + ".pdf")
+    fig.savefig(thoipapy.utils.pdf_subpath(ROC_4predictor_png))
