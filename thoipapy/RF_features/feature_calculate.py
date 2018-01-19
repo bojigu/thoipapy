@@ -1605,10 +1605,11 @@ def combine_all_features_mult_prot(s, df_set, logging):
         feature_combined_file = os.path.join(s["features_folder"], "combined", database, "{}.surr{}.gaps{}.combined_features.csv".format(acc, s["num_of_sur_residues"], s["max_n_gaps_in_TMD_subject_seq"]))
         alignments_dir = os.path.join(s["homologues_folder"], "alignments", database)
         alignment_summary_csv = os.path.join(alignments_dir, "{}.surr{}.gaps{}.alignment_summary.csv".format(acc, s["num_of_sur_residues"], s["max_n_gaps_in_TMD_subject_seq"]))
+        full_seq_fasta_file = os.path.join(s["Protein_folder"], database, "{}.fasta".format(acc))
+        full_seq_phobius_output_file = os.path.join(s["Protein_folder"], database, "{}.phobius".format(acc))
+        combine_all_features(s , full_seq,acc, database, TMD_seq, TMD_start, feature_combined_file, entropy_file, pssm_csv, lipo_csv, freecontact_parsed_csv, relative_position_file, LIPS_parsed_csv, motifs_file, alignment_summary_csv,full_seq_fasta_file,full_seq_phobius_output_file, logging)
 
-        combine_all_features(s , full_seq,acc, database, TMD_seq, TMD_start, feature_combined_file, entropy_file, pssm_csv, lipo_csv, freecontact_parsed_csv, relative_position_file, LIPS_parsed_csv, motifs_file, alignment_summary_csv, logging)
-
-def combine_all_features(s, full_seq, acc, database, TMD_seq, TMD_start, feature_combined_file, entropy_file, pssm_csv, lipo_csv, freecontact_parsed_csv, relative_position_file, LIPS_parsed_csv, motifs_file, alignment_summary_csv, logging):
+def combine_all_features(s, full_seq, acc, database, TMD_seq, TMD_start, feature_combined_file, entropy_file, pssm_csv, lipo_csv, freecontact_parsed_csv, relative_position_file, LIPS_parsed_csv, motifs_file, alignment_summary_csv,full_seq_fasta_file,full_seq_phobius_output_file, logging):
     """Combine all the training features for a particular protein.
 
     Parameters
@@ -1711,7 +1712,7 @@ def combine_all_features(s, full_seq, acc, database, TMD_seq, TMD_start, feature
     df_features_single_protein["n_homologues"] = n_homologues
     # add if the protein is multipass or singlepass
     # TEMPORARY! NEEDS TO BE REPLACED WITH A TOPOLOGY PREDICTOR LATER
-    df_features_single_protein["n_TMDs"] = return_num_tmd(s, acc, database, full_seq, logging)
+    df_features_single_protein["n_TMDs"] = return_num_tmd(s, acc,  full_seq, full_seq_fasta_file,full_seq_phobius_output_file, logging)
     # if database == "crystal":
     #     df_features_single_protein["n_TMDs"] = 2
     # # elif database == "NMR":
@@ -1729,7 +1730,7 @@ def combine_all_features(s, full_seq, acc, database, TMD_seq, TMD_start, feature
     df_features_single_protein.to_csv(feature_combined_file)
     logging.info("{} combine_all_features_mult_prot finished ({})".format(acc, feature_combined_file))
 
-def return_num_tmd(s, acc, database, full_seq, logging):
+def return_num_tmd(s, acc,  full_seq, full_seq_fasta_file,full_seq_phobius_output_file,logging):
     """Calculate the number of TMDs for the protein using the phobius prediction algorithm.
 
     Important when mixing crystal dataset (multipass) with single-pass protein datasets.
@@ -1750,9 +1751,6 @@ def return_num_tmd(s, acc, database, full_seq, logging):
     logging : logging.Logger
         Python object with settings for logging to console and file.
     """
-    full_seq_fasta_file = os.path.join(s["Protein_folder"], database, "{}.fasta".format(acc))
-    full_seq_phobius_output_file = os.path.join(s["Protein_folder"], database, "{}.phobius".format(acc))
-    print(full_seq_phobius_output_file)
     utils.make_sure_path_exists(full_seq_fasta_file, isfile=True)
     with open(full_seq_fasta_file, 'w') as f:
         f.write(">{}\n{}".format(acc, full_seq))

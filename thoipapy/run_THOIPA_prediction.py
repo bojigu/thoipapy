@@ -11,7 +11,7 @@ from thoipapy.NCBI_BLAST.download.download import download_homologues_from_ncbi
 from thoipapy.NCBI_BLAST.parse.parser import parse_NCBI_xml_to_csv, extract_filtered_csv_homologues_to_alignments
 from thoipapy.RF_features.feature_calculate import create_PSSM_from_MSA, lipo_from_pssm, entropy_calculation, \
     coevolution_calculation_with_freecontact, parse_freecontact_coevolution, calc_relative_position, LIPS_score_calculation, \
-    parse_LIPS_score, combine_all_features, add_physical_parameters_to_features
+    parse_LIPS_score,motifs_from_seq, combine_all_features, add_physical_parameters_to_features
 
 def get_start_end_pl_surr(TMD_start, TMD_end, seqlen, surr):
     TMD_start_pl_surr = TMD_start - surr
@@ -22,7 +22,7 @@ def get_start_end_pl_surr(TMD_start, TMD_end, seqlen, surr):
         TMD_end_pl_surr = seqlen
     return TMD_start_pl_surr, TMD_end_pl_surr
 
-def run_THOIPA_prediction(protein_name, TMD_seq, full_seq, predictions_folder):
+def run_THOIPA_prediction(s,protein_name, TMD_seq, full_seq, predictions_folder):
     TMD_plus_full_seq = TMD_seq + "_" + full_seq
     # adjust encoding for md5 creation
     TMD_plus_full_seq = unicodedata.normalize('NFKD', TMD_plus_full_seq).encode('ascii','ignore')
@@ -49,7 +49,7 @@ def run_THOIPA_prediction(protein_name, TMD_seq, full_seq, predictions_folder):
         logging.warning("TMD sequence was not found in full protein sequence. Please check input sequences.")
         return
         # the following code will only continue if the TMD seq is found ONCE in the full protein seq
-
+    s["Protein_folder"] = predictions_folder
     blast_xml_file = os.path.join(out_folder, "BLAST_results.xml")
     xml_txt = blast_xml_file[:-4] + "_details.txt"
     xml_tar_gz = os.path.join(out_folder, "BLAST_results.xml.tar.gz")
@@ -67,6 +67,9 @@ def run_THOIPA_prediction(protein_name, TMD_seq, full_seq, predictions_folder):
     relative_position_file = os.path.join(out_folder,"relative_position.csv")
     LIPS_output_file = os.path.join(out_folder,"LIPS_output.csv")
     LIPS_parsed_csv = os.path.join(out_folder,"LIPS_output_parsed.csv")
+    motifs_file = os.path.join(out_folder,  "motifs.csv")
+    full_seq_fasta_file = os.path.join(out_folder,  "protein.fasta")
+    full_seq_phobius_output_file = os.path.join(out_folder,  "protein.phobius")
     feature_combined_file = os.path.join(out_folder, "features_combined.csv")
     alignment_summary_csv = os.path.join(out_folder, "homologues.alignment_summary.csv")
 
@@ -114,14 +117,18 @@ def run_THOIPA_prediction(protein_name, TMD_seq, full_seq, predictions_folder):
     tm_surr_right = TMD_end_pl_surr - TMD_end
     # reset to 5. AM NOT SURE WHY.
     if tm_surr_left >= 5:
-        tm_surr_left = 5
+        tm_surr_left_lipo = 5
+    else:
+        tm_surr_left_lipo = tm_surr_left
     if tm_surr_right >= 5:
-        tm_surr_right = 5
+        tm_surr_right_lipo = 5
+    else:
+        tm_surr_right_lipo = tm_surr_right
 
     thoipapy_module_path = os.path.dirname(os.path.abspath(thoipapy.__file__))
     hydrophob_scale_path = os.path.join(thoipapy_module_path, "setting", "hydrophobicity_scales.xlsx")
 
-    lipo_from_pssm(acc, pssm_surr5_csv, lipo_csv, tm_surr_left, tm_surr_right, s["lipophilicity_scale"], logging, plot_linechart=True)
+    lipo_from_pssm(acc, pssm_surr5_csv, lipo_csv, tm_surr_left_lipo, tm_surr_right_lipo, s["lipophilicity_scale"], logging, plot_linechart=True)
                  # (acc, pssm_csv_surr5, lipo_csv, tm_surr_left, tm_surr_right, scalename, logging, plot_linechart = False)
 
     entropy_calculation(acc, path_uniq_TMD_seqs_for_PSSM_FREECONTACT, entropy_file, logging)
@@ -132,16 +139,20 @@ def run_THOIPA_prediction(protein_name, TMD_seq, full_seq, predictions_folder):
     else:
         coevolution_calculation_with_freecontact(path_uniq_TMD_seqs_for_PSSM_FREECONTACT, freecontact_file, s["freecontact_dir"], logging)
 
-    parse_freecontact_coevolution(acc, freecontact_file, freecontact_parsed_csv, logging)
+    parse_freecontact_coevolution(acc, freecontact_file, freecontact_parsed_csv, TMD_start, TMD_end, logging)
 
     calc_relative_position(acc, path_uniq_TMD_seqs_for_PSSM_FREECONTACT, relative_position_file, TMD_start, seqlen, logging)
 
     LIPS_score_calculation(path_uniq_TMD_seqs_no_gaps_for_LIPS, LIPS_output_file)
 
     parse_LIPS_score(acc, LIPS_output_file, LIPS_parsed_csv, logging)
+    motifs_from_seq(TMD_seq, TMD_seq_pl_surr, tm_surr_left, tm_surr_right, motifs_file, logging)
 
     database = "standalone_prediction"
-    combine_all_features(acc, database, TMD_seq, feature_combined_file, entropy_file, pssm_csv, lipo_csv, freecontact_parsed_csv, relative_position_file, LIPS_parsed_csv, alignment_summary_csv, logging)
+    #combine_all_features(acc, database, TMD_seq, feature_combined_file, entropy_file, pssm_csv, lipo_csv, freecontact_parsed_csv, relative_position_file, LIPS_parsed_csv,motifs_file, alignment_summary_csv, logging)
+    combine_all_features(s, full_seq, acc, database, TMD_seq, TMD_start, feature_combined_file, entropy_file, pssm_csv,
+                         lipo_csv, freecontact_parsed_csv, relative_position_file, LIPS_parsed_csv, motifs_file,
+                         alignment_summary_csv, full_seq_fasta_file,full_seq_phobius_output_file,logging)
 
     add_physical_parameters_to_features(acc, feature_combined_file, logging)
 
@@ -181,4 +192,4 @@ if __name__ == "__main__":
     #predictions_folder = r"D:\data_thoipapy\Predictions"
     predictions_folder = os.path.normpath(args.f)
 
-    run_THOIPA_prediction(protein_name, TMD_seq, full_seq, predictions_folder)
+    run_THOIPA_prediction(s,protein_name, TMD_seq, full_seq, predictions_folder)

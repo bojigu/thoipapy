@@ -131,6 +131,8 @@ def create_AUC_BoAUC_figs_THOIPA_PREDDIMER_TMDOCK(s,df_set,logging):
     auc_mean_list=[]
     AUC_AUBOC_file = os.path.join(s["thoipapy_data_folder"], "Results", "compare_predictors",
                                                 "{}.4predictors_AUC_AUBOC.csv".format(s["setname"]))
+    mean_AUBOC_file = os.path.join(s["thoipapy_data_folder"], "Results", "compare_predictors",
+                                                "{}.4predictors_mean_AUBOC.csv".format(s["setname"]))
     predictors_AUC_barchart_png = os.path.join(s["thoipapy_data_folder"], "Results", "compare_predictors",
                                                 "{}.4predictors_AUC_barchart.png".format(s["setname"]))
     predictors_BOAUC10_barchart_png = os.path.join(s["thoipapy_data_folder"], "Results", "compare_predictors",
@@ -215,6 +217,8 @@ def create_AUC_BoAUC_figs_THOIPA_PREDDIMER_TMDOCK(s,df_set,logging):
 
         AUC_AUBOC_df = pd.concat([AUC_AUBOC_df,AUC_ser, AUBOC10_ser], axis=1, join="outer")
     #sys.stdout.write(auc_mean_list)
+    auc_mean_df = pd.DataFrame.from_records([AUBOC10_list], columns=linechar_name_list)
+    auc_mean_df.to_csv(mean_AUBOC_file)
     df_o_minus_r_mean_df.columns = linechar_name_list
     AUC_AUBOC_df.columns = AUC_AUBOC_name_list
     AUC_AUBOC_df.index.name = "acc_db"
