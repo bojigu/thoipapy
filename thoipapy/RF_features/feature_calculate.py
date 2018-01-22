@@ -435,9 +435,36 @@ def lipo_from_pssm(acc, pssm_csv_surr5, lipo_csv, tm_surr_left, tm_surr_right, s
     """
 
     df_lipo = pd.DataFrame()
+    # calculate the mean polarity at each position
     df_lipo["polarity".format(scalename)] = dfh.sum(axis=1)
-    #df_lipo["IND"] = df_lipo.index
+    # add a range index
     df_lipo.index = range(df_lipo.shape[0])
+
+    # make sure a high polarity value means the residues are polar
+    list_scales_polar_high_values = ["Hessa", "Elazar", "Hopp - Woods"]
+    list_scales_polar_low_values = ["KyteDoolittle", "Wimley", "Cornette", "Eisenberg", "Rose", "Janin", "Engelman(GES)"]
+
+    if scalename in list_scales_polar_high_values:
+        # everything is good in the world. Polar stuff is high.
+        pass
+    elif scalename in list_scales_polar_low_values :
+        # reverse all values so that polar = high
+        df_lipo = - df_lipo
+    else:
+        raise ValueError("Panic. The scalename is wrong somehow.")
+
+    # add the lowest value, so polarity starts at zero and gets larger
+    # e.g. lowest value in Hessa scale is -0.6 for Ile
+    min_value_dict = {"Hessa" : 0.6, "Elazar" : 1.92, "Hopp - Woods" : 3.4, "KyteDoolittle" : 4.5, "Wimley" : 1.85,
+                      "Cornette" : 5.7, "Eisenberg" : 1.38, "Rose" : 0.91, "Janin" : 0.9, "Engelman(GES)" : 3.7}
+    lowest_polarity_value = min_value_dict[scalename]
+    df_lipo = df_lipo + lowest_polarity_value
+
+    # lowest_polarity_value = 0.6
+    # columns = ["polarity", "polarity_i1-i3_N", "polarity_i1-i3_C", "polarity_i_i1"]
+    # for col in columns:
+    #     df_lipo[col] = df_lipo[col] + lowest_polarity_value
+
     # take mean over a window that includes the 3 N-terminal residues to the original position
     window = [1, 1, 1, "x", 0, 0, 0]
     polarity_i1_i3_N = calculate_weighted_windows(df_lipo["polarity".format(scalename)], window, statistic="mean", full_output=False)
@@ -482,13 +509,6 @@ def lipo_from_pssm(acc, pssm_csv_surr5, lipo_csv, tm_surr_left, tm_surr_right, s
         df_lipo = df_lipo[tm_surr_left:]
     else:
         df_lipo=df_lipo[tm_surr_left:-tm_surr_right]
-
-    # convert to positive values.
-    # lowest value in Hessa scale is -0.6 for Ile
-    lowest_polarity_value = 0.6
-    columns = ["polarity", "polarity_i1-i3_N", "polarity_i1-i3_C", "polarity_i_i1"]
-    for col in columns:
-        df_lipo[col] = df_lipo[col] + lowest_polarity_value
 
     df_lipo.to_csv(lipo_csv)
 
@@ -1939,6 +1959,17 @@ def add_experimental_data_to_combined_features(acc, database, TMD_seq, feature_c
             sys.stdout.write("\n{}, TMD_seq_in_merged_file   = {}\n".format(acc, TMD_seq_in_merged_file))
             #print("TMD_seq in original settings file and final merged features dataframe does not match.")
             raise IndexError("TMD_seq in original settings file and final merged features dataframe does not match.")
+
+        # create normalised interface scores from both ETRA and closedist(NMR/crystal) data
+        # 0 = non-interface
+        # 0.5 = intermediate
+        # 1 = definitely an interface
+        if database == "crystal" or database == "NMR":
+            # normalize crystal and NMR closedistance to between 0 and 1 with invert, min and max values were set as 2 and 10 angstrom
+            df_combined_plus_exp_data["interface_score_norm"] = normalise_between_2_values(df_combined_plus_exp_data["interface_score"], 2, 10, invert=True)
+        elif database == "ETRA":
+            ###normalize ETRA experimental disruption value to the range of 0 to 1 without invert, the min and max values were set as -0.4 and 0.4
+            df_combined_plus_exp_data["interface_score_norm"] = normalise_between_2_values(df_combined_plus_exp_data["interface_score"], -0.4, 0.4)
 
         # overwrite existing combined features file
         df_combined_plus_exp_data.to_csv(feature_combined_file)
