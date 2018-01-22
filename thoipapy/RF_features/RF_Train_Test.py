@@ -7,7 +7,7 @@ import thoipapy
 import sys
 from scipy import interp
 import matplotlib.pyplot as plt
-from sklearn.ensemble import RandomForestClassifier, ExtraTreesClassifier
+from sklearn.ensemble import RandomForestClassifier, ExtraTreesClassifier, ExtraTreesRegressor
 from sklearn.metrics import roc_curve, auc
 from sklearn.model_selection import StratifiedKFold
 import os
@@ -92,14 +92,29 @@ def THOIPA_classifier_with_settings(s, n_features):
     #                                 #random_state=s["random_state"]
     #                                 )
 
-    forest = ExtraTreesClassifier(n_estimators=s["RF_number_of_estimators"], n_jobs=s["n_CPU_cores"], criterion=s["criterion"],
-                                    min_samples_leaf=min_samples_leaf,
-                                    max_depth=max_depth,
-                                    oob_score=bool(s["oob_estimation"]),
-                                    bootstrap=bool(s["bootstrap"]),
-                                    max_features=max_features,
-                                    random_state=s["random_state"]
-                                    )
+    if s["bind_column"] == "interface":
+        forest = ExtraTreesClassifier(n_estimators=s["RF_number_of_estimators"], n_jobs=s["n_CPU_cores"], criterion=s["criterion"],
+                                        min_samples_leaf=min_samples_leaf,
+                                        max_depth=max_depth,
+                                        oob_score=bool(s["oob_estimation"]),
+                                        bootstrap=bool(s["bootstrap"]),
+                                        max_features=max_features,
+                                        random_state=s["random_state"]
+                                        )
+
+    # in case you want to try to run the ML as a regressor
+    elif s["bind_column"] == "interface_score_norm":
+        forest = ExtraTreesRegressor(n_estimators=s["RF_number_of_estimators"], n_jobs=s["n_CPU_cores"],
+                                        #criterion=s["criterion"],
+                                        min_samples_leaf=min_samples_leaf,
+                                        max_depth=max_depth,
+                                        oob_score=bool(s["oob_estimation"]),
+                                        bootstrap=bool(s["bootstrap"]),
+                                        max_features=max_features,
+                                        random_state=s["random_state"]
+                                        )
+    else:
+        raise ValueError("bind column in excel settings file is not recognised ({})".format(s["bind_column"]))
 
     return forest
 
@@ -466,7 +481,7 @@ def run_LOO_validation_OLD_non_multiprocessing(s, df_set, logging):
             continue
         df_train = df_data.loc[df_data.acc_db != acc_db]
         X_train = thoipapy.RF_features.RF_Train_Test.drop_cols_not_used_in_ML(logging, df_train, s["excel_file_with_settings"])
-        y_train = df_train["interface"]
+        y_train = df_train[s["bind_column"]]
 
         #######################################################################################################
         #                                                                                                     #
@@ -641,7 +656,7 @@ def run_LOO_validation(s, df_set, logging):
             continue
         # df_train = df_data.loc[df_data.acc_db != acc_db]
         # X_train = thoipapy.RF_features.RF_Train_Test.drop_cols_not_used_in_ML(logging, df_train, s["excel_file_with_settings"])
-        # y_train = df_train["interface"]
+        # y_train = df_train[s["bind_column"]]
 
         #######################################################################################################
         #                                                                                                     #
@@ -655,7 +670,7 @@ def run_LOO_validation(s, df_set, logging):
         d["df_data"] = df_data
         d["excel_file_with_settings"] = s["excel_file_with_settings"]
         d["forest"], d["pred_colname"] = forest, pred_colname
-        d["acc_db"], d["database"] = acc_db, database
+        d["acc_db"], d["database"], d["bind_column"] = acc_db, database, s["bind_column"]
         d["n"], d["logger"], d["excel_file_with_settings"] = n, logger, s["excel_file_with_settings"]
 
         if s["use_multiprocessing"]:
@@ -743,11 +758,11 @@ def LOO_single_prot(d):
     df_data, logger = d["df_data"], d["logger"]
     excel_file_with_settings = d["excel_file_with_settings"]
     forest, pred_colname = d["forest"], d["pred_colname"]
-    acc_db, database = d["acc_db"], d["database"]
+    acc_db, database, bind_column = d["acc_db"], d["database"], d["bind_column"]
 
     df_train = df_data.loc[df_data.acc_db != acc_db]
     X_train = thoipapy.RF_features.RF_Train_Test.drop_cols_not_used_in_ML(logger, df_train, excel_file_with_settings)
-    y_train = df_train["interface"]
+    y_train = df_train[bind_column]
 
     n, logger, excel_file_with_settings = d["n"], d["logger"], d["excel_file_with_settings"]
     #######################################################################################################
@@ -768,7 +783,13 @@ def LOO_single_prot(d):
     #                                                                                                     #
     #######################################################################################################
 
-    prediction = forest.fit(X_train, y_train).predict_proba(X_test)[:, 1]
+    fitted = forest.fit(X_train, y_train)
+    if bind_column == "interface":
+        prediction = fitted.predict_proba(X_test)[:, 1]
+    elif bind_column == "interface_score_norm":
+        prediction = fitted.predict(X_test)#[:, 1]
+    else:
+        raise ValueError("bind_column in excel settings file is not recognised ({})".format(bind_column))
     # add the prediction to the combined file
     df_test[pred_colname] = prediction
     # save just the prediction alone to csv
