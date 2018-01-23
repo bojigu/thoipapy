@@ -232,6 +232,7 @@ def create_AUC_BoAUC_figs_THOIPA_PREDDIMER_TMDOCK(s,df_set,logging):
     df_o_minus_r_mean_df.to_csv(df_o_minus_r_mean_csv)
     logging.info("finished create_AUC_BoAUC_figs_THOIPA_PREDDIMER_TMDOCK")
 
+
 def create_mean_AUC_barchart_comp(auc_mean_list,linechar_name_list,predictors_mean_auc_barchart_png):
     plt.close("all")
     # plt.rcParams.update({'font.size': 2})
@@ -317,6 +318,45 @@ def create_4predictors_AUC_AUBOC10_barchart(AUC_AUBOC_df, predictors_AUC_barchar
     fig.tight_layout()
     ax.grid(False)
     fig.savefig(predictors_BOAUC10_barchart_png, dpi=240)
+
+def create_AUC_BoAUC_4predictors_3databases_figs(s,df_set,logging):
+
+    logging.info("start create_AUC_BoAUC_4predictors_3databases_figs")
+    predictor_name_list = ["THOIPA_{}_LOO".format(s["set_number"]),"PREDDIMER", "TMDOCK", "LIPS_surface_ranked"] #"LIPS_L*E",
+    databases = ["crystal", "NMR", "ETRA"]
+    for database in databases:
+        df_o_minus_r_mean_df = pd.DataFrame()
+        AUBOC10_list = []
+        predictors_BOCURVE_linechart_png = os.path.join(s["thoipapy_data_folder"], "Results", "compare_predictors",
+                                                        "{}.{}.4predictors_BOCURVE_linechart.png".format(s["setname"],database))
+        for predictor_name in predictor_name_list:
+            BO_data_excel = os.path.join(s["thoipapy_data_folder"], "Results", "compare_predictors",
+                                         "{}.{}_BO_curve_data.xlsx".format(s['setname'], predictor_name.replace('*', "")))
+            df_o_minus_r = pd.read_excel(BO_data_excel,sheetname="df_o_minus_r",index_col=0)
+            df_o_minus_r = df_o_minus_r.filter(regex=database, axis=1)
+            df_o_minus_r_mean = df_o_minus_r.T.mean()
+            AUBOC10 = np.trapz(y=df_o_minus_r_mean, x=df_o_minus_r_mean.index)
+            AUBOC10_list.append(AUBOC10)
+            df_o_minus_r_mean_df = pd.concat([df_o_minus_r_mean_df, df_o_minus_r_mean], axis=1, join="outer")
+
+        df_o_minus_r_mean_df.columns = predictor_name_list
+        plt.close("all")
+        figsize = np.array([3.42, 3.42]) * 2  # DOUBLE the real size, due to problems on Bo computer with fontsizes
+        color_list = 'rgbk'
+        fig, ax = plt.subplots(figsize=figsize)
+        for i,column in enumerate(df_o_minus_r_mean_df.columns):
+            # df_o_minus_r_mean_df.plot(ax=ax, color="#0f7d9b", linestyle="-", label="prediction (AUBOC10 : {:0.2f}".format(AUBOC10))
+            label_name = "{}(AUBOC:{:.2f})".format(predictor_name_list[i] ,AUBOC10_list[i])
+            df_o_minus_r_mean_df[column].plot(ax=ax,  linestyle="-",label=label_name, color = color_list[i])
+        ax.plot([1, 10], [0, 0], color="#0f7d9b", linestyle="--", label="random", alpha=0.5)
+        ax.grid(False)
+        ax.set_ylabel("performance value\n(observed - random)", color="#0f7d9b")
+        ax.tick_params('y', colors="#0f7d9b")
+
+        ax.spines['left'].set_color("#0f7d9b")
+        ax.legend()
+        fig.tight_layout()
+        fig.savefig(predictors_BOCURVE_linechart_png, dpi=140)
 
 
 def merge_4_files_ALIGNMENT_METHOD(acc, full_seq, train_data_file, THOIPA_prediction_file, PREDDIMER_prediction_file, TMDOCK_prediction_file, merged_data_xlsx_path, columns_kept_in_combined_file):
