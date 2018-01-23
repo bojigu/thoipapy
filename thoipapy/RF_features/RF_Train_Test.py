@@ -67,7 +67,7 @@ def drop_cols_not_used_in_ML(logging, df_data, excel_file_with_settings):
     df_data = df_data.loc[:, feature_list]
     return df_data
 
-def THOIPA_classifier_with_settings(s, n_features):
+def THOIPA_classifier_with_settings(s, n_features, totally_randomized_trees=False):
     """ For tuning the RF parameters, they are always in one place, and determined by the settings file.
 
     Parameters
@@ -91,6 +91,11 @@ def THOIPA_classifier_with_settings(s, n_features):
     #                                 oob_score=True, max_features=max_features, bootstrap=bool(s["bootstrap"]),
     #                                 #random_state=s["random_state"]
     #                                 )
+
+    if totally_randomized_trees:
+        max_features = 1
+        min_samples_leaf = 1
+        max_depth = None
 
     if s["bind_column"] == "interface":
         forest = ExtraTreesClassifier(n_estimators=s["RF_number_of_estimators"], n_jobs=s["n_CPU_cores"], criterion=s["criterion"],
@@ -933,33 +938,53 @@ def calculate_variable_importance(s, logging):
     X = drop_cols_not_used_in_ML(logging, df_data, s["excel_file_with_settings"])
     y = df_data["interface"]
     n_features = X.shape[1]
-    forest = THOIPA_classifier_with_settings(s, n_features)
-    forest.fit(X, y)
-    importances_arr = forest.feature_importances_
-    std_arr = np.std([tree.feature_importances_ for tree in forest.estimators_], axis=0)
-    indices_arr = np.argsort(importances_arr)[::-1]
 
-    importances_text_list = X.columns.tolist()
+    # regular trees, or Totally Randomized Trees
+    model_types = ["", "_TRT"]
+    output_dfs = []
 
-    order_list = [importances_arr[indices_arr[f]] for f in range(X.shape[1])]
+    for model_type in model_types:
+        if model_type == "_TRT":
+            forest = THOIPA_classifier_with_settings(s, n_features, totally_randomized_trees=True)
+            logging.info("IMPORTANCES FOR TOTALLY RANDOMIZED TREES (max_features=1, max_depth=None, min_samples_leaf=1)")
+        elif model_type == "":
+            forest = THOIPA_classifier_with_settings(s, n_features)
+            logging.info("Feature ranking:")
+        else:
+            raise ValueError("model type unknown")
+        forest.fit(X, y)
+        importances_arr = forest.feature_importances_
+        std_arr = np.std([tree.feature_importances_ for tree in forest.estimators_], axis=0)
+        indices_arr = np.argsort(importances_arr)[::-1]
 
-    logging.info("\nFeature ranking:")
+        importances_text_list = X.columns.tolist()
 
-    nested_dict = {}
+        #order_list = [importances_arr[indices_arr[f]] for f in range(X.shape[1])]
 
-    for f in range(X.shape[1]):
-        if f < 10:
-            logging.info("%d. feature %d (%f) %s" % (f + 1, indices_arr[f], importances_arr[indices_arr[f]], importances_text_list[indices_arr[f]]))
-        single_feature_dict = {"feature_order" : indices_arr[f], "mean_decrease_gini" : importances_arr[indices_arr[f]], "feature" : importances_text_list[indices_arr[f]],  "std" : std_arr[f]}
-        nested_dict[f + 1] = single_feature_dict
 
-    sys.stdout.write("\n\n"), sys.stdout.flush()
 
-    df_imp = pd.DataFrame(nested_dict).T
-    df_imp["orig_order"] = df_imp.index
-    df_imp.set_index("feature", inplace=True)
+        nested_dict = {}
 
-    df_imp.to_csv(variable_importance_csv)
+        for f in range(X.shape[1]):
+            if f < 10 :
+                logging.info("%d. feature %d (%f) %s" % (f + 1, indices_arr[f], importances_arr[indices_arr[f]], importances_text_list[indices_arr[f]]))
+            single_feature_dict = {"original_order" : indices_arr[f], "mean_decrease_gini{}".format(model_type) : importances_arr[indices_arr[f]], "feature{}".format(model_type) : importances_text_list[indices_arr[f]],  "std{}".format(model_type) : std_arr[f]}
+            nested_dict[f + 1] = single_feature_dict
+
+        sys.stdout.write("\n\n"), sys.stdout.flush()
+
+        df_imp = pd.DataFrame(nested_dict).T
+        df_imp["order_importance{}".format(model_type)] = df_imp.index
+        #df_imp.set_index("feature", inplace=True)
+        df_imp.set_index("original_order", inplace=True)
+        output_dfs.append(df_imp)
+
+    df_imp2 = pd.concat(output_dfs, axis=1)
+    df_imp2.sort_values("order_importance", inplace=True)
+    df_imp2["original_order"] = df_imp2.index
+    df_imp2.set_index("feature", inplace=True)
+
+    df_imp2.to_csv(variable_importance_csv)
 
 def fig_variable_importance(s, logging):
     """Create figures showing ML feature importance.
@@ -981,8 +1006,8 @@ def fig_variable_importance(s, logging):
     colour_dict = create_colour_lists()
 
     variable_importance_csv = os.path.join(s["set_results_folder"], "crossvalidation", "data", "{}_variable_importance.csv".format(s["setname"]))
-    variable_importance_all_png = os.path.join(s["set_results_folder"], "crossvalidation", "{}_10F_all_var_import.png".format(s["setname"]))
-    variable_importance_top_png = os.path.join(s["set_results_folder"], "crossvalidation", "{}_10F_top_var_import.png".format(s["setname"]))
+    variable_importance_all_png = os.path.join(s["set_results_folder"], "crossvalidation", "{}_all_var_import.png".format(s["setname"]))
+    variable_importance_top_png = os.path.join(s["set_results_folder"], "crossvalidation", "{}_top_var_import.png".format(s["setname"]))
 
     df_imp = pd.read_csv(variable_importance_csv, index_col = 0)
 
@@ -994,24 +1019,33 @@ def create_var_imp_plot(df_imp, colour_dict, variable_importance_png, n_features
     """Plot function for fig_variable_importance, allowing a variable number of features.
     """
     df_sel = df_imp.iloc[:n_features_in_plot, :].copy()
-    df_sel.sort_values("mean_decrease_gini", ascending=True, inplace=True)
-    min_ = df_sel.mean_decrease_gini.min()
 
-    # determine the plot height by the number of features
-    # currently set for 30
-    plot_height = 4 * n_features_in_plot / 30
-    figsize = np.array([4.42, plot_height])
-    fig, ax = plt.subplots(figsize=figsize)
+    # regular trees, or Totally Randomized Trees
+    model_types = ["", "_TRT"]
 
-    TUMblue = colour_dict["TUM_colours"]['TUMBlue']
-    df_sel.mean_decrease_gini.plot(kind="barh", color=TUMblue, ax=ax)# xerr=df_sel["std"]
-    ax.errorbar(df_sel.mean_decrease_gini, range(len(df_sel.index)), xerr=df_sel["std"], fmt="none", ecolor="k", ls="none", capthick=0.5, elinewidth=0.5, capsize=1, label=None)
+    for model_type in model_types:
 
-    ax.set_ylabel("")
-    ax.set_xlabel("variable importance\n(mean decrease gini)")
-    ax.grid(False)
-    fig.tight_layout()
-    fig.savefig(variable_importance_png, dpi=240)
-    #fig.savefig(variable_importance_png[:-4] + ".pdf")
-    fig.savefig(thoipapy.utils.pdf_subpath(variable_importance_png))
+        # add suffix for the totally randomised trees
+        variable_importance_png = variable_importance_png[:-4] + model_type + ".png"
+
+        df_sel.sort_values("mean_decrease_gini{}".format(model_type), ascending=True, inplace=True)
+        #min_ = df_sel.mean_decrease_gini.min()
+
+        # determine the plot height by the number of features
+        # currently set for 30
+        plot_height = 4 * n_features_in_plot / 30
+        figsize = np.array([4.42, plot_height])
+        fig, ax = plt.subplots(figsize=figsize)
+
+        TUMblue = colour_dict["TUM_colours"]['TUMBlue']
+        df_sel["mean_decrease_gini{}".format(model_type)].plot(kind="barh", color=TUMblue, ax=ax)# xerr=df_sel["std"]
+        ax.errorbar(df_sel["mean_decrease_gini{}".format(model_type)], range(len(df_sel.index)), xerr=df_sel["std{}".format(model_type)], fmt="none", ecolor="k", ls="none", capthick=0.5, elinewidth=0.5, capsize=1, label=None)
+
+        ax.set_ylabel("")
+        ax.set_xlabel("variable importance\n(mean decrease gini)")
+        ax.grid(False)
+        fig.tight_layout()
+        fig.savefig(variable_importance_png, dpi=240)
+        #fig.savefig(variable_importance_png[:-4] + ".pdf")
+        fig.savefig(thoipapy.utils.pdf_subpath(variable_importance_png))
 
