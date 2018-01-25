@@ -109,6 +109,9 @@ if __name__ == "__main__":
             thoipapy.Get_Tmd_Homodimer.get_tmd_nr_homodimer.create_multiple_bind_closedist_file(s,logging)
             #thoipapy.Get_Tmd_Homodimer.get_tmd_nr_homodimer.create_average_fraction_DI_file(s, logging)
 
+        if s["calc_NMR_closedist"] :
+            thoipapy.Get_Tmd_Homodimer.NMR_data.calc_closedist_from_NMR_best_model(s)
+
         if s["Atom_Close_Dist"]:
             infor = thoipapy.Atom_Dist.Residu_Closest_Dist.homodimer_residue_closedist_calculate_from_complex(thoipapy, s, logging)
             sys.stdout.write(infor)
