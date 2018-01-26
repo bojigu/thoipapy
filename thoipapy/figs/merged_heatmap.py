@@ -68,18 +68,20 @@ def create_single_merged_heatmap(s, acc, database,savename, fig_label, dfh_cols)
         dfh.dropna(inplace=True)
         dfh.reset_index(drop=True, inplace=True)
         # normalise all the data columns between 0 and 1
-        cols_to_plot = dfh_cols[2:]
-        dfh["PREDDIMER"] = normalise_between_2_values(dfh["PREDDIMER"], 0.5, 10, invert=True)
+        #cols_to_plot = dfh_cols[2:]
+        dfh["PREDDIMER_norm"] = normalise_between_2_values(dfh["PREDDIMER"], 0.5, 10, invert=True)
         #dfm["PREDDIMER"] = -1 * dfm["PREDDIMER"]
-        dfh["TMDOCK"] = normalise_between_2_values(dfh["TMDOCK"], 0.5, 10, invert=True)
+        dfh["TMDOCK_norm"] = normalise_between_2_values(dfh["TMDOCK"], 0.5, 10, invert=True)
         #dfm["TMDOCK"] = -1 * dfm["TMDOCK"]
         if database == "crystal" or database == "NMR":
             # normalize crystal and NMR closedistance to between 0 and 1 with invert, min and max values were set as 2 and 10 angstrom
-            dfh["interface_score"] = normalise_between_2_values(dfh["interface_score"],2,10,invert=True)
+            dfh["interface_score_norm"] = normalise_between_2_values(dfh["interface_score"],2,10,invert=True)
             #dfm["interface_score"] = -1 * dfm["interface_score"]
         elif database == "ETRA":
             ###normalize ETRA experimental disruption value to the range of 0 to 1 without invert, the min and max values were set as -0.4 and 0.4
-            dfh["interface_score"] = normalise_between_2_values(dfh["interface_score"], -0.4, 0.4)
+            dfh["interface_score_norm"] = normalise_between_2_values(dfh["interface_score"], -0.4, 0.4)
+        cols_to_plot = ["interface", "interface_score_norm", "THOIPA", "PREDDIMER_norm", "TMDOCK_norm", "LIPS",
+                        "conservation", "polarity", "coev_i4_DI"]
         for col in cols_to_plot:
             dfh[col] = eccpy.tools.normalise_0_1(dfh[col])[0]
 
