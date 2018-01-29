@@ -161,18 +161,20 @@ def create_PSSM_from_MSA_mult_prot(s, df_set, logging):
     for i in df_set.index:
         acc = df_set.loc[i, "acc"]
         database = df_set.loc[i, "database"]
+        TMD_seq = df_set.loc[i, "TMD_seq"]
+        TMD_seq_pl_surr5 = df_set.loc[i, "TMD_seq_pl_surr5"]
         alignments_dir = os.path.join(s["homologues_folder"], "alignments", database)
         path_uniq_TMD_seqs_for_PSSM_FREECONTACT = os.path.join(alignments_dir,"{}.surr{}.gaps{}.uniq.for_PSSM_FREECONTACT.txt".format(acc, s["num_of_sur_residues"],s["max_n_gaps_in_TMD_subject_seq"]))
         pssm_csv = os.path.join(s["feature_pssm"], database, "{}.surr{}.gaps{}.pssm.csv".format(acc, s["num_of_sur_residues"], s["max_n_gaps_in_TMD_subject_seq"]))
 
-        create_PSSM_from_MSA(path_uniq_TMD_seqs_for_PSSM_FREECONTACT, pssm_csv, acc, logging)
+        create_PSSM_from_MSA(path_uniq_TMD_seqs_for_PSSM_FREECONTACT, pssm_csv, acc, TMD_seq, logging)
 
         path_uniq_TMD_seqs_surr5_for_LIPO = os.path.join(alignments_dir, "{}.surr5.gaps{}.uniq.for_LIPO.txt".format(acc, s["max_n_gaps_in_TMD_subject_seq"]))
 
         pssm_csv_surr5 = os.path.join(s["feature_pssm"], database, "{}.surr5.gaps{}.pssm.csv".format(acc, s["max_n_gaps_in_TMD_subject_seq"]))
-        create_PSSM_from_MSA(path_uniq_TMD_seqs_surr5_for_LIPO, pssm_csv_surr5, acc, logging)
+        create_PSSM_from_MSA(path_uniq_TMD_seqs_surr5_for_LIPO, pssm_csv_surr5, acc, TMD_seq_pl_surr5, logging)
 
-def create_PSSM_from_MSA(path_uniq_TMD_seqs_for_PSSM_FREECONTACT, pssm_csv, acc, logging):
+def create_PSSM_from_MSA(path_uniq_TMD_seqs_for_PSSM_FREECONTACT, pssm_csv, acc, TMD_seq, logging):
     """Creates a PSSM from a multiple sequence alignment in FASTA format.
 
     Parameters
@@ -195,23 +197,44 @@ def create_PSSM_from_MSA(path_uniq_TMD_seqs_for_PSSM_FREECONTACT, pssm_csv, acc,
             writer.writerow(['residue_num', 'residue_name', 'A', 'I', 'L', 'V', 'F', 'W', 'Y', 'N', 'C', 'Q', 'M', 'S', 'T', 'D', 'E', 'R', 'H', 'K', 'G', 'P'])
             with open(path_uniq_TMD_seqs_for_PSSM_FREECONTACT, "r") as f:
                 for line in f.readlines():
-                    if not re.search("^>", line):
-                        mat.append(list(line))
-            rowlen = len(mat[0])
-            collen = len(mat)
+                    # strip removes \n. Input currently is not FASTA, no need to check for >
+                    mat.append(list(line.strip()))
+                    # if not re.search("^>", line):
+                    #     mat.append(list(line))
+
+            """ mat is a nested list of all sequences
+            [['L', 'G', 'C', 'S', 'A', 'V', 'G', 'G'], ['L', 'A', 'A', 'S', 'A', 'V', 'G', 'P', 'G', 'I', 'G', 'E', 'G'], [.. and so on
+            """
+            # number of residues in each sequence
+            n_residues = len(mat[0])
+            # number of sequences in alignment
+            n_seqs = len(mat)
             column = []
             # write 20 amino acids as the header of pssm output file
             # pssm_file_handle.write(
             # 'residue'+' '+'A' + ' ' + 'I' + ' ' + 'L' + ' ' + 'V' + ' ' + 'F' + ' ' + 'W' + ' ' + 'Y' + ' ' + 'N' + ' ' + 'C' + ' ' + 'Q' + ' ' + 'M' + ' ' + 'S' + ' ' + 'T' + ' ' + 'D' + ' ' + 'E' + ' ' + 'R' + ' ' + 'H' + ' ' + 'K' + ' ' + 'G' + ' ' + 'P' + '\n')
-            for j in range(0, rowlen - 1):
-                for i in range(0, collen):
+
+            #for j in range(0, rowlen - 1):
+
+            # no need to exclude final \n anymore. iterate through number of residues
+            for j in range(0, n_residues):
+                # iterate through sequences
+                for i in range(0, n_seqs):
+                    # append the residue in that column
+                    # this results in a list of residues at that column position, for all sequences
                     column.append(mat[i][j])
-                aa_num = [column.count('A') / collen, column.count('I') / collen, column.count('L') / collen, column.count('V') / collen, column.count('F') / collen,
-                          column.count('W') / collen, column.count('Y') / collen, column.count('N') / collen, column.count('C') / collen, column.count('Q') / collen,
-                          column.count('M') / collen, column.count('S') / collen, column.count('T') / collen, column.count('D') / collen, column.count('E') / collen,
-                          column.count('R') / collen, column.count('H') / collen, column.count('K') / collen, column.count('G') / collen, column.count('P') / collen]
-                aa_num.insert(0, mat[0][j])  ###adding the residue name to the second column
-                aa_num.insert(0, j + 1)  ##adding the residue number to the first column
+                aa_num = [column.count('A') / n_seqs, column.count('I') / n_seqs, column.count('L') / n_seqs, column.count('V') / n_seqs, column.count('F') / n_seqs,
+                          column.count('W') / n_seqs, column.count('Y') / n_seqs, column.count('N') / n_seqs, column.count('C') / n_seqs, column.count('Q') / n_seqs,
+                          column.count('M') / n_seqs, column.count('S') / n_seqs, column.count('T') / n_seqs, column.count('D') / n_seqs, column.count('E') / n_seqs,
+                          column.count('R') / n_seqs, column.count('H') / n_seqs, column.count('K') / n_seqs, column.count('G') / n_seqs, column.count('P') / n_seqs]
+                # add the residue name to the second column
+                aa_num.insert(0, TMD_seq[j])
+                #aa_num.insert(0, mat[0][j])  #DEPRECATED: Assumes that first sequence is always the original sequence (will break as soon as this is not the case...)
+                # add the residue number to the first column
+                aa_num.insert(0, j + 1)
+                """ the aa_num now looks like this:
+                [4, 'S', 0.0, 0.014, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0074, 0.0, 0.0, 0.933, 0.037, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.007]
+                """
                 writer.writerow(aa_num)
                 column = []
             logging.info('{} pssm calculation finished ({})'.format(acc, pssm_csv))
@@ -271,12 +294,15 @@ def lipo_from_pssm_mult_prot(s, df_set, logging):
 
 
 def lipo_from_pssm(acc, pssm_csv_surr5, lipo_csv, tm_surr_left, tm_surr_right, scalename, logging, plot_linechart=False):
-    """Calculates lipophilicity from a PSSM for a single protein.
+    """Calculates polarity from for a single protein. Residue propensities are taken from a PSSM, generated from a MSA.
 
     Takes a PSSM as an input. The PSSM should have the fractions of each residue at each position.
-    1) calculates the lipophilicity for each position (e.g. lipo_hessa)
-    2) uses the weighslide module to get the average lipophilicity of the 3 N-terminal aa to each position (e.g. lipo_Hessa_mean_3_N_pos)
-       and the 3 C-terminal aa to each position (e.g. lipo_Hessa_mean_3_C_pos).
+    1) Normalises the PSSM so that it adds up to 1.0 (excluding gaps)
+    2) Calculates the polarity for each position by multiplying the residue propensities by a hydrophobicity scale
+    3) Uses the weighslide module to get the average lipophilicity of the 3 N-terminal aa to each position (e.g. polarity_i1-i3_N)
+       and the 3 C-terminal aa to each position (e.g. polarity_i1-i3_C), and the 3 residues centred on the residue of interest (polarity_i_i1)
+
+    Utilises the excel file containing hydrophobicity scales, within the THOIPApy module.
 
     Parameters
     ----------
@@ -302,9 +328,9 @@ def lipo_from_pssm(acc, pssm_csv_surr5, lipo_csv, tm_surr_left, tm_surr_right, s
     Saved files
     -----------
     lipo_csv - csv
-        csv output file with the lipophilicity values for each position
+        csv output file with the polarity values for each position
         index = ["A1", "I2", ....]
-        columns = lipo_Hessa, lipo_Hessa_mean_3_N_pos, lipo_Hessa_mean_3_C_pos (e.g. for Hessa scale)
+        columns = polarity  polarity_i1-i3_N  polarity_i1-i3_C  polarity_i_i1, etc
 
     Returns
     -------
@@ -551,16 +577,23 @@ def entropy_calculation_mult_prot(s, df_set, logging):
     for i in df_set.index:
         acc = df_set.loc[i, "acc"]
         database = df_set.loc[i, "database"]
+        TMD_seq = df_set.loc[i, "TMD_seq"]
         #homo_filter_fasta_file = os.path.join(s["output_oa3m_homologues"],database,"%s.a3m.mem.uniq.2gaps%s") % (acc,s["surres"])
         alignments_dir = os.path.join(s["homologues_folder"], "alignments", database)
         path_uniq_TMD_seqs_for_PSSM_FREECONTACT = os.path.join(alignments_dir, "{}.surr{}.gaps{}.uniq.for_PSSM_FREECONTACT.txt".format(acc, s["num_of_sur_residues"], s["max_n_gaps_in_TMD_subject_seq"]))
         entropy_file = os.path.join(s["feature_entropy"], database, "{}.surr{}.gaps{}.uniq.entropy.csv".format(acc, s["num_of_sur_residues"], s["max_n_gaps_in_TMD_subject_seq"]))
 
-        entropy_calculation(acc, path_uniq_TMD_seqs_for_PSSM_FREECONTACT, entropy_file, logging)
+        entropy_calculation(acc, path_uniq_TMD_seqs_for_PSSM_FREECONTACT, TMD_seq, entropy_file, logging)
 
 
-def entropy_calculation(acc, path_uniq_TMD_seqs_for_PSSM_FREECONTACT, entropy_file, logging):
-    """Calculates conservation of positions using entropy formula based on an input fasta alignment.
+def entropy_calculation(acc, path_uniq_TMD_seqs_for_PSSM_FREECONTACT, TMD_seq, entropy_file, logging):
+    """Calculates conservation of positions using entropy formula.
+
+    S = - sum (Pi + log(Pi))
+    See the scipy documentation for more information regarding the entropy formula.
+    https://docs.scipy.org/doc/scipy/reference/generated/scipy.stats.entropy.html
+
+    Note that this code currently considers gaps to be the 21st amino acid.
 
     Parameters
     ----------
@@ -581,23 +614,36 @@ def entropy_calculation(acc, path_uniq_TMD_seqs_for_PSSM_FREECONTACT, entropy_fi
         with open(entropy_file, 'w') as entropy_file_handle:
             mat = []
             with open(path_uniq_TMD_seqs_for_PSSM_FREECONTACT) as f:
+                # iterate through each sequence
                 for line in f.readlines():
-                    # for line in open(path_uniq_TMD_seqs_for_PSSM_FREECONTACT).readlines():
-                    if not re.search("^>", line):
-                        mat.append(list(line))
-                rowlen = len(mat[0])
-                collen = len(mat)
+                    # append each seq as a list to nested list, mat
+                    mat.append(list(line.strip()))
+                    # if not re.search("^>", line):
+                    #     mat.append(list(line))
+                n_residues = len(mat[0])
+                n_seqs = len(mat)
                 column = []
             writer = csv.writer(entropy_file_handle, delimiter=',', quotechar='"', lineterminator='\n',
                                 quoting=csv.QUOTE_NONNUMERIC, doublequote=True)
             writer.writerow(["residue_num", "residue_name", "Entropy"])
-            for j in range(0, rowlen - 1):
-                for i in range(0, collen):
+            # iterate through each residue position
+            for j in range(0, n_residues):
+                # iterate through each sequence
+                for i in range(0, n_seqs):
+                    # add the residue at that column position to list
                     column.append(mat[i][j])
+                """
+                UP UNTIL NOW, THE CODE MIRRORS EXACTLY WHAT IS DONE FOR THE PSSM CALCULATION
+                """
+
+                # convert to series
                 column_serie = Series(column)
-                p_data = column_serie.value_counts() / len(column_serie)  # calculates the probabilities
-                entropy = sc.stats.entropy(p_data)  # input probabilities to get the entropy
-                csv_header_for_ncbi_homologues_file = [j + 1, mat[0][j], entropy]
+                # calculates the probabilities
+                p_data = column_serie.value_counts() / len(column_serie)
+                # input probabilities to get the entropy
+                # note that this currently includes gaps "-" as the 21st amino acid
+                entropy = sc.stats.entropy(p_data)
+                csv_header_for_ncbi_homologues_file = [j + 1, TMD_seq[j], entropy]
                 writer = csv.writer(entropy_file_handle, delimiter=',', quotechar='"', lineterminator='\n',
                                     quoting=csv.QUOTE_NONNUMERIC, doublequote=True)
                 writer.writerow(csv_header_for_ncbi_homologues_file)
