@@ -251,8 +251,9 @@ if __name__ == "__main__":
         if s["create_ROC_4predictors"] == True:
             thoipapy.figs.combine_add_3_prediction.create_ROC_Curve_comp_4predictors(s,df_set,logging)
 
-        if s["create_AUBOC_separate_database"] == True:
-            thoipapy.figs.combine_add_3_prediction.create_AUC_BoAUC_4predictors_3databases_figs(s,df_set,logging)
+        if s["create_AUC_AUBOC_separate_database"] == True:
+            #thoipapy.figs.combine_add_3_prediction.create_AUBOC10_4predictors_3databases_figs(s,df_set,logging)
+            thoipapy.figs.combine_add_3_prediction.create_AUC_4predictors_3databases_figs(s, df_set, logging)
 
 
         if "download_10_homologues_from_ncbi" in s:

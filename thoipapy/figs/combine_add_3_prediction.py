@@ -7,6 +7,8 @@ import thoipapy
 from sklearn.metrics import roc_curve, auc
 from scipy import interp
 import matplotlib.pyplot as plt
+import pickle
+import re
 
 
 def combine_file_add_PREDDIMER_TMDOCK_THOIPA_prediction(s, df_set, logging):
@@ -147,6 +149,8 @@ def create_AUC_BoAUC_figs_THOIPA_PREDDIMER_TMDOCK(s,df_set,logging):
         auc_dict = {}
         mean_tpr = 0.0
         mean_fpr = np.linspace(0, 1, 100)
+        auc_pkl = os.path.join(s["thoipapy_data_folder"], "Results", "compare_predictors",
+                                                "{}.{}_AUC_data.pkl".format(s["setname"],predictor_name.replace('*',"")))
         BO_curve_data_csv = os.path.join(s["thoipapy_data_folder"], "Results", "compare_predictors",
                                                 "{}.{}_BO_Curve_data.csv".format(s["setname"],predictor_name.replace('*',"")))
         thoipapy.utils.make_sure_path_exists(BO_curve_data_csv, isfile=True)
@@ -195,6 +199,9 @@ def create_AUC_BoAUC_figs_THOIPA_PREDDIMER_TMDOCK(s,df_set,logging):
             auc_dict[acc_db] = auc_value
             xv_dict[acc_db] = {"fpr": fpr, "tpr": tpr, "auc": auc_value}
 
+        # save dict as pickle
+        with open(auc_pkl, "wb") as f:
+            pickle.dump(xv_dict, f, protocol=pickle.HIGHEST_PROTOCOL)
         BO_data_df.to_csv(BO_curve_data_csv)
         # THOIPA_linechart_mean_obs_and_rand = analyse_bo_curve_underlying_data(THOIPA_BO_curve_data_csv, BO_curve_folder, names_excel_path)
         thoipapy.figs.Create_Bo_Curve_files.parse_BO_data_csv_to_excel(BO_curve_data_csv, BO_data_excel, logging, predictor_name)
@@ -319,14 +326,23 @@ def create_4predictors_AUC_AUBOC10_barchart(AUC_AUBOC_df, predictors_AUC_barchar
     ax.grid(False)
     fig.savefig(predictors_BOAUC10_barchart_png, dpi=240)
 
-def create_AUC_BoAUC_4predictors_3databases_figs(s,df_set,logging):
+def create_AUBOC10_4predictors_3databases_figs(s,df_set,logging):
 
-    logging.info("start create_AUC_BoAUC_4predictors_3databases_figs")
+    logging.info("start create_AUBOC10_4predictors_3databases_figs")
     predictor_name_list = ["THOIPA_{}_LOO".format(s["set_number"]),"PREDDIMER", "TMDOCK", "LIPS_surface_ranked"] #"LIPS_L*E",
     databases = ["crystal", "NMR", "ETRA"]
     for database in databases:
         df_o_minus_r_mean_df = pd.DataFrame()
         AUBOC10_list = []
+        mean_AUBOC_file = os.path.join(s["thoipapy_data_folder"], "Results", "compare_predictors",
+                                                        "{}.{}.4predictors_mean_AUBOC10.csv".format(s["setname"],
+                                                                                                         database))
+        mean_AUBOC_barplot_png = os.path.join(s["thoipapy_data_folder"], "Results", "compare_predictors",
+                                       "{}.{}.4predictors_mean_AUBOC10.png".format(s["setname"],
+                                                                                   database))
+        predictors_BOCURVE_linechart_csv = os.path.join(s["thoipapy_data_folder"], "Results", "compare_predictors",
+                                                        "{}.{}.4predictors_BOCURVE_linechart.csv".format(s["setname"],
+                                                                                                         database))
         predictors_BOCURVE_linechart_png = os.path.join(s["thoipapy_data_folder"], "Results", "compare_predictors",
                                                         "{}.{}.4predictors_BOCURVE_linechart.png".format(s["setname"],database))
         for predictor_name in predictor_name_list:
@@ -339,7 +355,10 @@ def create_AUC_BoAUC_4predictors_3databases_figs(s,df_set,logging):
             AUBOC10_list.append(AUBOC10)
             df_o_minus_r_mean_df = pd.concat([df_o_minus_r_mean_df, df_o_minus_r_mean], axis=1, join="outer")
 
+        auboc_mean_df = pd.DataFrame.from_records([AUBOC10_list], columns=predictor_name_list)
+        auboc_mean_df.to_csv(mean_AUBOC_file)
         df_o_minus_r_mean_df.columns = predictor_name_list
+        df_o_minus_r_mean_df.to_csv(predictors_BOCURVE_linechart_csv)
         plt.close("all")
         figsize = np.array([3.42, 3.42]) * 2  # DOUBLE the real size, due to problems on Bo computer with fontsizes
         color_list = 'rgbk'
@@ -357,6 +376,102 @@ def create_AUC_BoAUC_4predictors_3databases_figs(s,df_set,logging):
         ax.legend()
         fig.tight_layout()
         fig.savefig(predictors_BOCURVE_linechart_png, dpi=140)
+
+        plt.close("all")
+        # plt.rcParams.update({'font.size': 8})
+        # figsize = np.array([3.42, 3.42]) * 2  # DOUBLE the real size, due to problems on Bo computer with fontsizes
+        figsize = np.array([9, 6])  # DOUBLE the real size, due to problems on Bo computer with fontsizes
+        fig, ax = plt.subplots(figsize=figsize)
+        # replace the protein names
+
+        auboc_mean_df.plot(kind="bar", ax=ax, alpha=0.7)
+
+        ax.set_ylabel("performance value\n(AUBOC10)")
+        ax.legend()  # (["sample size = 5", "sample size = 10"])
+
+        fig.tight_layout()
+        ax.grid(False)
+        fig.savefig(mean_AUBOC_barplot_png, dpi=240)
+
+def create_AUC_4predictors_3databases_figs(s,df_set,logging):
+
+    logging.info("start create_AUC_4predictors_3databases_figs")
+    predictor_name_list = ["THOIPA_{}_LOO".format(s["set_number"]),"PREDDIMER", "TMDOCK", "LIPS_surface_ranked"] #"LIPS_L*E",
+    databases = ["crystal", "NMR", "ETRA"]
+    for database in databases:
+        mean_auc_list = []
+        mean_tpr_list= []
+        mean_AUC_file = os.path.join(s["thoipapy_data_folder"], "Results", "compare_predictors",
+                                                        "{}.{}.4predictors_mean_AUC.csv".format(s["setname"],
+                                                                                                         database))
+        mean_AUC_barplot_png = os.path.join(s["thoipapy_data_folder"], "Results", "compare_predictors",
+                                       "{}.{}.4predictors_mean_AUC.png".format(s["setname"],
+                                                                                   database))
+        predictors_ROC_curve_csv = os.path.join(s["thoipapy_data_folder"], "Results", "compare_predictors",
+                                                        "{}.{}.4predictors_AUC_ROC.csv".format(s["setname"],
+                                                                                                         database))
+        predictors_AUC_ROC_png = os.path.join(s["thoipapy_data_folder"], "Results", "compare_predictors",
+                                                        "{}.{}.4predictors_AUC_ROC.png".format(s["setname"],database))
+        plt.close("all")
+        figsize = np.array([3.42, 3.42]) * 2  # DOUBLE the real size, due to problems on Bo computer with fontsizes
+        fig, ax = plt.subplots(figsize=figsize)
+        for predictor_name in predictor_name_list:
+            mean_auc = []
+            mean_tpr = 0.0
+            mean_fpr = np.linspace(0, 1, 100)
+            n=0
+            AUC_data_pkl = os.path.join(s["thoipapy_data_folder"], "Results", "compare_predictors",
+                                         "{}.{}_AUC_data.pkl".format(s["setname"],predictor_name.replace('*',"")))
+            # open pickle file
+            with open(AUC_data_pkl, "rb") as f:
+                xv_dict = pickle.load(f)
+                for k,v in xv_dict.items():
+                    if re.search(database,k):
+                        mean_auc.append(v['auc'])
+                        fpr = v['fpr']
+                        tpr = v['tpr']
+                        mean_tpr += interp(mean_fpr, fpr, tpr)
+                        mean_tpr[0] = 0.0
+                        n = n+1
+            mean_tpr /= n
+            mean_tpr[-1] = 1.0
+            mean_auc = np.mean(mean_auc)
+            mean_auc_list.append(mean_auc)
+            mean_tpr_list.append(mean_tpr)
+            ax.plot(mean_fpr, mean_tpr, lw=1, label="{} (area = {:.2f})".format(predictor_name, mean_auc), alpha=0.8)
+        ax.plot([0, 1], [0, 1], '--', color=(0.6, 0.6, 0.6), label='random')
+        ax.set_xlim([-0.05, 1.05])
+        ax.set_ylim([-0.05, 1.05])
+        ax.set_xlabel("False positive rate")
+        ax.set_ylabel("True positive rate")
+        ax.legend(loc="lower right")
+        fig.tight_layout()
+        fig.savefig(predictors_AUC_ROC_png, dpi=240)
+        # fig.savefig(crossvalidation_png[:-4] + ".pdf")
+        fig.savefig(thoipapy.utils.pdf_subpath(predictors_AUC_ROC_png))
+
+        df_tpr = pd.DataFrame.from_records(list(map(list, zip(*mean_tpr_list))),
+                                                    columns=predictor_name_list)
+        df_tpr.to_csv(predictors_ROC_curve_csv)
+
+        auc_mean_df = pd.DataFrame.from_records([mean_auc_list], columns=predictor_name_list)
+        auc_mean_df.to_csv(mean_AUC_file)
+
+        plt.close("all")
+        # plt.rcParams.update({'font.size': 8})
+        # figsize = np.array([3.42, 3.42]) * 2  # DOUBLE the real size, due to problems on Bo computer with fontsizes
+        figsize = np.array([9, 6])  # DOUBLE the real size, due to problems on Bo computer with fontsizes
+        fig, ax = plt.subplots(figsize=figsize)
+        # replace the protein names
+
+        auc_mean_df.plot(kind="bar", ax=ax, alpha=0.7)
+
+        ax.set_ylabel("performance value\n(AUC)")
+        ax.legend()  # (["sample size = 5", "sample size = 10"])
+
+        fig.tight_layout()
+        ax.grid(False)
+        fig.savefig(mean_AUC_barplot_png, dpi=240)
 
 
 def merge_4_files_ALIGNMENT_METHOD(acc, full_seq, train_data_file, THOIPA_prediction_file, PREDDIMER_prediction_file, TMDOCK_prediction_file, merged_data_xlsx_path, columns_kept_in_combined_file):
@@ -518,10 +633,13 @@ def create_ROC_Curve_comp_4predictors(s,df_set,logging):
     logging.info("start create_ROC_Curve_figs_THOIPA_PREDDIMER_TMDOCK_LIPS")
     pred_colname = "THOIPA_{}_LOO".format(s["set_number"])
     prediction_name_list = [pred_colname, "PREDDIMER", "TMDOCK", "LIPS_surface_ranked"]
+    ROC_4predictor_csv = os.path.join(s["thoipapy_data_folder"], "Results", "compare_predictors",
+                                      "{}_ROC_4predictors.csv".format(s['setname']))
     ROC_4predictor_png = os.path.join(s["thoipapy_data_folder"], "Results", "compare_predictors",
                                                "{}_ROC_4predictors.png".format(s['setname']))
     figsize = np.array([3.42, 3.42]) * 2  # DOUBLE the real size, due to problems on Bo computer with fontsizes
     fig, ax = plt.subplots(figsize=figsize)
+    mean_tpr_list=[]
     for n, predictor in enumerate(prediction_name_list):
         mean_tpr = 0.0
         mean_fpr = np.linspace(0, 1, 100)
@@ -543,7 +661,7 @@ def create_ROC_Curve_comp_4predictors(s,df_set,logging):
         mean_tpr /= len(df_set.index)
         mean_tpr[-1] = 1.0
         mean_auc = auc(mean_fpr, mean_tpr)
-
+        mean_tpr_list.append(mean_tpr)
         ax.plot(mean_fpr, mean_tpr, lw=1,label="{} (area = {:.2f})".format(predictor, mean_auc), alpha=0.8)
     ax.plot([0, 1], [0, 1], '--', color=(0.6, 0.6, 0.6), label='random')
     ax.set_xlim([-0.05, 1.05])
@@ -555,3 +673,6 @@ def create_ROC_Curve_comp_4predictors(s,df_set,logging):
     fig.savefig(ROC_4predictor_png, dpi=240)
     # fig.savefig(crossvalidation_png[:-4] + ".pdf")
     fig.savefig(thoipapy.utils.pdf_subpath(ROC_4predictor_png))
+    df_tpr = pd.DataFrame.from_records(list(map(list, zip(*mean_tpr_list))),
+                                       columns=prediction_name_list)
+    df_tpr.to_csv(ROC_4predictor_csv)
