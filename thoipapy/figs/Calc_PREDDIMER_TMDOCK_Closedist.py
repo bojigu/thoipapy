@@ -74,9 +74,11 @@ def closedist_calculate_from_dimer(s,pdb_file, closedist_out_csv):
 
     with open(pdb_file, "r") as f:
         for line in f:
+            if re.search("^MODEL\s+2", line):
+                break
             if re.search("^ATOM", line):
                 atom = line[12:16]
-                if not re.search("^H", atom):  # non-H atom distance
+                if not re.search("^\s*H", atom):  # non-H atom distance
                     index = line[6:11]
                     x = line[30:38]
                     y = line[38:46]
@@ -132,7 +134,6 @@ def closedist_calculate_from_dimer(s,pdb_file, closedist_out_csv):
                     else:
                         if dist < hashclosedist[key2]:
                             hashclosedist[key2] = dist
-
     closest_dist_arr = Get_Closedist_between_ChianA_ChainB(hashclosedist)
     closest_dist_df = pd.DataFrame.from_records(closest_dist_arr, columns = ["residue_num","residue_name","closedist"])
     closest_dist_df.residue_num = closest_dist_df.residue_num.astype(int)

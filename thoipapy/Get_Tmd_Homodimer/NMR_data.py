@@ -60,6 +60,8 @@ def calc_closedist_from_NMR_best_model(s):
 
                         # if re.search('^MODEL\s+2\s+', row):
                         #     break
+                        if re.search("^MODEL\s+2",row):
+                            break
                         if re.search("^ATOM", row):
                             atom = row[12:16]
                             if not re.search("^\s*H", atom):  # non-H atom distance
