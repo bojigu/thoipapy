@@ -33,6 +33,7 @@ def parse_NCBI_xml_to_csv_mult_prot(s, df_set, logging):
 
     for i in df_set.index:
         acc = df_set.loc[i, "acc"]
+        #if acc == "Q99IB8":
         database = df_set.loc[i, "database"]
         TMD_start = df_set.loc[i, "TMD_start"]
         TMD_end = df_set.loc[i, "TMD_end"]

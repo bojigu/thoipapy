@@ -194,10 +194,10 @@ def create_single_bind_closedist_file(s, df_homo,i, inter_pair_max):
         closedistAB_dict = {}
         for j in range(1, len(closedistA.split('+'))):
             closedistA_dict[int(closedistA.split('+')[j].split('_')[1]) - aligned_AB_startA] = \
-            closedistA.split('+')[j].split('_')[4]
+            float(closedistA.split('+')[j].split('_')[4])
         for j in range(1, len(closedistB.split('+'))):
             closedistB_dict[int(closedistB.split('+')[j].split('_')[1]) - aligned_AB_startB] = \
-            closedistB.split('+')[j].split('_')[4]
+            float(closedistB.split('+')[j].split('_')[4])
         closedistA_list = [int(closedistA.split('+')[i].split('_')[1]) - aligned_AB_startA for i in
                            range(1, len(closedistA.split('+')))]
         closedistB_list = [int(closedistB.split('+')[i].split('_')[1]) - aligned_AB_startB for i in
