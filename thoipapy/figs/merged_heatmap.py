@@ -33,8 +33,11 @@ def create_merged_heatmap(s, df_set, logging):
     #             EXTRACT NAMES FROM NAMES EXCEL FILE               #
     #################################################################
 
+    THOIPA_col = "THOIPA_5_LOO"
+    LIPS_col = "LIPS_surface_ranked"
+    coev_col = "coev_i4_DI"
 
-    dfh_cols = ["res_num_full_seq", "residue_name","interface", "interface_score", "THOIPA_5_LOO", "PREDDIMER", "TMDOCK", "LIPS_surface_ranked", "conservation", "polarity", "coev_i4_DI"]
+    dfh_cols = ["res_num_full_seq", "residue_name", "interface", "interface_score", THOIPA_col, "PREDDIMER", "TMDOCK", LIPS_col, "conservation", "polarity", coev_col]
     for i in df_set.index:
         acc = df_set.loc[i, "acc"]
         #if acc =="1orqC4":
@@ -46,13 +49,13 @@ def create_merged_heatmap(s, df_set, logging):
         if acc in df_names.index:
             savename = "{}_{}".format(acc, df_names.loc[acc, "shortname"])
             fig_label = df_names.loc[acc, "concatname"]
-            print(savename,fig_label)
+            sys.stdout.write("{} {}".format(savename,fig_label))
         else:
             savename = acc + "_{}".format(database)
             fig_label = acc + "_{}".format(database)
-        create_single_merged_heatmap(s, acc, database,savename, fig_label,dfh_cols)
+        create_single_merged_heatmap(s, acc, database,savename, fig_label, dfh_cols, THOIPA_col, LIPS_col, coev_col)
 
-def create_single_merged_heatmap(s, acc, database,savename, fig_label, dfh_cols):
+def create_single_merged_heatmap(s, acc, database, savename, fig_label, dfh_cols, THOIPA_col, LIPS_col, coev_col):
         merged_data_csv_path = os.path.join(s["thoipapy_data_folder"], "Merged", database, "{}.merged.csv".format(acc))
         dfm = pd.read_csv(merged_data_csv_path, engine = "python")
         heatmap_path = os.path.join(s["thoipapy_data_folder"], "heatmap",database, "{}.png".format(acc))
@@ -60,12 +63,12 @@ def create_single_merged_heatmap(s, acc, database,savename, fig_label, dfh_cols)
         heatmap_data_xlsx_path = os.path.join(s["thoipapy_data_folder"], "heatmap",database,"xlsx","{}_merged.xlsx".format(acc))
         thoipapy.utils.make_sure_path_exists(heatmap_pdf_path, isfile=True)
         thoipapy.utils.make_sure_path_exists(heatmap_data_xlsx_path, isfile=True)
+
         # create dfh, dataframe for heatmap
         dfh = dfm[dfh_cols].copy()
-        dfh = dfh.rename(columns={"THOIPA_5_LOO": "THOIPA", "LIPS_surface_ranked":"LIPS"})
-        dfh_cols= ["THOIPA" if x== "THOIPA_5_LOO" else x for x in dfh_cols]
-        dfh_cols = ["LIPS" if x == "LIPS_surface_ranked" else x for x in dfh_cols]
-        dfh.dropna(inplace=True)
+
+        # Drop only positions where there is no interface data
+        dfh.dropna(subset=["interface"], inplace=True)
         dfh.reset_index(drop=True, inplace=True)
         # normalise all the data columns between 0 and 1
         #cols_to_plot = dfh_cols[2:]
@@ -75,20 +78,55 @@ def create_single_merged_heatmap(s, acc, database,savename, fig_label, dfh_cols)
         #dfm["TMDOCK"] = -1 * dfm["TMDOCK"]
         if database == "crystal" or database == "NMR":
             # normalize crystal and NMR closedistance to between 0 and 1 with invert, min and max values were set as 2 and 10 angstrom
-            dfh["interface_score_norm"] = normalise_between_2_values(dfh["interface_score"],2,10,invert=True)
+            dfh["interface score_norm"] = normalise_between_2_values(dfh["interface_score"],2,10,invert=True)
             #dfm["interface_score"] = -1 * dfm["interface_score"]
         elif database == "ETRA":
             ###normalize ETRA experimental disruption value to the range of 0 to 1 without invert, the min and max values were set as -0.4 and 0.4
-            dfh["interface_score_norm"] = normalise_between_2_values(dfh["interface_score"], -0.4, 0.4)
-        cols_to_plot = ["interface", "interface_score_norm", "THOIPA", "PREDDIMER_norm", "TMDOCK_norm", "LIPS",
-                        "conservation", "polarity", "coev_i4_DI"]
-        for col in cols_to_plot:
-            dfh[col] = eccpy.tools.normalise_0_1(dfh[col])[0]
+            dfh["interface score_norm"] = normalise_between_2_values(dfh["interface_score"], -0.4, 0.4)
+
+        # norm conservation
+        dfh["conservation_norm"] = normalise_between_2_values(dfh["conservation"], 0, 3, invert=False)
+        # norm conservation
+        dfh["THOIPA_norm"] = normalise_between_2_values(dfh[THOIPA_col], 0.15, 0.5, invert=False)
+        # norm polarity
+        dfh["polarity_norm"] = normalise_between_2_values(dfh["polarity"], 0, 3, invert=False)
+        # norm polarity
+        dfh["LIPS_norm"] = normalise_between_2_values(dfh[LIPS_col], -0.5, 1, invert=False)
+
+        # currently coevolution doesn't need to be normalised (already norm in each TMD between 0 and 1
+        dfh["coevolution_norm"] = dfh[coev_col]
+
+        # # dfh_cols= ["THOIPA" if x == "THOIPA_5_LOO" else x for x in dfh_cols]
+        # # dfh_cols = ["LIPS" if x == "LIPS_surface_ranked" else x for x in dfh_cols]
+        # # replace any column containing THOIPA with simply "THOIPA"
+        # rename_list = ["THOIPA", "LIPS", "interface_score", "PREDDIMER", "TMDOCK", "coev"]
+        # # shorten the column names in dfh_cols
+        # for shortname in rename_list:
+        #     dfh_cols = [shortname if shortname in x else x for x in dfh_cols]
+        # dfh.columns = dfh_cols
+        #
+        # dfh.rename(columns={"interface_score": "interface score", "coev":"coevolution"}, inplace=True)
+
+        # dfh_cols= ["THOIPA" if "THOIPA" in x else x for x in dfh_cols]
+        # dfh_cols= ["LIPS" if "LIPS" in x else x for x in dfh_cols]
+        # dfh_cols= ["interface score" if "interface_score" in x else x for x in dfh_cols]
+        # DEPRECATED CODE, DROPS ANY RESIDUES THAT DON'T HAVE DATA FOR ALL PREDICTION ALGORITHMS
+        # (effectively truncated TMDs to match TMDOCK)
+        #dfh.dropna(inplace=True)
+
+        # cols_to_plot = ["interface", "interface_score_norm", "THOIPA", "PREDDIMER_norm", "TMDOCK_norm", "LIPS",
+        #                 "conservation", "polarity", "coev_i4_DI"]
+
+        cols_to_plot = ['interface score_norm', 'interface', 'THOIPA_norm', 'PREDDIMER_norm', 'TMDOCK_norm', 'LIPS_norm', 'conservation_norm', 'polarity_norm', 'coevolution_norm']
+        cols_to_plot_renamed = [x[:-5] if "_norm" in x else x for x in cols_to_plot]
+        # for col in cols_to_plot:
+        #     dfh[col] = eccpy.tools.normalise_0_1(dfh[col])[0]
 
         # transpose dataframe so that "disruption" etc is on the left
         dfh_to_plot = dfh[cols_to_plot].T
+        dfh_to_plot.index = cols_to_plot_renamed
         df_labels = dfh_to_plot.isnull().replace(False, "")
-        df_labels = df_labels.replace(True, "X")
+        df_labels = df_labels.replace(True, "-")
         dfh_to_plot.fillna(0, inplace=True)
 
         fontsize = 10
@@ -133,4 +171,3 @@ def create_single_merged_heatmap(s, acc, database,savename, fig_label, dfh_cols)
 
         sys.stdout.write("\n{} heatmap finished.".format(savename))
         sys.stdout.flush()
-

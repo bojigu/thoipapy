@@ -72,7 +72,7 @@ def combine_file_add_PREDDIMER_TMDOCK_THOIPA_prediction(s, df_set, logging):
         dfm = pd.read_csv(train_data_file)
         # set the unique index, based on the residue number in the full sequence
         dfm.set_index("res_num_full_seq", inplace=True)
-        dfm["conservation"] = -1 * dfm["Entropy"]
+        #dfm["conservation"] = -1 * dfm["Entropy"]
         file_list = [THOIPA_prediction_csv, PREDDIMER_prediction_file, TMDOCK_prediction_file]
         prediction_name_list = [pred_colname, "PREDDIMER", "TMDOCK"]
         n_files_merged = 0
