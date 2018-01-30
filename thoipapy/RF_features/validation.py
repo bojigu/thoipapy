@@ -143,7 +143,7 @@ def train_random_forest_model(s, logging):
 
     train_data_csv = os.path.join(s["set_results_folder"], "{}_train_data.csv".format(s["setname"]))
     train_data_used_for_model_csv = os.path.join(s["set_results_folder"], "{}_train_data_used_for_model.csv".format(s["setname"]))
-    model_pkl = os.path.join(s["set_results_folder"], "{}_rfmodel.pkl".format(s["setname"]))
+    model_pkl = os.path.join(s["set_results_folder"], "{}_ML_model.lpkl".format(s["setname"]))
 
     df_data = pd.read_csv(train_data_csv, index_col=0)
 
@@ -161,7 +161,7 @@ def train_random_forest_model(s, logging):
     n_features = X.shape[1]
     forest = THOIPA_classifier_with_settings(s, n_features)
     # save random forest model into local driver
-    # pkl_file = r'D:\thoipapy\RandomForest\rfmodel.pkl'
+    # pkl_file = r'D:\thoipapy\RandomForest\ML_model.lpkl'
     fit = forest.fit(X, y)
     joblib.dump(fit, model_pkl)
 
@@ -200,7 +200,7 @@ def predict_test_dataset_with_THOIPA_DEPRECATED(train_setname, test_setname, s, 
         rows = range(0, number of AA in test set)
     """
 
-    model_pkl = os.path.join(s["set_results_folder"], "{}_rfmodel.pkl".format(train_setname))
+    model_pkl = os.path.join(s["set_results_folder"], "{}_ML_model.lpkl".format(train_setname))
     test_data_csv = os.path.join(s["Results_folder"], test_setname, "{}_train_data.csv".format(test_setname))
     THOIPA_pred_csv = os.path.join(s["set_results_folder"], "trainset{}_testset{}_predictions.csv".format(train_setname[-2:], test_setname[-2:]))
 
@@ -464,8 +464,8 @@ def run_LOO_validation_OLD_non_multiprocessing(s, df_set, logging):
     BO_all_df = pd.DataFrame()
     pred_colname = "THOIPA_{}_LOO".format(s["set_number"])
 
-    n_features = thoipapy.RF_features.RF_Train_Test.drop_cols_not_used_in_ML(logging, df_data, s["excel_file_with_settings"]).shape[1]
-    forest = thoipapy.RF_features.RF_Train_Test.THOIPA_classifier_with_settings(s, n_features)
+    n_features = thoipapy.RF_features.validation.drop_cols_not_used_in_ML(logging, df_data, s["excel_file_with_settings"]).shape[1]
+    forest = thoipapy.RF_features.validation.THOIPA_classifier_with_settings(s, n_features)
 
     for i in df_set.index:
 
@@ -485,7 +485,7 @@ def run_LOO_validation_OLD_non_multiprocessing(s, df_set, logging):
             # skip protein
             continue
         df_train = df_data.loc[df_data.acc_db != acc_db]
-        X_train = thoipapy.RF_features.RF_Train_Test.drop_cols_not_used_in_ML(logging, df_train, s["excel_file_with_settings"])
+        X_train = thoipapy.RF_features.validation.drop_cols_not_used_in_ML(logging, df_train, s["excel_file_with_settings"])
         y_train = df_train[s["bind_column"]]
 
         #######################################################################################################
@@ -498,7 +498,7 @@ def run_LOO_validation_OLD_non_multiprocessing(s, df_set, logging):
         testdata_combined_file = os.path.join(s["features_folder"], "combined", database, "{}.surr20.gaps5.combined_features.csv".format(acc))
         df_test = pd.read_csv(testdata_combined_file)
 
-        X_test = thoipapy.RF_features.RF_Train_Test.drop_cols_not_used_in_ML(logging, df_test, s["excel_file_with_settings"])
+        X_test = thoipapy.RF_features.validation.drop_cols_not_used_in_ML(logging, df_test, s["excel_file_with_settings"])
         y_test = df_test["interface"].fillna(0).astype(int)
 
         #######################################################################################################
@@ -630,8 +630,8 @@ def run_LOO_validation(s, df_set, logging):
     start = time.clock()
     pred_colname = "THOIPA_{}_LOO".format(s["set_number"])
 
-    n_features = thoipapy.RF_features.RF_Train_Test.drop_cols_not_used_in_ML(logging, df_data, s["excel_file_with_settings"]).shape[1]
-    forest = thoipapy.RF_features.RF_Train_Test.THOIPA_classifier_with_settings(s, n_features)
+    n_features = thoipapy.RF_features.validation.drop_cols_not_used_in_ML(logging, df_data, s["excel_file_with_settings"]).shape[1]
+    forest = thoipapy.RF_features.validation.THOIPA_classifier_with_settings(s, n_features)
 
     #list of all dictionaries for each protein, for multiprocessing
     d_list = []
@@ -766,7 +766,7 @@ def LOO_single_prot(d):
     acc_db, database, bind_column = d["acc_db"], d["database"], d["bind_column"]
 
     df_train = df_data.loc[df_data.acc_db != acc_db]
-    X_train = thoipapy.RF_features.RF_Train_Test.drop_cols_not_used_in_ML(logger, df_train, excel_file_with_settings)
+    X_train = thoipapy.RF_features.validation.drop_cols_not_used_in_ML(logger, df_train, excel_file_with_settings)
     y_train = df_train[bind_column]
 
     n, logger, excel_file_with_settings = d["n"], d["logger"], d["excel_file_with_settings"]
@@ -779,7 +779,7 @@ def LOO_single_prot(d):
     # df_test = df_data.loc[df_data.acc_db == acc_db]
     df_test = pd.read_csv(testdata_combined_file)
 
-    X_test = thoipapy.RF_features.RF_Train_Test.drop_cols_not_used_in_ML(logger, df_test, excel_file_with_settings)
+    X_test = thoipapy.RF_features.validation.drop_cols_not_used_in_ML(logger, df_test, excel_file_with_settings)
     y_test = df_test["interface"].fillna(0).astype(int)
 
     #######################################################################################################

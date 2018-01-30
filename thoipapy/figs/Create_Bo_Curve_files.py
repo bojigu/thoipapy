@@ -94,7 +94,7 @@ def validate_THOIPA_for_testset_trainset_combination(s, test_set_list, train_set
 
     for n, train_set in enumerate(train_set_list):
         trainsetname = "set{:02d}".format(int(train_set))
-        model_pkl = os.path.join(s["Results_folder"], trainsetname, "{}_rfmodel.pkl".format(trainsetname))
+        model_pkl = os.path.join(s["Results_folder"], trainsetname, "{}_ML_model.lpkl".format(trainsetname))
 
         for test_set in test_set_list:
             testsetname = "set{:02d}".format(int(test_set))
@@ -394,7 +394,7 @@ def save_THOIPA_pred_indiv_prot(s, model_pkl, testdata_combined_file, THOIPA_pre
     #Lips_score = test_df.LIPS_polarity * test_df.LIPS_entropy
 
     #tX=test_df.drop(test_features_del,axis=1)
-    test_X = thoipapy.RF_features.RF_Train_Test.drop_cols_not_used_in_ML(logging, combined_incl_THOIPA_df, s["excel_file_with_settings"])
+    test_X = thoipapy.RF_features.validation.drop_cols_not_used_in_ML(logging, combined_incl_THOIPA_df, s["excel_file_with_settings"])
 
     try:
         prob_arr = fit.predict_proba(test_X)[:, 1]

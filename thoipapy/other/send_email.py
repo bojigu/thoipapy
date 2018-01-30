@@ -5,7 +5,7 @@ from email.mime.text import MIMEText
 from email.mime.base import MIMEBase
 from email import encoders
 
-def send_email_when_finished(s, thoipapyoutput_file_loc,output_png_loc):
+def send_email_when_finished(s, output_file_loc, output_png_loc):
     """ Sends an email to specified address when job is finished
 
     Parameters
@@ -18,10 +18,7 @@ def send_email_when_finished(s, thoipapyoutput_file_loc,output_png_loc):
     nothing but sends an email
 
     """
-
-    #fromaddr = "***REMOVED***"
-    fromaddr = "***REMOVED***"
-    #toaddr = "***REMOVED***"
+    fromaddr = "INSERT FROM ADDRESS"
     toaddr = s["email_to"]
 
     msg = MIMEMultipart()
@@ -29,7 +26,7 @@ def send_email_when_finished(s, thoipapyoutput_file_loc,output_png_loc):
     msg['From'] = fromaddr
     msg['To'] = toaddr
     msg['Subject'] = "thoipapy prediction is finished"
-    body = '{a}\n\n processed list: {b}'.format(a='Dear users:', b='Your submitted job was finished, the prediciton result and fitted sine curve are in the attachment files')
+    body = '{a}\n\n processed list: {b}'.format(a='Dear users:', b='Your submitted job was finished, the prediction result and fitted sine curve are in the attachment files')
     msg.attach(MIMEText(body, 'plain'))
 
     email_fig_list = []
@@ -73,8 +70,7 @@ def send_email_when_finished(s, thoipapyoutput_file_loc,output_png_loc):
     server = smtplib.SMTP('smtp.gmail.com', 587)
     #server = smtplib.SMTP('smtp.mail.com',587)
     server.starttls()
-    server.login("***REMOVED***", "***REMOVED***")
-    #server.login("***REMOVED***", "***REMOVED***")
+    server.login("INSERT EMAIL ADDRESS", "INSERT PASSWORD")
 
     text = msg.as_string()
     server.sendmail(fromaddr, toaddr, text)

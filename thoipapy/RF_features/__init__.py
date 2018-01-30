@@ -1,3 +1,3 @@
 import thoipapy.RF_features.feature_calculate
-import thoipapy.RF_features.RF_Train_Test
+import thoipapy.RF_features.validation
 import thoipapy.RF_features.Output_Parse

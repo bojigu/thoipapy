@@ -181,22 +181,22 @@ if __name__ == "__main__":
         ###################################################################################################
 
         if s["run_10fold_cross_validation"]:
-            thoipapy.RF_features.RF_Train_Test.run_10fold_cross_validation(s, logging)
-            thoipapy.RF_features.RF_Train_Test.create_10fold_cross_validation_fig(s, logging)
+            thoipapy.RF_features.validation.run_10fold_cross_validation(s, logging)
+            thoipapy.RF_features.validation.create_10fold_cross_validation_fig(s, logging)
 
 
         if s["run_LOO_validation"]:
-            thoipapy.RF_features.RF_Train_Test.run_LOO_validation(s, df_set, logging)
+            thoipapy.RF_features.validation.run_LOO_validation(s, df_set, logging)
             if "create_LOO_validation_figs" in s:
                 if s["create_LOO_validation_figs"]:
-                    thoipapy.RF_features.RF_Train_Test.create_LOO_validation_fig(s, df_set, logging)
+                    thoipapy.RF_features.validation.create_LOO_validation_fig(s, df_set, logging)
 
         if s["calculate_variable_importance"]:
-            thoipapy.RF_features.RF_Train_Test.calculate_variable_importance(s, logging)
-            thoipapy.RF_features.RF_Train_Test.fig_variable_importance(s, logging)
+            thoipapy.RF_features.validation.calculate_variable_importance(s, logging)
+            thoipapy.RF_features.validation.fig_variable_importance(s, logging)
 
         if s["train_random_forest_model"]:
-            thoipapy.RF_features.RF_Train_Test.train_random_forest_model(s, logging)
+            thoipapy.RF_features.validation.train_random_forest_model(s, logging)
 
 
         if s["run_testset_trainset_validation"] == True:
@@ -289,8 +289,7 @@ if __name__ == "__main__":
     #                         help=r'Full path to your prediction output file.'
     #                              r'E.g. "\Path\to\your output_file\"')
     #     parser.add_argument("-email_to",  # "-setting output email address",
-    #                         help=r'user email given on web server'
-    #                              r'E.g. "***REMOVED***"')
+    #                         help=r'user email given on web server')
     #     """
     #     # create output file, parsed file, and the output figure file names.
     #     if args.of:
