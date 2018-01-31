@@ -72,9 +72,9 @@ def create_single_merged_heatmap(s, acc, database, savename, fig_label, dfh_cols
         dfh.reset_index(drop=True, inplace=True)
         # normalise all the data columns between 0 and 1
         #cols_to_plot = dfh_cols[2:]
-        dfh["PREDDIMER_norm"] = normalise_between_2_values(dfh["PREDDIMER"], 0.5, 10, invert=True)
+        dfh["PREDDIMER_norm"] = normalise_between_2_values(dfh["PREDDIMER"], 2.5, 8, invert=True)
         #dfm["PREDDIMER"] = -1 * dfm["PREDDIMER"]
-        dfh["TMDOCK_norm"] = normalise_between_2_values(dfh["TMDOCK"], 0.5, 10, invert=True)
+        dfh["TMDOCK_norm"] = normalise_between_2_values(dfh["TMDOCK"], 2.5, 8, invert=True)
         #dfm["TMDOCK"] = -1 * dfm["TMDOCK"]
         if database == "crystal" or database == "NMR":
             # normalize crystal and NMR closedistance to between 0 and 1 with invert, min and max values were set as 2 and 10 angstrom
@@ -85,44 +85,21 @@ def create_single_merged_heatmap(s, acc, database, savename, fig_label, dfh_cols
             dfh["interface score_norm"] = normalise_between_2_values(dfh["interface_score"], -0.4, 0.4)
 
         # norm conservation
-        dfh["conservation_norm"] = normalise_between_2_values(dfh["conservation"], 0, 3, invert=False)
-        # norm conservation
+        dfh["conservation_norm"] = normalise_between_2_values(dfh["conservation"], 1.25, 3, invert=False)
+        # norm THOIPA
         dfh["THOIPA_norm"] = normalise_between_2_values(dfh[THOIPA_col], 0.15, 0.5, invert=False)
         # norm polarity
-        dfh["polarity_norm"] = normalise_between_2_values(dfh["polarity"], 0, 3, invert=False)
-        # norm polarity
-        dfh["LIPS_norm"] = normalise_between_2_values(dfh[LIPS_col], -0.5, 1, invert=False)
+        dfh["polarity_norm"] = normalise_between_2_values(dfh["polarity"], 0.5, 2.5, invert=False)
+        # norm LIPS
+        dfh["LIPS_norm"] = normalise_between_2_values(dfh[LIPS_col], -0.4, 1, invert=False)
 
         # currently coevolution doesn't need to be normalised (already norm in each TMD between 0 and 1
         dfh["coevolution_norm"] = dfh[coev_col]
 
-        # # dfh_cols= ["THOIPA" if x == "THOIPA_5_LOO" else x for x in dfh_cols]
-        # # dfh_cols = ["LIPS" if x == "LIPS_surface_ranked" else x for x in dfh_cols]
-        # # replace any column containing THOIPA with simply "THOIPA"
-        # rename_list = ["THOIPA", "LIPS", "interface_score", "PREDDIMER", "TMDOCK", "coev"]
-        # # shorten the column names in dfh_cols
-        # for shortname in rename_list:
-        #     dfh_cols = [shortname if shortname in x else x for x in dfh_cols]
-        # dfh.columns = dfh_cols
-        #
-        # dfh.rename(columns={"interface_score": "interface score", "coev":"coevolution"}, inplace=True)
-
-        # dfh_cols= ["THOIPA" if "THOIPA" in x else x for x in dfh_cols]
-        # dfh_cols= ["LIPS" if "LIPS" in x else x for x in dfh_cols]
-        # dfh_cols= ["interface score" if "interface_score" in x else x for x in dfh_cols]
-        # DEPRECATED CODE, DROPS ANY RESIDUES THAT DON'T HAVE DATA FOR ALL PREDICTION ALGORITHMS
-        # (effectively truncated TMDs to match TMDOCK)
-        #dfh.dropna(inplace=True)
-
-        # cols_to_plot = ["interface", "interface_score_norm", "THOIPA", "PREDDIMER_norm", "TMDOCK_norm", "LIPS",
-        #                 "conservation", "polarity", "coev_i4_DI"]
-
-        cols_to_plot = ['interface score_norm', 'interface', 'THOIPA_norm', 'PREDDIMER_norm', 'TMDOCK_norm', 'LIPS_norm', 'conservation_norm', 'polarity_norm', 'coevolution_norm']
+        cols_to_plot = ['interface score_norm', 'interface', 'PREDDIMER_norm', 'TMDOCK_norm', 'THOIPA_norm', 'LIPS_norm', 'conservation_norm', 'polarity_norm', 'coevolution_norm']
         cols_to_plot_renamed = [x[:-5] if "_norm" in x else x for x in cols_to_plot]
-        # for col in cols_to_plot:
-        #     dfh[col] = eccpy.tools.normalise_0_1(dfh[col])[0]
 
-        # transpose dataframe so that "disruption" etc is on the left
+        # transpose dataframe so that "interface" etc is on the left
         dfh_to_plot = dfh[cols_to_plot].T
         dfh_to_plot.index = cols_to_plot_renamed
         df_labels = dfh_to_plot.isnull().replace(False, "")

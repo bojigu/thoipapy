@@ -32,12 +32,6 @@ def combine_file_add_PREDDIMER_TMDOCK_THOIPA_prediction(s, df_set, logging):
 
 
     """
-    # columns_kept_in_combined_file = ['residue_num', 'residue_name', 'conservation', 'lipo_Hessa', 'CoevDImax_norm',
-    #                                  'CoevDI4_norm',
-    #                                  'CoevDI8_norm', 'CoevMImax_norm', 'CoevMI4_norm', 'CoevMI8_norm',
-    #                                  'CumDI4_norm', 'CumDI8_norm', 'CumMI4_norm', 'CumMI8_norm', 'RelPos_TMD',
-    #                                  'RelPos_fullseq', 'LIPS_L*E', 'LIPS_surface_ranked', 'Hydrophobicity_sAA',
-    #                                  'TMDOCK', 'PREDDIMER']
     # add the THOIPA prediction name to the list of columns to keep
     pred_colname = "THOIPA_{}_LOO".format(s["set_number"])
     # for simplicity, keep only the predictions. Since the index is unique, it can be added later to the combined file.
@@ -45,10 +39,7 @@ def combine_file_add_PREDDIMER_TMDOCK_THOIPA_prediction(s, df_set, logging):
 
     #set_list = thoipapy.figs.fig_utils.get_set_lists(s)
     PREDDIMER_TMDOCK_folder = os.path.join(s["base_dir"], "figs", "FigBZ18-PreddimerTmdockComparison")
-    #for set_number in set_list:
-    #setname = "set{:02d}".format(int(set_number))
-    #set_path = thoipapy.common.get_path_of_protein_set(setname, s["sets_folder"])
-    #df_set = pd.read_excel(set_path, sheetname="proteins")
+
     for i in df_set.index:
         acc = df_set.loc[i, "acc"]
         #if acc =="2axtM1":
@@ -58,8 +49,6 @@ def combine_file_add_PREDDIMER_TMDOCK_THOIPA_prediction(s, df_set, logging):
         combined_data_file = os.path.join(s["dropbox_dir"], "THOIPA_data","Features","combined",database,
                                        "{}.surr20.gaps5.combined_features.csv".format(acc))
         thoipapy.utils.make_sure_path_exists(combined_data_file,isfile=True)
-        #THOIPA_prediction_file = os.path.join(s["thoipapy_data_folder"], "Predictions", "testset_trainset",database, "{}.THOIPA.trainset04.csv".format(acc))
-        #THOIPA_prediction_file = os.path.join(s["thoipapy_data_folder"], "Predictions", "leave_one_out", database, "{}.{}.LOO.prediction.csv".format(acc, s["setname"]))
         THOIPA_prediction_csv = os.path.join(s["thoipapy_data_folder"], "Predictions", "leave_one_out", database, "{}.{}.{}.LOO.prediction.csv".format(acc, database, s["setname"]))
         PREDDIMER_prediction_file = os.path.join(PREDDIMER_TMDOCK_folder, database, "{}.preddimer.closedist.csv".format(acc))
         TMDOCK_prediction_file = os.path.join(PREDDIMER_TMDOCK_folder, database, "{}.tmdock.closedist.csv".format(acc))
@@ -111,7 +100,6 @@ def combine_file_add_PREDDIMER_TMDOCK_THOIPA_prediction(s, df_set, logging):
 
                 n_files_merged += 1
         # keep the desired columns
-        #dfm.to_csv(combined_data_file)
         new_columns_kept_in_combined_file = list(set(columns_kept_in_combined_file).intersection(set(dfm.columns)))
         dfm = dfm[new_columns_kept_in_combined_file]
         # save to "Merged" folder, so as not to get confused with the "combined" files
@@ -175,10 +163,6 @@ def create_AUC_BoAUC_figs_THOIPA_PREDDIMER_TMDOCK(s,df_set,logging):
             merged_data_df["LIPS_L*E"] = -1 * merged_data_df["LIPS_L*E"]
             merged_data_df["PREDDIMER"] = -1 * merged_data_df["PREDDIMER"]
             merged_data_df["TMDOCK"] = -1 * merged_data_df["TMDOCK"]
-
-            # Mark_is_testing_something = True
-            # if Mark_is_testing_something:
-            #     merged_data_df = merged_data_df.dropna(subset=["interface_score", "PREDDIMER"])
 
             if database == "crystal" or database == "NMR":
                 # (it is closest distance and low value means high propensity of interfacial)

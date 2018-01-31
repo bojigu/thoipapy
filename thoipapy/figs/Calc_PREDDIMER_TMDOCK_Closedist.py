@@ -27,7 +27,7 @@ def calc_closedist_from_PREDDIMER_TMDOCK_best_model(s):
             PREDDIMER_TMDOCK_folder = os.path.join(s["base_dir"], "figs", "FigBZ18-PreddimerTmdockComparison")
             pdb_file_preddimer = os.path.join(PREDDIMER_TMDOCK_folder,database,"{}.preddimer.pdb".format(protein))
             pdb_file_tmdock = os.path.join(PREDDIMER_TMDOCK_folder, database, "{}.tmdock.pdb".format(protein))
-            preddimer_closedist_file = os.path.join(PREDDIMER_TMDOCK_folder,database,"{}.preddimer.closedist.csv".format(protein))
+            preddimer_closedist_file = os.path.join(PREDDIMER_TMDOCK_folder, database,"{}.preddimer.closedist.csv".format(protein))
             tmdock_closedist_file = os.path.join(PREDDIMER_TMDOCK_folder, database,"{}.tmdock.closedist.csv".format(protein))
 
             #closedist_calculate_from_dimer(s,pdb_file_preddimer,preddimer_closedist_file)
@@ -45,7 +45,6 @@ def calc_closedist_from_PREDDIMER_TMDOCK_best_model(s):
                 sys.stdout.write("\nthe preddimer pdb file for protein {} not exists".format(protein))
                 sys.stdout.flush()
                 continue
-
 
 def closedist_calculate_from_dimer(s,pdb_file, closedist_out_csv):
     if not os.path.isfile(pdb_file):
