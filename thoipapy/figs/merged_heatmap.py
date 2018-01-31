@@ -48,11 +48,11 @@ def create_merged_heatmap(s, df_set, logging):
         df_names = df_names.loc[df_names.database == database]
         if acc in df_names.index:
             savename = "{}_{}".format(acc, df_names.loc[acc, "shortname"])
-            fig_label = df_names.loc[acc, "concatname"]
-            sys.stdout.write("{} {}".format(savename,fig_label))
+            fig_label = df_names.loc[acc, "concatname"] + " [{} subset]".format(database)
         else:
             savename = acc + "_{}".format(database)
-            fig_label = acc + "_{}".format(database)
+            fig_label = acc + " [{} subset, PDB:{}, chain:{}, TMD:{}]".format(database, acc[:-2], acc[-2], acc[-1])
+        sys.stdout.write("\n{} {}".format(savename, fig_label))
         create_single_merged_heatmap(s, acc, database,savename, fig_label, dfh_cols, THOIPA_col, LIPS_col, coev_col)
 
 def create_single_merged_heatmap(s, acc, database, savename, fig_label, dfh_cols, THOIPA_col, LIPS_col, coev_col):
@@ -67,9 +67,13 @@ def create_single_merged_heatmap(s, acc, database, savename, fig_label, dfh_cols
         # create dfh, dataframe for heatmap
         dfh = dfm[dfh_cols].copy()
 
+
         # Drop only positions where there is no interface data
         dfh.dropna(subset=["interface"], inplace=True)
+        # why reset index here???
         dfh.reset_index(drop=True, inplace=True)
+        # set index to start with 1
+        dfh.index = range(1, dfh.shape[0] + 1)
         # normalise all the data columns between 0 and 1
         #cols_to_plot = dfh_cols[2:]
         dfh["PREDDIMER_norm"] = normalise_between_2_values(dfh["PREDDIMER"], 2.5, 8, invert=True)
@@ -112,9 +116,10 @@ def create_single_merged_heatmap(s, acc, database, savename, fig_label, dfh_cols
 
         plt.close("all")
         # sns.set_context("paper", rc={"font.size": 10, "axes.titlesize": 10, "axes.labelsize": 10})
-        plt.rcParams['font.size'] = 10
-        # fig, ax = plt.subplots(figsize=(3.42, 1))
+        plt.rcParams['font.size'] = fontsize
+        #fig, ax = plt.subplots(figsize=(3.42, 1))
         fig, ax = plt.subplots(figsize=(7, 2))
+        #fig, ax = plt.subplots(figsize=(10, 3))
 
         # SOMEWHAT INELEGANT: In order to create a second xticklabels, a second axis was created, and the heatmap rendered twice
         # in ax1, the aa numbers are used as the xticklabels at the bottom
@@ -135,8 +140,9 @@ def create_single_merged_heatmap(s, acc, database, savename, fig_label, dfh_cols
         ax2.set_xticks(ax.get_xticks())
         ax2.xaxis.tick_top()
         ax2.set_xticklabels(dfh.residue_name, fontsize=fontsize)
-        ax.tick_params(direction='out', pad=1, tick1On=False)
-        ax2.tick_params(direction='out', pad=0.1, tick2On=False)
+        ax.tick_params(direction='out', pad=0, tick1On=False)
+        #ax2.tick_params(direction='out', pad=0.1, tick2On=False)
+        ax2.tick_params(direction='out', pad=-3, tick2On=False)
         fig.tight_layout()
         fig.savefig(heatmap_path, dpi=240)
         fig.savefig(heatmap_pdf_path)
