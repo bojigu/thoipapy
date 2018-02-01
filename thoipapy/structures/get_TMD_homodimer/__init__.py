@@ -1,0 +1,2 @@
+import thoipapy.structures.get_TMD_homodimer.get_tmd_nr_homodimer
+import thoipapy.structures.get_TMD_homodimer.NMR_data

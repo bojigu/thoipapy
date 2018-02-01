@@ -21,10 +21,8 @@ import sys
 import os
 import thoipapy
 from thoipapy import common
-import csv
 import platform
 import pandas as pd
-import re
 
 # read the command line arguments
 parser = argparse.ArgumentParser()
@@ -102,18 +100,18 @@ if __name__ == "__main__":
 
         if s["Get_Tmd_Homodimers"] :
 
-            #thoipapy.Get_Tmd_Homodimer.get_tmd_nr_homodimer.Download_xml_Get_alphahelix_Get_homo_pair(s, logging)
-            thoipapy.Get_Tmd_Homodimer.get_tmd_nr_homodimer.Download_trpdb_Calc_inter_rr_pairs(s, logging)
-            #thoipapy.Get_Tmd_Homodimer.get_tmd_nr_homodimer.create_redundant_interact_homodimer_rm_shorttm(s, logging)
-            #thoipapy.Get_Tmd_Homodimer.get_tmd_nr_homodimer.extract_crystal_resolv035_interact_pairs_and_create_fasta_file(s, logging)
-            thoipapy.Get_Tmd_Homodimer.get_tmd_nr_homodimer.create_multiple_bind_closedist_file(s,logging)
-            #thoipapy.Get_Tmd_Homodimer.get_tmd_nr_homodimer.create_average_fraction_DI_file(s, logging)
+            #thoipapy.get_TMD_homodimer.get_tmd_nr_homodimer.download_xml_get_alphahelix_get_homo_pair(s, logging)
+            thoipapy.other.Get_Tmd_Homodimer.get_tmd_nr_homodimer.Download_trpdb_Calc_inter_rr_pairs(s, logging)
+            #thoipapy.get_TMD_homodimer.get_tmd_nr_homodimer.create_redundant_interact_homodimer_rm_shorttm(s, logging)
+            #thoipapy.get_TMD_homodimer.get_tmd_nr_homodimer.extract_crystal_resolv035_interact_pairs_and_create_fasta_file(s, logging)
+            thoipapy.other.Get_Tmd_Homodimer.get_tmd_nr_homodimer.create_multiple_bind_closedist_file(s, logging)
+            #thoipapy.get_TMD_homodimer.get_tmd_nr_homodimer.create_average_fraction_DI_file(s, logging)
 
         if s["calc_NMR_closedist"] :
-            thoipapy.Get_Tmd_Homodimer.NMR_data.calc_closedist_from_NMR_best_model(s)
+            thoipapy.other.Get_Tmd_Homodimer.NMR_data.calc_closedist_from_NMR_best_model(s)
 
         if s["Atom_Close_Dist"]:
-            infor = thoipapy.Atom_Dist.Residu_Closest_Dist.homodimer_residue_closedist_calculate_from_complex(thoipapy, s, logging)
+            infor = thoipapy.other.Atom_Dist.Residu_Closest_Dist.homodimer_residue_closedist_calculate_from_complex(thoipapy, s, logging)
             sys.stdout.write(infor)
 
         ###################################################################################################
@@ -123,13 +121,13 @@ if __name__ == "__main__":
         ###################################################################################################
 
         if s["run_retrieve_NCBI_homologues_with_blastp"]:
-            thoipapy.NCBI_BLAST.download.download.download_homologues_from_ncbi_mult_prot(s, df_set, logging)
+            thoipapy.homologues.NCBI.download.download.download_homologues_from_ncbi_mult_prot(s, df_set, logging)
 
         if s["run_parse_homologues_xml_into_csv"]:
-            thoipapy.NCBI_BLAST.parse.parser.parse_NCBI_xml_to_csv_mult_prot(s, df_set, logging)
+            thoipapy.homologues.NCBI.parse.parser.parse_NCBI_xml_to_csv_mult_prot(s, df_set, logging)
 
         if s["parse_csv_homologues_to_alignment"]:
-            thoipapy.NCBI_BLAST.parse.parser.extract_filtered_csv_homologues_to_alignments_mult_prot(s, df_set, logging)
+            thoipapy.homologues.NCBI.parse.parser.extract_filtered_csv_homologues_to_alignments_mult_prot(s, df_set, logging)
 
 
         ###################################################################################################
@@ -139,40 +137,40 @@ if __name__ == "__main__":
         ###################################################################################################
 
         if s["pssm_feature_calculation"]:
-            thoipapy.RF_features.feature_calculate.create_PSSM_from_MSA_mult_prot(s, df_set, logging)
+            thoipapy.features.feature_calculate.create_PSSM_from_MSA_mult_prot(s, df_set, logging)
 
         if s["entropy_feature_calculation"]:
-            thoipapy.RF_features.feature_calculate.entropy_calculation_mult_prot(s, df_set, logging)
+            thoipapy.features.feature_calculate.entropy_calculation_mult_prot(s, df_set, logging)
 
         if s["cumulative_coevolution_feature_calculation"]:
             if "Windows" in platform.system():
                 sys.stdout.write("\n Freecontact cannot be run in Windows! Skipping coevolution_calculation_with_freecontact_mult_prot.")
-                thoipapy.RF_features.feature_calculate.parse_freecontact_coevolution_mult_prot(s, df_set, logging)
+                thoipapy.features.feature_calculate.parse_freecontact_coevolution_mult_prot(s, df_set, logging)
             else:
-                thoipapy.RF_features.feature_calculate.coevolution_calculation_with_freecontact_mult_prot(s, df_set, logging)
-                thoipapy.RF_features.feature_calculate.parse_freecontact_coevolution_mult_prot(s, df_set, logging)
+                thoipapy.features.feature_calculate.coevolution_calculation_with_freecontact_mult_prot(s, df_set, logging)
+                thoipapy.features.feature_calculate.parse_freecontact_coevolution_mult_prot(s, df_set, logging)
 
         if s["clac_relative_position"]:
-            thoipapy.RF_features.feature_calculate.calc_relative_position_mult_prot(s, df_set, logging)
+            thoipapy.features.feature_calculate.calc_relative_position_mult_prot(s, df_set, logging)
 
         if s["calc_lipo_from_pssm"]:
-            thoipapy.RF_features.feature_calculate.lipo_from_pssm_mult_prot(s, df_set, logging)
+            thoipapy.features.feature_calculate.lipo_from_pssm_mult_prot(s, df_set, logging)
 
         if s["lips_score_feature_calculation"]:
-            thoipapy.RF_features.feature_calculate.LIPS_score_calculation_mult_prot(s, df_set, logging)
-            thoipapy.RF_features.feature_calculate.parse_LIPS_score_mult_prot(s, df_set, logging)
+            thoipapy.features.feature_calculate.LIPS_score_calculation_mult_prot(s, df_set, logging)
+            thoipapy.features.feature_calculate.parse_LIPS_score_mult_prot(s, df_set, logging)
 
         if s["motifs_from_seq"]:
-            thoipapy.RF_features.feature_calculate.motifs_from_seq_mult_protein(s, df_set, logging)
+            thoipapy.features.feature_calculate.motifs_from_seq_mult_protein(s, df_set, logging)
 
         if s["combine_feature_into_train_data"]:
-            thoipapy.RF_features.feature_calculate.combine_all_features_mult_prot(s, df_set, logging)
-            thoipapy.RF_features.feature_calculate.add_physical_parameters_to_features_mult_prot(s, df_set, logging)
-            thoipapy.RF_features.feature_calculate.add_experimental_data_to_combined_features_mult_prot(s, df_set, logging)
+            thoipapy.features.feature_calculate.combine_all_features_mult_prot(s, df_set, logging)
+            thoipapy.features.feature_calculate.add_physical_parameters_to_features_mult_prot(s, df_set, logging)
+            thoipapy.features.feature_calculate.add_experimental_data_to_combined_features_mult_prot(s, df_set, logging)
             if "add_PREDDIMER_TMDOCK_to_combined_features" in s:
                 if s["add_PREDDIMER_TMDOCK_to_combined_features"]:
-                    thoipapy.RF_features.feature_calculate.add_PREDDIMER_TMDOCK_to_combined_features_mult_prot(s, df_set, logging)
-            thoipapy.RF_features.feature_calculate.combine_all_train_data_for_random_forest(s, df_set, logging)
+                    thoipapy.features.feature_calculate.add_PREDDIMER_TMDOCK_to_combined_features_mult_prot(s, df_set, logging)
+            thoipapy.features.feature_calculate.combine_all_train_data_for_random_forest(s, df_set, logging)
 
         ###################################################################################################
         #                                                                                                 #
@@ -181,26 +179,26 @@ if __name__ == "__main__":
         ###################################################################################################
 
         if s["run_10fold_cross_validation"]:
-            thoipapy.RF_features.validation.run_10fold_cross_validation(s, logging)
-            thoipapy.RF_features.validation.create_10fold_cross_validation_fig(s, logging)
+            thoipapy.validation.validation.run_10fold_cross_validation(s, logging)
+            thoipapy.validation.validation.create_10fold_cross_validation_fig(s, logging)
 
 
         if s["run_LOO_validation"]:
-            thoipapy.RF_features.validation.run_LOO_validation(s, df_set, logging)
+            thoipapy.validation.validation.run_LOO_validation(s, df_set, logging)
             if "create_LOO_validation_figs" in s:
                 if s["create_LOO_validation_figs"]:
-                    thoipapy.RF_features.validation.create_LOO_validation_fig(s, df_set, logging)
+                    thoipapy.validation.validation.create_LOO_validation_fig(s, df_set, logging)
 
         if s["calculate_variable_importance"]:
-            thoipapy.RF_features.validation.calculate_variable_importance(s, logging)
-            thoipapy.RF_features.validation.fig_variable_importance(s, logging)
+            thoipapy.validation.validation.calculate_variable_importance(s, logging)
+            thoipapy.validation.validation.fig_variable_importance(s, logging)
 
         if s["train_random_forest_model"]:
-            thoipapy.RF_features.validation.train_random_forest_model(s, logging)
+            thoipapy.validation.validation.train_random_forest_model(s, logging)
 
 
         if s["run_testset_trainset_validation"] == True:
-            thoipapy.figs.Create_Bo_Curve_files.run_testset_trainset_validation(s, logging)
+            thoipapy.figs.create_BOcurve_files.run_testset_trainset_validation(s, logging)
 
         ###################################################################################################
         #                                                                                                 #
@@ -216,40 +214,40 @@ if __name__ == "__main__":
 
         if s["FigZB_07"] == True:
             # barcharts of coevolution values for interface and non-interface
-            thoipapy.figs.Average_Fraction_DI.FigZB_07(Fontsize, Width, Size, s)
+            thoipapy.figs.average_fraction_DI.FigZB_07(Fontsize, Width, Size, s)
 
         if s["FigZB_18"] == True:
             # heatmap of prediction from THOIPA, PREDDIMER, TMDOCK
-            thoipapy.figs.Preddimer_TMdock_heatmap.FigZB_18(Fontsize,Width,Size)
+            thoipapy.figs.create_PREDDIMER_TMDOCK_heatmap.FigZB_18(Fontsize, Width, Size)
 
 
-        #if s["combine_BO_curve_files_HARDLINKED"] == True:
-        #    thoipapy.figs.Combine_Bo_Curve_files.combine_BO_curve_files_HARDLINKED(s)
+        #if s["combine_BOcurve_files_hardlinked"] == True:
+        #    thoipapy.figs.Combine_Bo_Curve_files.combine_BOcurve_files_hardlinked(s)
 
         # DEPRECATED. USE COMPARE PREDICTORS
-        # if s["fig_plot_BO_curve_mult_train_datasets"] == True:
-        #     thoipapy.figs.Combine_Bo_Curve_files.fig_plot_BO_curve_mult_train_datasets(s)
+        # if s["fig_plot_BOcurve_mult_train_datasets"] == True:
+        #     thoipapy.figs.Combine_Bo_Curve_files.fig_plot_BOcurve_mult_train_datasets(s)
 
         if s["compare_predictors"] == True:
-            thoipapy.figs.Combine_Bo_Curve_files.compare_predictors(s)
+            thoipapy.figs.combine_BOcurve_files.compare_predictors(s)
 
-        if s["run_bocurve_comp_HARDLINKED"] == True:
-            thoipapy.figs.BoCurve_ThoipaBest_comp_LIPS_and_Nmr.run_bocurve_comp_HARDLINKED(Fontsize, Width, Size, s, Linewidth)
+        if s["run_BOcurve_comp_hardlinked"] == True:
+            thoipapy.figs.BOcurve_THOIPAbest_comp_LIPS_and_NMR.run_BOcurve_comp_hardlinked(Fontsize, Width, Size, s, Linewidth)
 
         if s["calc_PREDDIMER_TMDOCK_closedist"] == True:
-            thoipapy.figs.Calc_PREDDIMER_TMDOCK_Closedist.calc_closedist_from_PREDDIMER_TMDOCK_best_model(s)
+            thoipapy.figs.calc_PREDDIMER_TMDOCK_closedist.calc_closedist_from_PREDDIMER_TMDOCK_best_model(s)
 
         if s["add_predictions_to_combined_files"] == True:
             thoipapy.figs.combine_add_3_prediction.combine_file_add_PREDDIMER_TMDOCK_THOIPA_prediction(s, df_set, logging)
 
         if s["create_AUC_BoAuc_fig_bestset"] == True:
-            thoipapy.figs.combine_add_3_prediction.create_AUC_BoAUC_figs_THOIPA_PREDDIMER_TMDOCK(s, df_set, logging)
+            thoipapy.figs.combine_add_3_prediction.create_AUC_BOAUC10_figs_THOIPA_PREDDIMER_TMDOCK(s, df_set, logging)
 
         if s["create_merged_heatmap"] == True:
-            thoipapy.figs.merged_heatmap.create_merged_heatmap(s, df_set, logging)
+            thoipapy.figs.create_heatmap_from_merge_file.create_merged_heatmap(s, df_set, logging)
 
         if s["create_ROC_4predictors"] == True:
-            thoipapy.figs.combine_add_3_prediction.create_ROC_Curve_comp_4predictors(s,df_set,logging)
+            thoipapy.figs.combine_add_3_prediction.create_ROC_comp_4predictors(s, df_set, logging)
 
         if s["create_AUC_AUBOC_separate_database"] == True:
             thoipapy.figs.combine_add_3_prediction.create_AUBOC10_4predictors_3databases_figs(s,df_set,logging)
@@ -258,7 +256,7 @@ if __name__ == "__main__":
 
         if "download_10_homologues_from_ncbi" in s:
             if s["download_10_homologues_from_ncbi"] == True:
-                thoipapy.NCBI_BLAST.download.download.download_10_homologues_from_ncbi(s, df_set, logging)
+                thoipapy.other.NCBI.download.download.download_10_homologues_from_ncbi(s, df_set, logging)
 
         # close the logger. A new one will be made for the next protein list.
         logging.info("FINISHED PROCESSING OF {}.".format(setname))
@@ -327,11 +325,11 @@ if __name__ == "__main__":
     #     # thoipapy.common.create_TMD_surround20_fasta_file(s)
     #
     #     if s["parse_prediction_output"]:
-    #         thoipapy.RF_features.Output_Parse.parse_Predicted_Output(thoipapy,s,output_file_loc,output_parse_file,logging)
+    #         thoipapy.features.Output_Parse.parse_Predicted_Output(thoipapy,s,output_file_loc,output_parse_file,logging)
     #
     #     if s["Send_sine_curve_to_email"]:
     #         sys.stdout.write('begining to run run sine curve fitting')
-    #         thoipapy.Sine_Curve.SineCurveFit.Save_Sine_Curve_Result(s,output_file_loc,output_png_loc)
+    #         thoipapy.sine_curve.SineCurveFit.save_sine_vurve_result(s,output_file_loc,output_png_loc)
     #         logging.info('the fitting of sine curve is done')
     #
     #     if s["Send_email_finished"]:

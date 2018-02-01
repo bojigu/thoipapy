@@ -1,17 +1,21 @@
-import pandas as pd
 import argparse
-import os
-import thoipapy
-import re
 import hashlib
-import unicodedata
+import os
 import platform
+import re
 import sys
-from thoipapy.NCBI_BLAST.download.download import download_homologues_from_ncbi
-from thoipapy.NCBI_BLAST.parse.parser import parse_NCBI_xml_to_csv, extract_filtered_csv_homologues_to_alignments
-from thoipapy.RF_features.feature_calculate import create_PSSM_from_MSA, lipo_from_pssm, entropy_calculation, \
-    coevolution_calculation_with_freecontact, parse_freecontact_coevolution, calc_relative_position, LIPS_score_calculation, \
-    parse_LIPS_score,motifs_from_seq, combine_all_features, add_physical_parameters_to_features
+import unicodedata
+
+import pandas as pd
+from thoipapy.NCBI.download.download import download_homologues_from_ncbi
+
+import thoipapy
+from thoipapy.features.feature_calculate import create_PSSM_from_MSA, lipo_from_pssm, entropy_calculation, \
+    coevolution_calculation_with_freecontact, parse_freecontact_coevolution, calc_relative_position, \
+    LIPS_score_calculation, \
+    parse_LIPS_score, motifs_from_seq, combine_all_features, add_physical_parameters_to_features
+from thoipapy.homologues.NCBI import parse_NCBI_xml_to_csv, extract_filtered_csv_homologues_to_alignments
+
 
 def get_start_end_pl_surr(TMD_start, TMD_end, seqlen, surr):
     TMD_start_pl_surr = TMD_start - surr

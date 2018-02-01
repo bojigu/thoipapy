@@ -48,14 +48,14 @@ def combine_file_add_PREDDIMER_TMDOCK_THOIPA_prediction(s, df_set, logging):
         train_data_file = os.path.join(s["features_folder"], "combined", database,"{}.surr20.gaps5.combined_features.csv".format(acc))
         combined_data_file = os.path.join(s["dropbox_dir"], "THOIPA_data","Features","combined",database,
                                        "{}.surr20.gaps5.combined_features.csv".format(acc))
-        thoipapy.utils.make_sure_path_exists(combined_data_file,isfile=True)
+        thoipapy.utils.make_sure_path_exists(combined_data_file, isfile=True)
         THOIPA_prediction_csv = os.path.join(s["thoipapy_data_folder"], "Predictions", "leave_one_out", database, "{}.{}.{}.LOO.prediction.csv".format(acc, database, s["setname"]))
         PREDDIMER_prediction_file = os.path.join(PREDDIMER_TMDOCK_folder, database, "{}.preddimer.closedist.csv".format(acc))
         TMDOCK_prediction_file = os.path.join(PREDDIMER_TMDOCK_folder, database, "{}.tmdock.closedist.csv".format(acc))
         merged_data_csv_path = os.path.join(s["thoipapy_data_folder"], "Merged", database, "{}.merged.csv".format(acc))
         merged_data_xlsx_path = os.path.join(s["thoipapy_data_folder"], "Merged", database, "{}.merged.xlsx".format(acc))
         thoipapy.utils.make_sure_path_exists(merged_data_xlsx_path, isfile=True)
-        #merge_4_files_ALIGNMENT_METHOD(acc, full_seq, train_data_file, THOIPA_prediction_file, PREDDIMER_prediction_file, TMDOCK_prediction_file, merged_data_xlsx_path, columns_kept_in_combined_file)
+        #merge_4_files_alignment_metho(acc, full_seq, train_data_file, THOIPA_prediction_file, PREDDIMER_prediction_file, TMDOCK_prediction_file, merged_data_xlsx_path, columns_kept_in_combined_file)
 
         # load the full feature file as the start of dfm
         dfm = pd.read_csv(train_data_file)
@@ -75,7 +75,7 @@ def combine_file_add_PREDDIMER_TMDOCK_THOIPA_prediction(s, df_set, logging):
                     logging.warning("Sequence in residue_name column of dataframe is not found in the original df_set sequence."
                                      "\nacc : {}\nfile number : {}\nTMD_seq : {}\nfull seq in df_set : {}\nTHOIPA_prediction_csv:{}".format(acc, n, seq, full_seq, THOIPA_prediction_csv))
                     if prediction_name == [pred_colname]:
-                        df = thoipapy.utils.add_mutation_missed_residues_with_na(s,acc,database,df)
+                        df = thoipapy.utils.add_mutation_missed_residues_with_na(s, acc, database, df)
                         seq = df["residue_name"].str.cat()
                     # skip protein
                     #continue
@@ -106,9 +106,9 @@ def combine_file_add_PREDDIMER_TMDOCK_THOIPA_prediction(s, df_set, logging):
         dfm.to_csv(merged_data_csv_path)
         logging.info("{} predictions combined. n_files_merged : {}. ({})".format(acc, n_files_merged, merged_data_csv_path))
 
-def create_AUC_BoAUC_figs_THOIPA_PREDDIMER_TMDOCK(s,df_set,logging):
+def create_AUC_BOAUC10_figs_THOIPA_PREDDIMER_TMDOCK(s, df_set, logging):
 
-    logging.info("start create_AUC_BoAUC_figs_THOIPA_PREDDIMER_TMDOCK")
+    logging.info("start create_AUC_BOAUC10_figs_THOIPA_PREDDIMER_TMDOCK")
 
     names_excel_path = os.path.join(os.path.dirname(s["sets_folder"]), "ETRA_NMR_names.xlsx")
     namedict = thoipapy.utils.create_namedict(names_excel_path)
@@ -188,7 +188,7 @@ def create_AUC_BoAUC_figs_THOIPA_PREDDIMER_TMDOCK(s,df_set,logging):
             pickle.dump(xv_dict, f, protocol=pickle.HIGHEST_PROTOCOL)
         BO_data_df.to_csv(BO_curve_data_csv)
         # THOIPA_linechart_mean_obs_and_rand = analyse_bo_curve_underlying_data(THOIPA_BO_curve_data_csv, BO_curve_folder, names_excel_path)
-        thoipapy.figs.Create_Bo_Curve_files.parse_BO_data_csv_to_excel(BO_curve_data_csv, BO_data_excel, logging, predictor_name)
+        thoipapy.figs.create_BOcurve_files.parse_BO_data_csv_to_excel(BO_curve_data_csv, BO_data_excel, logging, predictor_name)
         AUC_ser = pd.Series(auc_dict)
         AUC_ser.sort_values(inplace=True, ascending=False)
         auc_mean_list.append(AUC_ser.mean())
@@ -203,8 +203,8 @@ def create_AUC_BoAUC_figs_THOIPA_PREDDIMER_TMDOCK(s,df_set,logging):
         linechar_name_list.append(predictor_name)
         AUC_AUBOC_name_list.append("{}-AUC".format(predictor_name))
         AUC_AUBOC_name_list.append("{}-AUBOC10".format(predictor_name))
-        thoipapy.figs.Create_Bo_Curve_files.save_BO_linegraph_and_barchart(s, BO_data_excel, BO_linechart_png, BO_barchart_png, namedict,
-                                                 logging, AUC_ser)
+        thoipapy.figs.create_BOcurve_files.save_BO_linegraph_and_barchart(s, BO_data_excel, BO_linechart_png, BO_barchart_png, namedict,
+                                                                          logging, AUC_ser)
 
         AUC_AUBOC_df = pd.concat([AUC_AUBOC_df,AUC_ser, AUBOC10_ser], axis=1, join="outer")
     #sys.stdout.write(auc_mean_list)
@@ -218,10 +218,10 @@ def create_AUC_BoAUC_figs_THOIPA_PREDDIMER_TMDOCK(s,df_set,logging):
     AUC_AUBOC_df.to_csv(AUC_AUBOC_file)
     THOIPA_best_set = s["THOIPA_best_set"]
     create_4predictors_AUC_AUBOC10_barchart(AUC_AUBOC_df, predictors_AUC_barchart_png, predictors_BOAUC10_barchart_png, namedict, THOIPA_best_set)
-    create_4predictors_bocurve_linechart(df_o_minus_r_mean_df, AUBOC10_list, linechar_name_list, predictors_BOCURVE_linechart_png)
+    create_4predictors_BOcurve_linechart(df_o_minus_r_mean_df, AUBOC10_list, linechar_name_list, predictors_BOCURVE_linechart_png)
     create_mean_AUC_barchart_comp(auc_mean_list, linechar_name_list, predictors_mean_auc_barchart_png)
     df_o_minus_r_mean_df.to_csv(df_o_minus_r_mean_csv)
-    logging.info("finished create_AUC_BoAUC_figs_THOIPA_PREDDIMER_TMDOCK")
+    logging.info("finished create_AUC_BOAUC10_figs_THOIPA_PREDDIMER_TMDOCK")
 
 
 def create_mean_AUC_barchart_comp(auc_mean_list,linechar_name_list,predictors_mean_auc_barchart_png):
@@ -245,7 +245,7 @@ def create_mean_AUC_barchart_comp(auc_mean_list,linechar_name_list,predictors_me
     fig.savefig(predictors_mean_auc_barchart_png, dpi=240)
 
 
-def create_4predictors_bocurve_linechart(df_o_minus_r_mean_df,AUBOC10_list,linechar_name_list, predictors_BOCURVE_linechart_png):
+def create_4predictors_BOcurve_linechart(df_o_minus_r_mean_df, AUBOC10_list, linechar_name_list, predictors_BOCURVE_linechart_png):
     # BO_linechart_png
     plt.close("all")
     figsize = np.array([3.42, 3.42]) * 2  # DOUBLE the real size, due to problems on Bo computer with fontsizes
@@ -458,7 +458,7 @@ def create_AUC_4predictors_3databases_figs(s,df_set,logging):
         fig.savefig(mean_AUC_barplot_png, dpi=240)
 
 
-def merge_4_files_ALIGNMENT_METHOD(acc, full_seq, train_data_file, THOIPA_prediction_file, PREDDIMER_prediction_file, TMDOCK_prediction_file, merged_data_xlsx_path, columns_kept_in_combined_file):
+def merge_4_files_alignment_metho(acc, full_seq, train_data_file, THOIPA_prediction_file, PREDDIMER_prediction_file, TMDOCK_prediction_file, merged_data_xlsx_path, columns_kept_in_combined_file):
     all_files_exist = True
     for path in [train_data_file, THOIPA_prediction_file,PREDDIMER_prediction_file,TMDOCK_prediction_file]:
         if not os.path.isfile(path):
@@ -492,10 +492,10 @@ def merge_4_files_ALIGNMENT_METHOD(acc, full_seq, train_data_file, THOIPA_predic
                              "acc : {}\nTMD_seq : {}\nfull seq in df_set : {}\nall TM sequences in list : {}".format(acc, seq, full_seq, seqlist))
             return None, None, None
 
-    df_train = thoipapy.utils.add_res_num_full_seq_to_df(acc,df_train, df_train_seq, full_seq)
-    df_thoipa = thoipapy.utils.add_res_num_full_seq_to_df(acc,df_thoipa, df_thoipa_seq, full_seq)
-    df_preddimer = thoipapy.utils.add_res_num_full_seq_to_df(acc,df_preddimer, df_preddimer_seq, full_seq)
-    df_tmdock = thoipapy.utils.add_res_num_full_seq_to_df(acc,df_tmdock, df_tmdock_seq, full_seq)
+    df_train = thoipapy.utils.add_res_num_full_seq_to_df(acc, df_train, df_train_seq, full_seq)
+    df_thoipa = thoipapy.utils.add_res_num_full_seq_to_df(acc, df_thoipa, df_thoipa_seq, full_seq)
+    df_preddimer = thoipapy.utils.add_res_num_full_seq_to_df(acc, df_preddimer, df_preddimer_seq, full_seq)
+    df_tmdock = thoipapy.utils.add_res_num_full_seq_to_df(acc, df_tmdock, df_tmdock_seq, full_seq)
 
     dfs = pd.DataFrame()
 
@@ -612,7 +612,7 @@ def merge_4_files_ALIGNMENT_METHOD(acc, full_seq, train_data_file, THOIPA_predic
     sys.stdout.write("\n{} finished. Merged data saved to {}".format(acc, merged_data_xlsx_path))
     sys.stdout.flush()
 
-def create_ROC_Curve_comp_4predictors(s,df_set,logging):
+def create_ROC_comp_4predictors(s, df_set, logging):
 
     logging.info("start create_ROC_Curve_figs_THOIPA_PREDDIMER_TMDOCK_LIPS")
     pred_colname = "THOIPA_{}_LOO".format(s["set_number"])

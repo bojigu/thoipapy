@@ -1,9 +1,9 @@
-import thoipapy.figs.BoCurve_ThoipaBest_comp_LIPS_and_Nmr
-import thoipapy.figs.Average_Fraction_DI
-import thoipapy.figs.Preddimer_TMdock_heatmap
+import thoipapy.figs.BOcurve_THOIPAbest_comp_LIPS_and_NMR
+import thoipapy.figs.average_fraction_DI
+import thoipapy.figs.create_PREDDIMER_TMDOCK_heatmap
 import thoipapy.figs.fig_utils
-import thoipapy.figs.Create_Bo_Curve_files
-import thoipapy.figs.Combine_Bo_Curve_files
-import thoipapy.figs.Calc_PREDDIMER_TMDOCK_Closedist
+import thoipapy.figs.create_BOcurve_files
+import thoipapy.figs.combine_BOcurve_files
+import thoipapy.figs.calc_PREDDIMER_TMDOCK_closedist
 import thoipapy.figs.combine_add_3_prediction
-import thoipapy.figs.merged_heatmap
+import thoipapy.figs.create_heatmap_from_merge_file

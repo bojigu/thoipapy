@@ -21,6 +21,11 @@ import pandas as pd
 from shutil import copyfile
 from time import strftime
 import plotly
+import platform
+import matplotlib.colors as colors
+import ctypes
+
+
 
 class Command(object):
     '''
@@ -467,3 +472,378 @@ def add_mutation_missed_residues_with_na(s,acc,database,df):
         df.loc[element] = [df_feature.loc[element -1,"residue_name"], np.nan]
     df = df.sort_index()
     return df
+
+def normalise_0_1(arraylike):
+    """ Normalise an array to values between 0 and 1.
+
+    The following linear formula is used.
+    norm_array = (orig_array - array_min)/(array_max - array_min)
+
+    The use of this simple linear formula allows the normalised data to be "denormalised" later, so long as
+    the min and max values of the original array are known.
+
+    Parameters
+    ----------
+    arraylike : array
+        Numpy array (or other arraylike) dataset of floats or ints to be normalised.
+
+    Returns
+    -------
+    normalised : array
+        Array of floats, containing the normalised datapoints.
+    array_min : float
+        Minimum value of the original data. Necessary in order to "denormalise" the data later, back to the effective
+        original values.
+    array_max : float
+        Maximum value of the original data. Necessary in order to "denormalise" the data later, back to the effective
+        original values.
+
+    Usage
+    -----
+    normalised_array, min_, max_ = normalise_0_1(original_array)
+    # or, if denormalisation is not necessary
+    normalised_array = normalise_0_1(original_array)[0]
+    # for further usage examples, see the docstring for denormalise_0_1
+    """
+    array_min = np.min(arraylike)
+    array_max = np.max(arraylike)
+    normalised = (arraylike - array_min)/(array_max - array_min)
+    # convert to float
+    normalised = np.array(normalised).astype(float)
+    return normalised, array_min, array_max
+
+def denormalise_0_1(value_or_array, array_min, array_max):
+    """ Denormalise a value or array to orig values.
+
+    For use after normalisation between 0 and 1 with the normalise_0_1 function.
+
+    The normalisation formula (normalise_0_1):
+        norm_array = (orig_array - array_min)/(array_max - array_min)
+
+    The denormalisation formula (denormalise_0_1):
+        denormalised_array = norm_array*(array_max - array_min) + array_min
+
+    Parameters
+    ----------
+    value_or_array : int, float or arraylike
+        Int or float to be denormalised.
+        Numpy array (or other arraylike) of data (float, int, etc) to be denormalised.
+
+    Returns
+    -------
+    normalised : float, or numpy array
+        Array of floats, containing the normalised datapoints.
+    array_min : float
+        Minimum value of the original data. Necessary in order to "denormalise" the data later, back to the effective
+        original values.
+    array_max : float
+        Maximum value of the original data. Necessary in order to "denormalise" the data later, back to the effective
+        original values.
+
+    Usage
+    -----
+    from eccpy.tools import normalise_0_1, denormalise_0_1
+    import numpy as np
+    original_array = np.linspace(10,130,10)
+    original_array[2], original_array[4] = 3, 140
+    print(original_array)
+    # normalise original array
+    normalised_array, min_, max_ = normalise_0_1(original_array)
+    print(normalised_array)
+    # do stuff to normalised array (e.g., multiply by 0.5)
+    normalised_array_halved = normalised_array * 0.5
+    # denormalise values to match the equivalents in the original array.
+    # Note that the min value (3) was normalised to zero, and was therefore not affected by multiplication.
+    normalised_array_halved_denorm = denormalise_0_1(normalised_array_halved, min_, max_)
+    print(normalised_array_halved_denorm)
+    # now calculate average values, and check that they match
+    norm_array_mean = np.mean(normalised_array)
+    norm_array_mean_denormalised = denormalise_0_1(norm_array_mean, min_, max_)
+    orig_array_mean = np.mean(original_array)
+    # print the two mean values. They should be equal.
+    print(norm_array_mean_denormalised)
+    print(orig_array_mean)
+    """
+    if isinstance(value_or_array, list):
+        raise ValueError('this function accepts arraylike data, not a list. '
+                         'Please check data or convert list to numpy array')
+    elif isinstance(value_or_array, float):
+        #print("found a float")
+        denormalised = value_or_array*(array_max - array_min) + array_min
+    elif isinstance(value_or_array, np.ndarray):
+        #print("found an array")
+        denormalised = value_or_array*(array_max - array_min) + array_min
+    elif isinstance(value_or_array, pd.Series):
+        #print("found a series")
+        denormalised = value_or_array*(array_max - array_min) + array_min
+    else:
+        print("Unknown datatype. denormalise_0_1 has been given an input that does not appear to be "
+              "an int, float, np.ndarray or pandas Series\n"
+              "Attempting to process as if it is arraylike.....")
+    return denormalised
+
+
+def normalise_between_2_values(arraylike, min_value, max_value, invert=False):
+    """Normalises an array of data between two desired values.
+
+    Any values below min_value will be converted to 0.
+    Any values above max_value will be converted to 1.
+    Optionally, the normalised array can be inverted, so that the original highest
+    values are 0, and the original lowest values are now 1.
+
+    Parameters
+    ----------
+    arraylike : np.ndarray
+        Arraylike original data (numpy array or pandas Series)
+    min_value : float
+        Desired minimum value for normalisation
+    max_value : float
+        Desired max value for normalisation
+    invert : bool
+        If True, normalised data will be inverted (former highest value = 0)
+
+    Returns
+    -------
+    normalised : np.ndarray
+        Normalised array of data
+
+    Usage
+    -----
+    from eccpy.tools import normalise_between_2_values
+    # for array
+    orig_array = np.array(range(0, 15))
+    norm_array = normalise_between_2_values(orig_array, 3, 10)
+    # for pandas Dataframe
+    df["norm_data"] = normalise_between_2_values(df["orig_data"], 3, 10)
+    """
+    # normalise array between min and max values
+    normalised = (arraylike - min_value)/(max_value - min_value)
+    # replace anything above 1 with 1
+    normalised[normalised > 1] = 1
+    # replace anything below 0 with 0
+    normalised[normalised < 0] = 0
+    # if desired, invert the normalised values
+    if invert:
+        normalised = abs(normalised - 1)
+    return normalised
+
+def create_colour_lists():
+    '''
+    Converts several lists of rgb colours to the python format (normalized to between 0 and 1)
+    Returns a dictionary that contains dictionaries of palettes with named colours (eg. TUM blues)
+    and also lists of unnamed colours (e.g. tableau20)
+    (copied from tlabtools 2016.08.08)
+    '''
+    output_dict = {}
+
+    matplotlib_150 = list(colors.cnames.values())
+    output_dict['matplotlib_150'] = matplotlib_150
+
+    #define colour dictionaries. TUM colours are based on the style guide.
+    colour_dicts = {
+                    'TUM_colours' : {
+                                    'TUMBlue':(34,99,169),
+                                    'TUM1':(100,160,200),
+                                    'TUM2':(1,51,89),
+                                    'TUM3':(42,110,177),
+                                    'TUM4':(153,198,231),
+                                    'TUM5':(0,82,147)
+                                    },
+                    'TUM_oranges': {
+                        'TUM0': (202, 101, 10),
+                        'TUM1': (213, 148, 96),
+                        'TUM2': (102, 49, 5),
+                        'TUM3': (220, 108, 11),
+                        'TUM4': (247, 194, 148),
+                        'TUM5': (160, 78, 8)
+                    },
+                    'TUM_accents' : {
+                                    'green':(162,183,0),
+                                    'orange':(227,114,34),
+                                    'ivory':(218,215,203),
+                                    }
+                    }
+
+    #convert the nested dicts to python 0 to 1 format
+    for c_dict in colour_dicts:
+        for c in colour_dicts[c_dict]:
+            #define r, g, b as ints
+            r, g, b = colour_dicts[c_dict][c]
+            #normalise r, g, b and add to dict
+            colour_dicts[c_dict][c] = (r / 255., g / 255., b / 255.)
+        #add normalised colours to output dictionary
+        output_dict[c_dict] = colour_dicts[c_dict]
+
+    #define colour lists
+    colour_lists = {
+                    'tableau20' : [
+                                 (31, 119, 180), (174, 199, 232), (255, 127, 14), (255, 187, 120),
+                                 (44, 160, 44), (152, 223, 138), (214, 39, 40), (255, 152, 150),
+                                 (148, 103, 189), (197, 176, 213), (140, 86, 75), (196, 156, 148),
+                                 (227, 119, 194), (247, 182, 210), (127, 127, 127), (199, 199, 199),
+                                 (188, 189, 34), (219, 219, 141), (23, 190, 207), (158, 218, 229)
+                                    ],
+                    'tableau20blind' : [
+                                         (0, 107, 164), (255, 128, 14), (171, 171, 171), (89, 89, 89),
+                                         (95, 158, 209), (200, 82, 0), (137, 137, 137), (163, 200, 236),
+                                         (255, 188, 121), (207, 207, 207)
+                                          ]
+                    }
+    #normalise the colours for the colour lists
+    for rgb_list in colour_lists:
+        colour_array = np.array(colour_lists[rgb_list])/255.
+        colour_array_tup = tuple(map(tuple,colour_array))
+        colour_lists[rgb_list] = colour_array_tup
+        #add normalised colours to output dictionary
+        output_dict[rgb_list] = colour_lists[rgb_list]
+    #create a mixed blue/grey colour list, with greys in decreasing darkness
+    TUM_colours_list_with_greys = []
+    grey = 0.7
+    for c in colour_dicts['TUM_colours'].values():
+        TUM_colours_list_with_greys.append('%0.2f' % grey)
+        TUM_colours_list_with_greys.append(c)
+        grey -= 0.1
+    output_dict['TUM_colours_list_with_greys'] = TUM_colours_list_with_greys
+
+    output_dict['HTML_list01'] = ['#808080', '#D59460', '#005293', '#A1B11A', '#9ECEEC', '#0076B8', '#454545', "#7b3294", "#c2a5cf", "#008837", "#a6dba0"]
+    return output_dict
+
+def get_free_space(folder, format="MB"):
+    """
+        Return folder/drive free space
+    """
+    fConstants = {"GB": 1073741824,
+                  "MB": 1048576,
+                  "KB": 1024,
+                  "B": 1
+                  }
+    if platform.system() == 'Windows':
+        free_bytes = ctypes.c_ulonglong(0)
+        ctypes.windll.kernel32.GetDiskFreeSpaceExW(ctypes.c_wchar_p(folder), None, None, ctypes.pointer(free_bytes))
+        return (int(free_bytes.value/fConstants[format.upper()]), format)
+    else:
+        return (int(os.statvfs(folder).f_bfree*os.statvfs(folder).f_bsize/fConstants[format.upper()]), format)
+
+def create_regex_string(inputseq):
+    ''' adds '-*' between each aa or nt/aa in a DNA or protein sequence, so that a particular
+    aligned sequence can be identified via a regex search, even if it contains gaps
+    inputseq : 'LQQLWNA'
+    output   : 'L-*Q-*Q-*L-*W-*N-*A'
+    '''
+    search_string = ''
+    for letter in inputseq:
+        letter_with_underscore = letter + '-*'
+        search_string += letter_with_underscore
+    return search_string[:-2]
+
+def convert_truelike_to_bool(input_item, convert_int=False, convert_float=False, convert_nontrue=False):
+    """Converts true-like values ("true", 1, True", "WAHR", etc) to python boolean True.
+
+    Parameters
+    ----------
+    input_item : string or int
+        Item to be converted to bool (e.g. "true", 1, "WAHR" or the equivalent in several languagues)
+    convert_float: bool
+        Convert floats to bool.
+        If True, "1.0" will be converted to True
+    convert_nontrue : bool
+        If True, the output for input_item not recognised as "True" will be False.
+        If True, the output for input_item not recognised as "True" will be the original input_item.
+
+    Returns
+    -------
+    return_value : True, or input_item
+        If input_item is True-like, returns python bool True. Otherwise, returns the input_item.
+
+    Usage
+    -----
+    # convert a single value or string
+    convert_truelike_to_bool("true")
+    # convert a column in a pandas DataFrame
+    df["column_name"] = df["column_name"].apply(convert_truelike_to_bool)
+    """
+    list_True_items = [True, 'True', "true","TRUE","T","t",'wahr', 'WAHR', 'prawdziwy', 'verdadeiro', 'sann', 'istinit',
+                       'veritable', 'Pravda', 'sandt', 'vrai', 'igaz', 'veru', 'verdadero', 'sant', 'gwir', 'PRAWDZIWY',
+                       'VERDADEIRO', 'SANN', 'ISTINIT', 'VERITABLE', 'PRAVDA', 'SANDT', 'VRAI', 'IGAZ', 'VERU',
+                       'VERDADERO', 'SANT', 'GWIR', 'bloody oath', 'BLOODY OATH', 'nu', 'NU','damn right','DAMN RIGHT']
+
+    # if you want to accept 1 or 1.0 as a true value, add it to the list
+    if convert_int:
+        list_True_items += ["1"]
+    if convert_float:
+        list_True_items += [1.0, "1.0"]
+    # check if the user input string is in the list_True_items
+    input_item_is_true = input_item in list_True_items
+    # if you want to convert non-True values to "False", then nontrue_return_value = False
+    if convert_nontrue:
+        nontrue_return_value = False
+    else:
+        # otherwise, for strings not in the True list, the original string will be returned
+        nontrue_return_value = input_item
+    # return True if the input item is in the list. If not, return either False, or the original input_item
+    return_value = input_item_is_true if input_item_is_true == True else nontrue_return_value
+    # special case: decide if 1 as an integer is True or 1
+    if input_item == 1:
+        if convert_int == True:
+            return_value = True
+        else:
+            return_value = 1
+    return return_value
+
+def convert_falselike_to_bool(input_item, convert_int=False, convert_float=False):
+    """Converts false-like values ("false", 0, FALSE", "FALSCH", etc) to python boolean False.
+
+    Parameters
+    ----------
+    input_item : string or int
+        Item to be converted to bool (e.g. "FALSE", 0, "FALSCH" or the equivalent in several languagues)
+    convert_float: bool
+        Convert floats to bool.
+        If True, "0.0" will be converted to True
+
+    Returns
+    -------
+    return_value : False, or input_item
+        If input_item is False-like, returns python bool False. Otherwise, returns the input_item.
+
+    Usage
+    -----
+    # convert a single value or string
+    convert_falselike_to_bool("false")
+    # convert a column in a pandas DataFrame
+    df["column_name"] = df["column_name"].apply(convert_falselike_to_bool)
+    """
+    list_False_items = [False, "False", "false", "FALSE", "F", "f", "falsch", "FALSCH", "valse", "lažna", "fals",
+                        "NEPRAVDA", "falsk", "vals", "faux", "pa vre", "tsis tseeb", "hamis", "palsu", "uongo", "ngeb",
+                        "viltus", "klaidinga", "falz", "falso", "USANN", "wartosc false", "falošné", "falskt", "yanlis",
+                        "sai", "ffug", "VALSE", "LAŽNA", "FALS", "FALSK", "VALS", "FAUX", "PA VRE", "TSIS TSEEB",
+                        "HAMIS", "PALSU", "UONGO", "NGEB", "VILTUS", "KLAIDINGA", "FALZ", "FALSO", "WARTOSC FALSE",
+                        "FALOŠNÉ", "FALSKT", "YANLIS", "SAI", "FFUG"]
+
+    # if you want to accept 0 or 0.0 as a false value, add it to the list
+    if convert_int:
+        list_False_items += [0, "0"]
+    if convert_float:
+        list_False_items += [0.0,"0.0"]
+    # return boolean False if the input item is in the list. If not, return the original input_item
+    return_value = False if input_item in list_False_items else input_item
+
+    return return_value
+
+class HardDriveSpaceException(Exception):
+    def __init__(self, value):
+        self.parameter = value
+    def __str__(self):
+        # name changed to allow p-r( to be unique to the print function
+        canonical_string_representation = repr
+        return canonical_string_representation(self.parameter)
+
+class Log_Only_To_Console(object):
+    def __init__(self):
+        pass
+    def info(self, message):
+        sys.stdout.write("\n{}".format(message))
+    def warning(self, message):
+        sys.stdout.write("\n{}".format(message))
+    def critical(self, message):
+        sys.stdout.write("\n{}".format(message))

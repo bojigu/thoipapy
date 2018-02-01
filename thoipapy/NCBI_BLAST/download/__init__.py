@@ -1,1 +1,0 @@
-from thoipapy.NCBI_BLAST.download import download

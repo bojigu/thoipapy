@@ -1,4 +1,4 @@
-![THOIPApy logo](docs/logo/THOIPApy_logo.png)
+![THOIPApy logo](thoipapy/other/docs/logo/THOIPApy_logo.png)
 
 # THOIPApy
 THOIPApy is a program of Transmembrane HOmodimer Interface Prediction Algorithm (THOIPA) in python.
@@ -62,7 +62,7 @@ Using THOIPApy requires only the following:
  * copy the THOIPApy_settings_template.xlsx from THOIPApy/templates
  * open the excel file, input the name and location of your datafiles, and the desired location for your output files
  * write "TRUE" next to the files you want to examine
-![01_run_curvefit_settings](docs/images/01_run_curvefit_settings.png)
+![01_run_curvefit_settings](thoipapy/other/docs/images/01_run_curvefit_settings.png)
 
 ### 3. tell THOIPApy to "run"
  * run the ipython/jupyter notebook, which opens a python interpreter in your web browser

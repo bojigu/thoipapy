@@ -1,19 +1,22 @@
-from time import strftime
+import glob
 import json
-import thoipapy
-from korbinian.utils import convert_truelike_to_bool, convert_falselike_to_bool
 import logging
 import os
-import pandas as pd
 import platform
-import psutil
+import re
 import signal
 import sys
-import re
+from time import strftime
+
+import numpy as np
+import pandas as pd
+import psutil
 from Bio import SeqIO
 from Bio.SeqUtils.ProtParam import ProteinAnalysis
-import numpy as np
-import glob
+from korbinian.utils import convert_truelike_to_bool, convert_falselike_to_bool
+#from thoipapy.utils import convert_truelike_to_bool, convert_falselike_to_bool
+
+import thoipapy
 
 
 def calculate_fasta_file_length(s):

@@ -1,1 +1,0 @@
-import thoipapy.proteins.get_tmp_lists
