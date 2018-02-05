@@ -170,7 +170,11 @@ if __name__ == "__main__":
             if "add_PREDDIMER_TMDOCK_to_combined_features" in s:
                 if s["add_PREDDIMER_TMDOCK_to_combined_features"]:
                     thoipapy.features.feature_calculate.add_PREDDIMER_TMDOCK_to_combined_features_mult_prot(s, df_set, logging)
+            if s["remove_crystal_hetero"]:
+                thoipapy.features.feature_calculate.remove_crystal_hetero_contact_residues_mult_prot(s, df_set, logging)
             thoipapy.features.feature_calculate.combine_all_train_data_for_random_forest(s, df_set, logging)
+
+
 
         ###################################################################################################
         #                                                                                                 #
