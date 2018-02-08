@@ -107,8 +107,25 @@ def create_single_merged_heatmap(s, acc, database, savename, fig_label, dfh_cols
         # transpose dataframe so that "interface" etc is on the left
         dfh_to_plot = dfh[cols_to_plot].T
         dfh_to_plot.index = cols_to_plot_renamed
+        # create dataframe that has an "-" in areas of np.nan
+        # this is used to label the missing residues in TMDOCK
         df_labels = dfh_to_plot.isnull().replace(False, "")
         df_labels = df_labels.replace(True, "-")
+
+        #################################################################################
+        #                                                                               #
+        #          @BO RECOMMEND INSERTING CODE TO LABEL "FOLDING" residues here        #
+        #                                                                               #
+        #################################################################################
+
+        """
+        for res in wherever_your_hetero(folding)_residues_are:
+            if res == folding:
+                df_labels.loc["interface_score", res] = "*"
+        
+        """
+
+        # now replace np.nan with 0 in original shading dataframe (colour will look like 0, rather than white)
         dfh_to_plot.fillna(0, inplace=True)
 
         fontsize = 10
