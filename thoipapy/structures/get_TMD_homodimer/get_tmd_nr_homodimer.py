@@ -254,50 +254,47 @@ def create_single_bind_closedist_file(s, df_homo,i, inter_pair_max):
         closest_dist_df = closest_dist_df.sort_index()
         closest_dist_df.to_csv(bind_closedist_file)
 
+def return_set_id_list(set_file):
+    df_set = pd.read_excel(set_file)
+    id_list = df_set.loc[:, "acc"].values
+    return id_list
+
 def create_average_fraction_DI_file(s, logging):
-    inter_pair_max = s['inter_pair_max']
-    non_redundant_homodimer_file = r"D:\THOIPA_data\pdbtm_20170616\xml\homodimer\cdhit_0.6_nr_represent_228_interpair.csv"
+    database = "crystal"
+    contact_def = 3.5
+    id_list = []
+    set_file = os.path.join(s["sets_folder"],"set01_crystal.xlsx")
+    id_list = return_set_id_list(set_file)
+    crystal_averge_fraction_file = os.path.join(s["thoipapy_data_folder"],"Results",s["setname"],"Average_Fraction_DI",database,"Crystal_DI_rawdata.csv")
+    utils.make_sure_path_exists(crystal_averge_fraction_file,isfile=True)
+    crystal_averge_fraction_file_handle = open(crystal_averge_fraction_file, "w")
+    writer = csv.writer(crystal_averge_fraction_file_handle, delimiter=',', quotechar='"', lineterminator='\n',
+                        quoting=csv.QUOTE_NONNUMERIC, doublequote=True)
+    header = ["Uniprot", "AverageInter", "AverageNoninter", "FractionInter", "FractionNoninter"]
+    writer.writerow(header)
+    non_redundant_homodimer_file = os.path.join(s["dropbox_dir"],"THOIPA_data","Features","Structure",database,"cdhit_0.6_nr_represent_228_interpair.csv")
     df_homo = pd.read_csv(non_redundant_homodimer_file, engine="python")
     cols = [c for c in df_homo.columns if c[:7] != "Unnamed"]
     df_homo = df_homo[cols]
-    crystal_288_average_fraction_file = os.path.join(s["pdbtm_homodimer_folder"], "xml", "homodimer", "results","crystal_228_average_fraction_DI.csv")
-    utils.make_sure_path_exists(crystal_288_average_fraction_file, isfile=True)
-    average_fraction_crystal288_file_handle = open(crystal_288_average_fraction_file, 'w', newline='')
-    writer = csv.writer(average_fraction_crystal288_file_handle)
-    writer.writerow(['acc','average_inter','average_noninter','fraction_inter','fraction_noninter'])
     for i in range(df_homo.shape[0]):
+        pdb_id = df_homo.iloc[i]['pdb_id']
         pdb_id_chain = df_homo.iloc[i]['pdb_id'] + df_homo.iloc[i]['tm_numA']
-        freecontact_file = os.path.join(s['feature_cumulative_coevolution'] , "crystal" ,
-                                        "{}.surr20.gaps5.freecontact.csv".format(pdb_id_chain))
+        pdb_id_chain1 = df_homo.iloc[i]['pdb_id'] + df_homo.iloc[i]['tm_numB']
+        freecontact_file = os.path.join(s["features_folder"],"cumulative_coevolution",database,"{}.surr20.gaps5.freecontact.csv".format(pdb_id_chain))
         tm_seq = df_homo.iloc[i]['aligned_AB']
         tm_len = len(tm_seq)
         aligned_AB_startA = df_homo.iloc[i]['full_seqA'].index(tm_seq) + 1
         aligned_AB_startB = df_homo.iloc[i]['full_seqB'].index(tm_seq) + 1
         interpair = df_homo.iloc[i]['interpair_4.5']
         interpair_dict = {}
-        ## get the unique inter rr pairs, unique means residues pair A2B3 and B3A2 is the same pair (A,B)
         for j in range(1, len(interpair.split('+'))):
-            if (str(int(interpair.split('+')[j].split('_')[5]) - aligned_AB_startB + 1) + '_' +
-                    str(int(interpair.split('+')[j].split('_')[1]) - aligned_AB_startA + 1)
-                ) not in interpair_dict:
-                interpair_dict[str(int(interpair.split('+')[j].split('_')[1]) - aligned_AB_startA + 1) + '_' +
-                               str(int(interpair.split('+')[j].split('_')[5]) - aligned_AB_startB + 1)] = \
-                interpair.split('+')[j].split('_')[8]
-        ##interpair_dict_new only concluds the ordered top inter_pair_max pairs, the value of inter_pair_max pairs was setted in setting file,
-        ## e.g. top 5 interact pairs if the interact pair number is equal or bigger than 5.
-        interpair_dict_new = {}
-        interpair_num = len(interpair_dict)
-        if interpair_num <= inter_pair_max:
-            interpair_dict_new = interpair_dict
-        else:
-            n = 0
-            sorted_keys = sorted(interpair_dict, key=interpair_dict.get, reverse=True)
-            for r in sorted_keys:
-                if n < inter_pair_max:
-                    interpair_dict_new[r] = interpair_dict[r]
-                    n = n + 1
-
-        ### get the interact pair dict from freecontact file, while the rr are defined as neighbor residues within 8 residues
+            if float(interpair.split('+')[j].split('_')[8]) < contact_def:
+                if (str(int(interpair.split('+')[j].split('_')[5]) - aligned_AB_startB + 1) + '_' +
+                        str(int(interpair.split('+')[j].split('_')[1]) - aligned_AB_startA + 1)
+                    ) not in interpair_dict:
+                    interpair_dict[str(int(interpair.split('+')[j].split('_')[1]) - aligned_AB_startA + 1) + '_' +
+                                   str(int(interpair.split('+')[j].split('_')[5]) - aligned_AB_startB + 1)] = \
+                    interpair.split('+')[j].split('_')[8]
         inter_within8_dict = {}
         if os.path.isfile(freecontact_file):
             with open(freecontact_file, 'r') as f:
@@ -306,29 +303,25 @@ def create_average_fraction_DI_file(s, logging):
                     if int(arr[2]) - int(arr[0]) <= 8:
                         string = arr[0] + '_' + arr[2]
                         inter_within8_dict[string] = arr[5]
-                        string1 = arr[2] + '_' + arr[0]
-                        inter_within8_dict[string1] = arr[5]
+                        string = arr[2] + '_' + arr[0]
+                        inter_within8_dict[string] = arr[5]
             f.close()
 
-        ## get the sum of DI for those interact rr pairs calculated from above interpair_dict_new, also the number of pairs which belongs to inter_within8_dict from freecontact file
-        ## in addition, the other pairs were treated as non-interacting, and the sum of DI and the number of non-interact pairs were calculatd
         inter_DI = 0
         ninter_DI = 0
         I = 0
         N = 0
         for key, value in inter_within8_dict.items():
-            if key in interpair_dict_new:
+            if key in interpair_dict:
                 inter_DI = inter_DI + float(inter_within8_dict[key])
                 I = I + 1
             else:
                 ninter_DI = ninter_DI + float(inter_within8_dict[key])
                 N = N + 1
 
-        ##set the high DI cutoff, first set the DI cutpoint as the 1/2 of ordered DI from inter_within8_dict
-        point =int(s['high_DI_cut_point'])
         high_DI_cutoff = 0
         TmdDiPairLen = len(inter_within8_dict)
-        CutPoint = TmdDiPairLen / point
+        CutPoint = TmdDiPairLen / 3
         n = 0
         sorted_keys = sorted(inter_within8_dict, key=inter_within8_dict.get, reverse=True)
         for r in sorted_keys:
@@ -336,13 +329,12 @@ def create_average_fraction_DI_file(s, logging):
             if n == CutPoint:
                 high_DI_cutoff = float(inter_within8_dict[r])
 
-        ## calculate the fraction of high_DI_score for interacting and non-interacting pairs
         high_num_inter = 0
         high_num_noninter = 0
         Inter = 0
         Noninter = 0
         for key, value in inter_within8_dict.items():
-            if key in interpair_dict_new:
+            if key in interpair_dict:
                 if float(inter_within8_dict[key]) > high_DI_cutoff:
                     high_num_inter = high_num_inter + 1
                 Inter = Inter + 1
@@ -351,16 +343,18 @@ def create_average_fraction_DI_file(s, logging):
                     high_num_noninter = high_num_noninter + 1
                 Noninter = Noninter + 1
 
-        ##save the average and fraction DI scores
         if I > 0 and N > 0 and Inter > 0 and Noninter > 0:
-            average_score_inter = inter_DI / I
-            average_score_ninter = ninter_DI / N
-            fraction_highscore_inter = high_num_inter / Inter
-            fraction_highscore_ninter = high_num_noninter / Noninter
-            writer.writerow([pdb_id_chain ,average_score_inter,average_score_ninter,fraction_highscore_inter,fraction_highscore_ninter])
-            print(pdb_id_chain + '\t' + str(average_score_inter) + '\t' + str(average_score_ninter) + '\t' + str(
-                fraction_highscore_inter) + '\t' + str(fraction_highscore_ninter))
-    average_fraction_crystal288_file_handle.close()
+            if pdb_id_chain in id_list:
+                average_score_inter = inter_DI / I
+                average_score_ninter = ninter_DI / N
+                fraction_highscore_inter = high_num_inter / Inter
+                fraction_highscore_ninter = high_num_noninter / Noninter
+                line = [pdb_id_chain, average_score_inter, average_score_ninter, fraction_highscore_inter,
+                        fraction_highscore_ninter]
+                writer.writerow(line)
+    crystal_averge_fraction_file_handle.close()
+
+
 
 
 def create_inter_rr_number_bt1_set228_file(df_new, set_file):

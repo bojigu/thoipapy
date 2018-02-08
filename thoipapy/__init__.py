@@ -6,3 +6,4 @@ import thoipapy.homologues.hhblits
 import thoipapy.setting
 import thoipapy.validation
 import thoipapy.utils
+import thoipapy.structures
