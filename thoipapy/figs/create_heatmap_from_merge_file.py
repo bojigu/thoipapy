@@ -62,6 +62,7 @@ def create_single_merged_heatmap(s, acc, database, savename, fig_label, dfh_cols
         heatmap_path = os.path.join(s["thoipapy_data_folder"], "heatmap",database, "{}.png".format(acc))
         heatmap_pdf_path = os.path.join(s["thoipapy_data_folder"], "heatmap",database,"pdf","{}.pdf".format(acc))
         heatmap_data_xlsx_path = os.path.join(s["thoipapy_data_folder"], "heatmap",database,"xlsx","{}_merged.xlsx".format(acc))
+        hetero_bind_file = os.path.join(s["features_folder"], "Structure",database, "{}.hetero.bind.csv").format(acc)
         thoipapy.utils.make_sure_path_exists(heatmap_pdf_path, isfile=True)
         thoipapy.utils.make_sure_path_exists(heatmap_data_xlsx_path, isfile=True)
 
@@ -124,6 +125,12 @@ def create_single_merged_heatmap(s, acc, database, savename, fig_label, dfh_cols
                 df_labels.loc["interface_score", res] = "*"
         
         """
+        if os.path.exists(hetero_bind_file):
+            df_hetero = pd.read_csv(hetero_bind_file,engine="python")
+            for i in df_hetero.index:
+                if df_hetero.iloc[i]["hetero_interface"] == 1:
+                    df_labels.loc["interface score",i+1] = "*"
+
 
         # now replace np.nan with 0 in original shading dataframe (colour will look like 0, rather than white)
         dfh_to_plot.fillna(0, inplace=True)
