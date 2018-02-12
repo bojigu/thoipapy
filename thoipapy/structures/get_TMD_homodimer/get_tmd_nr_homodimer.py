@@ -14,6 +14,8 @@ import re
 import math
 import numpy as np
 import tarfile
+from matplotlib import pyplot as plt
+from scipy.stats import ttest_ind
 
 
 def download_xml_get_alphahelix_get_homo_pair(s, logging):
@@ -333,7 +335,16 @@ def create_average_fraction_DI_file(s, df_set, logging):
             dfc.index = dfc.res_num_full_seq.astype(int)
             # get list of interface and noninterface residue positions
             InterResList = dfc.loc[dfc.interface == 1].index
-            NoninterResList = dfc.loc[dfc.interface == 0].index
+            NoninterResList = list(dfc.loc[dfc.interface == 0].index)
+
+            remove_residues_outside_interface_region = True
+            if remove_residues_outside_interface_region:
+                logging.info("orig NoninterResList = {}".format(NoninterResList))
+                lowest_interface_res = InterResList.min()
+                highest_interface_res = InterResList.max()
+                logging.info("interface residue range = {} to {}".format(lowest_interface_res, highest_interface_res))
+                NoninterResList = [x for x in NoninterResList if lowest_interface_res < x < highest_interface_res]
+                logging.info("final NoninterResList = {}".format(NoninterResList))
 
             # calculate mean coevolution values for the desired selection of the dataframe.
             # Note that the values are symmetric and doubled ([235,236] and also [236,235])
@@ -347,6 +358,27 @@ def create_average_fraction_DI_file(s, df_set, logging):
         df_retro = pd.DataFrame(sub_dict).T
         df_retro.to_excel(writer, sheet_name = XI)
     writer.close()
+    create_quick_plot = True
+    if XI == "DI":
+        if create_quick_plot:
+            retrospective_coev_plot = retrospective_coev_xlsx[:-5] + ".png"
+            df_retro["inter_larger"] = df_retro.AverageInter > df_retro.AverageNoninter
+            fig, ax = plt.subplots()
+            df_retro[["AverageInter", "AverageNoninter"]].plot(kind="bar", ax=ax)
+            fig.tight_layout()
+            fig.savefig(retrospective_coev_plot)
+
+    vc = df_retro["inter_larger"].value_counts()
+    perc_higher_int = vc[True] / df_retro.shape[0]
+    logging.info("{:.2f} % ({}/{}) of TMDs have higher DI of interface than non-interface".format(perc_higher_int*100, vc[True], df_retro.shape[0]))
+
+    logging.info("\n mean values\n{}\n".format(df_retro.mean()))
+
+    t_value, p_value = ttest_ind(df_retro.AverageInter, df_retro.AverageNoninter)
+
+    logging.info("p-value for average coevolution of interface vs non-interface = {:.03f}".format(p_value))
+
+
     sys.stdout.write("\n")
     logging.info('create_average_fraction_DI_file finished')
 
