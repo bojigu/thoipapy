@@ -337,7 +337,7 @@ def create_average_fraction_DI_file(s, df_set, logging):
             InterResList = dfc.loc[dfc.interface == 1].index
             NoninterResList = list(dfc.loc[dfc.interface == 0].index)
 
-            remove_residues_outside_interface_region = True
+            remove_residues_outside_interface_region = False
             if remove_residues_outside_interface_region:
                 logging.info("orig NoninterResList = {}".format(NoninterResList))
                 lowest_interface_res = InterResList.min()
@@ -376,6 +376,7 @@ def create_average_fraction_DI_file(s, df_set, logging):
 
     t_value, p_value = ttest_ind(df_retro.AverageInter, df_retro.AverageNoninter)
 
+    logging.info("remove_residues_outside_interface_region = {}".format(remove_residues_outside_interface_region))
     logging.info("p-value for average coevolution of interface vs non-interface = {:.03f}".format(p_value))
 
 
