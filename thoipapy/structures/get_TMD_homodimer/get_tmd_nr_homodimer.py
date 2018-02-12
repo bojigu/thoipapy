@@ -268,121 +268,226 @@ def create_average_fraction_DI_file(s, df_set, logging):
     retrospective_coev_xlsx = os.path.join(s["set_results_folder"], "{}_retrospective_coev.xlsx".format(s["setname"]))
     writer = pd.ExcelWriter(retrospective_coev_xlsx)
 
+    randomise_int_res = False
+    remove_residues_outside_interface_region = True
+    logging.info("randomise_int_res = {}, remove_residues_outside_interface_region = {}".format(randomise_int_res, remove_residues_outside_interface_region))
+    InterResList_of_last_TMD = None
+    NoninterResList_of_last_TMD = None
+    TMD_start_of_last_TMD = None
+
     for XI in ["MI", "DI"]:
         sub_dict = {}
 
         for i in df_set.index:
             sys.stdout.write(".")
             sys.stdout.flush()
-            acc = df_set.loc[i, "acc"]
-            database = df_set.loc[i, "database"]
-            TMD_start = int(df_set.loc[i, "TMD_start"])
-            TMD_end = int(df_set.loc[i, "TMD_end"])
-            freecontact_file = os.path.join(s["feature_cumulative_coevolution"], database, "{}.surr{}.gaps{}.freecontact.csv".format(acc, s["num_of_sur_residues"], s["max_n_gaps_in_TMD_subject_seq"]))
-            feature_combined_file = os.path.join(s["features_folder"], "combined", database, "{}.surr{}.gaps{}.combined_features.csv".format(acc, s["num_of_sur_residues"], s["max_n_gaps_in_TMD_subject_seq"]))
+            if i == 0:
+                is_first_TMD = True
+            else:
+                is_first_TMD = False
+            sub_dict, InterResList_of_last_TMD, NoninterResList_of_last_TMD, TMD_start_of_last_TMD = calc_av_frac_DI_single_prot(sub_dict, s, logging, i, XI, is_first_TMD, df_set,
+                                                                                                                                 randomise_int_res, InterResList_of_last_TMD,
+                                                                                                                                 NoninterResList_of_last_TMD, TMD_start_of_last_TMD,
+                                                                                                                                 remove_residues_outside_interface_region)
 
-            df = pd.read_csv(freecontact_file, sep=" ", header=None)
-            df.columns = ["n1", "res1", "n2", "res2", "MI", "DI"]
-            # due to uniprot indexing, residue_num should equal res + TMD_start - 1
-            df["n1"] = df.n1 + TMD_start - 1
-            df["n2"] = df.n2 + TMD_start - 1
-            """df is a csv like this:
-                   n1 res1  n2 res2        MI        DI
-            0  92    I  93    T  0.243618  0.454792
-            1  92    I  94    L  0.404760  0.445580
-            2  92    I  95    I  0.017704 -1.066260
-            3  92    I  96    I  0.106223 -0.731704
-            4  92    I  97    F  0.244482 -0.252246
-            """
-
-            dfp = df.pivot_table(index="n1", columns="n2", values=XI)
-
-            """ asymmetrical pivoted data
-        
-                 235       236       237       238       239       240 ...        252       253       254       255       256       
-            n1                                                     ...                                                              
-            235   0.243618  0.404760  0.017704  0.106223  0.244482 ...   0.132235  0.219876  0.198667  0.360217  0.320984  0.145523 
-            236        NaN  0.332451  0.140595  0.000747  0.151737 ...   0.217048  0.403469  0.174750  0.286540  0.357700  0.044577 
-            237        NaN       NaN  0.062405  0.173925  0.353367 ...   0.336857  0.657512  0.418125  0.521322  0.538269  0.229414 
-            238        NaN       NaN       NaN  0.049759  0.044692 ...   0.119658  0.236728  0.080722  0.114663  0.064796  0.096822 
-            """
-            # get full list of residues
-            position_list = range(TMD_start, TMD_end + 1)
-            dfp = dfp.reindex(index=position_list, columns=position_list)
-            # put data on both sides of the table for easy indexing
-            for col in dfp.columns:
-                start = col + 1
-                dfp.loc[start:, col] = dfp.loc[col, start:]
-
-            """dfp now contains the coevolution data as a symmetrical dataframe, from each residue to the other
-            
-                      192       193       194       195       196       197       198       199       200       201    ...          210       211       212       213       214       215       216       217       218       219
-            n1                                                                                                         ...                                                                                                       
-            192       NaN  0.092237  0.026186  0.126701  0.108622  0.107383  0.075048  0.070287  0.084822  0.037957    ...     0.152848  0.074908  0.073767  0.159693  0.044335  0.092576  0.057039  0.176549  0.076715  0.066157
-            193  0.092237       NaN  0.089528  0.137392  0.112203  0.153103  0.114659  0.173971  0.134006  0.091982    ...     0.237441  0.107704  0.097004  0.216488  0.146309  0.100271  0.101273  0.301949  0.105543  0.193257
-            194  0.026186  0.089528       NaN  0.102470  0.078647  0.138274  0.141817  0.142261  0.133799  0.079009    ...     0.172375  0.111071  0.121039  0.171232  0.106160  0.095982  0.188747  0.230212  0.093526  0.217379
-            195  0.126701  0.137392  0.102470       NaN  0.162021  0.124095  0.131162  0.248673  0.167416  0.094939    ...     0.179470  0.168239  0.139384  0.193543  0.102942  0.172607  0.153524  0.289339  0.113594  0.181711
-            196  0.108622  0.112203  0.078647  0.162021       NaN  0.147395  0.106920  0.186598  0.170876  0.074893    ...     0.152920  0.130958  0.104620  0.165248  0.071461  0.117822  0.113831  0.243438  0.097208  0.153550
-            197  0.107383  0.153103  0.138274  0.124095  0.147395       NaN  0.185372  0.300418  0.254464  0.135116    ...     0.294558  0.214323  0.237466  0.396039  0.111643  0.203568  0.221890  0.442481  0.167183  0.255704
-            198  0.075048  0.114659  0.141817  0.131162  0.106920  0.185372       NaN  0.188028  0.174667  0.158833    ...     0.145839  0.134066  0.147938  0.256873  0.098789  0.146614  0.202526  0.266566  0.114003  0.211277
-            199  
-            """
-
-            # open combined file with interface definitions
-            dfc = pd.read_csv(feature_combined_file, index_col=0)
-
-            # set the residue numbering as the index
-            dfc.index = dfc.res_num_full_seq.astype(int)
-            # get list of interface and noninterface residue positions
-            InterResList = dfc.loc[dfc.interface == 1].index
-            NoninterResList = list(dfc.loc[dfc.interface == 0].index)
-
-            remove_residues_outside_interface_region = False
-            if remove_residues_outside_interface_region:
-                logging.info("orig NoninterResList = {}".format(NoninterResList))
-                lowest_interface_res = InterResList.min()
-                highest_interface_res = InterResList.max()
-                logging.info("interface residue range = {} to {}".format(lowest_interface_res, highest_interface_res))
-                NoninterResList = [x for x in NoninterResList if lowest_interface_res < x < highest_interface_res]
-                logging.info("final NoninterResList = {}".format(NoninterResList))
-
-            # calculate mean coevolution values for the desired selection of the dataframe.
-            # Note that the values are symmetric and doubled ([235,236] and also [236,235])
-            # but the mean will be unaffected
-            mean_XI_interface = dfp.loc[InterResList, InterResList].mean().mean()
-            mean_XI_noninterface = dfp.loc[NoninterResList, NoninterResList].mean().mean()
-
-            sub_dict[acc] = {"AverageInter" : mean_XI_interface, "AverageNoninter" : mean_XI_noninterface}
-
+        if randomise_int_res == True:
+            # need to add the data for the first TMD, which was skipped above
+            i = 0
+            is_first_TMD = False
+            sub_dict, InterResList_of_last_TMD, NoninterResList_of_last_TMD, TMD_start_of_last_TMD = calc_av_frac_DI_single_prot(sub_dict, s, logging, i, XI, is_first_TMD, df_set,
+                                                                                                                                 randomise_int_res, InterResList_of_last_TMD,
+                                                                                                                                 NoninterResList_of_last_TMD, TMD_start_of_last_TMD,
+                                                                                                                                 remove_residues_outside_interface_region)
         # save each MI and DI separately
         df_retro = pd.DataFrame(sub_dict).T
         df_retro.to_excel(writer, sheet_name = XI)
-    writer.close()
-    create_quick_plot = True
-    if XI == "DI":
+
+        create_quick_plot = True
         if create_quick_plot:
-            retrospective_coev_plot = retrospective_coev_xlsx[:-5] + ".png"
+            retrospective_coev_plot = retrospective_coev_xlsx[:-5] + XI + ".png"
             df_retro["inter_larger"] = df_retro.AverageInter > df_retro.AverageNoninter
             fig, ax = plt.subplots()
             df_retro[["AverageInter", "AverageNoninter"]].plot(kind="bar", ax=ax)
             fig.tight_layout()
             fig.savefig(retrospective_coev_plot)
 
-    vc = df_retro["inter_larger"].value_counts()
-    perc_higher_int = vc[True] / df_retro.shape[0]
-    logging.info("{:.2f} % ({}/{}) of TMDs have higher DI of interface than non-interface".format(perc_higher_int*100, vc[True], df_retro.shape[0]))
+        # drop any (rare) rows without data, where the interface region was outside the length of the TMD?
+        df_retro.dropna(how="any", inplace=True)
 
-    logging.info("\n mean values\n{}\n".format(df_retro.mean()))
+        vc = df_retro["inter_larger"].value_counts()
+        if True in vc.index.tolist():
+            n_TMDs_with_higher_int = vc[True]
+        else:
+            n_TMDs_with_higher_int = 0
 
-    t_value, p_value = ttest_ind(df_retro.AverageInter, df_retro.AverageNoninter)
+        perc_higher_int = n_TMDs_with_higher_int / df_retro.shape[0]
+        logging.info("\n{:.2f} % ({}/{}) of TMDs have higher {} of interface than non-interface".format(perc_higher_int*100, n_TMDs_with_higher_int, df_retro.shape[0], XI))
 
-    logging.info("remove_residues_outside_interface_region = {}".format(remove_residues_outside_interface_region))
-    logging.info("p-value for average coevolution of interface vs non-interface = {:.03f}".format(p_value))
+        logging.info("\n\nmean values\n{}\n".format(df_retro.mean()))
 
+        t_value, p_value = ttest_ind(df_retro.AverageInter, df_retro.AverageNoninter)
 
+        #logging.info("remove_residues_outside_interface_region = {}".format(remove_residues_outside_interface_region))
+        logging.info("\np-value for average {} coevolution of interface vs non-interface = {:.03f}".format(XI, p_value))
+
+    writer.close()
     sys.stdout.write("\n")
     logging.info('create_average_fraction_DI_file finished')
 
+
+def calc_av_frac_DI_single_prot(sub_dict, s, logging, i, XI, is_first_TMD, df_set, randomise_int_res, InterResList_of_last_TMD, NoninterResList_of_last_TMD, TMD_start_of_last_TMD, remove_residues_outside_interface_region):
+    """Calculate average fraction of DI for a single protein.
+
+    PANDAS METHOD USED FOR ETRA DATASET.
+
+    SPLIT INTO A SUB-FUNCTION FOR USE DURING RANDOMISATION.
+
+    Parameters
+    ----------
+    sub_dict : dict
+        dictionary for each TMD. Separate dicts are made for MI and DI.
+    s : dict
+        Settings dictionary
+    logging : logging.Logger
+        Python object with settings for logging to console and file.
+    i : int
+        TMD number
+    XI : str
+        "MI" or "DI"
+    is_first_TMD : bool
+        whether the TMD is the first one, without initial randomised data
+    df_set : pd.DataFrame
+        Dataframe containing the list of proteins to process, including their TMD sequences and full-length sequences
+        index : range(0, ..)
+        columns : ['acc', 'seqlen', 'TMD_start', 'TMD_end', 'tm_surr_left', 'tm_surr_right', 'database',  ....]
+    randomise_int_res : bool
+        whether the interface residues shold be randomised
+    InterResList_of_last_TMD : list
+        List of interface residues from the last TMD. To be used during randomisation.
+    NoninterResList_of_last_TMD : list
+        List of non-interface residues from the last TMD. To be used during randomisation.
+    TMD_start_of_last_TMD : int
+        TMD start used to convert residue positions to range index
+
+    Returns
+    -------
+    sub_dict : dict
+        dictionary for each TMD. Separate dicts are made for MI and DI.
+    InterResList_of_last_TMD : list
+        List of interface residues from the last TMD. To be used during randomisation.
+    NoninterResList_of_last_TMD : list
+        List of non-interface residues from the last TMD. To be used during randomisation.
+    TMD_start_of_last_TMD : int
+        TMD start used to convert residue positions to range index
+    """
+    acc = df_set.loc[i, "acc"]
+    database = df_set.loc[i, "database"]
+    TMD_start = int(df_set.loc[i, "TMD_start"])
+    TMD_end = int(df_set.loc[i, "TMD_end"])
+    TMD_len = TMD_end - TMD_start
+    freecontact_file = os.path.join(s["feature_cumulative_coevolution"], database, "{}.surr{}.gaps{}.freecontact.csv".format(acc, s["num_of_sur_residues"], s["max_n_gaps_in_TMD_subject_seq"]))
+    feature_combined_file = os.path.join(s["features_folder"], "combined", database, "{}.surr{}.gaps{}.combined_features.csv".format(acc, s["num_of_sur_residues"], s["max_n_gaps_in_TMD_subject_seq"]))
+
+    df = pd.read_csv(freecontact_file, sep=" ", header=None)
+    df.columns = ["n1", "res1", "n2", "res2", "MI", "DI"]
+    # due to uniprot indexing, residue_num should equal res + TMD_start - 1
+    df["n1"] = df.n1 + TMD_start - 1
+    df["n2"] = df.n2 + TMD_start - 1
+    """df is a csv like this:
+           n1 res1  n2 res2        MI        DI
+    0  92    I  93    T  0.243618  0.454792
+    1  92    I  94    L  0.404760  0.445580
+    2  92    I  95    I  0.017704 -1.066260
+    3  92    I  96    I  0.106223 -0.731704
+    4  92    I  97    F  0.244482 -0.252246
+    """
+
+    dfp = df.pivot_table(index="n1", columns="n2", values=XI)
+
+    """ asymmetrical pivoted data
+
+         235       236       237       238       239       240 ...        252       253       254       255       256       
+    n1                                                     ...                                                              
+    235   0.243618  0.404760  0.017704  0.106223  0.244482 ...   0.132235  0.219876  0.198667  0.360217  0.320984  0.145523 
+    236        NaN  0.332451  0.140595  0.000747  0.151737 ...   0.217048  0.403469  0.174750  0.286540  0.357700  0.044577 
+    237        NaN       NaN  0.062405  0.173925  0.353367 ...   0.336857  0.657512  0.418125  0.521322  0.538269  0.229414 
+    238        NaN       NaN       NaN  0.049759  0.044692 ...   0.119658  0.236728  0.080722  0.114663  0.064796  0.096822 
+    """
+    # get full list of residues
+    position_list = range(TMD_start, TMD_end + 1)
+    dfp = dfp.reindex(index=position_list, columns=position_list)
+    # put data on both sides of the table for easy indexing
+    for col in dfp.columns:
+        start = col + 1
+        dfp.loc[start:, col] = dfp.loc[col, start:]
+
+    """dfp now contains the coevolution data as a symmetrical dataframe, from each residue to the other
+
+              192       193       194       195       196       197       198       199       200       201    ...          210       211       212       213       214       215       216       217       218       219
+    n1                                                                                                         ...                                                                                                       
+    192       NaN  0.092237  0.026186  0.126701  0.108622  0.107383  0.075048  0.070287  0.084822  0.037957    ...     0.152848  0.074908  0.073767  0.159693  0.044335  0.092576  0.057039  0.176549  0.076715  0.066157
+    193  0.092237       NaN  0.089528  0.137392  0.112203  0.153103  0.114659  0.173971  0.134006  0.091982    ...     0.237441  0.107704  0.097004  0.216488  0.146309  0.100271  0.101273  0.301949  0.105543  0.193257
+    194  0.026186  0.089528       NaN  0.102470  0.078647  0.138274  0.141817  0.142261  0.133799  0.079009    ...     0.172375  0.111071  0.121039  0.171232  0.106160  0.095982  0.188747  0.230212  0.093526  0.217379
+    195  0.126701  0.137392  0.102470       NaN  0.162021  0.124095  0.131162  0.248673  0.167416  0.094939    ...     0.179470  0.168239  0.139384  0.193543  0.102942  0.172607  0.153524  0.289339  0.113594  0.181711
+    196  0.108622  0.112203  0.078647  0.162021       NaN  0.147395  0.106920  0.186598  0.170876  0.074893    ...     0.152920  0.130958  0.104620  0.165248  0.071461  0.117822  0.113831  0.243438  0.097208  0.153550
+    197  0.107383  0.153103  0.138274  0.124095  0.147395       NaN  0.185372  0.300418  0.254464  0.135116    ...     0.294558  0.214323  0.237466  0.396039  0.111643  0.203568  0.221890  0.442481  0.167183  0.255704
+    198  0.075048  0.114659  0.141817  0.131162  0.106920  0.185372       NaN  0.188028  0.174667  0.158833    ...     0.145839  0.134066  0.147938  0.256873  0.098789  0.146614  0.202526  0.266566  0.114003  0.211277
+    199  
+    """
+
+    # open combined file with interface definitions
+    dfc = pd.read_csv(feature_combined_file, index_col=0)
+
+    # set the residue numbering as the index
+    dfc.index = dfc.res_num_full_seq.astype(int)
+    # get list of interface and noninterface residue positions
+    InterResList = dfc.loc[dfc.interface == 1].index
+    NoninterResList = list(dfc.loc[dfc.interface == 0].index)
+
+    if remove_residues_outside_interface_region:
+        #logging.info("orig NoninterResList = {}".format(NoninterResList))
+        lowest_interface_res = InterResList.min()
+        highest_interface_res = InterResList.max()
+        #logging.info("interface residue range = {} to {}".format(lowest_interface_res, highest_interface_res))
+        NoninterResList = [x for x in NoninterResList if lowest_interface_res < x < highest_interface_res]
+        #logging.info("final NoninterResList = {}".format(NoninterResList))
+
+    if randomise_int_res == False:
+        # calculate mean coevolution values for the desired selection of the dataframe.
+        # Note that the values are symmetric and doubled ([235,236] and also [236,235])
+        # but the mean will be unaffected
+        mean_XI_interface = dfp.loc[InterResList, InterResList].mean().mean()
+        mean_XI_noninterface = dfp.loc[NoninterResList, NoninterResList].mean().mean()
+
+        sub_dict[acc] = {"AverageInter": mean_XI_interface, "AverageNoninter": mean_XI_noninterface}
+    elif randomise_int_res == True and is_first_TMD == True:
+        # can't used the interface residues from previous protein
+        pass
+    elif randomise_int_res == True and is_first_TMD != True:
+        # FOR RANDOMISATION, THE ORIGINAL INDEXING BASED ON AA NUMBERS MUST BE REPLACED BY RANGE INDEXING
+
+        # convert from amino acid numbering to a range index by subtracting the TMD_start
+        InterResList_of_last_TMD = pd.Series(InterResList_of_last_TMD) - TMD_start_of_last_TMD
+        NoninterResList_of_last_TMD = pd.Series(NoninterResList_of_last_TMD) - TMD_start_of_last_TMD
+        # drop any residue positions that are longer than the TMD (i.e., where index TMD is longer than TMD supplying coevolution data)
+        InterResList_of_last_TMD = InterResList_of_last_TMD[InterResList_of_last_TMD <= TMD_len].tolist()
+        NoninterResList_of_last_TMD = NoninterResList_of_last_TMD[NoninterResList_of_last_TMD <= TMD_len].tolist()
+
+        # convert pivoted data to range index
+        dfp.index = range(dfp.shape[0])
+        dfp.columns = range(dfp.shape[1])
+
+        # slice out the interface and non-interface residues, as above
+        mean_XI_interface = dfp.loc[InterResList_of_last_TMD, InterResList_of_last_TMD].mean().mean()
+        mean_XI_noninterface = dfp.loc[NoninterResList_of_last_TMD, NoninterResList_of_last_TMD].mean().mean()
+
+        sub_dict[acc] = {"AverageInter": mean_XI_interface, "AverageNoninter": mean_XI_noninterface}
+
+    InterResList_of_last_TMD = InterResList
+    NoninterResList_of_last_TMD = NoninterResList
+    TMD_start_of_last_TMD = TMD_start
+
+    return sub_dict, InterResList_of_last_TMD, NoninterResList_of_last_TMD, TMD_start_of_last_TMD
 
 def create_average_fraction_DI_file_OLD_PAIRWISE_VERSION(s, dfset, logging):
     database = "crystal"
