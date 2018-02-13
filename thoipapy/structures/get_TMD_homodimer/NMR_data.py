@@ -10,7 +10,7 @@ import glob
 cutoff = 4.0
 def calc_closedist_from_NMR_best_model(s):
     NMR_data_folder = r"D:\THOIPA_data\NMR_data"
-    nmr_data_infor_file = os.path.join(NMR_data_folder,"zprotein_pdb_chain_tm_pdbseq_uniprotseq_new")
+    nmr_data_infor_file = os.path.join(NMR_data_folder,"zprotein_pdb_chain_tm_pdbseq_uniprotseq_full")
     with open(nmr_data_infor_file,'r') as f:
         for line in f:
             arr = line.strip().split()

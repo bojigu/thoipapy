@@ -430,7 +430,7 @@ def create_average_fraction_DI_file(s, df_set, logging):
     writer = pd.ExcelWriter(retrospective_coev_xlsx)
 
     randomise_int_res = False
-    remove_residues_outside_interface_region = True
+    remove_residues_outside_interface_region = False
     logging.info("randomise_int_res = {}, remove_residues_outside_interface_region = {}".format(randomise_int_res, remove_residues_outside_interface_region))
     InterResList_of_last_TMD = None
     NoninterResList_of_last_TMD = None
@@ -652,101 +652,149 @@ def calc_av_frac_DI_single_prot(sub_dict, s, logging, i, XI, is_first_TMD, df_se
     return sub_dict, InterResList_of_last_TMD, NoninterResList_of_last_TMD, TMD_start_of_last_TMD
 
 def create_average_fraction_DI_file_OLD_PAIRWISE_VERSION(s, dfset, logging):
-    database = "crystal"
-    contact_def = 3.5
-    id_list = []
-    set_file = os.path.join(s["sets_folder"],"set01_crystal.xlsx")
-    id_list = return_set_id_list(set_file)
-    crystal_averge_fraction_file = os.path.join(s["thoipapy_data_folder"],"Results",s["setname"],"Average_Fraction_DI",database,"Crystal_DI_rawdata.csv")
-    utils.make_sure_path_exists(crystal_averge_fraction_file,isfile=True)
-    crystal_averge_fraction_file_handle = open(crystal_averge_fraction_file, "w")
-    writer = csv.writer(crystal_averge_fraction_file_handle, delimiter=',', quotechar='"', lineterminator='\n',
-                        quoting=csv.QUOTE_NONNUMERIC, doublequote=True)
-    header = ["Uniprot", "AverageInter", "AverageNoninter", "FractionInter", "FractionNoninter"]
-    writer.writerow(header)
-    non_redundant_homodimer_file = os.path.join(s["dropbox_dir"],"THOIPA_data","Features","Structure",database,"cdhit_0.6_nr_represent_228_interpair.csv")
-    df_homo = pd.read_csv(non_redundant_homodimer_file, engine="python")
-    cols = [c for c in df_homo.columns if c[:7] != "Unnamed"]
-    df_homo = df_homo[cols]
-    for i in range(df_homo.shape[0]):
-        pdb_id = df_homo.iloc[i]['pdb_id']
-        pdb_id_chain = df_homo.iloc[i]['pdb_id'] + df_homo.iloc[i]['tm_numA']
-        pdb_id_chain1 = df_homo.iloc[i]['pdb_id'] + df_homo.iloc[i]['tm_numB']
-        freecontact_file = os.path.join(s["features_folder"],"cumulative_coevolution",database,"{}.surr20.gaps5.freecontact.csv".format(pdb_id_chain))
-        tm_seq = df_homo.iloc[i]['aligned_AB']
-        tm_len = len(tm_seq)
-        aligned_AB_startA = df_homo.iloc[i]['full_seqA'].index(tm_seq) + 1
-        aligned_AB_startB = df_homo.iloc[i]['full_seqB'].index(tm_seq) + 1
-        interpair = df_homo.iloc[i]['interpair_4.5']
-        interpair_dict = {}
-        for j in range(1, len(interpair.split('+'))):
-            if float(interpair.split('+')[j].split('_')[8]) < contact_def:
-                if (str(int(interpair.split('+')[j].split('_')[5]) - aligned_AB_startB + 1) + '_' +
-                        str(int(interpair.split('+')[j].split('_')[1]) - aligned_AB_startA + 1)
-                    ) not in interpair_dict:
-                    interpair_dict[str(int(interpair.split('+')[j].split('_')[1]) - aligned_AB_startA + 1) + '_' +
-                                   str(int(interpair.split('+')[j].split('_')[5]) - aligned_AB_startB + 1)] = \
-                    interpair.split('+')[j].split('_')[8]
-        inter_within8_dict = {}
-        if os.path.isfile(freecontact_file):
-            with open(freecontact_file, 'r') as f:
-                for line in f:
-                    arr = line.strip().split()
-                    if int(arr[2]) - int(arr[0]) <= 8:
-                        string = arr[0] + '_' + arr[2]
-                        inter_within8_dict[string] = arr[5]
-                        string = arr[2] + '_' + arr[0]
-                        inter_within8_dict[string] = arr[5]
-            f.close()
+    logging.info('create_average_fraction_DI_file starting')
+    retrospective_coev_xlsx = os.path.join(s["set_results_folder"], "set04_retrospective_coev.xlsx")
+    writer = pd.ExcelWriter(retrospective_coev_xlsx)
+    randomise_int_res = False
+    remove_residues_outside_interface_region = False
+    logging.info("randomise_int_res = {}, remove_residues_outside_interface_region = {}".format(randomise_int_res, remove_residues_outside_interface_region))
+    InterPairList_of_last_TMD = None
+    NoninterPairList_of_last_TMD = None
+    TMD_start_of_last_TMD = None
+    crystal_NMR_interpair_file = os.path.join(s["set_results_folder"], "Average_Fraction_DI","Crystal_NMR_interpair.csv")
+    pd_int = pd.read_csv(crystal_NMR_interpair_file, engine="python")
+    set04_file = os.path.join(s["sets_folder"],"set04_crystal_NMR.xlsx")
+    df_set = pd.read_excel(set04_file,sheetname="proteins")
+    # s = df_set.TMD_seq.str.len().sort_values().index
+    # df_set = df_set.reindex(s)
+    # df_set = df_set.reset_index(drop=True)
+    print(df_set)
+    sub_dict = {}
+    for i in df_set.index:
+        sys.stdout.write(".")
+        sys.stdout.flush()
+        if i == 0:
+            is_first_TMD = True
+        else:
+            is_first_TMD = False
+        sub_dict, InterPairList_of_last_TMD,NoninterPairList_of_last_TMD, TMD_start_of_last_TMD = calc_av_frac_DI_single_prot_struct(sub_dict, s,  pd_int,i,logging,  is_first_TMD,
+                                                                                                                                    df_set,randomise_int_res, InterPairList_of_last_TMD,NoninterPairList_of_last_TMD,
+                                                                                                                                    TMD_start_of_last_TMD,remove_residues_outside_interface_region)
+        if randomise_int_res == True and is_first_TMD == True:
+            # need to add the data for the first TMD, which was skipped above
+            i = 0
+            is_first_TMD = False
+            sub_dict, InterPairList_of_last_TMD,NoninterPairList_of_last_TMD, TMD_start_of_last_TMD = calc_av_frac_DI_single_prot_struct(sub_dict, s, pd_int,i, logging,  is_first_TMD,
+                                                                                                                                        df_set,randomise_int_res, InterPairList_of_last_TMD,NoninterPairList_of_last_TMD,
+                                                                                                                                        TMD_start_of_last_TMD,remove_residues_outside_interface_region)
+    df_retro = pd.DataFrame(sub_dict).T
+    df_retro.to_excel(writer, sheet_name="DI")
 
-        inter_DI = 0
-        ninter_DI = 0
-        I = 0
-        N = 0
+    create_quick_plot = True
+    if create_quick_plot:
+        retrospective_coev_plot = retrospective_coev_xlsx[:-5]  + "DI.png"
+        df_retro["inter_larger"] = df_retro.AverageInter > df_retro.AverageNoninter
+        fig, ax = plt.subplots()
+        df_retro[["AverageInter", "AverageNoninter"]].plot(kind="bar", ax=ax)
+        fig.tight_layout()
+        fig.savefig(retrospective_coev_plot)
+
+    # drop any (rare) rows without data, where the interface region was outside the length of the TMD?
+    df_retro.dropna(how="any", inplace=True)
+
+    vc = df_retro["inter_larger"].value_counts()
+    if True in vc.index.tolist():
+        n_TMDs_with_higher_int = vc[True]
+    else:
+        n_TMDs_with_higher_int = 0
+
+    perc_higher_int = n_TMDs_with_higher_int / df_retro.shape[0]
+    logging.info(
+        "\n{:.2f} % ({}/{}) of TMDs have higher DI of interface than non-interface".format(perc_higher_int * 100,
+                                                                                           n_TMDs_with_higher_int,
+                                                                                           df_retro.shape[0]))
+
+    logging.info("\n\nmean values\n{}\n".format(df_retro.mean()))
+
+    t_value, p_value = ttest_ind(df_retro.AverageInter, df_retro.AverageNoninter)
+
+    # logging.info("remove_residues_outside_interface_region = {}".format(remove_residues_outside_interface_region))
+    logging.info("\np-value for average DI coevolution of interface vs non-interface = {:.03f}".format( p_value))
+
+    writer.close()
+    sys.stdout.write("\n")
+    logging.info('create_average_fraction_DI_file finished')
+
+def calc_av_frac_DI_single_prot_struct(sub_dict, s,  pd_int,i, logging,  is_first_TMD, df_set,randomise_int_res, InterPairList_of_last_TMD,NoninterPairList_of_last_TMD, TMD_start_of_last_TMD,remove_residues_outside_interface_region):
+    acc = df_set.loc[i,'acc']
+    database = df_set.loc[i,'database']
+    InterPairList= pd_int[["inter1", "inter2"]][pd_int["acc"] == acc].values.tolist()
+    interlist = []
+    for x in InterPairList:
+        interlist.extend(x)
+    lowest_interface_res = min(interlist)
+    highest_interface_res = max(interlist)
+    NoninterPairList = []
+    freecontact_file = os.path.join(s["features_folder"], "cumulative_coevolution", database,"{}.surr20.gaps5.freecontact.csv".format(acc))
+    inter_within8_dict = {}
+
+    if os.path.isfile(freecontact_file):
+        with open(freecontact_file, 'r') as f:
+            for line in f:
+                arr = line.strip().split()
+                tmd_len = int(arr[2])
+                if int(arr[2]) - int(arr[0]) <= 8:
+                    inter_within8_dict[arr[0] + '_' + arr[2]] = arr[5]
+                    inter_within8_dict[arr[2] + '_' + arr[0]] = arr[5]
+                    if [int(arr[0]), int(arr[2])] not in InterPairList and [int(arr[0]), int(
+                        arr[2])] not in InterPairList:
+                        if remove_residues_outside_interface_region:
+                            if lowest_interface_res < int(arr[0]) < highest_interface_res and lowest_interface_res < int(arr[2]) < highest_interface_res:
+                                NoninterPairList.append([int(arr[0]), int(arr[2])])
+                                NoninterPairList.append([int(arr[2]), int(arr[0])])
+                        else:
+                            NoninterPairList.append([int(arr[0]), int(arr[2])])
+                            NoninterPairList.append([int(arr[2]), int(arr[0])])
+        f.close()
+
+    if randomise_int_res == False:
+        inter_DI = []
+        ninter_DI = []
         for key, value in inter_within8_dict.items():
-            if key in interpair_dict:
-                inter_DI = inter_DI + float(inter_within8_dict[key])
-                I = I + 1
-            else:
-                ninter_DI = ninter_DI + float(inter_within8_dict[key])
-                N = N + 1
+            inter_pair = [int(x) for x in key.split('_')]
+            if inter_pair in InterPairList:
+                inter_DI.append(float(inter_within8_dict[key]))
+            elif inter_pair in NoninterPairList:
+                ninter_DI.append(float(inter_within8_dict[key]))
+        average_inter = np.mean(inter_DI)
+        average_ninter = np.mean(ninter_DI)
+        print(acc,average_inter,average_ninter)
+        sub_dict[acc] = {"AverageInter": average_inter, "AverageNoninter": average_ninter}
 
-        high_DI_cutoff = 0
-        TmdDiPairLen = len(inter_within8_dict)
-        CutPoint = TmdDiPairLen / 3
-        n = 0
-        sorted_keys = sorted(inter_within8_dict, key=inter_within8_dict.get, reverse=True)
-        for r in sorted_keys:
-            n = n + 1
-            if n == CutPoint:
-                high_DI_cutoff = float(inter_within8_dict[r])
-
-        high_num_inter = 0
-        high_num_noninter = 0
-        Inter = 0
-        Noninter = 0
+    elif randomise_int_res == True and is_first_TMD == True:
+        pass
+    elif randomise_int_res == True and is_first_TMD != True:
+        InterPairList_of_last_TMD =[x for x in InterPairList_of_last_TMD if x[0] <= tmd_len and x[1] <= tmd_len ]
+        NoninterPairList_of_last_TMD = [x for x in NoninterPairList_of_last_TMD if x[0] <= tmd_len and x[1] <= tmd_len ]
+        print(acc,InterPairList_of_last_TMD,NoninterPairList_of_last_TMD)
+        inter_DI = []
+        ninter_DI = []
         for key, value in inter_within8_dict.items():
-            if key in interpair_dict:
-                if float(inter_within8_dict[key]) > high_DI_cutoff:
-                    high_num_inter = high_num_inter + 1
-                Inter = Inter + 1
-            else:
-                if float(inter_within8_dict[key]) > high_DI_cutoff:
-                    high_num_noninter = high_num_noninter + 1
-                Noninter = Noninter + 1
+            inter_pair = [int(x) for x in key.split('_')]
+            if inter_pair in InterPairList_of_last_TMD:
+                inter_DI.append(float(inter_within8_dict[key]))
+            elif inter_pair in NoninterPairList_of_last_TMD:
+                ninter_DI.append(float(inter_within8_dict[key]))
+        average_inter = np.mean(inter_DI)
+        average_ninter = np.mean(ninter_DI)
+        print(acc,average_inter,average_ninter)
+        sub_dict[acc] = {"AverageInter": average_inter, "AverageNoninter": average_ninter}
 
-        if I > 0 and N > 0 and Inter > 0 and Noninter > 0:
-            if pdb_id_chain in id_list:
-                average_score_inter = inter_DI / I
-                average_score_ninter = ninter_DI / N
-                fraction_highscore_inter = high_num_inter / Inter
-                fraction_highscore_ninter = high_num_noninter / Noninter
-                line = [pdb_id_chain, average_score_inter, average_score_ninter, fraction_highscore_inter,
-                        fraction_highscore_ninter]
-                writer.writerow(line)
-    crystal_averge_fraction_file_handle.close()
+    InterPairList_of_last_TMD = InterPairList
+    NoninterPairList_of_last_TMD = NoninterPairList
 
-    logging.info("create_average_fraction_DI_file finished")
+
+    return sub_dict, InterPairList_of_last_TMD,NoninterPairList_of_last_TMD, TMD_start_of_last_TMD
 
 
 

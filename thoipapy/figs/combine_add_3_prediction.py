@@ -125,8 +125,12 @@ def create_AUC_BOAUC10_figs_THOIPA_PREDDIMER_TMDOCK(s, df_set, logging):
                                                 "{}.4predictors_mean_AUBOC.csv".format(s["setname"]))
     predictors_AUC_barchart_png = os.path.join(s["thoipapy_data_folder"], "Results", "compare_predictors",
                                                 "{}.4predictors_AUC_barchart.png".format(s["setname"]))
+    predictors_AUC_barchart_pdf = os.path.join(s["thoipapy_data_folder"], "Results", "compare_predictors","pdf",
+                                               "{}.4predictors_AUC_barchart.pdf".format(s["setname"]))
     predictors_BOAUC10_barchart_png = os.path.join(s["thoipapy_data_folder"], "Results", "compare_predictors",
                                                 "{}.4predictors_BOAUC_barchart.png".format(s["setname"]))
+    predictors_BOAUC10_barchart_pdf = os.path.join(s["thoipapy_data_folder"], "Results", "compare_predictors","pdf",
+                                                   "{}.4predictors_BOAUC_barchart.pdf".format(s["setname"]))
     predictors_BOCURVE_linechart_png = os.path.join(s["thoipapy_data_folder"], "Results", "compare_predictors",
                                                 "{}.4predictors_BOCURVE_linechart.png".format(s["setname"]))
     predictors_mean_auc_barchart_png = os.path.join(s["thoipapy_data_folder"], "Results", "compare_predictors",
@@ -217,7 +221,7 @@ def create_AUC_BOAUC10_figs_THOIPA_PREDDIMER_TMDOCK(s, df_set, logging):
     #sys.stdout.write(AUC_AUBOC_df)
     AUC_AUBOC_df.to_csv(AUC_AUBOC_file)
     THOIPA_best_set = s["THOIPA_best_set"]
-    create_4predictors_AUC_AUBOC10_barchart(AUC_AUBOC_df, predictors_AUC_barchart_png, predictors_BOAUC10_barchart_png, namedict, THOIPA_best_set)
+    create_4predictors_AUC_AUBOC10_barchart(AUC_AUBOC_df, predictors_AUC_barchart_png,predictors_AUC_barchart_pdf, predictors_BOAUC10_barchart_png,predictors_BOAUC10_barchart_pdf, namedict, THOIPA_best_set)
     create_4predictors_BOcurve_linechart(df_o_minus_r_mean_df, AUBOC10_list, linechar_name_list, predictors_BOCURVE_linechart_png)
     create_mean_AUC_barchart_comp(auc_mean_list, linechar_name_list, predictors_mean_auc_barchart_png)
     df_o_minus_r_mean_df.to_csv(df_o_minus_r_mean_csv)
@@ -265,7 +269,7 @@ def create_4predictors_BOcurve_linechart(df_o_minus_r_mean_df, AUBOC10_list, lin
     fig.tight_layout()
     fig.savefig(predictors_BOCURVE_linechart_png, dpi=140)
 
-def create_4predictors_AUC_AUBOC10_barchart(AUC_AUBOC_df, predictors_AUC_barchart_png, predictors_BOAUC10_barchart_png,namedict, THOIPA_best_set):
+def create_4predictors_AUC_AUBOC10_barchart(AUC_AUBOC_df, predictors_AUC_barchart_png,predictors_AUC_barchart_pdf, predictors_BOAUC10_barchart_png,predictors_BOAUC10_barchart_pdf,namedict, THOIPA_best_set):
     THOIPA_best_setnumber = int(THOIPA_best_set[3:])
     #colname = "THOIPA_5_LOOAUC"
     THOIPA_x_LOOAUC = "THOIPA_{}_LOO-AUC".format(THOIPA_best_setnumber)
@@ -292,6 +296,7 @@ def create_4predictors_AUC_AUBOC10_barchart(AUC_AUBOC_df, predictors_AUC_barchar
     fig.tight_layout()
     ax.grid(False)
     fig.savefig(predictors_AUC_barchart_png, dpi=240)
+    fig.savefig(predictors_AUC_barchart_pdf, dpi=240)
 
     AUC_AUBOC_df = AUC_AUBOC_df.sort_values(by=[THOIPA_x_LOOAUBOC10], ascending=False)
     plt.close("all")
@@ -309,6 +314,7 @@ def create_4predictors_AUC_AUBOC10_barchart(AUC_AUBOC_df, predictors_AUC_barchar
     fig.tight_layout()
     ax.grid(False)
     fig.savefig(predictors_BOAUC10_barchart_png, dpi=240)
+    fig.savefig(predictors_BOAUC10_barchart_pdf, dpi=240)
 
 def create_AUBOC10_4predictors_3databases_figs(s,df_set,logging):
 
