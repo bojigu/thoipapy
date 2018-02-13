@@ -765,8 +765,8 @@ def create_average_fraction_DI_file_OLD_PAIRWISE_VERSION(s, dfset, logging):
     logging.info('create_average_fraction_DI_file starting')
     retrospective_coev_xlsx = os.path.join(s["set_results_folder"], "set04_retrospective_coev.xlsx")
     writer = pd.ExcelWriter(retrospective_coev_xlsx)
-    randomise_int_res = False
-    remove_residues_outside_interface_region = False
+    randomise_int_res = True
+    remove_residues_outside_interface_region = True
     logging.info("randomise_int_res = {}, remove_residues_outside_interface_region = {}".format(randomise_int_res, remove_residues_outside_interface_region))
     InterPairList_of_last_TMD = None
     NoninterPairList_of_last_TMD = None
@@ -775,10 +775,8 @@ def create_average_fraction_DI_file_OLD_PAIRWISE_VERSION(s, dfset, logging):
     pd_int = pd.read_csv(crystal_NMR_interpair_file, engine="python")
     set04_file = os.path.join(s["sets_folder"],"set04_crystal_NMR.xlsx")
     df_set = pd.read_excel(set04_file,sheetname="proteins")
-    # s = df_set.TMD_seq.str.len().sort_values().index
-    # df_set = df_set.reindex(s)
-    # df_set = df_set.reset_index(drop=True)
-    print(df_set)
+    df_set.index = df_set['TMD_seq'].str.len()
+    df_set = df_set.sort_index(ascending=False).reset_index(drop=True)
     sub_dict = {}
     for i in df_set.index:
         sys.stdout.write(".")
