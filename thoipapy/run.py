@@ -265,6 +265,12 @@ if __name__ == "__main__":
             if s["download_10_homologues_from_ncbi"] == True:
                 thoipapy.other.NCBI.download.download.download_10_homologues_from_ncbi(s, df_set, logging)
 
+        if "plot_coev_vs_res_dist" in s:
+            if s["plot_coev_vs_res_dist"] == True:
+                thoipapy.structures.get_TMD_homodimer.get_tmd_nr_homodimer.calc_coev_vs_res_dist(s, dfset, logging)
+                thoipapy.structures.get_TMD_homodimer.get_tmd_nr_homodimer.plot_coev_vs_res_dist(s, dfset, logging)
+
+
         # close the logger. A new one will be made for the next protein list.
         logging.info("FINISHED PROCESSING OF {}.".format(setname))
         logging.shutdown()

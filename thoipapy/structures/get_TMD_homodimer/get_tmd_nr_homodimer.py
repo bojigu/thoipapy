@@ -262,6 +262,167 @@ def return_set_id_list(set_file):
     return id_list
 
 
+def get_pivot_table_coev_data(s, i, XI, df_set):
+    acc = df_set.loc[i, "acc"]
+    database = df_set.loc[i, "database"]
+    TMD_start = int(df_set.loc[i, "TMD_start"])
+    TMD_end = int(df_set.loc[i, "TMD_end"])
+    freecontact_file = os.path.join(s["feature_cumulative_coevolution"], database, "{}.surr{}.gaps{}.freecontact.csv".format(acc, s["num_of_sur_residues"], s["max_n_gaps_in_TMD_subject_seq"]))
+
+    df = pd.read_csv(freecontact_file, sep=" ", header=None)
+    df.columns = ["n1", "res1", "n2", "res2", "MI", "DI"]
+    # due to uniprot indexing, residue_num should equal res + TMD_start - 1
+    df["n1"] = df.n1 + TMD_start - 1
+    df["n2"] = df.n2 + TMD_start - 1
+    """df is a csv like this:
+           n1 res1  n2 res2        MI        DI
+    0  92    I  93    T  0.243618  0.454792
+    1  92    I  94    L  0.404760  0.445580
+    2  92    I  95    I  0.017704 -1.066260
+    3  92    I  96    I  0.106223 -0.731704
+    4  92    I  97    F  0.244482 -0.252246
+    """
+
+    dfp = df.pivot_table(index="n1", columns="n2", values=XI)
+
+    """ asymmetrical pivoted data
+
+         235       236       237       238       239       240 ...        252       253       254       255       256       
+    n1                                                     ...                                                              
+    235   0.243618  0.404760  0.017704  0.106223  0.244482 ...   0.132235  0.219876  0.198667  0.360217  0.320984  0.145523 
+    236        NaN  0.332451  0.140595  0.000747  0.151737 ...   0.217048  0.403469  0.174750  0.286540  0.357700  0.044577 
+    237        NaN       NaN  0.062405  0.173925  0.353367 ...   0.336857  0.657512  0.418125  0.521322  0.538269  0.229414 
+    238        NaN       NaN       NaN  0.049759  0.044692 ...   0.119658  0.236728  0.080722  0.114663  0.064796  0.096822 
+    """
+    # get full list of residues
+    position_list = range(TMD_start, TMD_end + 1)
+    dfp = dfp.reindex(index=position_list, columns=position_list)
+    # put data on both sides of the table for easy indexing
+    for col in dfp.columns:
+        start = col + 1
+        dfp.loc[start:, col] = dfp.loc[col, start:]
+
+    return dfp
+
+def calc_coev_vs_res_dist(s, df_set, logging):
+
+    logging.info('calc_coev_vs_res_dist starting')
+    coev_vs_res_dist_xlsx = os.path.join(s["set_results_folder"], "{}_coev_vs_res_dist.xlsx".format(s["setname"]))
+    writer = pd.ExcelWriter(coev_vs_res_dist_xlsx)
+
+    for XI in ["MI", "DI"]:
+        nested_coev_dist_dict = {}
+        N_term_nested_dict = {}
+        C_term_nested_dict = {}
+
+        for i in df_set.index:
+            sys.stdout.write(".")
+            sys.stdout.flush()
+            acc_db = df_set.loc[i, "acc_db"]
+            TMD_start = int(df_set.loc[i, "TMD_start"])
+            TMD_end = int(df_set.loc[i, "TMD_end"])
+
+            dfp = get_pivot_table_coev_data(s, i, XI, df_set)
+
+            #min_ = dfp.index.min()
+            #max_ = dfp.index.max()
+            #min_ = TMD_start
+            #max_ = TMD_end
+            buffer = 20
+            rng = range(TMD_start - buffer, TMD_end + buffer)
+            dfp = dfp.reindex(index=rng, columns=rng)
+            coev_dist_dict = {}
+            N_term_dist_dict = {}
+            C_term_dist_dict = {}
+
+            for b in range(1, buffer + 1):
+                single_dist_list = []
+                for i in range(TMD_start, TMD_end + 1):
+                    seln = dfp.loc[i, [i - b, i + b]]
+                    mean_ = dfp.loc[i, [i - b, i + b]].mean()
+                    #if not np.isnan(mean_):
+                    #    single_dist_list.append(mean_)
+                    single_dist_list.append(mean_)
+                    # if np.isnan(mean_):
+                    #     sys.stdout.write("({}.{}.{}.{})".format(b,i,seln, mean_))
+                    #     sys.stdout.flush()
+
+                N_term_coev_list = []
+                for i in range(TMD_start + b, TMD_end):
+                    N_term_coev_list.append(dfp.loc[i, i - b])
+                    N_term_dist_dict[b] = np.mean(N_term_coev_list)
+
+                C_term_coev_list = []
+                for i in range(TMD_start, TMD_end - b):
+                    C_term_coev_list.append(dfp.loc[i, i + b])
+                    C_term_dist_dict[b] = np.mean(C_term_coev_list)
+
+                mean_for_this_dist = np.array(single_dist_list).mean()
+                if not np.isnan(mean_for_this_dist):
+                    coev_dist_dict[b] = float("{:.03f}".format(mean_for_this_dist))
+
+
+            nested_coev_dist_dict[acc_db] = coev_dist_dict
+            N_term_nested_dict[acc_db] = N_term_dist_dict
+            C_term_nested_dict[acc_db] = C_term_dist_dict
+
+        #print(nested_coev_dist_dict)
+        pd.DataFrame(nested_coev_dist_dict).to_excel(writer, sheet_name="coev_{}".format(XI))
+        pd.DataFrame(N_term_nested_dict).to_excel(writer, sheet_name="N_{}".format(XI))
+        pd.DataFrame(C_term_nested_dict).to_excel(writer, sheet_name="C_{}".format(XI))
+
+    writer.close()
+
+
+def plot_coev_vs_res_dist(s, df_set, logging):
+    logging.info('plot_coev_vs_res_dist starting')
+    coev_vs_res_dist_xlsx = os.path.join(s["set_results_folder"], "{}_coev_vs_res_dist.xlsx".format(s["setname"]))
+
+    fig, ax = plt.subplots()
+    for XI in ["MI", "DI"]:
+        df = pd.read_excel(coev_vs_res_dist_xlsx, sheetname="coev_{}".format(XI))
+        df.mean(axis=1).plot(ax=ax, label=XI)
+    ax.set_xlabel("residue distance")
+    ax.set_ylabel("mean coevolution")
+    ax.set_xticks(df.index)
+    figpath = coev_vs_res_dist_xlsx[:-5] + "_coev" + ".png"
+    ax.legend()
+    fig.tight_layout()
+    fig.savefig(figpath)
+
+    fig, ax = plt.subplots()
+    for XI in ["MI", "DI"]:
+        df = pd.read_excel(coev_vs_res_dist_xlsx, sheetname="N_{}".format(XI))
+        df.mean(axis=1).plot(ax=ax, label=XI)
+    ax.set_xlabel("residue distance")
+    ax.set_ylabel("mean coevolution")
+    ax.set_xticks(df.index)
+    figpath = coev_vs_res_dist_xlsx[:-5] + "_N.png"
+    ax.legend()
+    fig.tight_layout()
+    fig.savefig(figpath)
+
+    fig, ax = plt.subplots()
+    for XI in ["MI", "DI"]:
+        dfN = pd.read_excel(coev_vs_res_dist_xlsx, sheetname="N_{}".format(XI))
+        dfC = pd.read_excel(coev_vs_res_dist_xlsx, sheetname="C_{}".format(XI))
+        dfC.index = -dfC.index
+        max_ = dfN.index.max()
+        df = pd.DataFrame(index=range(-max_, max_))
+        df["N"] = dfN.mean(axis=1)
+        df["C"] = dfC.mean(axis=1)
+        df["NC"] = df[["N", "C"]].max(axis=1)
+        df.NC.plot(ax=ax, label=XI)
+    ax.set_xlabel("residue distance")
+    ax.set_ylabel("mean coevolution")
+    ax.set_xticks(df.index)
+    ax.set_xlim(-10, 10)
+    figpath = coev_vs_res_dist_xlsx[:-5] + "_NC.png"
+    ax.legend()
+    fig.tight_layout()
+    fig.savefig(figpath)
+
+
 def create_average_fraction_DI_file(s, df_set, logging):
 
     logging.info('create_average_fraction_DI_file starting')
@@ -420,6 +581,7 @@ def calc_av_frac_DI_single_prot(sub_dict, s, logging, i, XI, is_first_TMD, df_se
     for col in dfp.columns:
         start = col + 1
         dfp.loc[start:, col] = dfp.loc[col, start:]
+
 
     """dfp now contains the coevolution data as a symmetrical dataframe, from each residue to the other
 
