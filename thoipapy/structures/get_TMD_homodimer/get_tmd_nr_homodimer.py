@@ -16,6 +16,9 @@ import numpy as np
 import tarfile
 from matplotlib import pyplot as plt
 from scipy.stats import ttest_ind
+from scipy.optimize import leastsq
+from tlabassays.mathfunctions import sine, sine_perfect_helix, residuals
+import tlabtools.tools as tools
 
 
 def download_xml_get_alphahelix_get_homo_pair(s, logging):
@@ -305,6 +308,23 @@ def get_pivot_table_coev_data(s, i, XI, df_set):
     return dfp
 
 def calc_coev_vs_res_dist(s, df_set, logging):
+    """Calculate mean oevolution scores for each residue distance
+
+    Parameters
+    ----------
+    s : dict
+        Settings dictionary
+    df_set : pd.DataFrame
+        Dataframe containing the list of proteins to process, including their TMD sequences and full-length sequences
+        index : range(0, ..)
+        columns : ['acc', 'seqlen', 'TMD_start', 'TMD_end', 'tm_surr_left', 'tm_surr_right', 'database',  ....]
+    logging : logging.Logger
+        Python object with settings for logging to console and file.
+
+    Returns
+    -------
+
+    """
 
     logging.info('calc_coev_vs_res_dist starting')
     coev_vs_res_dist_xlsx = os.path.join(s["set_results_folder"], "{}_coev_vs_res_dist.xlsx".format(s["setname"]))
@@ -312,8 +332,7 @@ def calc_coev_vs_res_dist(s, df_set, logging):
 
     for XI in ["MI", "DI"]:
         nested_coev_dist_dict = {}
-        N_term_nested_dict = {}
-        C_term_nested_dict = {}
+        nested_Cterm_dist_dict = {}
 
         for i in df_set.index:
             sys.stdout.write(".")
@@ -324,104 +343,195 @@ def calc_coev_vs_res_dist(s, df_set, logging):
 
             dfp = get_pivot_table_coev_data(s, i, XI, df_set)
 
-            #min_ = dfp.index.min()
-            #max_ = dfp.index.max()
-            #min_ = TMD_start
-            #max_ = TMD_end
+            """dfp pivot table has a symmetric coevolution values between all residues
+            
+                    307       308       309       310       311       312       313       314       315       316    ...          326       327       328       329       330       331       332       333       334       335
+            n1                                                                                                         ...                                                                                                       
+            307       NaN  0.233388  0.251910  0.257193  0.365270  0.468933  0.313458  0.253943  0.278989  0.297606    ...     0.206634  0.153770  0.271118  0.364004  0.185186  0.286575  0.166321  0.313355  0.269962  0.307910
+            308  0.233388       NaN  0.194896  0.290690  0.230827  0.300403  0.371423  0.149162  0.250657  0.283342    ...     0.130392  0.135035  0.317070  0.266557  0.134991  0.244770  0.164932  0.211624  0.185211  0.155684
+            309  0.251910  0.194896       NaN  0.376993  0.401137  0.480202  0.313931  0.298846  0.336291  0.317149    ...     0.253053  0.229490  0.359081  0.366537  0.203667  0.264654  0.221240  0.373255  0.300027  0.240920
+            310  0.257193  0.290690  0.376993       NaN  0.563525  0.651108  0.411248  0.353645  0.366177  0.455358    ...     0.264179  0.280039  0.398423  0.492760  0.226311  0.401377  0.242655  0.401358  0.316718  0.305772
+            311  0.365270  0.230827  0.401137  0.563525       NaN  0.686111  0.367423  0.446554  0.457673  0.488534    ...     0.327568  0.286183  0.489552  0.468001  0.259249  0.447306  0.250619  0.455895  0.444784  0.345875
+
+            """
+
+            # set the "buffer", which controls the distance between the residues
+            # will also be used to buffer the dataframe
             buffer = 20
+            # extend axes by adding buffer
             rng = range(TMD_start - buffer, TMD_end + buffer)
             dfp = dfp.reindex(index=rng, columns=rng)
-            coev_dist_dict = {}
-            N_term_dist_dict = {}
-            C_term_dist_dict = {}
 
+            coev_dist_dict = {}
+            N_coev_dist_dict = {}
+
+            # iterate through each distance, b, in the buffer
             for b in range(1, buffer + 1):
+
+                ###############################################
+                #         Method 1 : mean of i+1 and i-1      #
+                ###############################################
                 single_dist_list = []
                 for i in range(TMD_start, TMD_end + 1):
                     seln = dfp.loc[i, [i - b, i + b]]
-                    mean_ = dfp.loc[i, [i - b, i + b]].mean()
-                    #if not np.isnan(mean_):
-                    #    single_dist_list.append(mean_)
-                    single_dist_list.append(mean_)
+                    """ The selection contains the two values, whose mean is taken.
+                    Often, as b increases, one of the values is a nan.
+                    [0.582511, nan]
+                    [nan, 0.612737]
+                    [nan, 0.5906779999999999]
+                    """
+                    mean_ = seln.mean()
+                    if not np.isnan(mean_):
+                       single_dist_list.append(mean_)
+                    #single_dist_list.append(mean_)
+
                     # if np.isnan(mean_):
                     #     sys.stdout.write("({}.{}.{}.{})".format(b,i,seln, mean_))
                     #     sys.stdout.flush()
 
-                N_term_coev_list = []
-                for i in range(TMD_start + b, TMD_end):
-                    N_term_coev_list.append(dfp.loc[i, i - b])
-                    N_term_dist_dict[b] = np.mean(N_term_coev_list)
+                ###############################################
+                #     Method 2 : collect only i+1, i+2, etc   #
+                ###############################################
+                i_plus_b_coev_list = []
+                for i in range(TMD_start, TMD_end - b + 1):
+                    #i_plus_b is always a single coevolution value, between residue i, and residue i+b
+                    i_plus_b = dfp.loc[i, i + b]
+                    if not np.isnan(i_plus_b):
+                        i_plus_b_coev_list.append(i_plus_b)
+                    else:
+                        # there should be no nans here, but check anyway.
+                        sys.stdout.write("*")
 
-                C_term_coev_list = []
-                for i in range(TMD_start, TMD_end - b):
-                    C_term_coev_list.append(dfp.loc[i, i + b])
-                    C_term_dist_dict[b] = np.mean(C_term_coev_list)
+                # get mean for both methods, for this TMD
+                mean_for_this_dist = np.mean(single_dist_list)
+                mean_Cterm = np.mean(i_plus_b_coev_list)
 
-                mean_for_this_dist = np.array(single_dist_list).mean()
+                # add mean for this distance(b) to summary dictionary
                 if not np.isnan(mean_for_this_dist):
                     coev_dist_dict[b] = float("{:.03f}".format(mean_for_this_dist))
+                if not np.isnan(mean_Cterm):
+                    N_coev_dist_dict[b] = float("{:.03f}".format(mean_Cterm))
 
-
+            # add summary values for this TMD to the output dicts
             nested_coev_dist_dict[acc_db] = coev_dist_dict
-            N_term_nested_dict[acc_db] = N_term_dist_dict
-            C_term_nested_dict[acc_db] = C_term_dist_dict
+            nested_Cterm_dist_dict[acc_db] = N_coev_dist_dict
 
-        #print(nested_coev_dist_dict)
+        # save output dicts with all TMD values to excel
         pd.DataFrame(nested_coev_dist_dict).to_excel(writer, sheet_name="coev_{}".format(XI))
-        pd.DataFrame(N_term_nested_dict).to_excel(writer, sheet_name="N_{}".format(XI))
-        pd.DataFrame(C_term_nested_dict).to_excel(writer, sheet_name="C_{}".format(XI))
+        pd.DataFrame(nested_Cterm_dist_dict).to_excel(writer, sheet_name="C_{}".format(XI))
 
     writer.close()
+    logging.info('calc_coev_vs_res_dist finished')
 
 
-def plot_coev_vs_res_dist(s, df_set, logging):
+def plot_coev_vs_res_dist(s, logging):
+    """Plot figure comparing coevolution values against residue distance.
+
+    Uses excel output file from calc_coev_vs_res_dist.
+
+    Parameters
+    ----------
+    s : dict
+        Settings dictionary
+    df_set : pd.DataFrame
+        Dataframe containing the list of proteins to process, including their TMD sequences and full-length sequences
+        index : range(0, ..)
+        columns : ['acc', 'seqlen', 'TMD_start', 'TMD_end', 'tm_surr_left', 'tm_surr_right', 'database',  ....]
+    logging : logging.Logger
+        Python object with settings for logging to console and file.
+
+    Returns
+    -------
+
+    """
     logging.info('plot_coev_vs_res_dist starting')
+    plt.rcParams["font.family"] = "Verdana"
+    plt.rcParams["font.family"] = "Verdana"
+    colour_dict = tools.create_colour_lists()
+    blue1 = colour_dict["TUM_colours"]['TUM1']
+    blue5 = colour_dict["TUM_colours"]['TUM5']
+    TUMblue = colour_dict["TUM_colours"]['TUMBlue']
+
+    fontsize = 9
     coev_vs_res_dist_xlsx = os.path.join(s["set_results_folder"], "{}_coev_vs_res_dist.xlsx".format(s["setname"]))
 
-    fig, ax = plt.subplots()
-    for XI in ["MI", "DI"]:
-        df = pd.read_excel(coev_vs_res_dist_xlsx, sheetname="coev_{}".format(XI))
-        df.mean(axis=1).plot(ax=ax, label=XI)
-    ax.set_xlabel("residue distance")
-    ax.set_ylabel("mean coevolution")
-    ax.set_xticks(df.index)
+    fig, ax = plt.subplots(figsize=(4.5, 3.42))
+
+
+    #######################################################################################################
+    #                                                                                                     #
+    #                                    add alpha helical sine wave                                      #
+    #                                                                                                     #
+    #######################################################################################################
+    # [  0. ,   3.6,   7.2,  10.8,  14.4,  18. ,  21.6] for desired length
+    x_helical = np.ogrid[0:23.4:14j]
+    # [1,0, etc to train fitted sine as desired
+    y_helical = [1,0]*7
+    # fit to a perfect helix starting at 0 using leastsq
+    sine_constants_guess_perfhelix = [1.575, 0.5]
+    sine_constants_perfhelix1, cov_perfhelix, infodict_perfhelix, mesg_perfhelix, ier_perfhelix = leastsq(residuals,
+                                                                        sine_constants_guess_perfhelix,
+                                                                        args=(sine_perfect_helix,x_helical,y_helical),
+                                                                        full_output=1)
+
+    # create smooth sine curve x-points
+    x_rng = np.linspace(0, 20, 200)
+    logging.info("sine_constants_perfhelix1 : {}".format(sine_constants_perfhelix1))
+    # adjust the height as desired
+    sine_constants_fixed_centre = (sine_constants_perfhelix1[0], 0)
+    # fit and plot
+    yvalues_fitted_perfhelix1 = sine_perfect_helix(sine_constants_fixed_centre, x_rng)
+    ax.plot(x_rng, yvalues_fitted_perfhelix1, color="0.8", linestyle="--", label=r"$\alpha$-helical periodicity")
+
+    # only to show that heptad periodicity is not desirable
+    plot_heptad_periodicity = False
+    if plot_heptad_periodicity:
+        # test of heptad motif
+        x = range(0,21)
+        y = np.array([1,0,0,1,1,0,1] * 3)/4
+        ax.plot(x, y, color="r", alpha=0.5, linestyle=":", label="heptad periodicity")
+
+    #######################################################################################################
+    #                                                                                                     #
+    #                                     add mean MI and DI values                                       #
+    #                                                                                                     #
+    #######################################################################################################
+
+    # tab is "coev_" or "C_"
+    # this corresponds to Method 1 or Method 2 above
+    # they both give similar values, but i+b method is less likely to count values twice and is preferred
+    excel_tab = "C_"
+    #excel_tab = "coev_"
+
+    # plot MI on secondary axis
+    ax2 = ax.twinx()
+    df = pd.read_excel(coev_vs_res_dist_xlsx, sheetname="{}MI".format(excel_tab))
+    mean_ser = df.mean(axis=1)
+    mean_ser.plot(ax=ax2, label="mutual information (MI)", fontsize=fontsize, color=colour_dict["TUM_accents"]['orange'])
+
+    df = pd.read_excel(coev_vs_res_dist_xlsx, sheetname="{}DI".format(excel_tab))
+    mean_ser = df.mean(axis=1)
+    mean_ser.plot(ax=ax, label="direct information (DI)", fontsize=fontsize, color=TUMblue)
+
+    # axis colours
+    ax2.tick_params("y", colors=colour_dict["TUM_accents"]['orange'])
+    ax.tick_params("y", colors=TUMblue)
+    # axis labels
+    ax.set_ylabel("mean DI coevolution score", labelpad=-3, fontsize=fontsize, color = TUMblue)
+    ax2.set_ylabel("mean MI coevolution score", labelpad=1, fontsize=fontsize, color=colour_dict["TUM_accents"]['orange'])
+
+    ax.set_xlabel("residue distance", fontsize=fontsize)
+
+    ax.set_xticks(range(0, df.index.max()))
+    # data gets messy due to low numbers after 15 residues.
+    ax.set_xlim(0, 15)
+    # add a bit of height, so the legend does not overlap data
+    ax.set_ylim(mean_ser.min(), mean_ser.max() + 0.1)
     figpath = coev_vs_res_dist_xlsx[:-5] + "_coev" + ".png"
-    ax.legend()
+    fig.legend(fontsize=fontsize, loc="upper right", bbox_to_anchor=[0.85, 0.95])
     fig.tight_layout()
-    fig.savefig(figpath)
-
-    fig, ax = plt.subplots()
-    for XI in ["MI", "DI"]:
-        df = pd.read_excel(coev_vs_res_dist_xlsx, sheetname="N_{}".format(XI))
-        df.mean(axis=1).plot(ax=ax, label=XI)
-    ax.set_xlabel("residue distance")
-    ax.set_ylabel("mean coevolution")
-    ax.set_xticks(df.index)
-    figpath = coev_vs_res_dist_xlsx[:-5] + "_N.png"
-    ax.legend()
-    fig.tight_layout()
-    fig.savefig(figpath)
-
-    fig, ax = plt.subplots()
-    for XI in ["MI", "DI"]:
-        dfN = pd.read_excel(coev_vs_res_dist_xlsx, sheetname="N_{}".format(XI))
-        dfC = pd.read_excel(coev_vs_res_dist_xlsx, sheetname="C_{}".format(XI))
-        dfC.index = -dfC.index
-        max_ = dfN.index.max()
-        df = pd.DataFrame(index=range(-max_, max_))
-        df["N"] = dfN.mean(axis=1)
-        df["C"] = dfC.mean(axis=1)
-        df["NC"] = df[["N", "C"]].max(axis=1)
-        df.NC.plot(ax=ax, label=XI)
-    ax.set_xlabel("residue distance")
-    ax.set_ylabel("mean coevolution")
-    ax.set_xticks(df.index)
-    ax.set_xlim(-10, 10)
-    figpath = coev_vs_res_dist_xlsx[:-5] + "_NC.png"
-    ax.legend()
-    fig.tight_layout()
-    fig.savefig(figpath)
-
+    fig.savefig(figpath, dpi=240)
+    fig.savefig(figpath[:-4] + ".pdf")
 
 def create_average_fraction_DI_file(s, df_set, logging):
 

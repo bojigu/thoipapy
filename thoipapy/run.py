@@ -108,7 +108,7 @@ if __name__ == "__main__":
             pass
 
         if s["retrospective_coevolution"]:
-            #thoipapy.structures.get_TMD_homodimer.get_tmd_nr_homodimer.create_average_fraction_DI_file(s, dfset, logging)
+            thoipapy.structures.get_TMD_homodimer.get_tmd_nr_homodimer.create_average_fraction_DI_file(s, dfset, logging)
             thoipapy.structures.get_TMD_homodimer.get_tmd_nr_homodimer.create_average_fraction_DI_file_OLD_PAIRWISE_VERSION(s, dfset, logging)
 
         if s["calc_NMR_closedist"] :
@@ -269,7 +269,7 @@ if __name__ == "__main__":
         if "plot_coev_vs_res_dist" in s:
             if s["plot_coev_vs_res_dist"] == True:
                 thoipapy.structures.get_TMD_homodimer.get_tmd_nr_homodimer.calc_coev_vs_res_dist(s, dfset, logging)
-                thoipapy.structures.get_TMD_homodimer.get_tmd_nr_homodimer.plot_coev_vs_res_dist(s, dfset, logging)
+                thoipapy.structures.get_TMD_homodimer.get_tmd_nr_homodimer.plot_coev_vs_res_dist(s, logging)
 
 
         # close the logger. A new one will be made for the next protein list.
