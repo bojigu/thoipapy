@@ -271,6 +271,8 @@ if __name__ == "__main__":
                 thoipapy.structures.get_TMD_homodimer.get_tmd_nr_homodimer.calc_coev_vs_res_dist(s, dfset, logging)
                 thoipapy.structures.get_TMD_homodimer.get_tmd_nr_homodimer.plot_coev_vs_res_dist(s, logging)
 
+        if s["create_ROC_all_residues"]:
+            thoipapy.features.feature_calculate.create_ROC_all_residues(s, df_set, logging)
 
         # close the logger. A new one will be made for the next protein list.
         logging.info("FINISHED PROCESSING OF {}.".format(setname))
