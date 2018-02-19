@@ -497,13 +497,16 @@ def lipo_from_pssm(acc, pssm_csv_surr5, lipo_csv, tm_surr_left, tm_surr_right, s
 
     # take mean over a window that includes the 3 N-terminal residues to the original position
     window = [1, 1, 1, "x", 0, 0, 0]
-    polarity_i1_i3_N = calculate_weighted_windows(df_lipo["polarity".format(scalename)], window, statistic="mean", full_output=False)
+    polarity_i1_i3_N = calculate_weighted_windows(df_lipo["polarity"], window, statistic="mean", full_output=False)
     # take mean over a window that includes the 3 N-terminal residues to the original position
     window = [0, 0, 0, "x", 1, 1, 1]
-    polarity_i1_i3_C = calculate_weighted_windows(df_lipo["polarity".format(scalename)], window, statistic="mean", full_output=False)
+    polarity_i1_i3_C = calculate_weighted_windows(df_lipo["polarity"], window, statistic="mean", full_output=False)
     window = [1, 1, 1]
-    polarity_i_i1 = calculate_weighted_windows(df_lipo["polarity".format(scalename)], window, statistic="mean", full_output=False)
-
+    polarity_i_i1 = calculate_weighted_windows(df_lipo["polarity"], window, statistic="mean", full_output=False)
+    # calculate polarity of central position relative to 6 surrounding residues
+    window = [1, 1, 1, "x", 1, 1, 1]
+    mean_polarity_surr_6_res = calculate_weighted_windows(df_lipo["polarity"], window, statistic="mean", full_output=False)
+    relative_polarity = df_lipo["polarity"] / mean_polarity_surr_6_res
 
     # replace positions with nan that could not be properly calculated
     # this inlcludes the first 3 positions of polarity_i1_i3_N, and last 3 positions of polarity_i1_i3_C
@@ -511,9 +514,10 @@ def lipo_from_pssm(acc, pssm_csv_surr5, lipo_csv, tm_surr_left, tm_surr_right, s
     polarity_i1_i3_N.iloc[0:3] = np.nan
     polarity_i1_i3_C.iloc[-3:] = np.nan
 
-    df_lipo["polarity_i1-i3_N".format(scalename)] = polarity_i1_i3_N
-    df_lipo["polarity_i1-i3_C".format(scalename)] = polarity_i1_i3_C
-    df_lipo["polarity_i_i1".format(scalename)] = polarity_i_i1
+    df_lipo["polarity_i1-i3_N"] = polarity_i1_i3_N
+    df_lipo["polarity_i1-i3_C"] = polarity_i1_i3_C
+    df_lipo["polarity_i_i1"] = polarity_i_i1
+    df_lipo["relative_polarity"] = relative_polarity
 
     """df_lipo now looks like this.
 
@@ -533,7 +537,7 @@ def lipo_from_pssm(acc, pssm_csv_surr5, lipo_csv, tm_surr_left, tm_surr_right, s
     df_lipo["residue_num"] = [int(i) - tm_surr_left for i in df_lipo["residue_num"]]
     df_lipo.index = df_lipo["residue_num"]
 
-    df_lipo = df_lipo[["residue_name", "polarity".format(scalename), "polarity_i1-i3_N".format(scalename),"polarity_i1-i3_C".format(scalename), "polarity_i_i1".format(scalename)]]
+    df_lipo = df_lipo[["residue_name", "polarity", "polarity_i1-i3_N", "polarity_i1-i3_C", "polarity_i_i1", "relative_polarity"]]
     #df_lipo.set_index("IND", inplace=True)
     if tm_surr_right ==0 :
         df_lipo = df_lipo[tm_surr_left:]
@@ -1131,6 +1135,10 @@ def calc_relative_position(acc, path_uniq_TMD_seqs_for_PSSM_FREECONTACT, relativ
                 writer.writerow([i, tm_seq[i - 1], rp1, rp2])
         relative_position_file_handle.close()
         logging.info('{} relative position calculation finished ({})'.format(acc, relative_position_file))
+        dfrp = pd.read_csv(relative_position_file, index_col=0)
+        dfrp["residue_depth"] = (normalise_0_1(1 - abs(dfrp.RelPos_TMD - 0.5))[0]).round(1)
+        dfrp.to_csv(relative_position_file)
+
     else:
         logging.warning("{} calc_relative_position failed, file not found ({})".format(acc, path_uniq_TMD_seqs_for_PSSM_FREECONTACT))
 
@@ -2270,8 +2278,7 @@ def remove_crystal_hetero_contact_residues(acc, feature_combined_file, homo_hete
     df_combined = pd.read_csv(feature_combined_file, index_col=0)
 
     if not os.path.isfile(homo_hetero_contact_file):
-        logging.warning("homo_hetero_data_csv NOT FOUND. hetero conatct residues not calculated and added to combined file. ({})".format(
-            homo_hetero_contact_file))
+        raise FileNotFoundError("homo_hetero_contact_file NOT FOUND. hetero contact residues not calculated and added to combined file.\n({})".format(homo_hetero_contact_file))
 
     hetero_contact_num = 0
     if os.path.isfile(homo_hetero_contact_file):
