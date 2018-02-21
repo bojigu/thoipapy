@@ -162,7 +162,7 @@ def validate_THOIPA_for_testset_trainset_combination(s, test_set_list, train_set
 
                 predictor_name = "THOIPA"
 
-                fpr, tpr, thresholds = roc_curve(df_for_roc.interface, df_for_roc[predictor_name])
+                fpr, tpr, thresholds = roc_curve(df_for_roc.interface, df_for_roc[predictor_name], drop_intermediate=False)
                 auc_value = auc(fpr, tpr)
                 mean_tpr += interp(mean_fpr, fpr, tpr)
                 mean_tpr[0] = 0.0
@@ -284,7 +284,7 @@ def validate_LIPS_for_testset(s, logging, LIPS_name = "LIPS_LE", pred_col="LIPS_
 
             df_for_roc = combined_df.dropna(subset=["interface_score"])
 
-            fpr, tpr, thresholds = roc_curve(df_for_roc.interface, df_for_roc[pred_col])
+            fpr, tpr, thresholds = roc_curve(df_for_roc.interface, df_for_roc[pred_col], drop_intermediate=False)
             auc_value = auc(fpr, tpr)
             mean_tpr += interp(mean_fpr, fpr, tpr)
             mean_tpr[0] = 0.0

@@ -1666,6 +1666,7 @@ def combine_all_features_mult_prot(s, df_set, logging):
         Python object with settings for logging to console and file.
     """
     logging.info('Combining features into traindata')
+
     for i in df_set.index:
         acc = df_set.loc[i, "acc"]
         database = df_set.loc[i, "database"]
@@ -1685,7 +1686,10 @@ def combine_all_features_mult_prot(s, df_set, logging):
         alignment_summary_csv = os.path.join(alignments_dir, "{}.surr{}.gaps{}.alignment_summary.csv".format(acc, s["num_of_sur_residues"], s["max_n_gaps_in_TMD_subject_seq"]))
         full_seq_fasta_file = os.path.join(s["Protein_folder"], database, "{}.fasta".format(acc))
         full_seq_phobius_output_file = os.path.join(s["Protein_folder"], database, "{}.phobius".format(acc))
-        combine_all_features(s , full_seq,acc, database, TMD_seq, TMD_start, feature_combined_file, entropy_file, pssm_csv, lipo_csv, freecontact_parsed_csv, relative_position_file, LIPS_parsed_csv, motifs_file, alignment_summary_csv,full_seq_fasta_file,full_seq_phobius_output_file, logging)
+        combine_all_features(s, full_seq,acc, database, TMD_seq, TMD_start, feature_combined_file, entropy_file, pssm_csv, lipo_csv, freecontact_parsed_csv, relative_position_file, LIPS_parsed_csv, motifs_file, alignment_summary_csv,full_seq_fasta_file,full_seq_phobius_output_file, logging)
+
+
+
 
 def combine_all_features(s, full_seq, acc, database, TMD_seq, TMD_start, feature_combined_file, entropy_file, pssm_csv, lipo_csv, freecontact_parsed_csv, relative_position_file, LIPS_parsed_csv, motifs_file, alignment_summary_csv,full_seq_fasta_file,full_seq_phobius_output_file, logging):
     """Combine all the training features for a particular protein.
@@ -2037,6 +2041,99 @@ def add_experimental_data_to_combined_features(acc, database, TMD_seq, feature_c
         logging.warning("{} add_experimental_data_to_combined_features failed, {} not found".format(acc, experimental_data_file))
 
 
+def add_random_interface_to_combined_features_mult_prot(s, df_set, logging):
+    """Creates combined data with a randomly chosen interface residues.
+
+    Sorts TMDs according to length.
+    Adds the shortest one to the bottom of the list again.
+    Iterates through each TMD. The real interface is added as "real_interface"
+    The random interface is created by adding the interface for the previous one.
+    Saves combined data in a "rand_int" subfolder.
+
+    Only run if generate_randomised_interfaces is in settings excel file.
+
+    Parameters
+    ----------
+    s : dict
+        Settings dictionary
+    df_set : pd.DataFrame
+        Dataframe containing the list of proteins to process, including their TMD sequences and full-length sequences
+        index : range(0, ..)
+        columns : ['acc', 'seqlen', 'TMD_start', 'TMD_end', 'tm_surr_left', 'tm_surr_right', 'database',  ....]
+    logging : logging.Logger
+        Python object with settings for logging to console and file.
+
+    """
+    logging.info("starting add_random_interface_to_combined_features")
+    df_set.sort_values("TMD_len", inplace=True)
+    df_set.index = range(df_set.shape[0])
+
+    logging.info("df_set.tail(2) before adding protein01 to end of protein list\n{}".format(df_set.tail(2)))
+
+    # add the first TMD again at the end of the list
+    df_set.loc[df_set.index.max() + 1, :] = df_set.loc[0, :]
+
+    logging.info("df_set.tail(2) after adding protein01 to end of protein list\n{}".format(df_set.tail(2)))
+
+    df_experiment_data_prev_TMD = pd.DataFrame()
+    interface_list_prev_TMD = []
+
+    for i in df_set.index:
+        acc = df_set.loc[i, "acc"]
+        database = df_set.loc[i, "database"]
+        feature_combined_file = os.path.join(s["features_folder"], "combined", database, "{}.surr{}.gaps{}.combined_features.csv".format(acc, s["num_of_sur_residues"], s["max_n_gaps_in_TMD_subject_seq"]))
+        feature_combined_file_rand_int = os.path.join(s["features_folder"], "combined", "rand_int", database, "{}.surr{}.gaps{}.combined_features.csv".format(acc, s["num_of_sur_residues"], s["max_n_gaps_in_TMD_subject_seq"]))
+        thoipapy.utils.make_sure_path_exists(feature_combined_file_rand_int, isfile=True)
+
+        if database == "ETRA":
+            #experimental_data_file = os.path.join(s["base_dir"], "data_xy", "Figure", "Show_interface", "Interface_xlsx", "{}.xlsx".format(acc))
+            experimental_data_file = os.path.join(s["dropbox_dir"], "ETRA_data", "Average_with_interface", "{}_mul_scan_average_data.xlsx".format(acc))
+        else:
+            #experimental_data_file = os.path.join(s["features_folder"], 'Structure', database, '{}.{}pairmax.bind.closedist.csv'.format(acc,s['inter_pair_max']))
+            experimental_data_file = os.path.join(s["features_folder"], 'Structure', database, '{}.{}pairmax.bind.closedist.csv'.format(acc,s['inter_pair_max']))
+
+        df_combined = pd.read_csv(feature_combined_file, index_col=0)
+
+        if database == "ETRA":
+            print(experimental_data_file)
+            df_experiment_data = pd.read_excel(experimental_data_file)
+            df_experiment_data = df_experiment_data.rename(columns={"aa_position" : "residue_num", "orig_aa" : "residue_name", "Interface" : "interface", "Disruption" : "interface_score"})
+        else:
+            df_experiment_data = pd.read_csv(experimental_data_file)
+            df_experiment_data = df_experiment_data.rename(columns={"bind": "interface", "closedist": "interface_score"})
+
+
+        if i > 0:
+            # make sure that a range index is used
+            df_experiment_data_prev_TMD.index = range(df_experiment_data_prev_TMD.shape[0])
+            # reindex so that the length of the interface residue list from the previous TMD now matches that of the current TMD
+            df_experiment_data_prev_TMD = df_experiment_data_prev_TMD.reindex(df_combined.index)
+            # convert to a list that can be added to the combined file.
+            # Replace nan with 0 (non-interface), where the prev TMD is shorter than the current TMD (all except protein 1, when sorted by TMD_len)
+            interface_list_prev_TMD = df_experiment_data_prev_TMD.interface.fillna(0).astype(int).tolist()  # [:df_combined.shape[0]]
+            """ Instead of adding the full DF of experimental data, simply add a RANDOM list of interface residues(from the previous TMD).
+            
+            current list of interface residues that belongs to the current TMD
+            [0, 0, 0, 0, 0, 0, 0, 0, 1, 1, 0, 1, 1, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0]
+            list of interface residues extracted from the previous TMD
+            [0, 1, 0, 0, 1, 1, 0, 0, 0, 0, 0, 0, 1, 0, 0, 1, 1, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0]
+            """
+            df_combined["interface"] = interface_list_prev_TMD
+
+            # actually add the real interface
+            df_combined["real_interface"] = df_experiment_data.interface.tolist()
+
+            # overwrite existing combined features file
+            df_combined.to_csv(feature_combined_file_rand_int)
+            #logging.info("{} add_random_interface_to_combined_features finished ({})".format(acc, feature_combined_file_rand_int))
+
+        logging.info("{}    real interface for this TMD {}".format(acc, df_experiment_data.interface.tolist()))
+        logging.info("{} RANDOM interface from prev TMD {}".format(acc, interface_list_prev_TMD))
+
+        df_experiment_data_prev_TMD = df_experiment_data
+
+    logging.info("add_random_interface_to_combined_features finished")
+
 def add_PREDDIMER_TMDOCK_to_combined_features_mult_prot(s, df_set, logging):
     """Run add_PREDDIMER_TMDOCK_to_combined_features for a list of proteins.
 
@@ -2378,7 +2475,24 @@ def create_ROC_all_residues(s, df_set, logging):
 
     df_all.to_csv(pred_all_res_csv)
 
+    save_fig_ROC_all_residues(df_all, all_res_ROC_png, all_res_ROC_data_csv, logging)
 
+    df_all["subset"] = df_all.acc_db.str.split("-").str[1]
+
+    subsets = ["ETRA", "NMR", "crystal"]
+    for subset in subsets:
+        df_subset = df_all.loc[df_all.subset == subset]
+        if not df_subset.empty:
+            ROC_png = all_res_ROC_png[:-4] + "_{}_subset.png".format(subset)
+            ROC_data_csv = all_res_ROC_data_csv[:-4] + "_{}_subset.csv".format(subset)
+            save_fig_ROC_all_residues(df_subset, ROC_png, ROC_data_csv, logging)
+
+    # with open(all_res_ROC_data_pkl, "wb") as f:
+    #     pickle.dump(output_dict, f, protocol=pickle.HIGHEST_PROTOCOL)
+    logging.info('Finished combine_all_residue_predictions.')
+
+
+def save_fig_ROC_all_residues(df, all_res_ROC_png, all_res_ROC_data_csv, logging):
     fontsize=8
     fig, ax = plt.subplots(figsize=(5,5))
     ax.plot([0, 1], [0, 1], color="0.5", linestyle="--", label="random", linewidth=1)
@@ -2386,13 +2500,17 @@ def create_ROC_all_residues(s, df_set, logging):
     predictors = [THOIPA_predictor, "TMDOCK", "LIPS_surface_ranked", "PREDDIMER"]
     output_dict = {}
     for predictor in predictors:
-        df_sel = df_all[["interface", predictor]].dropna()
+        df_sel = df[["interface", predictor]].dropna()
         if predictor in ["TMDOCK", "PREDDIMER"]:
             pred = - df_sel[predictor]
             # pred = normalise_between_2_values(df_sel[predictor], 2.5, 8, invert=True)
         else:
             pred = df_sel[predictor]
-        fpr, tpr, thresholds = roc_curve(df_sel.interface, pred)
+        fpr, tpr, thresholds = roc_curve(df_sel.interface, pred, drop_intermediate=False)
+
+        # logging.info("fpr {}".format(list(fpr)))
+        # logging.info("tpr {}".format(list(tpr)))
+        # logging.info("thresholds {}".format(list(thresholds)))
 
         pred_auc = auc(fpr, tpr)
         sys.stdout.write("{} AUC : {:.03f}\n".format(predictor, pred_auc))
@@ -2413,9 +2531,7 @@ def create_ROC_all_residues(s, df_set, logging):
 
     df_ROC_data = pd.DataFrame(output_dict).T
     df_ROC_data.to_csv(all_res_ROC_data_csv)
-    # with open(all_res_ROC_data_pkl, "wb") as f:
-    #     pickle.dump(output_dict, f, protocol=pickle.HIGHEST_PROTOCOL)
-    logging.info('Finished combine_all_residue_predictions.')
+
 
 
 def combine_all_train_data_for_random_forest(s, df_set, logging):

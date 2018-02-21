@@ -332,7 +332,7 @@ def run_10fold_cross_validation(s, logging):
         sys.stdout.write("f{}.".format(i+1)), sys.stdout.flush()
         probas_ = forest.fit(X.iloc[train], y.iloc[train]).predict_proba(X.iloc[test])
         # Compute ROC curve and area the curve
-        fpr, tpr, thresholds = roc_curve(y.iloc[test], probas_[:, 1])
+        fpr, tpr, thresholds = roc_curve(y.iloc[test], probas_[:, 1], drop_intermediate=False)
         xv_dict["fpr{}".format(i)] = fpr
         xv_dict["tpr{}".format(i)] = tpr
         mean_tpr += interp(mean_fpr, fpr, tpr)
@@ -514,7 +514,7 @@ def run_LOO_validation_od_non_multiprocessing(s, df_set, logging):
         prediction_df = df_test[["residue_num", "residue_name", pred_colname]]
         prediction_df.to_csv(THOIPA_prediction_csv, index=False)
 
-        fpr, tpr, thresholds = roc_curve(y_test, prediction)
+        fpr, tpr, thresholds = roc_curve(y_test, prediction, drop_intermediate=False)
         roc_auc = auc(fpr, tpr)
         xv_dict[acc_db] = {"fpr": fpr, "tpr": tpr, "auc": roc_auc}
         mean_tpr += interp(mean_fpr, fpr, tpr)
@@ -801,7 +801,7 @@ def LOO_single_prot(d):
     prediction_df = df_test[["residue_num", "residue_name", pred_colname]]
     prediction_df.to_csv(THOIPA_prediction_csv, index=False)
 
-    fpr, tpr, thresholds = roc_curve(y_test, prediction)
+    fpr, tpr, thresholds = roc_curve(y_test, prediction, drop_intermediate=False)
     roc_auc = auc(fpr, tpr)
 
     auc_dict = {"fpr": fpr, "tpr": tpr, "auc": roc_auc}

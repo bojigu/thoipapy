@@ -180,10 +180,19 @@ def create_AUC_BOAUC10_figs_THOIPA_PREDDIMER_TMDOCK(s, df_set, logging):
 
             df_for_roc = merged_data_df.dropna(subset=["interface", predictor_name])
 
-            fpr, tpr, thresholds = roc_curve(df_for_roc.interface, df_for_roc[predictor_name])
+            testing_effect_cd_on_ROC = False
+            if testing_effect_cd_on_ROC:
+                # simply list the residues in order of their predicted role at the interface [0, 1,2,3,4,5 etc
+                pred_list = df_for_roc[predictor_name].dropna().argsort()
+                fpr, tpr, thresholds = roc_curve(df_for_roc.interface, pred_list, drop_intermediate=False)
+            else:
+                fpr, tpr, thresholds = roc_curve(df_for_roc.interface, df_for_roc[predictor_name], drop_intermediate=False)
+
             auc_value = auc(fpr, tpr)
             mean_tpr += interp(mean_fpr, fpr, tpr)
             mean_tpr[0] = 0.0
+
+            #sys.stdout.write("{},".format(mean_tpr[0]))
             auc_dict[acc_db] = auc_value
             xv_dict[acc_db] = {"fpr": fpr, "tpr": tpr, "auc": auc_value}
 
@@ -191,7 +200,6 @@ def create_AUC_BOAUC10_figs_THOIPA_PREDDIMER_TMDOCK(s, df_set, logging):
         with open(auc_pkl, "wb") as f:
             pickle.dump(xv_dict, f, protocol=pickle.HIGHEST_PROTOCOL)
         BO_data_df.to_csv(BO_curve_data_csv)
-        # THOIPA_linechart_mean_obs_and_rand = analyse_bo_curve_underlying_data(THOIPA_BO_curve_data_csv, BO_curve_folder, names_excel_path)
         thoipapy.figs.create_BOcurve_files.parse_BO_data_csv_to_excel(BO_curve_data_csv, BO_data_excel, logging, predictor_name)
         AUC_ser = pd.Series(auc_dict)
         AUC_ser.sort_values(inplace=True, ascending=False)
@@ -408,6 +416,7 @@ def create_AUC_4predictors_3databases_figs(s,df_set,logging):
         for predictor_name in predictor_name_list:
             mean_auc = []
             mean_tpr = 0.0
+            big_list_of_tprs = []
             mean_fpr = np.linspace(0, 1, 100)
             n=0
             AUC_data_pkl = os.path.join(s["thoipapy_data_folder"], "Results", "compare_predictors",
@@ -423,8 +432,13 @@ def create_AUC_4predictors_3databases_figs(s,df_set,logging):
                         mean_tpr += interp(mean_fpr, fpr, tpr)
                         mean_tpr[0] = 0.0
                         n = n+1
+
+                        big_list_of_tprs.append(tpr)
             mean_tpr /= n
             mean_tpr[-1] = 1.0
+
+            dfb = pd.DataFrame(big_list_of_tprs)
+
             mean_auc = np.mean(mean_auc)
             mean_auc_list.append(mean_auc)
             mean_tpr_list.append(mean_tpr)
@@ -645,7 +659,7 @@ def create_ROC_comp_4predictors(s, df_set, logging):
                 predict = dfm[predictor].values
             else:
                 predict = -1 * dfm[predictor].values
-            fpr, tpr, thresholds = roc_curve(interface, predict)
+            fpr, tpr, thresholds = roc_curve(interface, predict, drop_intermediate=False)
             mean_tpr += interp(mean_fpr, fpr, tpr)
             mean_tpr[0] = 0.0
         mean_tpr /= len(df_set.index)
