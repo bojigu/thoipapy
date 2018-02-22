@@ -574,20 +574,21 @@ def run_LOO_validation_od_non_multiprocessing(s, df_set, logging):
 
 
 def run_LOO_validation(s, df_set, logging):
-    """Run Leave-One-Out cross-validation for a particular set of TMDs (e.g. set04).
+    """Run Leave-One-Out cross-validation for a particular set of TMDs (e.g. set05).
 
     The SAME SET is used for both training and cross-validation.
+    ONLY USE IF YOUR DATASET IS NON-REDUNDANT! OR USE AUTO CD-HIT REDUNDANCY CHECKS!
     Each protein is uniquely identified by the acc and the database (acc_db).
-    The test and training datasets are based on the following:
-        1) the df_set derived from the set of protein sequences, e.g. set03
-            - created manually
-        2) the train_data csv, e.g."D:\data_thoipapy\Results\set03\set03_train_data.csv".
-            - filtered according to redundancy etc by combine_all_train_data_for_random_forest()
-            - this requires a CD-HIT file for this dataset to remove redundant proteins
-    If the acc_db is not in BOTH of these locations, it will not be used for training and validation.
 
     The training set (df_train) consists of all proteins except the one tested.
     The test dataset (df_test) contains only the interface and features of the one test protein
+
+    The model is trained on the train data csv (e.g. set38_train_data.csv)
+         - for crystal subset, hetero contacts (folding residues) are removed from this training set!
+
+    The model is validated against each combined CSV with features (e.g. "D:\data_thoipapy\Features\combined\ETRA\Q12983.surr20.gaps5.combined_features.csv")
+     - for crystal subset, folding residues (hetero contacts) are INCLUDED here.
+     - the model created without the folding contacts is therefore validated against the full seq, including folding residues
 
     Parameters
     ----------
@@ -602,9 +603,13 @@ def run_LOO_validation(s, df_set, logging):
 
     Saved Files
     -----------
-    crossvalidation_pkl : pickle
+    LOO_crossvalidation_pkl, pickle
         Pickled dictionary (xv_dict) containing the results for each fold of validation.
         Also contains the mean ROC curve, and the mean AUC.
+    BO_all_data_csv, csv
+        CSV with the BO curve underlying data
+    BO_data_excel, csv
+        excel file with the processed BO-curve data
     """
     logging.info('Leave-One-Out cross validation is running')
     names_excel_path = os.path.join(os.path.dirname(s["sets_folder"]), "ETRA_NMR_names.xlsx")
@@ -758,6 +763,16 @@ def run_LOO_validation(s, df_set, logging):
     logging.info('---AUC({:.2f})({:.2f})---'.format(mean_auc_all_prot, mean_auc_from_joined_data))
 
 def LOO_single_prot(d):
+    """Create Leave-One-Out cross-validation for a single protein in a dataset
+
+    see docstring of run_LOO_validation
+
+    Parameters
+    ----------
+    d : dict
+        dictionary with all necessary values for the function
+        having a single variable input allows python multiprocessing with Pool
+    """
     testdata_combined_file, THOIPA_prediction_csv = d["testdata_combined_file"], d["THOIPA_prediction_csv"]
     #X_train, y_train = d["X_train"], d["y_train"]
     df_data, logger = d["df_data"], d["logger"]
@@ -765,15 +780,25 @@ def LOO_single_prot(d):
     forest, pred_colname = d["forest"], d["pred_colname"]
     acc_db, database, bind_column = d["acc_db"], d["database"], d["bind_column"]
 
+    #######################################################################################################
+    #                                                                                                     #
+    #                 Train data is based on the large file of all residues in the dataset                #
+    #                       - positions without closedist/disruption data will be EXCLUDED)               #
+    #                       - crystal positions with "folding/hetero contacts" will be EXCLUDED           #
+    #                                                                                                     #
+    #######################################################################################################
+
     df_train = df_data.loc[df_data.acc_db != acc_db]
     X_train = thoipapy.validation.validation.drop_cols_not_used_in_ML(logger, df_train, excel_file_with_settings)
     y_train = df_train[bind_column]
 
     n, logger, excel_file_with_settings = d["n"], d["logger"], d["excel_file_with_settings"]
+
     #######################################################################################################
     #                                                                                                     #
     #                  Test data is based on the combined features file for that protein and TMD          #
-    #                   (positions without closedist/disruption data will be INCLUDED)                    #
+    #                              - positions without closedist/disruption data will be INCLUDED)        #
+    #                              - positions with "folding/hetero contacts" will be included            #
     #                                                                                                     #
     #######################################################################################################
     # df_test = df_data.loc[df_data.acc_db == acc_db]
@@ -805,20 +830,13 @@ def LOO_single_prot(d):
     roc_auc = auc(fpr, tpr)
 
     auc_dict = {"fpr": fpr, "tpr": tpr, "auc": roc_auc}
-    # xv_dict[acc_db] = auc_dict
-    # mean_tpr += interp(mean_fpr, fpr, tpr)
-    # mean_tpr[0] = 0.0
 
     if database == "crystal" or database == "NMR":
-        # (it is closest distance and low value means high propencity of interfacial)
+        # low closest distance means high importance at interface
         df_test["interface_score"] = -1 * df_test["interface_score"]
 
     BO_df = thoipapy.figs.fig_utils.calc_best_overlap(acc_db, df_test, experiment_col="interface_score", pred_col=pred_colname)
 
-    # if BO_all_df.empty:
-    #     BO_all_df = BO_df
-    # else:
-    #     BO_all_df = pd.concat([BO_all_df, BO_df], axis=1, join="outer")
     if n == 0:
         tree_depths = np.array([estimator.tree_.max_depth for estimator in forest.estimators_])
         logger.info("tree depth mean = {} ({})".format(tree_depths.mean(), tree_depths))
@@ -828,15 +846,27 @@ def LOO_single_prot(d):
 
 
 def create_LOO_validation_fig(s, df_set, logging):
-    """Create figure showing ROC curve for each fold in a 10-fold validation.
+    """Create Leave-One-Out cross-validation for each TMD in a dataset.
 
-    The underlying data is created by run_10fold_cross_validation. If this has not been run,
-    it will return a file-not-found error.
+    Training dataset = all residues in full dataset, except that being trained.
+
+    ASSUMES YOUR DATASET IS NON-REDUNDANT! AUTO CD-HIT REDUNDANCY CHECKS ARE MOSTLY UNUSED!
+
+    The model is trained on the train data csv (e.g. set38_train_data.csv)
+         - for crystal subset, hetero contacts (folding residues) are removed from this training set!
+
+    The model is validated against each combined CSV with features
+     - for crystal subset, folding residues (hetero contacts) are INCLUDED here.
+     - the model created without the folding contacts is therefore validated against the full seq, including folding residues
 
     Parameters
     ----------
     s : dict
         Settings dictionary
+    df_set : pd.DataFrame
+        Dataframe containing the list of proteins to process, including their TMD sequences and full-length sequences
+        index : range(0, ..)
+        columns : ['acc', 'seqlen', 'TMD_start', 'TMD_end', 'tm_surr_left', 'tm_surr_right', 'database',  ....]
     logging : logging.Logger
         Python object with settings for logging to console and file.
     """

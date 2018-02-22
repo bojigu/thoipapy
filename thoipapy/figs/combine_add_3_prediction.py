@@ -107,6 +107,20 @@ def combine_file_add_PREDDIMER_TMDOCK_THOIPA_prediction(s, df_set, logging):
         logging.info("{} predictions combined. n_files_merged : {}. ({})".format(acc, n_files_merged, merged_data_csv_path))
 
 def create_AUC_BOAUC10_figs_THOIPA_PREDDIMER_TMDOCK(s, df_set, logging):
+    """
+
+    Run using s["create_AUC_AUBOC_separate_database"]
+
+    Parameters
+    ----------
+    s
+    df_set
+    logging
+
+    Returns
+    -------
+
+    """
 
     logging.info("start create_AUC_BOAUC10_figs_THOIPA_PREDDIMER_TMDOCK")
 
@@ -230,6 +244,7 @@ def create_AUC_BOAUC10_figs_THOIPA_PREDDIMER_TMDOCK(s, df_set, logging):
     AUC_AUBOC_df.to_csv(AUC_AUBOC_file)
     THOIPA_best_set = s["THOIPA_best_set"]
     create_4predictors_AUC_AUBOC10_barchart(AUC_AUBOC_df, predictors_AUC_barchart_png,predictors_AUC_barchart_pdf, predictors_BOAUC10_barchart_png,predictors_BOAUC10_barchart_pdf, namedict, THOIPA_best_set)
+
     create_4predictors_BOcurve_linechart(df_o_minus_r_mean_df, AUBOC10_list, linechar_name_list, predictors_BOCURVE_linechart_png)
     create_mean_AUC_barchart_comp(auc_mean_list, linechar_name_list, predictors_mean_auc_barchart_png)
     df_o_minus_r_mean_df.to_csv(df_o_minus_r_mean_csv)
@@ -269,13 +284,15 @@ def create_4predictors_BOcurve_linechart(df_o_minus_r_mean_df, AUBOC10_list, lin
         df_o_minus_r_mean_df[column].plot(ax=ax,  linestyle="-",label=label_name, color = color_list[i])
     ax.plot([1, 10], [0, 0], color="#0f7d9b", linestyle="--", label="random", alpha=0.5)
     ax.grid(False)
-    ax.set_ylabel("performance value\n(observed - random)", color="#0f7d9b")
+    ax.set_ylabel("fraction of correctly predicted residues\n(observed - random)", color="#0f7d9b")
+    ax.set_xlabel("number of TMD residues\n(sample size)")
     ax.tick_params('y', colors="#0f7d9b")
 
     ax.spines['left'].set_color("#0f7d9b")
     ax.legend()
     fig.tight_layout()
     fig.savefig(predictors_BOCURVE_linechart_png, dpi=140)
+    print(predictors_BOCURVE_linechart_png)
 
 def create_4predictors_AUC_AUBOC10_barchart(AUC_AUBOC_df, predictors_AUC_barchart_png,predictors_AUC_barchart_pdf, predictors_BOAUC10_barchart_png,predictors_BOAUC10_barchart_pdf,namedict, THOIPA_best_set):
     THOIPA_best_setnumber = int(THOIPA_best_set[3:])
