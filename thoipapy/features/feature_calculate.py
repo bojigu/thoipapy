@@ -2534,7 +2534,7 @@ def save_fig_ROC_all_residues(df, all_res_ROC_png, all_res_ROC_data_csv, logging
 
 
 
-def combine_all_train_data_for_random_forest(s, df_set, logging):
+def combine_all_train_data_for_machine_learning(s, df_set, logging):
     """Combine training (or test) data for multiple proteins
 
     Effectively stacks the CSVs on top of each other.
@@ -2557,7 +2557,7 @@ def combine_all_train_data_for_random_forest(s, df_set, logging):
         index = range(0, ..)
         columns =
     """
-    logging.info('creating train or test data for random forest')
+    logging.info('creating train or test data for machine learning')
 
     train_data_csv = os.path.join(s["set_results_folder"], "{}_train_data.csv".format(s["setname"]))
 
@@ -2603,6 +2603,6 @@ def combine_all_train_data_for_random_forest(s, df_set, logging):
     df_all = thoipapy.utils.reorder_dataframe_columns(df_all, column_list)
 
     df_all.to_csv(train_data_csv)
-    logging.info('Finished creating train or test data for random forest.')
+    logging.info('Finished creating train or test data for machine learning.')
 
 

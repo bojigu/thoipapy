@@ -1063,12 +1063,3 @@ def save_extra_BO_figs(BO_data_excel, other_figs_path):
     ax.legend(loc="upper left", ncol=2)
     ax.set_ylabel("observed - random")
     fig.savefig(linechart_o_minus_r, dpi=140)
-
-    df_o_over_r = pd.read_excel(BO_data_excel, sheetname="df_o_over_r", index_col=0)
-    # linechart_o_over_r
-    plt.close("all")
-    fig, ax = plt.subplots()
-    df_o_over_r.plot(ax=ax, alpha=0.7)
-    ax.set_ylabel("observed / random")
-    ax.legend(loc="upper left", ncol=2)
-    fig.savefig(linechart_o_over_r, dpi=140)

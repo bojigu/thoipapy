@@ -22,7 +22,7 @@ from multiprocessing import Pool
 def intersect(a, b):
      return list(set(a) & set(b))
 
-def drop_cols_not_used_in_ML(logging, df_data, excel_file_with_settings):
+def drop_cols_not_used_in_ML(logging, df_data, excel_file_with_settings, i=0):
     """Remove columns not used in machine learning training or testing.
 
     This includes
@@ -32,10 +32,16 @@ def drop_cols_not_used_in_ML(logging, df_data, excel_file_with_settings):
 
     Parameters
     ----------
+    logging : logging.Logger
+        Python object with settings for logging to console and file.
     df_data : pd.DataFrame
         Dataframe with either the training or test dataset
         columns = 'acc_db', "residue_num", "residue_name", etc
         rows = range of number of residues
+    excel_file_with_settings : str
+        Path to excel file with all settings.
+        Necessary for getting the list of features included in the THOIPA algorithm.
+
 
     Returns
     -------
@@ -54,12 +60,14 @@ def drop_cols_not_used_in_ML(logging, df_data, excel_file_with_settings):
     unused_features_in_excel = set(features_df.index) - set(df_data.columns)
     features_missing_from_excel = set(df_data.columns) - set(features_df.index)
 
-    if len(features_missing_from_excel) > 1:
-        logging.info("\nfeatures_missing_from_excel, {}".format(features_missing_from_excel))
-        if "Unnamed: 0" in features_missing_from_excel:
-            raise IndexError("Unnamed column is in dataframe. Try opening csv with index_col=0.")
-    if len(unused_features_in_excel) > 1:
-        logging.info("\nunused_features_in_excel, {}".format(unused_features_in_excel))
+    # only print this stuff for the first TMD analysed, if in a list
+    if i == 0:
+        if len(features_missing_from_excel) > 1:
+            logging.info("\nfeatures_missing_from_excel, {}".format(features_missing_from_excel))
+            if "Unnamed: 0" in features_missing_from_excel:
+                raise IndexError("Unnamed column is in dataframe. Try opening csv with index_col=0.")
+        if len(unused_features_in_excel) > 1:
+            logging.info("\nunused_features_in_excel, {}".format(unused_features_in_excel))
     # drop any features that are not labeled TRUE for inclusion
     features_df = features_df.loc[features_df.include == True]
     # filter df_data to only keep the desired feature columns
@@ -98,7 +106,7 @@ def THOIPA_classifier_with_settings(s, n_features, totally_randomized_trees=Fals
         max_depth = None
 
     if s["bind_column"] == "interface":
-        forest = ExtraTreesClassifier(n_estimators=s["RF_number_of_estimators"], n_jobs=s["n_CPU_cores"], criterion=s["criterion"],
+        cls = ExtraTreesClassifier(n_estimators=s["RF_number_of_estimators"], n_jobs=s["n_CPU_cores"], criterion=s["criterion"],
                                         min_samples_leaf=min_samples_leaf,
                                         max_depth=max_depth,
                                         oob_score=bool(s["oob_estimation"]),
@@ -109,7 +117,7 @@ def THOIPA_classifier_with_settings(s, n_features, totally_randomized_trees=Fals
 
     # in case you want to try to run the ML as a regressor
     elif s["bind_column"] == "interface_score_norm":
-        forest = ExtraTreesRegressor(n_estimators=s["RF_number_of_estimators"], n_jobs=s["n_CPU_cores"],
+        cls = ExtraTreesRegressor(n_estimators=s["RF_number_of_estimators"], n_jobs=s["n_CPU_cores"],
                                         #criterion=s["criterion"],
                                         min_samples_leaf=min_samples_leaf,
                                         max_depth=max_depth,
@@ -121,10 +129,10 @@ def THOIPA_classifier_with_settings(s, n_features, totally_randomized_trees=Fals
     else:
         raise ValueError("bind column in excel settings file is not recognised ({})".format(s["bind_column"]))
 
-    return forest
+    return cls
 
-def train_random_forest_model(s, logging):
-    """Train the random forest model for a particular set.
+def train_machine_learning_model(s, logging):
+    """Train the machine learning model for a particular set.
 
     Parameters
     ----------
@@ -136,7 +144,7 @@ def train_random_forest_model(s, logging):
     Sawed Files
     -----------
     model_pkl : pickle
-        Pickle containing the trained random forest model.
+        Pickle containing the trained machine learning model.
 
     """
     logging.info('starting to predict etra data with THOIPA prediction model')
@@ -160,7 +168,7 @@ def train_random_forest_model(s, logging):
 
     n_features = X.shape[1]
     forest = THOIPA_classifier_with_settings(s, n_features)
-    # save random forest model into local driver
+    # save machine learning model into local driver
     # pkl_file = r'D:\thoipapy\RandomForest\ML_model.lpkl'
     fit = forest.fit(X, y)
     joblib.dump(fit, model_pkl)
@@ -168,7 +176,7 @@ def train_random_forest_model(s, logging):
     tree_depths = np.array([estimator.tree_.max_depth for estimator in forest.estimators_])
     logging.info("tree depth mean = {} ({})".format(tree_depths.mean(), tree_depths))
 
-    logging.info('finished training random forest algorithm ({})'.format(model_pkl))
+    logging.info('finished training machine learning algorithm ({})'.format(model_pkl))
 
 def predict_test_dataset_with_THOIPA_DEPRECATED(train_setname, test_setname, s, logging):
     """ Predict the interface of residues within one set (e.g. set03)
@@ -223,7 +231,7 @@ def predict_test_dataset_with_THOIPA_DEPRECATED(train_setname, test_setname, s, 
     logging.info('finished predict_test_dataset_with_THOIPA_DEPRECATED ({})'.format(THOIPA_pred_csv))
 
 def run_Rscipt_random_forest(s, output_file_loc, logging):
-    logging.info('begining to run random forest R code')
+    logging.info('begining to run machine learning R code')
     Rscript_loc = s["Rscript_dir"]
     Random_Forest_R_code_file=s["Rcode"]
     train_data_file=os.path.join(s["RF_loc"],"NoRedundPro/TRAINDATA68.csv")
@@ -279,7 +287,7 @@ def run_10fold_cross_validation(s, logging):
 
     The number of folds is determined by "cross_validation_number_of_splits" in the settings file.
 
-    The number of estimators in the random forest algorithm is determined by "RF_number_of_estimators" in the settings file,
+    The number of estimators in the machine learning algorithm is determined by "RF_number_of_estimators" in the settings file,
     therefore it should match the full training result of the whole dataset.
 
     IMPORTANT. CURRENTLY THERE IS NO AUTOMATIC REDUNDANCY CHECK.
@@ -411,7 +419,7 @@ def run_LOO_validation_od_non_multiprocessing(s, df_set, logging):
         1) the df_set derived from the set of protein sequences, e.g. set03
             - created manually
         2) the train_data csv, e.g."D:\data_thoipapy\Results\set03\set03_train_data.csv".
-            - filtered according to redundancy etc by combine_all_train_data_for_random_forest()
+            - filtered according to redundancy etc by combine_all_train_data_for_machine_learning()
             - this requires a CD-HIT file for this dataset to remove redundant proteins
     If the acc_db is not in BOTH of these locations, it will not be used for training and validation.
 
@@ -485,7 +493,7 @@ def run_LOO_validation_od_non_multiprocessing(s, df_set, logging):
             # skip protein
             continue
         df_train = df_data.loc[df_data.acc_db != acc_db]
-        X_train = thoipapy.validation.validation.drop_cols_not_used_in_ML(logging, df_train, s["excel_file_with_settings"])
+        X_train = thoipapy.validation.validation.drop_cols_not_used_in_ML(logging, df_train, s["excel_file_with_settings"], i)
         y_train = df_train[s["bind_column"]]
 
         #######################################################################################################
@@ -680,7 +688,7 @@ def run_LOO_validation(s, df_set, logging):
         d["df_data"] = df_data
         d["excel_file_with_settings"] = s["excel_file_with_settings"]
         d["forest"], d["pred_colname"] = forest, pred_colname
-        d["acc_db"], d["database"], d["bind_column"] = acc_db, database, s["bind_column"]
+        d["i"], d["acc_db"], d["database"], d["bind_column"] = i, acc_db, database, s["bind_column"]
         d["n"], d["logger"], d["excel_file_with_settings"] = n, logger, s["excel_file_with_settings"]
 
         if s["use_multiprocessing"]:
@@ -778,7 +786,7 @@ def LOO_single_prot(d):
     df_data, logger = d["df_data"], d["logger"]
     excel_file_with_settings = d["excel_file_with_settings"]
     forest, pred_colname = d["forest"], d["pred_colname"]
-    acc_db, database, bind_column = d["acc_db"], d["database"], d["bind_column"]
+    i, acc_db, database, bind_column = d["i"], d["acc_db"], d["database"], d["bind_column"]
 
     #######################################################################################################
     #                                                                                                     #
@@ -789,7 +797,7 @@ def LOO_single_prot(d):
     #######################################################################################################
 
     df_train = df_data.loc[df_data.acc_db != acc_db]
-    X_train = thoipapy.validation.validation.drop_cols_not_used_in_ML(logger, df_train, excel_file_with_settings)
+    X_train = thoipapy.validation.validation.drop_cols_not_used_in_ML(logger, df_train, excel_file_with_settings, i)
     y_train = df_train[bind_column]
 
     n, logger, excel_file_with_settings = d["n"], d["logger"], d["excel_file_with_settings"]
@@ -804,7 +812,7 @@ def LOO_single_prot(d):
     # df_test = df_data.loc[df_data.acc_db == acc_db]
     df_test = pd.read_csv(testdata_combined_file)
 
-    X_test = thoipapy.validation.validation.drop_cols_not_used_in_ML(logger, df_test, excel_file_with_settings)
+    X_test = thoipapy.validation.validation.drop_cols_not_used_in_ML(logger, df_test, excel_file_with_settings, i)
     y_test = df_test["interface"].fillna(0).astype(int)
 
     #######################################################################################################
@@ -954,7 +962,7 @@ def calculate_variable_importance(s, logging):
     -----------
     variable_importance_csv : csv
         List of variables, sorted by their importance to the algorithm.
-        Also includes the standard deviation supplied by the random forest algorithm
+        Also includes the standard deviation supplied by the machine learning algorithm
     """
     #logging.info('RF_variable_importance_calculate is running\n')
     train_data_csv = os.path.join(s["set_results_folder"], "{}_train_data.csv".format(s["setname"]))
