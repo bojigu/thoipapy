@@ -128,10 +128,10 @@ if __name__ == "__main__":
             thoipapy.homologues.NCBI.download.download.download_homologues_from_ncbi_mult_prot(s, df_set, logging)
 
         if s["run_parse_homologues_xml_into_csv"]:
-            thoipapy.homologues.NCBI.parse.parser.parse_NCBI_xml_to_csv_mult_prot(s, df_set, logging)
+            thoipapy.homologues.NCBI_parser.parse_NCBI_xml_to_csv_mult_prot(s, df_set, logging)
 
         if s["parse_csv_homologues_to_alignment"]:
-            thoipapy.homologues.NCBI.parse.parser.extract_filtered_csv_homologues_to_alignments_mult_prot(s, df_set, logging)
+            thoipapy.homologues.NCBI_parser.extract_filtered_csv_homologues_to_alignments_mult_prot(s, df_set, logging)
 
 
         ###################################################################################################
