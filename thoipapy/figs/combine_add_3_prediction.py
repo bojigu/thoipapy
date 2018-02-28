@@ -133,6 +133,7 @@ def create_AUC_BOAUC10_figs_THOIPA_PREDDIMER_TMDOCK(s, df_set, logging):
     AUBOC10_list = []
     df_o_minus_r_mean_df = pd.DataFrame()
     auc_mean_list=[]
+    auc_std_list = []
     AUC_AUBOC_file = os.path.join(s["thoipapy_data_folder"], "Results", "compare_predictors",
                                                 "{}.4predictors_AUC_AUBOC.csv".format(s["setname"]))
     mean_AUBOC_file = os.path.join(s["thoipapy_data_folder"], "Results", "compare_predictors",
@@ -149,6 +150,10 @@ def create_AUC_BOAUC10_figs_THOIPA_PREDDIMER_TMDOCK(s, df_set, logging):
                                                 "{}.4predictors_BOCURVE_linechart.png".format(s["setname"]))
     predictors_mean_auc_barchart_png = os.path.join(s["thoipapy_data_folder"], "Results", "compare_predictors",
                                                 "{}.4predictors_mean_auc_barchart.png".format(s["setname"]))
+    predictors_mean_auc_barchart_csv = os.path.join(s["thoipapy_data_folder"], "Results", "compare_predictors",
+                                                "{}.4predictors_mean_auc_data.csv".format(s["setname"]))
+
+
     for predictor_name in predictor_name_list:
         BO_data_df = pd.DataFrame()
         xv_dict = {}
@@ -218,6 +223,7 @@ def create_AUC_BOAUC10_figs_THOIPA_PREDDIMER_TMDOCK(s, df_set, logging):
         AUC_ser = pd.Series(auc_dict)
         AUC_ser.sort_values(inplace=True, ascending=False)
         auc_mean_list.append(AUC_ser.mean())
+        auc_std_list.append(AUC_ser.std())
         AUBOC10_ser = pd.read_excel(BO_data_excel, sheetname="AUBOC10", index_col=0)["AUBOC10"].copy()
 
         df_o_minus_r = pd.read_excel(BO_data_excel, sheetname="df_o_minus_r", index_col=0)
@@ -243,8 +249,19 @@ def create_AUC_BOAUC10_figs_THOIPA_PREDDIMER_TMDOCK(s, df_set, logging):
     #sys.stdout.write(AUC_AUBOC_df)
     AUC_AUBOC_df.to_csv(AUC_AUBOC_file)
     THOIPA_best_set = s["THOIPA_best_set"]
-    create_4predictors_AUC_AUBOC10_barchart(AUC_AUBOC_df, predictors_AUC_barchart_png,predictors_AUC_barchart_pdf, predictors_BOAUC10_barchart_png,predictors_BOAUC10_barchart_pdf, namedict, THOIPA_best_set)
 
+    # AUC for barchart, 4 predictors, mean AUC of all proteins in dataset
+    logging.info("_finder : {}".format(predictors_mean_auc_barchart_csv))
+    AUC_4pred_mean_all_indiv_prot_df = pd.DataFrame(index = linechar_name_list)
+    #AUC_4pred_mean_all_indiv_prot_df = pd.DataFrame([auc_mean_list, auc_std_list], index = linechar_name_list, columns=["mean", "std"])
+    AUC_4pred_mean_all_indiv_prot_df["auc_mean"] = auc_mean_list
+    AUC_4pred_mean_all_indiv_prot_df["auc_std"] = auc_std_list
+    AUC_4pred_mean_all_indiv_prot_df["n"] = df_set.shape[0]
+    AUC_4pred_mean_all_indiv_prot_df["SEM"] = AUC_4pred_mean_all_indiv_prot_df.auc_std / AUC_4pred_mean_all_indiv_prot_df["n"].apply(np.sqrt)
+    AUC_4pred_mean_all_indiv_prot_df.to_csv(predictors_mean_auc_barchart_csv)
+    #__finder
+
+    create_4predictors_AUC_AUBOC10_barchart(AUC_AUBOC_df, predictors_AUC_barchart_png,predictors_AUC_barchart_pdf, predictors_BOAUC10_barchart_png,predictors_BOAUC10_barchart_pdf, namedict, THOIPA_best_set)
     create_4predictors_BOcurve_linechart(df_o_minus_r_mean_df, AUBOC10_list, linechar_name_list, predictors_BOCURVE_linechart_png)
     create_mean_AUC_barchart_comp(auc_mean_list, linechar_name_list, predictors_mean_auc_barchart_png)
     df_o_minus_r_mean_df.to_csv(df_o_minus_r_mean_csv)

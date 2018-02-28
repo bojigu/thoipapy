@@ -27,6 +27,9 @@ def get_start_end_pl_surr(TMD_start, TMD_end, seqlen, surr):
     return TMD_start_pl_surr, TMD_end_pl_surr
 
 def run_THOIPA_prediction(s,protein_name, TMD_seq, full_seq, predictions_folder):
+    # default model is the combined ETRA, NMR, crystal non-redundant dataset (set05)
+    set_number = 5
+
     TMD_plus_full_seq = TMD_seq + "_" + full_seq
     # adjust encoding for md5 creation
     TMD_plus_full_seq = unicodedata.normalize('NFKD', TMD_plus_full_seq).encode('ascii','ignore')
@@ -76,6 +79,10 @@ def run_THOIPA_prediction(s,protein_name, TMD_seq, full_seq, predictions_folder)
     full_seq_phobius_output_file = os.path.join(out_folder,  "protein.phobius")
     feature_combined_file = os.path.join(out_folder, "features_combined.csv")
     alignment_summary_csv = os.path.join(out_folder, "homologues.alignment_summary.csv")
+
+    thoipapy_module_path = os.path.dirname(os.path.abspath(thoipapy.__file__))
+    machine_learning_model = os.path.join(thoipapy_module_path, "ML_model", "set{:02d}_ML_model.lpkl".format(set_number))
+
 
     logging.info("md5 checksum of TMD and full sequence = {}".format(md5))
     logging.info("acc = md5[0:6] = {}".format(acc))
