@@ -25,6 +25,7 @@ import platform
 import matplotlib.colors as colors
 import ctypes
 
+from scipy.special import comb
 
 
 class Command(object):
@@ -847,3 +848,74 @@ class Log_Only_To_Console(object):
         sys.stdout.write("\n{}".format(message))
     def critical(self, message):
         sys.stdout.write("\n{}".format(message))
+
+
+def calc_rand_overlap(sequence_length, sample_size):
+    """Calculate expected random overlap between two random selections from a sample.
+
+    You have a bowl of 20 balls, either blue or red.
+    sample_size = 1
+     - There is only one red ball. You only pick out one ball.
+     - you do this 1000 times
+     - the average number of red (correct) balls 0.05
+    sample_size = 2
+     - there are 2 red balls. You can pick out 2 balls.
+     - you do this 1000 times
+     - what is the average number of red (correct) balls?
+     [This function calculates the answer, which is 0.2, corresponding to a red ball 10% of the time (0.2/2))
+    sample_size = 10
+     - there are 10 red balls. You can pick out 10 balls.
+     - you do this 1000 times
+     - what is the average number of red (correct) balls?
+     [This function calculates the answer, which is 5, corresponding to a red ball 50% of the time (5/10))
+     The answer depends on the number of balls in the bowl. If there are 24 balls, the average number of red balls is 4.16,
+     corresponding to a red ball 41.6% of the time (4.16/10))
+
+    This is a mathematical question related to sampling without replacement.
+
+    Parameters
+    ----------
+    sequence_length : int
+        Number of samples in total, from which a subset is randomly selected.
+        E.g. a bowl with 20 numbered balls.
+        In our case, TMD_length.
+    sample_size : int
+        Size of the selected sample (e.g. 3, for 3 balls taken from the bowl)
+        In our case, number of interface residues considered.
+
+    Returns
+    -------
+    inter_num_random : float
+        Expected overlap seen by random chance.
+        E.g., when 5 balls from 20 are randomly selected without replacement.
+        The expected overlap between two random selections is 1.25
+
+    Usage
+    -----
+    from thoipapy.utils import calc_rand_overlap
+    # size of bowl (in our case, transmembrane domain length)
+    TMD_length = 22
+    # number of balls withdrawn from bowl (in our case, top 4 residues predicted)
+    sample_size = 4
+    # expected overlap is the number predicted to be correct, simply by random chance
+    expected_overlap = calc_rand_overlap(TMD_length, sample_size)
+    percentage_randomly_correct = expected_overlap / sample_size * 100
+    """
+    # start the [[write description]] at 0
+    inter_num_random = 0
+    # iterate through [[write description]]
+    for random_inter_num_ober in range(1, sample_size + 1):
+        # random_inter_num_ober = j
+
+        # write description
+        random_non_inter_num = sequence_length - sample_size
+        # write description
+        variable_1 = comb(sample_size, random_inter_num_ober)
+        # write description
+        variable_2 = comb(random_non_inter_num, sample_size - random_inter_num_ober)
+        # write description
+        variable_3 = comb(sequence_length, sample_size)
+        inter_num_random = inter_num_random + variable_1 * variable_2 / variable_3 * random_inter_num_ober
+        # inter_num_random = inter_num_random + comb(sample_size, random_inter_num_ober) * comb(random_non_inter_num, sample_size - random_inter_num_ober) / comb(tm_len, sample_size) * random_inter_num_ober
+
+    return inter_num_random
