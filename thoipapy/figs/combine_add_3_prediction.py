@@ -259,7 +259,6 @@ def create_AUC_BOAUC10_figs_THOIPA_PREDDIMER_TMDOCK(s, df_set, logging):
     AUC_4pred_mean_all_indiv_prot_df["n"] = df_set.shape[0]
     AUC_4pred_mean_all_indiv_prot_df["SEM"] = AUC_4pred_mean_all_indiv_prot_df.auc_std / AUC_4pred_mean_all_indiv_prot_df["n"].apply(np.sqrt)
     AUC_4pred_mean_all_indiv_prot_df.to_csv(predictors_mean_auc_barchart_csv)
-    #__finder
 
     create_4predictors_AUC_AUBOC10_barchart(AUC_AUBOC_df, predictors_AUC_barchart_png,predictors_AUC_barchart_pdf, predictors_BOAUC10_barchart_png,predictors_BOAUC10_barchart_pdf, namedict, THOIPA_best_set)
     create_4predictors_BOcurve_linechart(df_o_minus_r_mean_df, AUBOC10_list, linechar_name_list, predictors_BOCURVE_linechart_png)

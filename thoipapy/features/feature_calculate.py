@@ -2522,7 +2522,7 @@ def save_fig_ROC_all_residues(df, all_res_ROC_png, all_res_ROC_data_csv, logging
         # output_dict["tpr_{}".format(predictor)] = tpr
         # output_dict["auc_{}".format(predictor)] = auc
 
-        output_dict[predictor] = {"fpr" : fpr, "tpr" : tpr, "pred_auc" : pred_auc}
+        output_dict[predictor] = {"fpr" : list(fpr), "tpr" : list(tpr), "pred_auc" : pred_auc}
     ax.grid(False)
     ax.set_xlabel("false positive rate", fontsize=fontsize)
     ax.set_ylabel("true positive rate", fontsize=fontsize)
@@ -2534,6 +2534,7 @@ def save_fig_ROC_all_residues(df, all_res_ROC_png, all_res_ROC_data_csv, logging
     df_ROC_data = pd.DataFrame(output_dict).T
     df_ROC_data.to_csv(all_res_ROC_data_csv)
 
+    logging.info("save_fig_ROC_all_residues finished ({})".format(all_res_ROC_data_csv))
 
 
 def combine_all_train_data_for_machine_learning(s, df_set, logging):
