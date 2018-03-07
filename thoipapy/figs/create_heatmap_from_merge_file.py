@@ -38,7 +38,7 @@ def create_merged_heatmap(s, df_set, logging):
     LIPS_col = "LIPS_surface_ranked"
     coev_col = "coev_i4_DI"
 
-    dfh_cols = ["res_num_full_seq", "residue_name", "interface", "interface_score", THOIPA_col, "PREDDIMER", "TMDOCK", LIPS_col, "conservation", "polarity", coev_col]
+    dfh_cols = ["res_num_full_seq", "residue_name", "interface", "interface_score", THOIPA_col, "PREDDIMER", "TMDOCK", LIPS_col, "conservation", "relative_polarity", coev_col]
     for i in df_set.index:
         acc = df_set.loc[i, "acc"]
         #if acc =="1orqC4":
@@ -69,7 +69,6 @@ def create_single_merged_heatmap(s, acc, database, savename, fig_label, dfh_cols
         # create dfh, dataframe for heatmap
         dfh = dfm[dfh_cols].copy()
 
-
         # Drop only positions where there is no interface data
         dfh.dropna(subset=["interface"], inplace=True)
         # why reset index here???
@@ -95,14 +94,14 @@ def create_single_merged_heatmap(s, acc, database, savename, fig_label, dfh_cols
         # norm THOIPA
         dfh["THOIPA_norm"] = normalise_between_2_values(dfh[THOIPA_col], 0.15, 0.5, invert=False)
         # norm polarity
-        dfh["polarity_norm"] = normalise_between_2_values(dfh["polarity"], 0.5, 2.5, invert=False)
+        dfh["relative polarity_norm"] = normalise_between_2_values(dfh["relative_polarity"], 0.5, 2.5, invert=False)
         # norm LIPS
         dfh["LIPS_norm"] = normalise_between_2_values(dfh[LIPS_col], -0.4, 1, invert=False)
 
         # currently coevolution doesn't need to be normalised (already norm in each TMD between 0 and 1
         dfh["coevolution_norm"] = dfh[coev_col]
 
-        cols_to_plot = ['interface score_norm', 'interface', 'PREDDIMER_norm', 'TMDOCK_norm', 'THOIPA_norm', 'LIPS_norm', 'conservation_norm', 'polarity_norm', 'coevolution_norm']
+        cols_to_plot = ['interface score_norm', 'interface', 'PREDDIMER_norm', 'TMDOCK_norm', 'THOIPA_norm', 'LIPS_norm', 'conservation_norm', 'relative polarity_norm', 'coevolution_norm']
         cols_to_plot_renamed = [x[:-5] if "_norm" in x else x for x in cols_to_plot]
 
         # transpose dataframe so that "interface" etc is on the left
@@ -177,5 +176,5 @@ def create_single_merged_heatmap(s, acc, database, savename, fig_label, dfh_cols
             dfh.to_excel(writer, sheet_name="dfh")
             dfh_to_plot.to_excel(writer, sheet_name="dfh_to_plot")
 
-        sys.stdout.write("\n{} heatmap finished.".format(savename))
+        sys.stdout.write("\n{} heatmap finished. ({})".format(savename, heatmap_path))
         sys.stdout.flush()

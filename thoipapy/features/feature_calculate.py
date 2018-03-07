@@ -839,6 +839,8 @@ def parse_freecontact_coevolution(acc, freecontact_file, freecontact_parsed_csv,
         coev_all_top4_MI[int(key) - 1] = sum(map(float, sorted(dict_mi_list[key], reverse=True)[0:4])) / 4
         coev_all_top8_DI[int(key) - 1] = sum(map(float, sorted(dict_di_list[key], reverse=True)[0:8])) / 8
         coev_all_top8_MI[int(key) - 1] = sum(map(float, sorted(dict_mi_list[key], reverse=True)[0:8])) / 8
+        # MT note: as far as I can see, the coev_all_max_DI is not limited to [0:8], and is therefore the max DI value between
+        # the residue of interest, and any of the residues in the TMD
         coev_all_max_DI_1[int(key) - 1] = sorted(dict_di_list[key], reverse=True)[0]
         coev_all_max_MI_1[int(key) - 1] = sorted(dict_mi_list[key], reverse=True)[0]
         # sys.stdout.write(str(key)+"corresponding to"+str(dict_di_list[key]))

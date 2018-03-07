@@ -7,6 +7,7 @@ import pandas as pd
 import scipy
 import os
 import thoipapy
+from scipy.special import comb
 
 #
 # def Bo_Curve_Create(acc, prob_pos, Lips_score, disrupt_or_closedist, database):
@@ -153,13 +154,10 @@ def calc_best_overlap(acc_db, df, experiment_col="interface_score", pred_col="TH
         intersection_result = exp_set.intersection(pred_set)
         observed_overlap = len(intersection_result)
 
-        pval = scipy.special.comb(sample_size, observed_overlap) * scipy.special.comb(non_sample_size, sample_size - observed_overlap) / scipy.special.comb(tm_len, sample_size)
-        inter_num_random = 0
-        for j in range(1, sample_size + 1):
-            random_inter_num_ober = j
-            random_non_inter_num = tm_len - sample_size
-            inter_num_random = inter_num_random + scipy.special.comb(sample_size, random_inter_num_ober) * scipy.special.comb(random_non_inter_num, sample_size - random_inter_num_ober) / scipy.special.comb(tm_len,
-                                                                                                                                                                                                              sample_size) * j
+        pval = comb(sample_size, observed_overlap) * comb(non_sample_size, sample_size - observed_overlap) / comb(tm_len, sample_size)
+
+        inter_num_random = calc_rand_overlap(sample_size, tm_len)
+
         odf.set_value(ind, acc_db, observed_overlap)
         odf.set_value(ind, "sample_size", "Top" + str(sample_size))
         odf.set_value(ind, "parameters", "observed_overlap")
@@ -176,6 +174,45 @@ def calc_best_overlap(acc_db, df, experiment_col="interface_score", pred_col="TH
         previous_overlap = observed_overlap
     odf.set_index(["sample_size", "parameters"], inplace=True, drop=True)
     return odf
+
+def calc_rand_overlap(sample_size, sequence_length):
+    """Calculate expected random overlap between two random selections from a sample.
+
+    Parameters
+    ----------
+    sequence_length : int
+        Number of samples in total, from which a subset is randomly selected.
+        E.g. a bowl with 20 numbered balls.
+        In our case, TMD_length.
+    sample_size : int
+        Size of the selected sample (e.g. 3, for 3 balls taken from the bowl)
+        In our case, number of interface residues considered.
+
+    Returns
+    -------
+    inter_num_random : float
+        Expected overlap seen by random chance.
+        E.g., when 5 balls from 20 are randomly selected without replacement.
+        The expected overlap between two random selections is 1.25
+    """
+    # start the [[write description]] at 0
+    inter_num_random = 0
+    # iterate through [[write description]]
+    for random_inter_num_ober in range(1, sample_size + 1):
+        # random_inter_num_ober = j
+
+        # write description
+        random_non_inter_num = sequence_length - sample_size
+        # write description
+        variable_1 = comb(sample_size, random_inter_num_ober)
+        # write description
+        variable_2 = comb(random_non_inter_num, sample_size - random_inter_num_ober)
+        # write description
+        variable_3 = comb(sequence_length, sample_size)
+        inter_num_random = inter_num_random + variable_1 * variable_2 / variable_3 * random_inter_num_ober
+        # inter_num_random = inter_num_random + comb(sample_size, random_inter_num_ober) * comb(random_non_inter_num, sample_size - random_inter_num_ober) / comb(tm_len, sample_size) * random_inter_num_ober
+
+    return inter_num_random
 
 def create_one_out_train_data(acc_db,set_path,s):
     df_train = pd.DataFrame()
