@@ -850,7 +850,8 @@ class Log_Only_To_Console(object):
         sys.stdout.write("\n{}".format(message))
 
 
-def calc_rand_overlap(sequence_length, sample_size):
+
+def calc_rand_overlap_DEPRECATED_METHOD(sequence_length, sample_size):
     """Calculate expected random overlap between two random selections from a sample.
 
     You have a bowl of 20 balls, either blue or red.

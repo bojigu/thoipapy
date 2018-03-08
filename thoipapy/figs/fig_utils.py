@@ -1,11 +1,3 @@
-# intersect function
-from thoipapy.utils import calc_rand_overlap
-
-
-def intersect(a, b):
-    return list(set(a) & set(b))
-
-
 import pandas as pd
 import os
 import thoipapy
@@ -66,6 +58,10 @@ from scipy.special import comb
 #     odf.set_index(["sample_size", "parameters"], inplace=True, drop=True)
 #     return odf
 
+
+# intersect function
+def intersect(a, b):
+    return list(set(a) & set(b))
 
 
 def calc_best_overlap(acc_db, df, experiment_col="interface_score", pred_col="THOIPA"):
@@ -158,7 +154,8 @@ def calc_best_overlap(acc_db, df, experiment_col="interface_score", pred_col="TH
 
         pval = comb(sample_size, observed_overlap) * comb(non_sample_size, sample_size - observed_overlap) / comb(tm_len, sample_size)
 
-        inter_num_random = calc_rand_overlap(tm_len, sample_size)
+        #inter_num_random = calc_rand_overlap(tm_len, sample_size)
+        inter_num_random = sample_size**2 / tm_len
 
         odf.set_value(ind, acc_db, observed_overlap)
         odf.set_value(ind, "sample_size", "Top" + str(sample_size))
