@@ -125,7 +125,7 @@ if __name__ == "__main__":
         ###################################################################################################
 
         if s["run_retrieve_NCBI_homologues_with_blastp"]:
-            thoipapy.homologues.NCBI.download.download.download_homologues_from_ncbi_mult_prot(s, df_set, logging)
+            thoipapy.homologues.NCBI_download.download_homologues_from_ncbi_mult_prot(s, df_set, logging)
 
         if s["run_parse_homologues_xml_into_csv"]:
             thoipapy.homologues.NCBI_parser.parse_NCBI_xml_to_csv_mult_prot(s, df_set, logging)
@@ -268,7 +268,7 @@ if __name__ == "__main__":
 
         if "plot_coev_vs_res_dist" in s:
             if s["plot_coev_vs_res_dist"] == True:
-                thoipapy.structures.get_TMD_homodimer.get_tmd_nr_homodimer.calc_coev_vs_res_dist(s, dfset, logging)
+                #thoipapy.structures.get_TMD_homodimer.get_tmd_nr_homodimer.calc_coev_vs_res_dist(s, dfset, logging)
                 thoipapy.structures.get_TMD_homodimer.get_tmd_nr_homodimer.plot_coev_vs_res_dist(s, logging)
 
         if s["create_ROC_all_residues"]:

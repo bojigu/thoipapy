@@ -4,7 +4,7 @@ import thoipapy
 #import eccpy
 import numpy as np
 import pandas as pd
-import seaborn as sns
+import seaborn as sns; sns.set()
 from matplotlib import pyplot as plt
 #from eccpy.tools import normalise_between_2_values
 from thoipapy.utils import normalise_between_2_values
@@ -141,24 +141,37 @@ def create_single_merged_heatmap(s, acc, database, savename, fig_label, dfh_cols
         plt.close("all")
         # sns.set_context("paper", rc={"font.size": 10, "axes.titlesize": 10, "axes.labelsize": 10})
         plt.rcParams['font.size'] = fontsize
+        gridspec_kw = {"height_ratios": [2, 4, 3]}
         #fig, ax = plt.subplots(figsize=(3.42, 1))
-        fig, ax = plt.subplots(figsize=(7, 2))
-        #fig, ax = plt.subplots(figsize=(10, 3))
+        fig, axes = plt.subplots(ncols=1, nrows=3, figsize=(10, 3), gridspec_kw=gridspec_kw)
 
         # SOMEWHAT INELEGANT: In order to create a second xticklabels, a second axis was created, and the heatmap rendered twice
         # in ax1, the aa numbers are used as the xticklabels at the bottom
         # in ax2, the amino acid letters are used as the xticklabels on the top
-        ax2 = ax.twiny()
+        # ax2 = ax.twiny()
+        ax2 = axes[0].twiny()
+        ax = axes[2]
         # plot in ax and ax2
-        sns.heatmap(dfh_to_plot, ax=ax, cbar=False, cmap=cmap)  # fmt = "s", annot_kws={"Axes.set_facecolor", 0.5} ,
-        sns.heatmap(dfh_to_plot, ax=ax2, cbar=False, cmap=cmap, annot=df_labels, fmt="s", annot_kws={"color": "k"})
+        # sns.heatmap(dfh_to_plot, ax=ax, cbar=False, cmap=cmap)  # fmt = "s", annot_kws={"Axes.set_facecolor", 0.5} ,
+        # sns.heatmap(dfh_to_plot, ax=ax2, cbar=False, cmap=cmap, annot=df_labels, fmt="s", annot_kws={"color": "k"})
+        sns.heatmap(dfh_to_plot.iloc[0:2,:], ax=axes[0], xticklabels=False, cbar=False,
+                    cmap=cmap)  # fmt = "s", annot_kws={"Axes.set_facecolor", 0.5} ,
+        sns.heatmap(dfh_to_plot.iloc[0:2,:], ax=ax2 , cbar=False, cmap=cmap, annot=df_labels[0:2], fmt="s",
+                    annot_kws={"color": "k"})
+        sns.heatmap(dfh_to_plot.iloc[2:6,:], ax=axes[1], xticklabels=False, cbar=False,
+                    cmap=cmap)  # fmt = "s", annot_kws={"Axes.set_facecolor", 0.5} ,
+        sns.heatmap(dfh_to_plot.iloc[6:9,:], ax=axes[2], cbar=False,
+                    cmap=cmap)  # fmt = "s", annot_kws={"Axes.set_facecolor", 0.5} ,
         # set aa position and letter labels
-        ax.set_xticklabels(dfh.index, fontsize=fontsize, rotation=0)
-        ax.set_yticklabels(ax.get_yticklabels(), fontsize=fontsize, rotation=0)
+        axes[2].set_xticklabels(dfh.index, fontsize=fontsize, rotation=0)
+        axes[2].set_yticklabels(axes[2].get_yticklabels(), fontsize=fontsize, rotation=0)
+        axes[0].set_yticklabels(axes[0].get_yticklabels(), fontsize=fontsize, rotation=0)
+        axes[1].set_yticklabels(axes[1].get_yticklabels(), fontsize=fontsize, rotation=0)
 
         ax.set_xlabel("")
         # ax2.set_xlim(ax.get_xlim())
-        # ax2.set_ylim(ax.get_ylim())
+        ax2.set_ylim(ax2 .get_ylim())
+        ax.set_ylim(ax.get_ylim())
 
         ax2.set_xlabel(fig_label)
         ax2.set_xticks(ax.get_xticks())
@@ -166,8 +179,8 @@ def create_single_merged_heatmap(s, acc, database, savename, fig_label, dfh_cols
         ax2.set_xticklabels(dfh.residue_name, fontsize=fontsize)
         ax.tick_params(direction='out', pad=1.8, tick1On=False)
         #ax2.tick_params(direction='out', pad=0.1, tick2On=False)
-        ax2.tick_params(direction='out', pad=-2.0, tick2On=False)
-        fig.tight_layout()
+        ax2.tick_params(direction='out', pad=-0.1, tick2On=False)
+        plt.tight_layout()
         fig.savefig(heatmap_path, dpi=240)
         fig.savefig(heatmap_pdf_path)
 

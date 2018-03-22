@@ -2321,7 +2321,7 @@ def add_physical_parameters_to_features(acc, feature_combined_file, logging):
     logging.info("{} add_physical_parameters_to_features_mult_prot finished. (updated {})".format(acc, feature_combined_file))
 
 def remove_crystal_hetero_contact_residues_mult_prot(s, df_set, logging):
-    """Run remove_crystal_hetero_contact_residues for a list of proteins.
+    """Run remove_crystal_hetero_contact_residues_mult_prot for a list of proteins.
 
       Parameters
       ----------
@@ -2345,20 +2345,20 @@ def remove_crystal_hetero_contact_residues_mult_prot(s, df_set, logging):
                                                                                              s["num_of_sur_residues"],
                                                                                              s[
                                                                                                  "max_n_gaps_in_TMD_subject_seq"]))
-            nohetero_feature_combined_file = os.path.join(s["features_folder"], "combined", database,
-                                                 "{}.nohetero.surr{}.gaps{}.combined_features.csv".format(acc,
+            add_hetero_feature_combined_file = os.path.join(s["features_folder"], "combined", database,
+                                                 "{}.addhetero.surr{}.gaps{}.combined_features.csv".format(acc,
                                                                                                  s[
                                                                                                      "num_of_sur_residues"],
                                                                                                  s[
                                                                                                      "max_n_gaps_in_TMD_subject_seq"]))
             homo_hetero_contact_file = os.path.join(s["features_folder"], "Structure", database, "{}.homohetero.bind.closedist.csv".format(acc))
 
-            hetero_contact_num = remove_crystal_hetero_contact_residues(acc, feature_combined_file, homo_hetero_contact_file,nohetero_feature_combined_file, logging)
+            hetero_contact_num = remove_crystal_hetero_contact_residues(acc, feature_combined_file, homo_hetero_contact_file,add_hetero_feature_combined_file, logging)
             sum_hetero_contact = sum_hetero_contact + hetero_contact_num
     logging.info(
         "there are in crystal data set in total hetero contact residues: {}  ".format( sum_hetero_contact))
 
-def remove_crystal_hetero_contact_residues(acc, feature_combined_file, homo_hetero_contact_file,nohetero_feature_combined_file, logging):
+def remove_crystal_hetero_contact_residues(acc, feature_combined_file, homo_hetero_contact_file,add_hetero_feature_combined_file, logging):
     """remove the hetero contact residues from the combined csv file with features.
 
     The "homo_hetero" csv file should contain and mark both the homo and hetero contact residues
@@ -2375,7 +2375,8 @@ def remove_crystal_hetero_contact_residues(acc, feature_combined_file, homo_hete
         Python object with settings for logging to console and file.
     """
     df_combined = pd.read_csv(feature_combined_file, index_col=0)
-
+    df_addhetreo_combined = pd.DataFrame()
+    df_addhetreo_combined = df_combined
     if not os.path.isfile(homo_hetero_contact_file):
         raise FileNotFoundError("homo_hetero_contact_file NOT FOUND. hetero contact residues not calculated and added to combined file.\n({})".format(homo_hetero_contact_file))
 
@@ -2386,20 +2387,22 @@ def remove_crystal_hetero_contact_residues(acc, feature_combined_file, homo_hete
         homo_hetero_interface = df_contacts.bind
         hetero_inter = [1 if homo_hetero_interface.iloc[i] == 1 and combined_interface.iloc[i] == 0 else 0 for i in
                         homo_hetero_interface.index]
-        hetero_inter_index = []
-        for i in range(len(hetero_inter)):
-            if hetero_inter[i] == 1:
-                hetero_inter_index.append(i)
-                hetero_contact_num = hetero_contact_num + 1
-        df_combined = df_combined.drop(df_combined.index[hetero_inter_index])
-        #df_combined["interface"] = hetero_inter
-        df_combined.to_csv(nohetero_feature_combined_file)
+        hetero_contact_num = hetero_inter.count(1)
+        df_addhetreo_combined["hetero_interface"] = hetero_inter
+        df_addhetreo_combined.to_csv(add_hetero_feature_combined_file)
+        # hetero_inter_index = []
+        # for i in range(len(hetero_inter)):
+        #     if hetero_inter[i] == 1:
+        #         hetero_inter_index.append(i)
+        # df_combined = df_combined.drop(df_combined.index[hetero_inter_index])
+        # #df_combined["interface"] = hetero_inter
+        # df_combined.to_csv(feature_combined_file)
 
-        logging.info("{} remove_hetero_contact_to_crystal_combined_files finished ({})".format(acc, nohetero_feature_combined_file))
+        logging.info("{} add_hetero_contact_to_crystal_combined_files finished ({})".format(acc, add_hetero_feature_combined_file))
 
     else:
         logging.warning(
-            "{} remove_hetero_contact_to_crystal_combined_file failed, {} not found".format(acc, nohetero_feature_combined_file))
+            "{} add_hetero_contact_to_crystal_combined_file failed, {} not found".format(acc, feature_combined_file))
     return hetero_contact_num
 
 
@@ -2605,6 +2608,13 @@ def combine_all_train_data_for_machine_learning(s, df_set, logging):
     column_list = ['acc_db', 'interface', 'interface_score', 'residue_num', 'residue_name', 'n_homologues']
     df_all = thoipapy.utils.reorder_dataframe_columns(df_all, column_list)
 
+    # # remove crystal hetero_interface residues and drop "hetero_interface" column
+    # hetero_inter_index = []
+    # for i in range(df_all.shape[0]):
+    #     if df_all.loc[i,"hetero_interface"] == 1:
+    #         hetero_inter_index.append(i)
+    # df_all = df_all.drop(df_all.index[hetero_inter_index])
+    # df_all.drop(["hetero_interface"],axis=1, inplace=True)
     df_all.to_csv(train_data_csv)
     logging.info('Finished creating train or test data for machine learning.')
 

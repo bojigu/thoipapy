@@ -528,7 +528,11 @@ def plot_coev_vs_res_dist(s, logging):
     # add a bit of height, so the legend does not overlap data
     ax.set_ylim(mean_ser.min(), mean_ser.max() + 0.1)
     figpath = coev_vs_res_dist_xlsx[:-5] + "_coev" + ".png"
-    fig.legend(fontsize=fontsize, loc="upper right", bbox_to_anchor=[0.85, 0.95])
+    handles, labels = ax.get_legend_handles_labels()
+    handles = [handles[1], handles[0]]
+    labels = [labels[1], labels[0]]
+    ax.legend(handles, labels, ncol=1, loc=1, fontsize=fontsize, frameon=True, facecolor='white')
+    #fig.legend(fontsize=fontsize, loc="upper right", bbox_to_anchor=[0.85, 0.95])
     fig.tight_layout()
     fig.savefig(figpath, dpi=240)
     fig.savefig(figpath[:-4] + ".pdf")
@@ -763,10 +767,15 @@ def calc_av_frac_DI_single_prot(sub_dict, s, logging, i, XI, is_first_TMD, df_se
 
 def create_average_fraction_DI_file_OLD_PAIRWISE_VERSION(s, dfset, logging):
     logging.info('create_average_fraction_DI_file starting')
-    retrospective_coev_xlsx = os.path.join(s["set_results_folder"], "set04_retrospective_coev.xlsx")
-    writer = pd.ExcelWriter(retrospective_coev_xlsx)
-    randomise_int_res = True
-    remove_residues_outside_interface_region = True
+    #retrospective_coev_xlsx = os.path.join(s["set_results_folder"], "set04_retrospective_coev.xlsx")
+    randomise_int_res = False
+    if randomise_int_res == True:
+        retrospective_coev_xlsx = os.path.join(s["set_results_folder"], "set04_randomise_retrospective_coev.xlsx")
+        writer = pd.ExcelWriter(retrospective_coev_xlsx)
+    else:
+        retrospective_coev_xlsx = os.path.join(s["set_results_folder"], "set04_retrospective_coev.xlsx")
+        writer = pd.ExcelWriter(retrospective_coev_xlsx)
+    remove_residues_outside_interface_region = False
     logging.info("randomise_int_res = {}, remove_residues_outside_interface_region = {}".format(randomise_int_res, remove_residues_outside_interface_region))
     InterPairList_of_last_TMD = None
     NoninterPairList_of_last_TMD = None
