@@ -39,26 +39,57 @@ def create_merged_heatmap(s, df_set, logging):
     coev_col = "coev_i4_DI"
 
     dfh_cols = ["res_num_full_seq", "residue_name", "interface", "interface_score", THOIPA_col, "PREDDIMER", "TMDOCK", LIPS_col, "conservation", "relative_polarity", coev_col]
+
+    names_excel_path = os.path.join(s["dropbox_dir"], "ETRA_NMR_names.xlsx")
+    df_names = pd.read_excel(names_excel_path, index_col=0)
+    df_names["acc_db"] = df_names.index + "_" + df_names["database"]
+    df_names["acc"] = df_names.index
+    df_names.set_index("acc_db", inplace=True)
+    from thoipapy.utils import aaa
+    aaa(df_names)
+
     for i in df_set.index:
         acc = df_set.loc[i, "acc"]
+        database = df_set.loc[i, "database"]
+        acc_db = acc + "_" + database
+
         #if acc =="1orqC4":
         database = df_set.loc[i, "database"]
-        names_excel_path = os.path.join(s["dropbox_dir"], "ETRA_NMR_names.xlsx")
-        df_names = pd.read_excel(names_excel_path, index_col=0)
+
+        #df_names = pd.read_excel(names_excel_path, index_col=0)
         # restrict names dict to only that database
-        df_names = df_names.loc[df_names.database == database]
-        if acc in df_names.index:
-            savename = "{}_{}".format(acc, df_names.loc[acc, "shortname"])
-            fig_label = df_names.loc[acc, "concatname"] + " [{} subset]".format(database)
-        else:
+        #df_names = df_names.loc[df_names.database == database]
+
+        if database == "ETRA":
+            ref = "".join(df_names.loc[acc_db, "source":"date"].astype(str).tolist())
+            savename = "{}_{}".format(acc, df_names.loc[acc_db, "shortname"])
+            fig_label = "{shortname} [{subset} subset, {acc}, {ref}]".format(shortname=df_names.loc[acc_db, "shortname"],
+                                                                            subset=database, acc=acc, ref=ref)
+        elif database == "NMR":
+            ref = "".join(df_names.loc[acc_db, "source":"date"].astype(str).tolist())
+            savename = "{}_{}".format(acc, df_names.loc[acc_db, "shortname"])
+            fig_label = "{shortname} [{subset} subset, {acc}, PDB:{pdb}, {ref}]".format(shortname=df_names.loc[acc_db, "shortname"],
+                                                                                      subset=database, acc=acc, pdb=df_names.loc[acc_db, "PDB acc"],ref=ref)
+        elif database == "crystal":
             savename = acc + "_{}".format(database)
             fig_label = acc + " [{} subset, PDB:{}, chain:{}, TMD:{}]".format(database, acc[:-2], acc[-2], acc[-1])
+        else:
+            raise ValueError("database not recognised : {}".format(database))
+        # if acc_db in df_names.index:
+        #     "PTPRG [ETRA subset, P23470, PDB:5uld, this study]"
+        #     savename = "{}_{}".format(acc, df_names.loc[acc_db, "shortname"])
+        #     fig_label = df_names.loc[acc_db, "concatname"] + " [{} subset]".format(database)
+        # else:
+        #     savename = acc + "_{}".format(database)
+        #     fig_label = acc + " [{} subset, PDB:{}, chain:{}, TMD:{}]".format(database, acc[:-2], acc[-2], acc[-1])
         sys.stdout.write("\n{} {}".format(savename, fig_label))
         create_single_merged_heatmap(s, acc, database,savename, fig_label, dfh_cols, THOIPA_col, LIPS_col, coev_col)
 
 def create_single_merged_heatmap(s, acc, database, savename, fig_label, dfh_cols, THOIPA_col, LIPS_col, coev_col):
         merged_data_csv_path = os.path.join(s["thoipapy_data_folder"], "Merged", database, "{}.merged.csv".format(acc))
         dfm = pd.read_csv(merged_data_csv_path, engine = "python")
+
+
         heatmap_path = os.path.join(s["thoipapy_data_folder"], "heatmap",database, "{}.png".format(acc))
         heatmap_pdf_path = os.path.join(s["thoipapy_data_folder"], "heatmap",database,"pdf","{}.pdf".format(acc))
         heatmap_data_xlsx_path = os.path.join(s["thoipapy_data_folder"], "heatmap",database,"xlsx","{}_merged.xlsx".format(acc))
