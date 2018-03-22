@@ -181,18 +181,37 @@ def create_single_merged_heatmap(s, acc, database, savename, fig_label, dfh_cols
         # in ax2, the amino acid letters are used as the xticklabels on the top
         # ax2 = ax.twiny()
         ax2 = axes[0].twiny()
+        ax3 = axes[1].twiny()
+        ax4 = axes[2].twiny()
+        # ax4 = axes[2].twiny()
         ax = axes[2]
         # plot in ax and ax2
         # sns.heatmap(dfh_to_plot, ax=ax, cbar=False, cmap=cmap)  # fmt = "s", annot_kws={"Axes.set_facecolor", 0.5} ,
         # sns.heatmap(dfh_to_plot, ax=ax2, cbar=False, cmap=cmap, annot=df_labels, fmt="s", annot_kws={"color": "k"})
-        sns.heatmap(dfh_to_plot.iloc[0:2,:], ax=axes[0], xticklabels=False, cbar=False,
+        sns.heatmap(dfh_to_plot[0:2], ax=axes[0], xticklabels=False, cbar=False,
                     cmap=cmap)  # fmt = "s", annot_kws={"Axes.set_facecolor", 0.5} ,
-        sns.heatmap(dfh_to_plot.iloc[0:2,:], ax=ax2 , cbar=False, cmap=cmap, annot=df_labels[0:2], fmt="s",
+        sns.heatmap(dfh_to_plot[0:2], ax=ax2, cbar=False, cmap=cmap, annot=df_labels[0:2], fmt="s",
                     annot_kws={"color": "k"})
-        sns.heatmap(dfh_to_plot.iloc[2:6,:], ax=axes[1], xticklabels=False, cbar=False,
+        sns.heatmap(dfh_to_plot[2:6], ax=axes[1], xticklabels=False, cbar=False,
                     cmap=cmap)  # fmt = "s", annot_kws={"Axes.set_facecolor", 0.5} ,
-        sns.heatmap(dfh_to_plot.iloc[6:9,:], ax=axes[2], cbar=False,
+        sns.heatmap(dfh_to_plot[2:6], ax=ax3, cbar=False,xticklabels=['']*dfh_to_plot.shape[1],
+                    cmap=cmap, annot=df_labels[2:6], fmt="s",annot_kws={"color": "k"})  # fmt = "s", annot_kws={"Axes.set_facecolor", 0.5} ,
+        sns.heatmap(dfh_to_plot[6:9], ax=axes[2], cbar=False,
                     cmap=cmap)  # fmt = "s", annot_kws={"Axes.set_facecolor", 0.5} ,
+        sns.heatmap(dfh_to_plot[6:9], ax=ax4, cbar=False,xticklabels=['']*dfh_to_plot.shape[1],
+                    cmap=cmap, annot=df_labels[6:9], fmt="s",annot_kws={"color": "k"})  # fmt = "s", annot_kws={"Axes.set_facecolor", 0.5} ,
+        # sns.heatmap(dfh_to_plot.iloc[0:2,:], ax=axes[0], xticklabels=False, cbar=False,
+        #             cmap=cmap)  # fmt = "s", annot_kws={"Axes.set_facecolor", 0.5} ,
+        # sns.heatmap(dfh_to_plot.iloc[0:2,:], ax=ax2 , cbar=False, cmap=cmap, annot=df_labels[0:2], fmt="s",
+        #             annot_kws={"color": "k"})
+        # sns.heatmap(dfh_to_plot.iloc[2:6,:], ax=axes[1], cbar=False,xticklabels=False,
+        #             cmap=cmap)  # fmt = "s", annot_kws={"Axes.set_facecolor", 0.5} ,
+        # # sns.heatmap(dfh_to_plot.iloc[2:6,:], ax=ax3 ,cbar=False, cmap=cmap, annot=df_labels.iloc[2:6,:], fmt="s",
+        # #             annot_kws={"color": "k"})
+        # sns.heatmap(dfh_to_plot.iloc[6:9,:], ax=axes[2], cbar=False,
+        #             cmap=cmap)  # fmt = "s", annot_kws={"Axes.set_facecolor", 0.5} ,
+        # sns.heatmap(dfh_to_plot.iloc[6:9, :], ax=ax4,  cbar=False, cmap=cmap, annot=df_labels[6:9], fmt="s",
+        #             annot_kws={"color": "k"})
         # set aa position and letter labels
         axes[2].set_xticklabels(dfh.index, fontsize=fontsize, rotation=0)
         axes[2].set_yticklabels(axes[2].get_yticklabels(), fontsize=fontsize, rotation=0)
@@ -208,6 +227,7 @@ def create_single_merged_heatmap(s, acc, database, savename, fig_label, dfh_cols
         ax2.set_xticks(ax.get_xticks())
         ax2.xaxis.tick_top()
         ax2.set_xticklabels(dfh.residue_name, fontsize=fontsize)
+
         ax.tick_params(direction='out', pad=1.8, tick1On=False)
         #ax2.tick_params(direction='out', pad=0.1, tick2On=False)
         ax2.tick_params(direction='out', pad=-0.1, tick2On=False)
