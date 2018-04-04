@@ -54,19 +54,23 @@ def create_merged_heatmap(s, df_set, logging):
         acc_db = acc + "_" + database
 
         #if acc =="1orqC4":
-        database = df_set.loc[i, "database"]
 
         #df_names = pd.read_excel(names_excel_path, index_col=0)
         # restrict names dict to only that database
         #df_names = df_names.loc[df_names.database == database]
 
+        # print(df_names.loc[acc_db, "shortname"])
+        # print(df_names.loc[acc_db, "shortname"].isnull())
+        # print(True in df_names.loc[acc_db, "shortname"].isnull())
+
+
         if database == "ETRA":
-            ref = "".join(df_names.loc[acc_db, "source":"date"].astype(str).tolist())
+            ref = "".join(df_names.loc[acc_db, "source":"date"].dropna().astype(str).tolist())
             savename = "{}_{}".format(acc, df_names.loc[acc_db, "shortname"])
             fig_label = "{shortname} [{subset} subset, {acc}, {ref}]".format(shortname=df_names.loc[acc_db, "shortname"],
                                                                             subset=database, acc=acc, ref=ref)
         elif database == "NMR":
-            ref = "".join(df_names.loc[acc_db, "source":"date"].astype(str).tolist())
+            ref = "".join(df_names.loc[acc_db, "source":"date"].dropna().astype(str).tolist())
             savename = "{}_{}".format(acc, df_names.loc[acc_db, "shortname"])
             fig_label = "{shortname} [{subset} subset, {acc}, PDB:{pdb}, {ref}]".format(shortname=df_names.loc[acc_db, "shortname"],
                                                                                       subset=database, acc=acc, pdb=df_names.loc[acc_db, "PDB acc"],ref=ref)
