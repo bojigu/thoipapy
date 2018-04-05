@@ -35,7 +35,7 @@ def combine_file_add_PREDDIMER_TMDOCK_THOIPA_prediction(s, df_set, logging):
     # add the THOIPA prediction name to the list of columns to keep
     pred_colname = "THOIPA_{}_LOO".format(s["set_number"])
     # for simplicity, keep only the predictions. Since the index is unique, it can be added later to the combined file.
-    columns_kept_in_combined_file = ['residue_num', 'residue_name', pred_colname, 'TMDOCK', 'PREDDIMER','interface','interface_score',"LIPS_surface_ranked", 'LIPS_L*E',"relative_polarity","conservation","coev_i4_DI"]
+    columns_kept_in_combined_file = ['residue_num', 'residue_name', pred_colname, 'TMDOCK', 'PREDDIMER','interface','interface_score',"LIPS_surface","LIPS_surface_ranked", 'LIPS_L*E',"relative_polarity","conservation","coev_i4_DI"]
 
     #set_list = thoipapy.figs.fig_utils.get_set_lists(s)
     PREDDIMER_TMDOCK_folder = os.path.join(s["base_dir"], "figs", "FigBZ18-PreddimerTmdockComparison")

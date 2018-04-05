@@ -920,3 +920,44 @@ def calc_rand_overlap_DEPRECATED_METHOD(sequence_length, sample_size):
         # inter_num_random = inter_num_random + comb(sample_size, random_inter_num_ober) * comb(random_non_inter_num, sample_size - random_inter_num_ober) / comb(tm_len, sample_size) * random_inter_num_ober
 
     return inter_num_random
+
+def rename_features(df_features_single_protein):
+    """rename selected features.
+
+    coev_all_top4_MI -> MItop4mean
+    coev_all_top4_DI -> DItop4mean
+    coev_all_top8_MI -> MItop8mean
+    coev_all_top8_DI -> DItop8mean
+    coev_i1_MI -> MI1mean
+    coev_i1_DI -> DI1mean
+    coev_i3_MI -> MI3mean
+    coev_i3_DI -> DI3mean
+    coev_i4_MI -> MI4mean
+    coev_i4_DI -> DI4mean
+    coev_all_max_MI -> MImax
+    coev_all_max_DI -> DImax
+    coev_i1-i4_max_MI -> MI4max
+    coev_i1-i4_max_DI -> DI4max
+    CumMI4 -> MI4cum
+    CumDI4 -> DI4cum
+    highest_face_MI -> MI_highest_face
+    highest_face_DI -> DI_highest_face
+
+
+    Parameters
+    ----------
+    df_features_single_protein : pd.DataFrame
+        Dataframe with all features for a protein
+        Index : range index
+        Columns : "residue_num", "residue_name", "Entropy", etc
+    """
+
+    # rename features
+    df_features_single_protein = df_features_single_protein.rename(
+        columns={"coev_all_top4_MI": "MItop4mean", "coev_all_top4_DI": "DItop4mean", "coev_all_top8_MI": "MItop8mean", "coev_all_top8_DI": "DItop8mean",
+                 "coev_i1_MI": "MI1mean", "coev_i1_DI": "DI1mean", "coev_i3_MI": "MI3mean","coev_i3_DI": "DI3mean",
+                 "coev_i4_MI": "MI4mean", "coev_i4_DI": "DI4mean", "coev_all_max_MI": "MImax","coev_all_max_DI": "DImax",
+                 "coev_i1-i4_max_MI": "MI4max", "coev_i1-i4_max_DI": "DI4max", "CumMI4": "MI4cum","CumDI4": "DI4cum",
+                 "highest_face_MI": "MI_highest_face", "highest_face_DI": "DI_highest_face"})
+
+    return df_features_single_protein

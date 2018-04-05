@@ -1810,6 +1810,7 @@ def combine_all_features(s, full_seq, acc, database, TMD_seq, TMD_start, feature
     df_features_single_protein["res_num_full_seq"] = df_features_single_protein.index + TMD_start
 
     df_features_single_protein = normalise_features(df_features_single_protein)
+    #df_features_single_protein = rename_features(df_features_single_protein)
 
     df_features_single_protein.to_csv(feature_combined_file)
     logging.info("{} combine_all_features_mult_prot finished ({})".format(acc, feature_combined_file))
@@ -1912,6 +1913,8 @@ def normalise_features(df_features_single_protein):
     df_features_single_protein["RelPos_fullseq"] = df_features_single_protein["RelPos_fullseq"].round(1)
 
     return df_features_single_protein
+
+
 
 def normalise_number_of_homologues(x):
     """Convert non-linear number of homologues to an integer value.
