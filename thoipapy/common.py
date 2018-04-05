@@ -13,10 +13,12 @@ import pandas as pd
 import psutil
 from Bio import SeqIO
 from Bio.SeqUtils.ProtParam import ProteinAnalysis
-from korbinian.utils import convert_truelike_to_bool, convert_falselike_to_bool
+import thoipapy
+from thoipapy.utils import convert_truelike_to_bool, convert_falselike_to_bool
+#from korbinian.utils import convert_truelike_to_bool, convert_falselike_to_bool
 #from thoipapy.utils import convert_truelike_to_bool, convert_falselike_to_bool
 
-import thoipapy
+
 
 
 def calculate_fasta_file_length(s):
