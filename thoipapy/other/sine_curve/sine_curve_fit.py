@@ -3,19 +3,17 @@ import numpy as np
 import matplotlib.pyplot as plt
 import sys
 #from __future__ import unicode_literals
-#from thoipapy.sine_curve.tlabassays.mathfunctions import sine, sine_perfect_helix, residuals
-from tlabassays.mathfunctions import sine, sine_perfect_helix, residuals
+from pytoxr.mathfunctions import sine, sine_perfect_helix, residuals
 import scipy.optimize
 import os
 #from thoipapy.sine_curve.tlabtools import tools
 #import tlabtools as tools
-#from korbinian.utils import create_colour_lists
+#from thoipapy.utils import create_colour_lists
 from thoipapy.utils import create_colour_lists
 colour_lists = create_colour_lists()
 fontsize = 12
 data_dir = 'TMD16/'   #set the data_dir where you save all the data
 file_dir_extension = os.path.join(data_dir, '*.xlsx')
-
 
 def make_interpolater(left_min, left_max, right_min, right_max):
     # Figure out how 'wide' each range is

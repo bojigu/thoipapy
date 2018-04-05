@@ -16,7 +16,7 @@ plt.rcParams["font.family"] = "Verdana"
 import os
 #import korbinian
 plt.rcParams["font.family"] = "Verdana"
-#colour_dict = korbinian.utils.create_colour_lists()
+#colour_dict = thoipapy.utils.create_colour_lists()()
 import thoipapy
 colour_dict = thoipapy.utils.create_colour_lists()
 #colour_lists = tools.create_colour_lists()

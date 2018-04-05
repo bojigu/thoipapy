@@ -4,15 +4,13 @@ import sys
 import numpy as np
 import pandas as pd
 from matplotlib import pyplot as plt
-import tlabtools.tools as tools
 plt.rcParams["font.family"] = "Verdana"
 import matplotlib as mpl
 import statistics
 import os
-#import korbinian
 plt.rcParams["font.family"] = "Verdana"
-#colour_dict = korbinian.utils.create_colour_lists()
-colour_dict = tools.create_colour_lists()
+from thoipapy.utils import create_colour_lists
+colour_dict = create_colour_lists()
 color_thoipa = "k"
 color_Lips = colour_dict["TUM_colours"]['TUM5']
 blue1 = colour_dict["TUM_colours"]['TUM1']

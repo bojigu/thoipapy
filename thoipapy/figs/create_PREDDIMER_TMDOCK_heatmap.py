@@ -5,7 +5,7 @@ from plotly import graph_objs as go, plotly
 from plotly.tools import FigureFactory as FF
 from scipy.interpolate import interp1d
 import plotly.plotly as py
-import tlabtools.tools as tools
+#import tlabtools.tools as tools
 plt.rcParams["font.family"] = "Verdana"
 from plotly import figure_factory as FF
 import glob
@@ -14,7 +14,7 @@ import os
 import thoipapy
 plt.rcParams["font.family"] = "Verdana"
 colour_dict = thoipapy.utils.create_colour_lists()
-colour_lists = tools.create_colour_lists()
+#colour_lists = tools.create_colour_lists()
 color_thoipa = "k"
 color_Lips = colour_dict["TUM_colours"]['TUM5']
 blue1 = colour_dict["TUM_colours"]['TUM1']

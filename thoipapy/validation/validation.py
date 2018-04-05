@@ -1040,7 +1040,7 @@ def fig_variable_importance(s, logging):
     plt.style.use('seaborn-whitegrid')
     plt.rcParams['errorbar.capsize'] = 1
     plt.rcParams.update({'font.size':4})
-    #from korbinian.utils import create_colour_lists
+    #from thoipapy.utils import create_colour_lists
     from thoipapy.utils import create_colour_lists
     colour_dict = create_colour_lists()
 

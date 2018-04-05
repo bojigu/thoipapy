@@ -17,9 +17,8 @@ import tarfile
 from matplotlib import pyplot as plt
 from scipy.stats import ttest_ind
 from scipy.optimize import leastsq
-from tlabassays.mathfunctions import sine, sine_perfect_helix, residuals
-import tlabtools.tools as tools
-
+from pytoxr.mathfunctions import sine_perfect_helix, residuals
+from thoipapy.utils import create_colour_lists
 
 def download_xml_get_alphahelix_get_homo_pair(s, logging):
     """
@@ -447,7 +446,7 @@ def plot_coev_vs_res_dist(s, logging):
     logging.info('plot_coev_vs_res_dist starting')
     plt.rcParams["font.family"] = "Verdana"
     plt.rcParams["font.family"] = "Verdana"
-    colour_dict = tools.create_colour_lists()
+    colour_dict = create_colour_lists()
     blue1 = colour_dict["TUM_colours"]['TUM1']
     blue5 = colour_dict["TUM_colours"]['TUM5']
     TUMblue = colour_dict["TUM_colours"]['TUMBlue']
