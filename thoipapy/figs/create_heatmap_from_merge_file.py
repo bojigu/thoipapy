@@ -36,7 +36,7 @@ def create_merged_heatmap(s, df_set, logging):
 
     THOIPA_col = "THOIPA_5_LOO"
     LIPS_col = "LIPS_surface_ranked"
-    coev_col = "coev_i4_DI"
+    coev_col = "DI4mean"
 
     dfh_cols = ["res_num_full_seq", "residue_name", "interface", "interface_score", THOIPA_col, "PREDDIMER", "TMDOCK", LIPS_col, "conservation", "relative_polarity", coev_col]
 
