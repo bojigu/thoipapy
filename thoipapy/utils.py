@@ -38,7 +38,7 @@ class Command(object):
         self.cmd = cmd
         self.process = None
 
-    def run(self, timeout):
+    def run(self, timeout, log_stderr=True):
         def target():
             #logging.info('Thread started')
             self.process = subprocess.Popen(self.cmd, shell=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
@@ -47,7 +47,8 @@ class Command(object):
             # Thus far, SIMAP has only ever given java faults, never java output. Don't bother showing.
             # if the console prints anything longer than 5 characters, log it
             if len(stderr.decode("utf-8")) > 5:
-                logging.warning('FAULTS: %s' % stderr.decode("utf-8"))
+                if log_stderr:
+                    logging.warning('FAULTS: %s' % stderr.decode("utf-8"))
             #logging.info('Thread finished')
 
         thread = threading.Thread(target=target)

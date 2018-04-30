@@ -5,9 +5,12 @@ import platform
 import re
 import sys
 import unicodedata
+from sklearn.externals import joblib
+from io import StringIO
 
 import pandas as pd
 from thoipapy.homologues.NCBI_download import download_homologues_from_ncbi
+from thoipapy.validation.validation import drop_cols_not_used_in_ML
 
 import thoipapy
 from thoipapy.features.feature_calculate import create_PSSM_from_MSA, lipo_from_pssm, entropy_calculation, \
@@ -98,10 +101,9 @@ def run_THOIPA_prediction(s,protein_name, TMD_seq, full_seq, predictions_folder)
     full_seq_phobius_output_file = os.path.join(out_folder,  "protein.phobius")
     feature_combined_file = os.path.join(out_folder, "features_combined.csv")
     alignment_summary_csv = os.path.join(out_folder, "homologues.alignment_summary.csv")
-
-    thoipapy_module_path = os.path.dirname(os.path.abspath(thoipapy.__file__))
-    machine_learning_model = os.path.join(thoipapy_module_path, "ML_model", "set{:02d}_ML_model.lpkl".format(set_number))
-
+    THOIPA_full_out_csv = os.path.join(out_folder, "THOIPA_full_out.csv")
+    THOIPA_pretty_out_xlsx = os.path.join(out_folder, "THOIPA_out.xlsx")
+    THOIPA_pretty_out_csv = os.path.join(out_folder, "THOIPA_out.csv")
 
     logging.info("md5 checksum of TMD and full sequence = {}".format(md5))
     logging.info("acc = md5[0:6] = {}".format(acc))
@@ -185,6 +187,46 @@ def run_THOIPA_prediction(s,protein_name, TMD_seq, full_seq, predictions_folder)
                          alignment_summary_csv, full_seq_fasta_file,full_seq_phobius_output_file,logging)
 
     add_physical_parameters_to_features(acc, feature_combined_file, logging)
+
+    df_data = pd.read_csv(feature_combined_file, index_col=0)
+    df_ML_input = drop_cols_not_used_in_ML(logging, df_data, s["excel_file_with_settings"])
+
+    cols_to_keep = ["residue_num", "residue_name", "res_num_full_seq"]
+
+    #df_out = df_data[cols_to_keep]
+    #df_out.merge(df_ML_input, how="left")
+
+    df_out = pd.concat([df_data[cols_to_keep], df_ML_input], axis=1, join="outer")
+
+    # load the trained machine learning model, saved in the thoipapy directory
+    thoipapy_module_path = os.path.dirname(os.path.abspath(thoipapy.__file__))
+    machine_learning_model = os.path.join(thoipapy_module_path, "ML_model", "set{:02d}_ML_model.lpkl".format(set_number))
+    #machine_learning_model = "/media/mark/sindy/m_data/THOIPA_data/Results/set05/set05_ML_model.lpkl"
+    fit = joblib.load(machine_learning_model)
+
+    df_out["THOIPA"] = fit.predict_proba(df_ML_input)[:, 1]
+
+    df_pretty_out = df_out[["residue_num", "residue_name", "THOIPA"]]
+    df_pretty_out.columns = ["residue number", "residue name", "THOIPA"]
+
+    df_pretty_out["THOIPA"] = df_pretty_out["THOIPA"].round(3)
+    df_pretty_out.to_excel(THOIPA_pretty_out_xlsx, index=False)
+
+    # pad all content with spaces so it lines up with the column name
+    df_pretty_out["residue number"] = df_pretty_out["residue number"].apply(lambda x: "{: >14}".format(x))
+    df_pretty_out["residue name"] = df_pretty_out["residue name"].apply(lambda x: "{: >12}".format(x))
+    df_pretty_out["THOIPA"] = df_pretty_out["THOIPA"].apply(lambda x : "{:>6.03f}".format(x))
+
+    df_pretty_out.set_index("residue number", inplace=True)
+
+    df_out.to_csv(THOIPA_full_out_csv)
+    df_pretty_out.to_csv(THOIPA_pretty_out_csv, sep="\t")
+
+    # print exactly what the CSV looks like
+    out = StringIO()
+    df_pretty_out.to_csv(out, sep="\t")
+    print(out.getvalue())
+
 
 # read the command line arguments
 parser = argparse.ArgumentParser()

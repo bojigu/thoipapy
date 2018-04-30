@@ -712,7 +712,7 @@ def coevolution_calculation_with_freecontact(path_uniq_TMD_seqs_for_PSSM_FREECON
                 aln_file=path_uniq_TMD_seqs_for_PSSM_FREECONTACT, freecontact=freecontact_loc, freecontact_output_file=freecontact_file)
 
             command = utils.Command(exect_str)
-            command.run(timeout=400)
+            command.run(timeout=400, log_stderr=False)
 
             logging.info("Output file: %s\n" % freecontact_file)
         except:
@@ -1851,7 +1851,7 @@ def return_num_tmd(s, acc,  full_seq, full_seq_fasta_file,full_seq_phobius_outpu
         phobius_dir = s["phobius_dir"]
         exect_str = "{} {} {}> {}".format(perl_dir, phobius_dir, full_seq_fasta_file, full_seq_phobius_output_file)
         command = utils.Command(exect_str)
-        command.run(timeout=400)
+        command.run(timeout=400, log_stderr=False)
     if os.path.exists(full_seq_phobius_output_file):
         tm_num = 0
         with open(full_seq_phobius_output_file) as file:

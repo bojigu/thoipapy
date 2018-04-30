@@ -282,71 +282,72 @@ if __name__ == "__main__":
     #            DEPRECATED SINGLE PROTEIN STUFF, REPLACED BY run_THOIPA_prediction.py                #
     #                                                                                                 #
     ###################################################################################################
-    # running_single_protein = False
-    # if running_single_protein:
-    #     """OLD PARSER ARGUMENTS
-    #
-    #     parser.add_argument("-i",  # "-setting input fasta file location",
-    #                         help=r'Full path to your input file.'
-    #                              r'E.g. "\Path\to\your\input.fasta"')
-    #     parser.add_argument("-tmd",  # "-setting input fasta file location",
-    #                         help=r'Full path to your input file contain the tmd sequence.'
-    #                              r'E.g. "\Path\to\your\P01908_tmd.txt"')
-    #     parser.add_argument("-ts",  # "-setting tm start",
-    #                         help=r'integere tm start value'
-    #                              r'E.g. "219"')
-    #     parser.add_argument("-te",  # "-setting tm end ",
-    #                         help=r'integer tm end value.'
-    #                              r'E.g. "231"')
-    #     parser.add_argument("-of",  # "-setting output file path",
-    #                         help=r'Full path to your prediction output file.'
-    #                              r'E.g. "\Path\to\your output_file\"')
-    #     parser.add_argument("-email_to",  # "-setting output email address",
-    #                         help=r'user email given on web server')
-    #     """
-    #     # create output file, parsed file, and the output figure file names.
-    #     if args.of:
-    #         output_file_loc = os.path.join(args.of, "output.csv")
-    #         output_parse_file = os.path.join(args.of, "output_parse.csv")
-    #         output_png_loc = os.path.join(args.of, "output.png")
-    #
-    #     s["tm_protein_name"] = 'input'
-    #     if args.i is not None:
-    #         s["input_fasta_file"] = args.i
-    #         s["tm_len"] = thoipapy.common.calculate_fasta_file_length(s)
-    #     if args.ts is not None:
-    #         s["TMD_start"] = args.ts
-    #     if args.te is not None:
-    #         s["TMD_end"] = args.te
-    #     if args.tmd is not None:
-    #         s["input_tmd_file"] = args.tmd
-    #         s["TMD_start"], s["TMD_end"] = common.tmd_positions_match_fasta(s)
-    #     if args.email_to is not None:
-    #         s["email_to"] = args.email_to
-    #
-    #     # when only run one protein each time, s["multiple_tmp_simultaneous"] is false, and create the query protein information file
-    #     # according to the arguments inputed by user
-    #     if not s["multiple_tmp_simultaneous"]:
-    #         query_protein_tmd_file = os.path.join(s["Protein_folder"], "Query_Protein_Tmd.csv")
-    #         query_protein_tmd_file_handle = open(query_protein_tmd_file, "w")
-    #         writer = csv.writer(query_protein_tmd_file_handle, delimiter=',', quoting=csv.QUOTE_NONE, lineterminator='\n')
-    #         writer.writerow(["Protein", "TMD_len", "TMD_Start", "TMD_End"])
-    #         writer.writerow([s["tm_protein_name"], s["tm_len"], s["TMD_start"], s["TMD_end"]])
-    #         query_protein_tmd_file_handle.close()
-    #         s["list_of_tmd_start_end"] = query_protein_tmd_file
-    #
-    #     # create new fasta file by only keep tmd and surrounded 20 residues for future blastp work
-    #     # this function works for both one query protein or multiple proteins simultaneously
-    #     # thoipapy.common.create_TMD_surround20_fasta_file(s)
-    #
-    #     if s["parse_prediction_output"]:
-    #         thoipapy.features.Output_Parse.parse_Predicted_Output(thoipapy,s,output_file_loc,output_parse_file,logging)
-    #
-    #     if s["Send_sine_curve_to_email"]:
-    #         sys.stdout.write('begining to run run sine curve fitting')
-    #         thoipapy.sine_curve.SineCurveFit.save_sine_vurve_result(s,output_file_loc,output_png_loc)
-    #         logging.info('the fitting of sine curve is done')
-    #
-    #     if s["Send_email_finished"]:
-    #         thoipapy.Send_Email.Send_Email_Smtp.send_email_when_finished(s, thoipapy, output_parse_file, output_png_loc)
+    running_single_protein = False
+    if running_single_protein:
+        """OLD PARSER ARGUMENTS
+
+        parser.add_argument("-i",  # "-setting input fasta file location",
+                            help=r'Full path to your input file.'
+                                 r'E.g. "\Path\to\your\input.fasta"')
+        parser.add_argument("-tmd",  # "-setting input fasta file location",
+                            help=r'Full path to your input file contain the tmd sequence.'
+                                 r'E.g. "\Path\to\your\P01908_tmd.txt"')
+        parser.add_argument("-ts",  # "-setting tm start",
+                            help=r'integere tm start value'
+                                 r'E.g. "219"')
+        parser.add_argument("-te",  # "-setting tm end ",
+                            help=r'integer tm end value.'
+                                 r'E.g. "231"')
+        parser.add_argument("-of",  # "-setting output file path",
+                            help=r'Full path to your prediction output file.'
+                                 r'E.g. "\Path\to\your output_file\"')
+        parser.add_argument("-email_to",  # "-setting output email address",
+                            help=r'user email given on web server')
+        """
+        # create output file, parsed file, and the output figure file names.
+        if args.of:
+            output_file_loc = os.path.join(args.of, "output.csv")
+            output_parse_file = os.path.join(args.of, "output_parse.csv")
+            output_png_loc = os.path.join(args.of, "output.png")
+
+        s["tm_protein_name"] = 'input'
+        if args.i is not None:
+            s["input_fasta_file"] = args.i
+            s["tm_len"] = thoipapy.common.calculate_fasta_file_length(s)
+        if args.ts is not None:
+            s["TMD_start"] = args.ts
+        if args.te is not None:
+            s["TMD_end"] = args.te
+        if args.tmd is not None:
+            s["input_tmd_file"] = args.tmd
+            s["TMD_start"], s["TMD_end"] = common.tmd_positions_match_fasta(s)
+        if args.email_to is not None:
+            s["email_to"] = args.email_to
+
+        # when only run one protein each time, s["multiple_tmp_simultaneous"] is false, and create the query protein information file
+        # according to the arguments inputed by user
+        if not s["multiple_tmp_simultaneous"]:
+            query_protein_tmd_file = os.path.join(s["Protein_folder"], "Query_Protein_Tmd.csv")
+            query_protein_tmd_file_handle = open(query_protein_tmd_file, "w")
+            writer = csv.writer(query_protein_tmd_file_handle, delimiter=',', quoting=csv.QUOTE_NONE, lineterminator='\n')
+            writer.writerow(["Protein", "TMD_len", "TMD_Start", "TMD_End"])
+            writer.writerow([s["tm_protein_name"], s["tm_len"], s["TMD_start"], s["TMD_end"]])
+            query_protein_tmd_file_handle.close()
+            s["list_of_tmd_start_end"] = query_protein_tmd_file
+
+        # create new fasta file by only keep tmd and surrounded 20 residues for future blastp work
+        # this function works for both one query protein or multiple proteins simultaneously
+        # thoipapy.common.create_TMD_surround20_fasta_file(s)
+
+        if s["parse_prediction_output"]:
+            thoipapy.features.output_parse.parse_predicted_output(thoipapy,s,output_file_loc,output_parse_file,logging)
+
+        if s["Send_sine_curve_to_email"]:
+            sys.stdout.write('begining to run run sine curve fitting')
+            thoipapy.sine_curve.SineCurveFit.save_sine_vurve_result(s,output_file_loc,output_png_loc)
+            logging.info('the fitting of sine curve is done')
+
+        if s["Send_email_finished"]:
+            thoipapy.Send_Email.Send_Email_Smtp.send_email_when_finished(s, thoipapy, output_parse_file, output_png_loc)
+
 
