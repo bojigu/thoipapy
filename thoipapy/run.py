@@ -34,8 +34,7 @@ parser.add_argument("-s",  # "-settingsfile",
 if __name__ == "__main__":
 
     sys.stdout.write('\nRun thoipapy as follows:')
-    sys.stdout.write(r'python \Path\to\run.py -s \Path\to\your\settingsfile.xlsx -i \Path\to\your\input.fasta -tmd \Path\to\your\input_tmd.txt '
-          r'-ts tm_start_position -te tm_end_position -of C:\Path\to\your output_file\ -email_to email_address')
+    sys.stdout.write(r'python \Path\to\run.py -s \Path\to\your\settingsfile.xlsx')
     # get the command-line arguments
     args = parser.parse_args()
     # args.s is the excel_settings_file input by the user

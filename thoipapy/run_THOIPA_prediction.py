@@ -27,6 +27,25 @@ def get_start_end_pl_surr(TMD_start, TMD_end, seqlen, surr):
     return TMD_start_pl_surr, TMD_end_pl_surr
 
 def run_THOIPA_prediction(s,protein_name, TMD_seq, full_seq, predictions_folder):
+    """Function to run standalone THOIPA prediction for a protein transmembrane domain of interest.
+
+    Parameters
+    ----------
+    s : dict
+        Settings dictionary
+    protein_name : str
+        Protein name
+    TMD_seq : str
+        Transmembrane domain sequence
+    full_seq : str
+        Full protein sequence
+    predictions_folder : str
+        Path to folder where the output will be saved
+
+    Saved files and figures
+    -----------------------
+
+    """
     # default model is the combined ETRA, NMR, crystal non-redundant dataset (set05)
     set_number = 5
 
@@ -121,8 +140,8 @@ def run_THOIPA_prediction(s,protein_name, TMD_seq, full_seq, predictions_folder)
                                                       path_uniq_TMD_seqs_no_gaps_for_LIPS, path_uniq_TMD_seqs_surr5_for_LIPO, BLAST_csv_tar,
                                                       TMD_seq, query_TMD_seq_surr5, logging)
 
-    create_PSSM_from_MSA(path_uniq_TMD_seqs_for_PSSM_FREECONTACT, pssm_csv, acc, logging)
-    create_PSSM_from_MSA(path_uniq_TMD_seqs_surr5_for_LIPO, pssm_surr5_csv, acc, logging)
+    create_PSSM_from_MSA(path_uniq_TMD_seqs_for_PSSM_FREECONTACT, pssm_csv, acc, TMD_seq, logging)
+    create_PSSM_from_MSA(path_uniq_TMD_seqs_surr5_for_LIPO, pssm_surr5_csv, acc, query_TMD_seq_surr5, logging)
 
     tm_surr_left = TMD_start - TMD_start_pl_surr
     tm_surr_right = TMD_end_pl_surr - TMD_end
@@ -142,7 +161,7 @@ def run_THOIPA_prediction(s,protein_name, TMD_seq, full_seq, predictions_folder)
     lipo_from_pssm(acc, pssm_surr5_csv, lipo_csv, tm_surr_left_lipo, tm_surr_right_lipo, s["lipophilicity_scale"], logging, plot_linechart=True)
                  # (acc, pssm_csv_surr5, lipo_csv, tm_surr_left, tm_surr_right, scalename, logging, plot_linechart = False)
 
-    entropy_calculation(acc, path_uniq_TMD_seqs_for_PSSM_FREECONTACT, entropy_file, logging)
+    entropy_calculation(acc, path_uniq_TMD_seqs_for_PSSM_FREECONTACT, TMD_seq, entropy_file, logging)
 
     if "Windows" in platform.system():
         logging.warning("\n Freecontact cannot be run in Windows! Skipping coevolution_calculation_with_freecontact."

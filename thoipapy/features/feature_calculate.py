@@ -211,6 +211,9 @@ def create_PSSM_from_MSA(path_uniq_TMD_seqs_for_PSSM_FREECONTACT, pssm_csv, acc,
             """
             # number of residues in each sequence
             n_residues = len(mat[0])
+            if n_residues != len(TMD_seq):
+                raise ValueError("Alignment length does not match TMD length. Check that appropriate TMD_seq (or TMD_seq_surr5) has been inserted."
+                                 "TMD_seq : {}, first line of alignment = {}".format(TMD_seq, mat[0]))
             # number of sequences in alignment
             n_seqs = len(mat)
             column = []
