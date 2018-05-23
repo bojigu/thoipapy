@@ -54,8 +54,12 @@ Usage as a standalone predictor
     TMD_seq = "MALTVIAGLVVIFMMLGGTFL"
     full_seq = "MVQNECRPCHENCTQGCKGPELQDCLGQTLVLIGKTHLTMALTVIAGLVVIFMMLGGTFLYWRGRRIQNKRAMRRYLERGESIEPLDPSEKANKVLA"
     predictions_folder = "/path/to/your/output/folder"
-    thoipapy.run_THOIPA_prediction(protein_name, TMD_seq, full_seq, predictions_folder)
+    blastp_executable = "blastp"
+    phobius_executable = "phobius"
+    freecontact_executable = "freecontact"
+    thoipapy.run_THOIPA_prediction(protein_name, TMD_seq, full_seq, predictions_folder, phobius_executable, freecontact_executable)
 
+Standalone prediction is currently only available on Linux. The operating system needs to have freecontact, phobius, and NCBI_BLAST installed. The biopython wrapper for NCBIblast should be working.
 
 Send us an email immediately if you have any troubles during installation or usage as a standalone predictor.
 
