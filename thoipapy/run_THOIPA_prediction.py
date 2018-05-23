@@ -48,6 +48,15 @@ def run_THOIPA_prediction(s,protein_name, TMD_seq, full_seq, predictions_folder)
     Saved files and figures
     -----------------------
 
+
+    Usage
+    -----
+    import thoipapy
+    protein_name = "1c17_A"
+    TMD_seq = "AAVMMGLAAIGAAIGIGILG"
+    full_seq = "MENLNMDLLYMAAAVMMGLAAIGAAIGIGILGGKFLEGAARQPDLIPLLRTQFFIVMGLVDAIPMIAVGLGLYVMFAVA"
+    predictions_folder = "/path/to/your/output/folder"
+    thoipapy.run_THOIPA_prediction(protein_name, TMD_seq, full_seq, predictions_folder)
     """
     # default model is the combined ETRA, NMR, crystal non-redundant dataset (set05)
     set_number = 5

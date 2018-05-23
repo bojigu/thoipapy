@@ -1,0 +1,7 @@
+include readme.rst
+include manifest.in
+include license.txt
+recursive-include ML_model *.lpkl
+recursive-include setting *.xlsx
+recursive-include setting *.txt
+prune figs

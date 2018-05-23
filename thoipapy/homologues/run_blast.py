@@ -12,7 +12,7 @@ def extract_NCBI_homolgous_as_xml(acc,s,logging,pathdict):
     #if protein == "P02724":
     myEntrezQuery = "Homo sapiens[Organism]"
     fasta_string = open(filename).read()
-    result_handle = NCBIWWW.qblast("blastp", "nr", fasta_string, expect=10,hitlist_size=10000)
+    result_handle = NCBIWWW.qblast("blastp", "nr", fasta_string, expect=10,  hitlist_size=10000)
     myblast="/scratch2/zeng/pythonscript/%s.xml" %protein
     save_file = open(myblast, "w")
     save_file.write(result_handle.read())
