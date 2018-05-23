@@ -1,7 +1,6 @@
 include readme.rst
 include manifest.in
 include license.txt
-recursive-include ML_model *.lpkl
-recursive-include setting *.xlsx
-recursive-include setting *.txt
-prune figs
+recursive-include thoipapy/ML_model *.lpkl
+recursive-include thoipapy/setting *.xlsx *.txt
+prune thoipapy/figs

@@ -15,7 +15,7 @@ setup(
     long_description=long_description,
     long_description_content_type='text/x-rst',
     url="https://github.com/bojigu/thoipapy",
-    download_url='https://github.com/bojigu/thoipapy/archive/0.0.0.tar.gz',
+    download_url='https://github.com/bojigu/thoipapy/archive/0.0.1.tar.gz',
     license='MIT',
     classifiers=
     [
@@ -31,11 +31,11 @@ setup(
     {
     'BoZeng': 'http://frishman.wzw.tum.de/index.php?id=50',
     'FrishmanLab': 'http://frishman.wzw.tum.de/index.php?id=2',
-    'LangoschLab': 'http://cbp.wzw.tum.de/index.php?id=9',
+    'LangoschLab': 'http://cbp.wzw.tum.de/index.php?id=10',
     "TU_Munich": "https://www.tum.de"
     },
     keywords="bioinformatics protein transmembrane residue conservation coevolution covariance evolutionary "
              "couplings polarity hydrophobicity randomforest machinelearning interface LIPS evolution",
     packages=find_packages(),
-    version = "0.0.0",
+    version = "0.0.1",
     )

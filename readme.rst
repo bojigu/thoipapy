@@ -1,4 +1,4 @@
-.. image:: https://raw.githubusercontent.com/bojigu/thoipapy/master/thoipapy/docs/THOIPApy_logo.png)
+.. image:: https://raw.githubusercontent.com/bojigu/thoipapy/master/thoipapy/docs/THOIPApy_logo.png
 
 THOIPApy
 ========
@@ -59,13 +59,14 @@ Usage as a standalone predictor
     freecontact_executable = "freecontact"
     thoipapy.run_THOIPA_prediction(protein_name, TMD_seq, full_seq, predictions_folder, phobius_executable, freecontact_executable)
 
-Standalone prediction is currently only available on Linux. The operating system needs to have freecontact, phobius, and NCBI_BLAST installed. The biopython wrapper for NCBIblast should be working.
-
-Send us an email immediately if you have any troubles during installation or usage as a standalone predictor.
+* Standalone prediction is currently only available on Linux. 
+* The operating system needs to have freecontact, phobius, and NCBI_BLAST installed. 
+* The biopython wrapper for NCBIblast should be installed.
+* Send us an email if you have any troubles during standalone usage.
 
 **Example Output**
 
-.. image:: https://raw.githubusercontent.com/bojigu/thoipapy/master/thoipapy/docs/standalone_heatmap_example.png)
+.. image:: https://raw.githubusercontent.com/bojigu/thoipapy/master/thoipapy/docs/standalone_heatmap_example.png
 
 Training the machine learning algorithm using THOIPApy
 ------------------------------------------------------
@@ -102,7 +103,7 @@ Further coding and supervision: `Mark Teese`__ of the `Langosch lab`__, TU-Munic
 .. _BoWebsite: http://frishman.wzw.tum.de/index.php?id=50
 .. _FrishmanWebsite: http://frishman.wzw.tum.de/index.php?id=2
 .. _MarkWebsite: http://cbp.wzw.tum.de/index.php?id=49&L=1
-.. _LangoschWebsite: http://cbp.wzw.tum.de/index.php?id=9
+.. _LangoschWebsite: http://cbp.wzw.tum.de/index.php?id=10
 __ BoWebsite_
 __ FrishmanWebsite_
 __ MarkWebsite_
