@@ -1650,11 +1650,11 @@ def convert_bind_data_to_csv(s, df_set, logging):
             sys.stdout.write("{} convert_bind_data_to_csv failed. {} not found".format(acc, bind_file))
 
 
-                         ###################################################################################################
-                         #                                                                                                 #
-                         #            combining train data and add physical parameters                                     #
-                         #                                                                                                 #
-                         ###################################################################################################
+###################################################################################################
+#                                                                                                 #
+#            combining train data and add physical parameters                                     #
+#                                                                                                 #
+###################################################################################################
 
 def combine_all_features_mult_prot(s, df_set, logging):
     """Run combine_all_features for all proteins in a list.
@@ -1690,13 +1690,13 @@ def combine_all_features_mult_prot(s, df_set, logging):
         alignments_dir = os.path.join(s["homologues_folder"], "alignments", database)
         alignment_summary_csv = os.path.join(alignments_dir, "{}.surr{}.gaps{}.alignment_summary.csv".format(acc, s["num_of_sur_residues"], s["max_n_gaps_in_TMD_subject_seq"]))
         full_seq_fasta_file = os.path.join(s["Protein_folder"], database, "{}.fasta".format(acc))
-        full_seq_phobius_output_file = os.path.join(s["Protein_folder"], database, "{}.phobius".format(acc))
-        combine_all_features(s, full_seq,acc, database, TMD_seq, TMD_start, feature_combined_file, entropy_file, pssm_csv, lipo_csv, freecontact_parsed_csv, relative_position_file, LIPS_parsed_csv, motifs_file, alignment_summary_csv,full_seq_fasta_file,full_seq_phobius_output_file, logging)
+        phobius_outfile = os.path.join(s["Protein_folder"], database, "{}.phobius".format(acc))
+        combine_all_features(s, full_seq,acc, database, TMD_seq, TMD_start, feature_combined_file, entropy_file, pssm_csv, lipo_csv, freecontact_parsed_csv, relative_position_file, LIPS_parsed_csv, motifs_file, alignment_summary_csv,full_seq_fasta_file,phobius_outfile, logging)
 
 
 
 
-def combine_all_features(s, full_seq, acc, database, TMD_seq, TMD_start, feature_combined_file, entropy_file, pssm_csv, lipo_csv, freecontact_parsed_csv, relative_position_file, LIPS_parsed_csv, motifs_file, alignment_summary_csv,full_seq_fasta_file,full_seq_phobius_output_file, logging):
+def combine_all_features(s, full_seq, acc, database, TMD_seq, TMD_start, feature_combined_file, entropy_file, pssm_csv, lipo_csv, freecontact_parsed_csv, relative_position_file, LIPS_parsed_csv, motifs_file, alignment_summary_csv,full_seq_fasta_file,phobius_outfile, logging):
     """Combine all the training features for a particular protein.
 
     Parameters
@@ -1799,7 +1799,7 @@ def combine_all_features(s, full_seq, acc, database, TMD_seq, TMD_start, feature
     df_features_single_protein["n_homologues"] = n_homologues
     # add if the protein is multipass or singlepass
     # TEMPORARY! NEEDS TO BE REPLACED WITH A TOPOLOGY PREDICTOR LATER
-    df_features_single_protein["n_TMDs"] = return_num_tmd(s, acc,  full_seq, full_seq_fasta_file,full_seq_phobius_output_file, logging)
+    df_features_single_protein["n_TMDs"] = return_num_tmd(s, acc,  full_seq, full_seq_fasta_file,phobius_outfile, logging)
     # if database == "crystal":
     #     df_features_single_protein["n_TMDs"] = 2
     # # elif database == "NMR":
@@ -1818,13 +1818,15 @@ def combine_all_features(s, full_seq, acc, database, TMD_seq, TMD_start, feature
     df_features_single_protein.to_csv(feature_combined_file)
     logging.info("{} combine_all_features_mult_prot finished ({})".format(acc, feature_combined_file))
 
-def return_num_tmd(s, acc,  full_seq, full_seq_fasta_file,full_seq_phobius_output_file,logging):
+def return_num_tmd(s, acc,  full_seq, full_seq_fasta_file,phobius_outfile,logging):
     """Calculate the number of TMDs for the protein using the phobius prediction algorithm.
 
     Important when mixing crystal dataset (multipass) with single-pass protein datasets.
     Gives the extra feature n_TMDs (number of TMDs) in the protein.
+    Helps the machine learning technique.
 
-    Helps the machine learning technique
+    Requires Phobius (http://phobius.sbc.su.se/data.html). Follow instructions in readme,
+    including link creation so "phobius" is recognised in the console.
 
     Parameters
     ----------
@@ -1844,28 +1846,31 @@ def return_num_tmd(s, acc,  full_seq, full_seq_fasta_file,full_seq_phobius_outpu
         f.write(">{}\n{}".format(acc, full_seq))
     f.close()
     if "Windows" in platform.system():
-
         logging.warning("phobius currently not run for Windows! Skipping phobius prediction.")
     else:
-        perl_dir = s["perl_dir"]
-        phobius_dir = s["phobius_dir"]
-        exect_str = "{} {} {}> {}".format(perl_dir, phobius_dir, full_seq_fasta_file, full_seq_phobius_output_file)
+        #perl_dir = s["perl_dir"]
+        #phobius_dir = s["phobius_dir"]
+        #exect_str = "{} {} {}> {}".format(perl_dir, phobius_dir, full_seq_fasta_file, phobius_outfile)
+        # use sudo ln -s /path/to/phobius.pl /usr/local/bin/phobius to create a link,
+        # so the perl and phobius directory are not necessary
+        exect_str = "phobius {}> {}".format(full_seq_fasta_file, phobius_outfile)
         command = utils.Command(exect_str)
         command.run(timeout=400, log_stderr=False)
-    if os.path.exists(full_seq_phobius_output_file):
+    if os.path.exists(phobius_outfile):
         tm_num = 0
-        with open(full_seq_phobius_output_file) as file:
+        with open(phobius_outfile) as file:
             for line in file:
                 if re.search('TRANSMEM', line):
                     tm_num = tm_num + 1
 
+        # Options are only 0 (no TMD predicted by phobius), 1, 2, 3, or 4 (4 or more TMDs predicted by phobius)
         if tm_num > 4:
             tm_num = 4
         return tm_num
     else:
         #sys.stdout.write("no phobius output file found, try to check the reason")
         #return None
-        raise FileNotFoundError("{} Phobius output not found ({})".format(acc, full_seq_phobius_output_file))
+        raise FileNotFoundError("{} Phobius output not found ({})".format(acc, phobius_outfile))
 
 
 def normalise_features(df_features_single_protein):

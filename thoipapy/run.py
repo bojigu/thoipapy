@@ -279,7 +279,7 @@ if __name__ == "__main__":
 
     ###################################################################################################
     #                                                                                                 #
-    #            DEPRECATED SINGLE PROTEIN STUFF, REPLACED BY run_THOIPA_prediction.py                #
+    #            DEPRECATED SINGLE PROTEIN STUFF, REPLACED BY thoipa.py                #
     #                                                                                                 #
     ###################################################################################################
     running_single_protein = False
