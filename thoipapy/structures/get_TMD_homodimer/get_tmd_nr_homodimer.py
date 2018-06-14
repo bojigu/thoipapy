@@ -719,6 +719,9 @@ def calc_av_frac_DI_single_prot(sub_dict, s, logging, i, XI, is_first_TMD, df_se
     InterResList = dfc.loc[dfc.interface == 1].index
     NoninterResList = list(dfc.loc[dfc.interface == 0].index)
 
+    # get dataframe of distances between the residues
+
+
     if remove_residues_outside_interface_region:
         #logging.info("orig NoninterResList = {}".format(NoninterResList))
         lowest_interface_res = InterResList.min()
@@ -763,6 +766,49 @@ def calc_av_frac_DI_single_prot(sub_dict, s, logging, i, XI, is_first_TMD, df_se
     TMD_start_of_last_TMD = TMD_start
 
     return sub_dict, InterResList_of_last_TMD, NoninterResList_of_last_TMD, TMD_start_of_last_TMD
+
+def get_array_dist_separating_res_in_list(pos_list):
+    """Get array of the distance separating the residues in a list.
+
+    Parameters
+    ----------
+    pos_list : list
+        list of positions that are interacting, e.g [28,29,32,33,34,36]
+
+    Returns
+    -------
+    dist_2D_arr np.ndarray
+        numpy array showing the distances between all combinations in the list of residues.
+        E.g.
+        array([[ nan,   1.,   4.,   5.,   6.,   8.],
+               [  1.,  nan,   3.,   4.,   5.,   7.],
+               [  4.,   3.,  nan,   1.,   2.,   4.],
+               [  5.,   4.,   1.,  nan,   1.,   3.],
+               [  6.,   5.,   2.,   1.,  nan,   2.],
+               [  8.,   7.,   4.,   3.,   2.,  nan]])
+
+        the dataframe equivalent looks like this:
+             28   29   32   33   34   36
+        28  NaN  1.0  4.0  5.0  6.0  8.0
+        29  1.0  NaN  3.0  4.0  5.0  7.0
+        32  4.0  3.0  NaN  1.0  2.0  4.0
+        33  5.0  4.0  1.0  NaN  1.0  3.0
+        34  6.0  5.0  2.0  1.0  NaN  2.0
+        36  8.0  7.0  4.0  3.0  2.0  NaN
+
+    """
+    # make empty array
+    le = len(pos_list)
+    dist_2D_arr = np.zeros(le*le).reshape(le, le)
+
+    # calculate distances for each position separately. Add to array
+    for i, pos in enumerate(pos_list):
+        arr = np.array(pos_list)
+        arr = abs(arr - pos)
+        dist_2D_arr[i, :] = arr
+    # replace 0 with nan, so that it doesn't count in the averages
+    dist_2D_arr[dist_2D_arr == 0] = np.nan
+    return dist_2D_arr
 
 def create_average_fraction_DI_file_OLD_PAIRWISE_VERSION(s, dfset, logging):
     logging.info('create_average_fraction_DI_file starting')

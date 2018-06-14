@@ -13,9 +13,10 @@ import os
 from sklearn.externals import joblib
 import pickle
 import time
-#from korbinian.utils import convert_truelike_to_bool, convert_falselike_to_bool, Log_Only_To_Console
-from thoipapy.utils import convert_truelike_to_bool, convert_falselike_to_bool, Log_Only_To_Console
+from korbinian.utils import convert_truelike_to_bool, convert_falselike_to_bool, Log_Only_To_Console
+#from thoipapy.utils import convert_truelike_to_bool, convert_falselike_to_bool, Log_Only_To_Console
 from multiprocessing import Pool
+from sklearn.metrics import precision_recall_curve
 
 # intersect function
 def intersect(a, b):
@@ -565,7 +566,9 @@ def LOO_single_prot(d):
     fpr, tpr, thresholds = roc_curve(y_test, prediction, drop_intermediate=False)
     roc_auc = auc(fpr, tpr)
 
-    auc_dict = {"fpr": fpr, "tpr": tpr, "auc": roc_auc}
+    precision, recall, thresholds_PRC = precision_recall_curve(y_test, prediction)
+
+    auc_dict = {"fpr": fpr, "tpr": tpr, "auc": roc_auc, "precision" : precision, "recall" : recall}
 
     if database == "crystal" or database == "NMR":
         # low closest distance means high importance at interface
