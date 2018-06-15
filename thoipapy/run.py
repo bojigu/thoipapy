@@ -107,7 +107,7 @@ if __name__ == "__main__":
             pass
 
         if s["retrospective_coevolution"]:
-            #thoipapy.structures.get_TMD_homodimer.get_tmd_nr_homodimer.create_average_fraction_DI_file(s, dfset, logging)
+            thoipapy.structures.get_TMD_homodimer.get_tmd_nr_homodimer.create_average_fraction_DI_file(s, dfset, logging)
             thoipapy.structures.get_TMD_homodimer.get_tmd_nr_homodimer.create_average_fraction_DI_file_OLD_PAIRWISE_VERSION(s, dfset, logging)
 
         if s["calc_NMR_closedist"] :

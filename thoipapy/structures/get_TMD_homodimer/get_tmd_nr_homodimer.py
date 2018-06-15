@@ -19,6 +19,7 @@ from scipy.stats import ttest_ind
 from scipy.optimize import leastsq
 from pytoxr.mathfunctions import sine_perfect_helix, residuals
 from thoipapy.utils import create_colour_lists
+from korbinian.utils import pn, aaa
 
 def download_xml_get_alphahelix_get_homo_pair(s, logging):
     """
@@ -307,7 +308,7 @@ def get_pivot_table_coev_data(s, i, XI, df_set):
     return dfp
 
 def calc_coev_vs_res_dist(s, df_set, logging):
-    """Calculate mean oevolution scores for each residue distance
+    """Calculate mean coevolution scores for each residue distance
 
     Parameters
     ----------
@@ -827,30 +828,61 @@ def create_average_fraction_DI_file_OLD_PAIRWISE_VERSION(s, dfset, logging):
     TMD_start_of_last_TMD = None
     crystal_NMR_interpair_file = os.path.join(s["set_results_folder"], "Average_Fraction_DI","Crystal_NMR_interpair.csv")
     pd_int = pd.read_csv(crystal_NMR_interpair_file, engine="python")
+    """pd_int looks like this    
+    acc	    inter1	inter2
+    1orqC4	14	    20
+    1orqC4	14	    23
+    1orqC4	14	    24
+    1orqC4	18	    24
+    1xioA4	1	    2
+    1xioA4	5	    6
+    """
+
+    # get list of proteins from set04
+    # MT NOTE: Why hard-code the use of set04 here?
+    # why sort by the TMD_seq rather than the length of the TMD_seq?
     set04_file = os.path.join(s["sets_folder"],"set04_crystal_NMR.xlsx")
     df_set = pd.read_excel(set04_file,sheetname="proteins")
     df_set.index = df_set['TMD_seq'].str.len()
     df_set = df_set.sort_index(ascending=False).reset_index(drop=True)
     sub_dict = {}
+    NoninterPairList_dict = {}
+    InterPairList_dict = {}
     for i in df_set.index:
+        acc = df_set.at[i, "acc"]
         sys.stdout.write(".")
         sys.stdout.flush()
         if i == 0:
             is_first_TMD = True
         else:
             is_first_TMD = False
-        sub_dict, InterPairList_of_last_TMD,NoninterPairList_of_last_TMD, TMD_start_of_last_TMD = calc_av_frac_DI_single_prot_struct(sub_dict, s,  pd_int,i,logging,  is_first_TMD,
+        sub_dict, InterPairList_of_last_TMD, NoninterPairList_of_last_TMD, TMD_start_of_last_TMD = calc_av_frac_DI_single_prot_struct(sub_dict, s,  pd_int,i,logging,  is_first_TMD,
                                                                                                                                     df_set,randomise_int_res, InterPairList_of_last_TMD,NoninterPairList_of_last_TMD,
                                                                                                                                     TMD_start_of_last_TMD,remove_residues_outside_interface_region)
         if randomise_int_res == True and is_first_TMD == True:
             # need to add the data for the first TMD, which was skipped above
             i = 0
             is_first_TMD = False
-            sub_dict, InterPairList_of_last_TMD,NoninterPairList_of_last_TMD, TMD_start_of_last_TMD = calc_av_frac_DI_single_prot_struct(sub_dict, s, pd_int,i, logging,  is_first_TMD,
+            sub_dict, InterPairList_of_last_TMD, NoninterPairList_of_last_TMD, TMD_start_of_last_TMD = calc_av_frac_DI_single_prot_struct(sub_dict, s, pd_int,i, logging,  is_first_TMD,
                                                                                                                                         df_set,randomise_int_res, InterPairList_of_last_TMD,NoninterPairList_of_last_TMD,
                                                                                                                                         TMD_start_of_last_TMD,remove_residues_outside_interface_region)
+        # save all lists of interacting and non-interacting pairs
+        InterPairList_dict[acc] = str(InterPairList_of_last_TMD)
+        NoninterPairList_dict[acc] = str(NoninterPairList_of_last_TMD)
+
     df_retro = pd.DataFrame(sub_dict).T
     df_retro.to_excel(writer, sheet_name="DI")
+
+    """Save lists of interacting or non-interacting residue pairs:
+    E.g. 
+            InterPair	                                 NonInterPair
+    1orqC4	[[14, 20], [14, 23], [14, 24], [18, 24]]	[[1, 2], [2, 1], [1, 3], [3, 1], [1, 4], [4, 1], [1, 5], [5, 1], ..........
+    1xioA4	[[1, 2], [5, 6], [12, 12], [16, 16]]	    [[1, 3], [3, 1], [1, 4], [4, 1], [1, 5], [5, 1], [1, 6], [6, 1], .............
+    """
+    InterPair_ser = pd.Series(InterPairList_dict)
+    NonInterPair_ser = pd.Series(NoninterPairList_dict)
+    df_res_list = pd.DataFrame([InterPair_ser, NonInterPair_ser], index=["InterPair", "NonInterPair"]).T
+    df_res_list.to_excel(writer, sheet_name="PairLists")
 
     create_quick_plot = True
     if create_quick_plot:
@@ -887,7 +919,7 @@ def create_average_fraction_DI_file_OLD_PAIRWISE_VERSION(s, dfset, logging):
     sys.stdout.write("\n")
     logging.info('create_average_fraction_DI_file finished')
 
-def calc_av_frac_DI_single_prot_struct(sub_dict, s,  pd_int,i, logging,  is_first_TMD, df_set,randomise_int_res, InterPairList_of_last_TMD,NoninterPairList_of_last_TMD, TMD_start_of_last_TMD,remove_residues_outside_interface_region):
+def calc_av_frac_DI_single_prot_struct(sub_dict, s,  pd_int,i, logging,  is_first_TMD, df_set,randomise_int_res, InterPairList_of_last_TMD, NoninterPairList_of_last_TMD, TMD_start_of_last_TMD,remove_residues_outside_interface_region):
     acc = df_set.loc[i,'acc']
     database = df_set.loc[i,'database']
     InterPairList= pd_int[["inter1", "inter2"]][pd_int["acc"] == acc].values.tolist()
@@ -897,7 +929,7 @@ def calc_av_frac_DI_single_prot_struct(sub_dict, s,  pd_int,i, logging,  is_firs
     lowest_interface_res = min(interlist)
     highest_interface_res = max(interlist)
     NoninterPairList = []
-    freecontact_file = os.path.join(s["features_folder"], "cumulative_coevolution", database,"{}.surr20.gaps5.freecontact.csv".format(acc))
+    freecontact_file = os.path.join(s["features_folder"], "cumulative_coevolution", database, "{}.surr20.gaps5.freecontact.csv".format(acc))
     inter_within8_dict = {}
 
     if os.path.isfile(freecontact_file):
@@ -956,7 +988,7 @@ def calc_av_frac_DI_single_prot_struct(sub_dict, s,  pd_int,i, logging,  is_firs
     NoninterPairList_of_last_TMD = NoninterPairList
 
 
-    return sub_dict, InterPairList_of_last_TMD,NoninterPairList_of_last_TMD, TMD_start_of_last_TMD
+    return sub_dict, InterPairList_of_last_TMD, NoninterPairList_of_last_TMD, TMD_start_of_last_TMD
 
 
 
