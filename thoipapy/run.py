@@ -107,7 +107,7 @@ if __name__ == "__main__":
             pass
 
         if s["retrospective_coevolution"]:
-            #thoipapy.structures.get_TMD_homodimer.get_tmd_nr_homodimer.calc_retrospective_coev_from_list_interf_res(s, dfset, logging)
+            thoipapy.structures.get_TMD_homodimer.get_tmd_nr_homodimer.calc_retrospective_coev_from_list_interf_res(s, dfset, logging)
             thoipapy.structures.get_TMD_homodimer.get_tmd_nr_homodimer.calc_retrospective_coev_from_struct_contacts(s, dfset, logging)
 
         if s["calc_NMR_closedist"] :

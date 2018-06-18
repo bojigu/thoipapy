@@ -540,72 +540,82 @@ def plot_coev_vs_res_dist(s, logging):
 def calc_retrospective_coev_from_list_interf_res(s, df_set, logging):
 
     logging.info('calc_retrospective_coev_from_list_interf_res starting')
-    retrospective_coev_xlsx = os.path.join(s["set_results_folder"], "{}_retrospective_coev.xlsx".format(s["setname"]))
-    writer = pd.ExcelWriter(retrospective_coev_xlsx)
 
-    randomise_int_res = False
-    remove_residues_outside_interface_region = False
-    logging.info("randomise_int_res = {}, remove_residues_outside_interface_region = {}".format(randomise_int_res, remove_residues_outside_interface_region))
-    InterResList_of_last_TMD = None
-    NoninterResList_of_last_TMD = None
-    TMD_start_of_last_TMD = None
-
-    for XI in ["MI", "DI"]:
-        sub_dict = {}
-
-        for i in df_set.index:
-            sys.stdout.write(".")
-            sys.stdout.flush()
-            if i == 0:
-                is_first_TMD = True
-            else:
-                is_first_TMD = False
-            sub_dict, InterResList_of_last_TMD, NoninterResList_of_last_TMD, TMD_start_of_last_TMD = calc_retrospective_coev_from_list_interf_res_single_prot(sub_dict, s, logging, i, XI, is_first_TMD, df_set,
-                                                                                                                                                              randomise_int_res, InterResList_of_last_TMD,
-                                                                                                                                                              NoninterResList_of_last_TMD, TMD_start_of_last_TMD,
-                                                                                                                                                              remove_residues_outside_interface_region)
+    for randomise_int_res in [False, True]:
 
         if randomise_int_res == True:
-            # need to add the data for the first TMD, which was skipped above
-            i = 0
-            is_first_TMD = False
-            sub_dict, InterResList_of_last_TMD, NoninterResList_of_last_TMD, TMD_start_of_last_TMD = calc_retrospective_coev_from_list_interf_res_single_prot(sub_dict, s, logging, i, XI, is_first_TMD, df_set,
-                                                                                                                                                              randomise_int_res, InterResList_of_last_TMD,
-                                                                                                                                                              NoninterResList_of_last_TMD, TMD_start_of_last_TMD,
-                                                                                                                                                              remove_residues_outside_interface_region)
-        # save each MI and DI separately
-        df_retro = pd.DataFrame(sub_dict).T
-        df_retro.to_excel(writer, sheet_name = XI)
-
-        create_quick_plot = True
-        if create_quick_plot:
-            retrospective_coev_plot = retrospective_coev_xlsx[:-5] + XI + ".png"
-            df_retro["inter_larger"] = df_retro.AverageInter > df_retro.AverageNoninter
-            fig, ax = plt.subplots()
-            df_retro[["AverageInter", "AverageNoninter"]].plot(kind="bar", ax=ax)
-            fig.tight_layout()
-            fig.savefig(retrospective_coev_plot)
-
-        # drop any (rare) rows without data, where the interface region was outside the length of the TMD?
-        df_retro.dropna(how="any", inplace=True)
-
-        vc = df_retro["inter_larger"].value_counts()
-        if True in vc.index.tolist():
-            n_TMDs_with_higher_int = vc[True]
+            retrospective_coev_from_list_interf_res_xlsx = os.path.join(s["set_results_folder"], "retrospective", "{}_retrospective_coev_from_list_interf_res_random.xlsx".format(s["setname"]))
         else:
-            n_TMDs_with_higher_int = 0
+            retrospective_coev_from_list_interf_res_xlsx = os.path.join(s["set_results_folder"], "retrospective", "{}_retrospective_coev_from_list_interf_res.xlsx".format(s["setname"]))
 
-        perc_higher_int = n_TMDs_with_higher_int / df_retro.shape[0]
-        logging.info("\n{:.2f} % ({}/{}) of TMDs have higher {} of interface than non-interface".format(perc_higher_int*100, n_TMDs_with_higher_int, df_retro.shape[0], XI))
+        if not os.path.exists(os.path.join(s["set_results_folder"], "retrospective")):
+            os.makedirs(os.path.join(s["set_results_folder"], "retrospective"))
+        writer = pd.ExcelWriter(retrospective_coev_from_list_interf_res_xlsx)
 
-        logging.info("\n\nmean values\n{}\n".format(df_retro.mean()))
+        #randomise_int_res = False
+        remove_residues_outside_interface_region = False
+        logging.info("randomise_int_res = {}, remove_residues_outside_interface_region = {}".format(randomise_int_res, remove_residues_outside_interface_region))
+        InterResList_of_last_TMD = None
+        NoninterResList_of_last_TMD = None
+        TMD_start_of_last_TMD = None
 
-        t_value, p_value = ttest_ind(df_retro.AverageInter, df_retro.AverageNoninter)
+        for XI in ["MI", "DI"]:
+            sub_dict = {}
 
-        #logging.info("remove_residues_outside_interface_region = {}".format(remove_residues_outside_interface_region))
-        logging.info("\np-value for average {} coevolution of interface vs non-interface = {:.03f}".format(XI, p_value))
+            for i in df_set.index:
+                sys.stdout.write(".")
+                sys.stdout.flush()
+                if i == 0:
+                    is_first_TMD = True
+                else:
+                    is_first_TMD = False
+                sub_dict, InterResList_of_last_TMD, NoninterResList_of_last_TMD, TMD_start_of_last_TMD = calc_retrospective_coev_from_list_interf_res_single_prot(sub_dict, s, logging, i, XI, is_first_TMD, df_set,
+                                                                                                                                                                  randomise_int_res, InterResList_of_last_TMD,
+                                                                                                                                                                  NoninterResList_of_last_TMD, TMD_start_of_last_TMD,
+                                                                                                                                                                  remove_residues_outside_interface_region)
 
-    writer.close()
+            if randomise_int_res == True:
+                # need to add the data for the first TMD, which was skipped above
+                i = 0
+                is_first_TMD = False
+                sub_dict, InterResList_of_last_TMD, NoninterResList_of_last_TMD, TMD_start_of_last_TMD = calc_retrospective_coev_from_list_interf_res_single_prot(sub_dict, s, logging, i, XI, is_first_TMD, df_set,
+                                                                                                                                                                  randomise_int_res, InterResList_of_last_TMD,
+                                                                                                                                                                  NoninterResList_of_last_TMD, TMD_start_of_last_TMD,
+                                                                                                                                                                  remove_residues_outside_interface_region)
+            # save each MI and DI separately
+            df_retro = pd.DataFrame(sub_dict).T
+            df_retro.to_excel(writer, sheet_name = XI)
+
+            create_quick_plot = True
+            if create_quick_plot:
+                retrospective_coev_plot = retrospective_coev_from_list_interf_res_xlsx[:-5] + XI + ".png"
+                df_retro["inter_larger"] = df_retro.AverageInter > df_retro.AverageNoninter
+                fig, ax = plt.subplots()
+                df_retro[["AverageInter", "AverageNoninter"]].plot(kind="bar", ax=ax)
+                fig.tight_layout()
+                fig.savefig(retrospective_coev_plot)
+
+            # drop any (rare) rows without data, where the interface region was outside the length of the TMD?
+            df_retro.dropna(how="any", inplace=True)
+
+            vc = df_retro["inter_larger"].value_counts()
+            if True in vc.index.tolist():
+                n_TMDs_with_higher_int = vc[True]
+            else:
+                n_TMDs_with_higher_int = 0
+
+            perc_higher_int = n_TMDs_with_higher_int / df_retro.shape[0]
+            logging.info("\n{:.2f} % ({}/{}) of TMDs have higher {} of interface than non-interface".format(perc_higher_int*100, n_TMDs_with_higher_int, df_retro.shape[0], XI))
+
+            logging.info("\n\nmean values\n{}\n".format(df_retro.mean()))
+
+            t_value, p_value = ttest_ind(df_retro.AverageInter, df_retro.AverageNoninter)
+
+            #logging.info("remove_residues_outside_interface_region = {}".format(remove_residues_outside_interface_region))
+            logging.info("\np-value for average {} coevolution of interface vs non-interface = {:.03f}".format(XI, p_value))
+
+        writer.close()
+
     sys.stdout.write("\n")
     logging.info('calc_retrospective_coev_from_list_interf_res finished')
 
@@ -845,7 +855,14 @@ def calc_retrospective_coev_from_struct_contacts(s, dfset, logging):
      - creates list of non-interacting pairs (NonInterPairList)
 
     REPEATS THE ABOVE WITH RANDOM POSITIONS, TAKEN FROM A DIFFERENT TMD IN THE LIST OF PROTEINS/TMDS TO TEST
+     - sorts the protein list by length of TMD (ascending, shorter TMDs first)
+     - for each protein, saves contact positions from last TMD for use in calculating mean coevolution, etc
+     - note that the output InterPairList is the real one, which is then applied to the next TMD
 
+    FOR THE FIRST TMD
+     - skipped in first round of iteration as no positions from prev TMD available
+     - re-run separately afterwards
+     - ANY CONTACT POSITIONS FROM PREV TMD THAT ARE LONGER THAN CURRENT TMD ARE EXCLUDED! (see InterPairList_rand creation)
 
 
     Parameters
@@ -863,138 +880,124 @@ def calc_retrospective_coev_from_struct_contacts(s, dfset, logging):
     -------
 
     """
-    logging.info('calc_retrospective_coev_from_list_interf_res starting')
-    #retrospective_coev_xlsx = os.path.join(s["set_results_folder"], "set04_retrospective_coev.xlsx")
-    randomise_int_res = True
-    if randomise_int_res == True:
-        retrospective_coev_xlsx = os.path.join(s["set_results_folder"], "set04_randomise_retrospective_coev.xlsx")
-        writer = pd.ExcelWriter(retrospective_coev_xlsx)
-    else:
-        retrospective_coev_xlsx = os.path.join(s["set_results_folder"], "set04_retrospective_coev.xlsx")
-        writer = pd.ExcelWriter(retrospective_coev_xlsx)
-    remove_residues_outside_interface_region = False
-    logging.info("randomise_int_res = {}, remove_residues_outside_interface_region = {}".format(randomise_int_res, remove_residues_outside_interface_region))
-    InterPairList_of_last_TMD = None
-    NonInterPairList_of_last_TMD = None
-    TMD_start_of_last_TMD = None
-    crystal_NMR_interpair_file = os.path.join(s["set_results_folder"], "Average_Fraction_DI","Crystal_NMR_interpair.csv")
-    pd_int = pd.read_csv(crystal_NMR_interpair_file, engine="python")
-    """pd_int looks like this    
-    acc	    inter1	inter2
-    1orqC4	14	    20
-    1orqC4	14	    23
-    1orqC4	14	    24
-    1orqC4	18	    24
-    1xioA4	1	    2
-    1xioA4	5	    6
-    """
+    logging.info('calc_retrospective_coev_from_struct_contacts starting')
 
-    # get list of proteins from set04, sort by TMD length
-    # MT NOTE: Set04 (NMR and crystal) is currently hard-coded here
-    set04_file = os.path.join(s["sets_folder"],"set04_crystal_NMR.xlsx")
-    df_set = pd.read_excel(set04_file,sheetname="proteins")
+    for randomise_int_res in [False, True]:
 
-    print(df_set['TMD_seq'].str.len())
-    print("zzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzz")
-
-    df_set.index = df_set['TMD_seq'].str.len()
-    df_set = df_set.sort_index(ascending=True).reset_index(drop=True)
-
-    print(df_set['TMD_seq'].str.len())
-    print("yyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyy")
-    sub_dict = {}
-    NoninterPairList_dict = {}
-    InterPairList_dict = {}
-    for i in df_set.index:
-        acc = df_set.at[i, "acc"]
-        TMD_len = len(df_set.at[i, "TMD_seq"])
-        sys.stdout.write(".")
-        sys.stdout.flush()
-        if i == 0:
-            is_first_TMD = True
+        if randomise_int_res == True:
+            retrospective_coev_xlsx = os.path.join(s["set_results_folder"], "retrospective", "{}_retrospective_coev_from_struct_contact_random.xlsx".format(s["setname"]))
         else:
+            retrospective_coev_xlsx = os.path.join(s["set_results_folder"], "retrospective", "{}_retrospective_coev_from_struct_contact.xlsx".format(s["setname"]))
+
+        writer = pd.ExcelWriter(retrospective_coev_xlsx)
+        remove_residues_outside_interface_region = False
+        logging.info("randomise_int_res = {}, remove_residues_outside_interface_region = {}".format(randomise_int_res, remove_residues_outside_interface_region))
+        InterPairList_of_last_TMD = None
+        NonInterPairList_of_last_TMD = None
+        TMD_start_of_last_TMD = None
+        crystal_NMR_interpair_file = os.path.join(s["set_results_folder"], "Average_Fraction_DI","Crystal_NMR_interpair.csv")
+        pd_int = pd.read_csv(crystal_NMR_interpair_file, engine="python")
+        """pd_int looks like this    
+        acc	    inter1	inter2
+        1orqC4	14	    20
+        1orqC4	14	    23
+        1orqC4	14	    24
+        1orqC4	18	    24
+        1xioA4	1	    2
+        1xioA4	5	    6
+        """
+
+        # get list of proteins sort by TMD length
+        # note that this will probably only work for set04
+        dfset.index = dfset['TMD_seq'].str.len()
+        dfset = dfset.sort_index(ascending=True).reset_index(drop=True)
+        sub_dict = {}
+        NoninterPairList_dict = {}
+        InterPairList_dict = {}
+
+        for i in dfset.index:
+            acc = dfset.at[i, "acc"]
+            TMD_len = len(dfset.at[i, "TMD_seq"])
+            sys.stdout.write(".")
+            sys.stdout.flush()
+            if i == 0:
+                is_first_TMD = True
+            else:
+                is_first_TMD = False
+
+            #if not all([randomise_int_res == True and i == 0]):
+
+            #is_first_TMD = False
+            sub_dict, InterPairList, NoninterPairList, TMD_start_of_last_TMD = calc_retrospective_coev_from_struct_contacts_single_prot(sub_dict, s, pd_int, i, logging, is_first_TMD, dfset, randomise_int_res, InterPairList_of_last_TMD, NonInterPairList_of_last_TMD, TMD_start_of_last_TMD, remove_residues_outside_interface_region)
+            # save all lists of interacting and non-interacting pairs
+            InterPairList_dict[acc] = str(InterPairList)
+            NoninterPairList_dict[acc] = str(NoninterPairList)
+
+            InterPairList_of_last_TMD = InterPairList
+            #sys.stdout.write("IN LOOP InterPairList_of_last_TMD", InterPairList_of_last_TMD)
+            #sys.stdout.write("acc", acc, "IN LOOP TMD_len", len(dfset.at[i, "TMD_seq"]))
+            #InterPairList_of_last_TMD_max = np.array(InterPairList_of_last_TMD).max()
+            #NonInterPairList_of_last_TMD_max = np.array(NonInterPairList_of_last_TMD).max()
+            NonInterPairList_of_last_TMD = NoninterPairList
+
+
+        if randomise_int_res == True:
+            # need to add the data for the first TMD, which was skipped above
+            i = 0
             is_first_TMD = False
-            InterPairList_of_last_TMD_max = np.array(InterPairList_of_last_TMD).max()
-            NonInterPairList_of_last_TMD_max = np.array(NonInterPairList_of_last_TMD).max()
-            print("InterPairList_of_last_TMD_max", InterPairList_of_last_TMD_max, "NonInterPairList_of_last_TMD_max", NonInterPairList_of_last_TMD_max, "TMD_len", TMD_len)
-            TMD_len = len(df_set.at[i, "TMD_seq"])
-            print("TMD_len", TMD_len)
-        #if not all([randomise_int_res == True and i == 0]):
+            logging.info("Randomisation is True. All other proteins finished. Starting first TMD, using the contacts from the last (longest) TMD above.")
+            sub_dict, InterPairList, NoninterPairList, TMD_start_of_last_TMD = calc_retrospective_coev_from_struct_contacts_single_prot(sub_dict, s, pd_int, i, logging, is_first_TMD, dfset, randomise_int_res, InterPairList_of_last_TMD, NonInterPairList_of_last_TMD, TMD_start_of_last_TMD, remove_residues_outside_interface_region)
 
-        #is_first_TMD = False
-        sub_dict, InterPairList, NoninterPairList, TMD_start_of_last_TMD = calc_retrospective_coev_from_struct_contacts_single_prot(sub_dict, s, pd_int, i, logging, is_first_TMD, df_set, randomise_int_res, InterPairList_of_last_TMD, NonInterPairList_of_last_TMD, TMD_start_of_last_TMD, remove_residues_outside_interface_region)
-        # save all lists of interacting and non-interacting pairs
-        InterPairList_dict[acc] = str(InterPairList)
-        NoninterPairList_dict[acc] = str(NoninterPairList)
+        df_retro = pd.DataFrame(sub_dict).T
+        df_retro.to_excel(writer, sheet_name="DI")
 
-        InterPairList_of_last_TMD = InterPairList
-        NonInterPairList_of_last_TMD = NoninterPairList
+        """Save lists of interacting or non-interacting residue pairs:
+        E.g. 
+                InterPair	                                 NonInterPair
+        1orqC4	[[14, 20], [14, 23], [14, 24], [18, 24]]	[[1, 2], [2, 1], [1, 3], [3, 1], [1, 4], [4, 1], [1, 5], [5, 1], ..........
+        1xioA4	[[1, 2], [5, 6], [12, 12], [16, 16]]	    [[1, 3], [3, 1], [1, 4], [4, 1], [1, 5], [5, 1], [1, 6], [6, 1], .............
+        """
+        InterPair_ser = pd.Series(InterPairList_dict)
+        NonInterPair_ser = pd.Series(NoninterPairList_dict)
+        df_res_list = pd.DataFrame([InterPair_ser, NonInterPair_ser], index=["InterPair", "NonInterPair"]).T
+        df_res_list.to_excel(writer, sheet_name="PairLists")
 
+        create_quick_plot = True
+        if create_quick_plot:
+            retrospective_coev_plot = retrospective_coev_xlsx[:-5]  + "DI.png"
+            df_retro["inter_larger"] = df_retro.AverageInter > df_retro.AverageNoninter
+            fig, ax = plt.subplots()
+            df_retro[["AverageInter", "AverageNoninter"]].plot(kind="bar", ax=ax)
+            fig.tight_layout()
+            fig.savefig(retrospective_coev_plot)
 
-    if randomise_int_res == True:
-        # need to add the data for the first TMD, which was skipped above
-        i = 0
-        acc = df_set.at[i, "acc"]
-        is_first_TMD = False
-        TMD_len = len(df_set.at[i, "TMD_seq"])
-        print("TMD_len", TMD_len)
-        print("InterPairList_of_last_TMD", InterPairList_of_last_TMD)
-        print("starting first TMD")
-        sub_dict, InterPairList, NoninterPairList, TMD_start_of_last_TMD = calc_retrospective_coev_from_struct_contacts_single_prot(sub_dict, s, pd_int, i, logging, is_first_TMD, df_set, randomise_int_res, InterPairList_of_last_TMD, NonInterPairList_of_last_TMD, TMD_start_of_last_TMD, remove_residues_outside_interface_region)
-        print("real InterPairList of the first TMD", InterPairList)
+        # drop any (rare) rows without data, where the interface region was outside the length of the TMD?
+        df_retro.dropna(how="any", inplace=True)
 
+        vc = df_retro["inter_larger"].value_counts()
+        if True in vc.index.tolist():
+            n_TMDs_with_higher_int = vc[True]
+        else:
+            n_TMDs_with_higher_int = 0
 
+        perc_higher_int = n_TMDs_with_higher_int / df_retro.shape[0]
+        logging.info(
+            "\n{:.2f} % ({}/{}) of TMDs have higher DI of interface than non-interface".format(perc_higher_int * 100,
+                                                                                               n_TMDs_with_higher_int,
+                                                                                               df_retro.shape[0]))
 
-    df_retro = pd.DataFrame(sub_dict).T
-    df_retro.to_excel(writer, sheet_name="DI")
+        logging.info("\n\nmean values\n{}\n".format(df_retro.mean()))
 
-    """Save lists of interacting or non-interacting residue pairs:
-    E.g. 
-            InterPair	                                 NonInterPair
-    1orqC4	[[14, 20], [14, 23], [14, 24], [18, 24]]	[[1, 2], [2, 1], [1, 3], [3, 1], [1, 4], [4, 1], [1, 5], [5, 1], ..........
-    1xioA4	[[1, 2], [5, 6], [12, 12], [16, 16]]	    [[1, 3], [3, 1], [1, 4], [4, 1], [1, 5], [5, 1], [1, 6], [6, 1], .............
-    """
-    InterPair_ser = pd.Series(InterPairList_dict)
-    NonInterPair_ser = pd.Series(NoninterPairList_dict)
-    df_res_list = pd.DataFrame([InterPair_ser, NonInterPair_ser], index=["InterPair", "NonInterPair"]).T
-    df_res_list.to_excel(writer, sheet_name="PairLists")
+        t_value, p_value = ttest_ind(df_retro.AverageInter, df_retro.AverageNoninter)
 
-    create_quick_plot = True
-    if create_quick_plot:
-        retrospective_coev_plot = retrospective_coev_xlsx[:-5]  + "DI.png"
-        df_retro["inter_larger"] = df_retro.AverageInter > df_retro.AverageNoninter
-        fig, ax = plt.subplots()
-        df_retro[["AverageInter", "AverageNoninter"]].plot(kind="bar", ax=ax)
-        fig.tight_layout()
-        fig.savefig(retrospective_coev_plot)
+        # logging.info("remove_residues_outside_interface_region = {}".format(remove_residues_outside_interface_region))
+        logging.info("\np-value for average DI coevolution of interface vs non-interface = {:.03f}".format( p_value))
 
-    # drop any (rare) rows without data, where the interface region was outside the length of the TMD?
-    df_retro.dropna(how="any", inplace=True)
-
-    vc = df_retro["inter_larger"].value_counts()
-    if True in vc.index.tolist():
-        n_TMDs_with_higher_int = vc[True]
-    else:
-        n_TMDs_with_higher_int = 0
-
-    perc_higher_int = n_TMDs_with_higher_int / df_retro.shape[0]
-    logging.info(
-        "\n{:.2f} % ({}/{}) of TMDs have higher DI of interface than non-interface".format(perc_higher_int * 100,
-                                                                                           n_TMDs_with_higher_int,
-                                                                                           df_retro.shape[0]))
-
-    logging.info("\n\nmean values\n{}\n".format(df_retro.mean()))
-
-    t_value, p_value = ttest_ind(df_retro.AverageInter, df_retro.AverageNoninter)
-
-    # logging.info("remove_residues_outside_interface_region = {}".format(remove_residues_outside_interface_region))
-    logging.info("\np-value for average DI coevolution of interface vs non-interface = {:.03f}".format( p_value))
-
-    writer.close()
+        writer.close()
     sys.stdout.write("\n")
-    logging.info('calc_retrospective_coev_from_list_interf_res finished')
+    logging.info('calc_retrospective_coev_from_struct_contacts finished')
 
-def calc_retrospective_coev_from_struct_contacts_single_prot(sub_dict, s, pd_int, i, logging, is_first_TMD, df_set, randomise_int_res, InterPairList_of_last_TMD, NonInterPairList_of_last_TMD, TMD_start_of_last_TMD, remove_residues_outside_interface_region):
+def calc_retrospective_coev_from_struct_contacts_single_prot(sub_dict, s, pd_int, i, logging, is_first_TMD, dfset, randomise_int_res, InterPairList_of_last_TMD, NonInterPairList_of_last_TMD, TMD_start_of_last_TMD, remove_residues_outside_interface_region):
     """Calculate retrospective coevolution from structural data with interpair contacts, for a single protein.
 
     see docstring above for calc_retrospective_coev_from_struct_contacts
@@ -1007,7 +1010,7 @@ def calc_retrospective_coev_from_struct_contacts_single_prot(sub_dict, s, pd_int
     i
     logging
     is_first_TMD
-    df_set
+    dfset
     randomise_int_res
     InterPairList
     NonInterPairList
@@ -1018,9 +1021,9 @@ def calc_retrospective_coev_from_struct_contacts_single_prot(sub_dict, s, pd_int
     -------
 
     """
-    acc = df_set.loc[i,'acc']
-    database = df_set.loc[i,'database']
-    InterPairList= pd_int[["inter1", "inter2"]][pd_int["acc"] == acc].values.tolist()
+    acc = dfset.loc[i,'acc']
+    database = dfset.loc[i,'database']
+    InterPairList = pd_int[["inter1", "inter2"]][pd_int["acc"] == acc].values.tolist()
     interlist = []
     for x in InterPairList:
         interlist.extend(x)
@@ -1050,6 +1053,7 @@ def calc_retrospective_coev_from_struct_contacts_single_prot(sub_dict, s, pd_int
         f.close()
 
     if randomise_int_res == False:
+        logging.info("No randomisation. Real InterPairList for this TMD = {}".format(InterPairList))
         inter_DI = []
         ninter_DI = []
         for key, value in inter_within8_dict.items():
@@ -1071,15 +1075,21 @@ def calc_retrospective_coev_from_struct_contacts_single_prot(sub_dict, s, pd_int
         pass
 
     elif randomise_int_res == True and is_first_TMD != True:
-        # random interpair lists taken from a previous TMD
+        # delete any interpair positions from a previous TMD that are out of range for index of THIS TMD
+        # should only apply to the first TMD, which is processed at the end
         InterPairList_rand =[x for x in InterPairList_of_last_TMD if x[0] <= tmd_len and x[1] <= tmd_len ]
         NonInterPairList_rand = [x for x in NonInterPairList_of_last_TMD if x[0] <= tmd_len and x[1] <= tmd_len ]
 
+        logging.info("Randomisation of contacting residues for TMD # {} (acc = {})".format(i, acc))
+        logging.info("Real InterPairList for this TMD = {}".format(InterPairList))
+        logging.info("Random NonInterPairList_rand for TMD, taken from last TMD in list = {}".format(InterPairList_rand))
+
         orig_max = np.array(InterPairList_of_last_TMD).max()
         final_max_after_filtering_out_res_too_long = np.array(InterPairList_rand).max()
-        print(orig_max == final_max_after_filtering_out_res_too_long)
+
         if orig_max != final_max_after_filtering_out_res_too_long:
-            print("must be the last TMD, if sorting is done correctly")
+            sys.stdout.write("\nmust be the last TMD, if sorting is done correctly")
+            sys.stdout.write("\norig_max {} final_max_after_filtering_out_res_too_long {}".format(orig_max, final_max_after_filtering_out_res_too_long))
 
         #print(acc,InterPairList_rand,NonInterPairList_rand, "is first TMD", is_first_TMD, "randomise_int_res", randomise_int_res)
         inter_DI = []
