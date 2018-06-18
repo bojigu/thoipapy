@@ -537,9 +537,9 @@ def plot_coev_vs_res_dist(s, logging):
     fig.savefig(figpath, dpi=240)
     fig.savefig(figpath[:-4] + ".pdf")
 
-def create_average_fraction_DI_file(s, df_set, logging):
+def calc_retrospective_coev_from_list_interf_res(s, df_set, logging):
 
-    logging.info('create_average_fraction_DI_file starting')
+    logging.info('calc_retrospective_coev_from_list_interf_res starting')
     retrospective_coev_xlsx = os.path.join(s["set_results_folder"], "{}_retrospective_coev.xlsx".format(s["setname"]))
     writer = pd.ExcelWriter(retrospective_coev_xlsx)
 
@@ -560,19 +560,19 @@ def create_average_fraction_DI_file(s, df_set, logging):
                 is_first_TMD = True
             else:
                 is_first_TMD = False
-            sub_dict, InterResList_of_last_TMD, NoninterResList_of_last_TMD, TMD_start_of_last_TMD = calc_av_frac_DI_single_prot(sub_dict, s, logging, i, XI, is_first_TMD, df_set,
-                                                                                                                                 randomise_int_res, InterResList_of_last_TMD,
-                                                                                                                                 NoninterResList_of_last_TMD, TMD_start_of_last_TMD,
-                                                                                                                                 remove_residues_outside_interface_region)
+            sub_dict, InterResList_of_last_TMD, NoninterResList_of_last_TMD, TMD_start_of_last_TMD = calc_retrospective_coev_from_list_interf_res_single_prot(sub_dict, s, logging, i, XI, is_first_TMD, df_set,
+                                                                                                                                                              randomise_int_res, InterResList_of_last_TMD,
+                                                                                                                                                              NoninterResList_of_last_TMD, TMD_start_of_last_TMD,
+                                                                                                                                                              remove_residues_outside_interface_region)
 
         if randomise_int_res == True:
             # need to add the data for the first TMD, which was skipped above
             i = 0
             is_first_TMD = False
-            sub_dict, InterResList_of_last_TMD, NoninterResList_of_last_TMD, TMD_start_of_last_TMD = calc_av_frac_DI_single_prot(sub_dict, s, logging, i, XI, is_first_TMD, df_set,
-                                                                                                                                 randomise_int_res, InterResList_of_last_TMD,
-                                                                                                                                 NoninterResList_of_last_TMD, TMD_start_of_last_TMD,
-                                                                                                                                 remove_residues_outside_interface_region)
+            sub_dict, InterResList_of_last_TMD, NoninterResList_of_last_TMD, TMD_start_of_last_TMD = calc_retrospective_coev_from_list_interf_res_single_prot(sub_dict, s, logging, i, XI, is_first_TMD, df_set,
+                                                                                                                                                              randomise_int_res, InterResList_of_last_TMD,
+                                                                                                                                                              NoninterResList_of_last_TMD, TMD_start_of_last_TMD,
+                                                                                                                                                              remove_residues_outside_interface_region)
         # save each MI and DI separately
         df_retro = pd.DataFrame(sub_dict).T
         df_retro.to_excel(writer, sheet_name = XI)
@@ -607,10 +607,10 @@ def create_average_fraction_DI_file(s, df_set, logging):
 
     writer.close()
     sys.stdout.write("\n")
-    logging.info('create_average_fraction_DI_file finished')
+    logging.info('calc_retrospective_coev_from_list_interf_res finished')
 
 
-def calc_av_frac_DI_single_prot(sub_dict, s, logging, i, XI, is_first_TMD, df_set, randomise_int_res, InterResList_of_last_TMD, NoninterResList_of_last_TMD, TMD_start_of_last_TMD, remove_residues_outside_interface_region):
+def calc_retrospective_coev_from_list_interf_res_single_prot(sub_dict, s, logging, i, XI, is_first_TMD, df_set, randomise_int_res, InterResList_of_last_TMD, NoninterResList_of_last_TMD, TMD_start_of_last_TMD, remove_residues_outside_interface_region):
     """Calculate average fraction of DI for a single protein.
 
     PANDAS METHOD USED FOR ETRA DATASET.
@@ -811,10 +811,61 @@ def get_array_dist_separating_res_in_list(pos_list):
     dist_2D_arr[dist_2D_arr == 0] = np.nan
     return dist_2D_arr
 
-def create_average_fraction_DI_file_OLD_PAIRWISE_VERSION(s, dfset, logging):
-    logging.info('create_average_fraction_DI_file starting')
+def calc_retrospective_coev_from_struct_contacts(s, dfset, logging):
+    """Calculate retrospective coevolution from structural data with interpair contacts
+
+    Calculates coevolution of interface (contacting) residues from homodimer structures
+    using the method of Wang and Barth (2015).
+
+    Takes csv with list of interacting residues as an input:
+    acc	    inter1	inter2
+    1orqC4	14	    20
+    1orqC4	14	    23
+    1orqC4	14	    24
+    1orqC4	18	    24
+    1xioA4	1	    2
+    1xioA4	5	    6
+
+    Converts this to a list of interacting pairs:
+     - saved as InterPairList by the calc_retrospective_coev_from_struct_contacts_single_prot function
+     - this is named as "last TMD" because the randomisation takes took? the positions of first TMD and applied them to the last
+
+    Takes pairwise coevolution values from FreeContact output file.
+    E.g. D:\Dropbox\tm_homodimer_dropbox\THOIPA_data\Features\cumulative_coevolution\ NMR\O15455.surr20.gaps5.freecontact.csv
+    Data looks like this:
+    1 F 2 F 0.195863 0.552187
+    1 F 3 M 0.172853 -0.530669
+    1 F 4 I 0.406909 0.445122
+    1 F 5 N 0.245805 2.64414
+
+    Finds coevolution scores for all interacting residue pairs.
+     - calculates average
+
+    Finds coevolution scores for all non-interacting pairs, separated by no longer than 8 residues.
+     - creates list of non-interacting pairs (NonInterPairList)
+
+    REPEATS THE ABOVE WITH RANDOM POSITIONS, TAKEN FROM A DIFFERENT TMD IN THE LIST OF PROTEINS/TMDS TO TEST
+
+
+
+    Parameters
+    ----------
+    s : dict
+        Settings dictionary
+    df_set : pd.DataFrame
+        Dataframe containing the list of proteins to process, including their TMD sequences and full-length sequences
+        index : range(0, ..)
+        columns : ['acc', 'seqlen', 'TMD_start', 'TMD_end', 'tm_surr_left', 'tm_surr_right', 'database',  ....]
+    logging : logging.Logger
+        Python object with settings for logging to console and file.
+
+    Returns
+    -------
+
+    """
+    logging.info('calc_retrospective_coev_from_list_interf_res starting')
     #retrospective_coev_xlsx = os.path.join(s["set_results_folder"], "set04_retrospective_coev.xlsx")
-    randomise_int_res = False
+    randomise_int_res = True
     if randomise_int_res == True:
         retrospective_coev_xlsx = os.path.join(s["set_results_folder"], "set04_randomise_retrospective_coev.xlsx")
         writer = pd.ExcelWriter(retrospective_coev_xlsx)
@@ -824,7 +875,7 @@ def create_average_fraction_DI_file_OLD_PAIRWISE_VERSION(s, dfset, logging):
     remove_residues_outside_interface_region = False
     logging.info("randomise_int_res = {}, remove_residues_outside_interface_region = {}".format(randomise_int_res, remove_residues_outside_interface_region))
     InterPairList_of_last_TMD = None
-    NoninterPairList_of_last_TMD = None
+    NonInterPairList_of_last_TMD = None
     TMD_start_of_last_TMD = None
     crystal_NMR_interpair_file = os.path.join(s["set_results_folder"], "Average_Fraction_DI","Crystal_NMR_interpair.csv")
     pd_int = pd.read_csv(crystal_NMR_interpair_file, engine="python")
@@ -838,37 +889,61 @@ def create_average_fraction_DI_file_OLD_PAIRWISE_VERSION(s, dfset, logging):
     1xioA4	5	    6
     """
 
-    # get list of proteins from set04
-    # MT NOTE: Why hard-code the use of set04 here?
-    # why sort by the TMD_seq rather than the length of the TMD_seq?
+    # get list of proteins from set04, sort by TMD length
+    # MT NOTE: Set04 (NMR and crystal) is currently hard-coded here
     set04_file = os.path.join(s["sets_folder"],"set04_crystal_NMR.xlsx")
     df_set = pd.read_excel(set04_file,sheetname="proteins")
+
+    print(df_set['TMD_seq'].str.len())
+    print("zzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzz")
+
     df_set.index = df_set['TMD_seq'].str.len()
-    df_set = df_set.sort_index(ascending=False).reset_index(drop=True)
+    df_set = df_set.sort_index(ascending=True).reset_index(drop=True)
+
+    print(df_set['TMD_seq'].str.len())
+    print("yyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyy")
     sub_dict = {}
     NoninterPairList_dict = {}
     InterPairList_dict = {}
     for i in df_set.index:
         acc = df_set.at[i, "acc"]
+        TMD_len = len(df_set.at[i, "TMD_seq"])
         sys.stdout.write(".")
         sys.stdout.flush()
         if i == 0:
             is_first_TMD = True
         else:
             is_first_TMD = False
-        sub_dict, InterPairList_of_last_TMD, NoninterPairList_of_last_TMD, TMD_start_of_last_TMD = calc_av_frac_DI_single_prot_struct(sub_dict, s,  pd_int,i,logging,  is_first_TMD,
-                                                                                                                                    df_set,randomise_int_res, InterPairList_of_last_TMD,NoninterPairList_of_last_TMD,
-                                                                                                                                    TMD_start_of_last_TMD,remove_residues_outside_interface_region)
-        if randomise_int_res == True and is_first_TMD == True:
-            # need to add the data for the first TMD, which was skipped above
-            i = 0
-            is_first_TMD = False
-            sub_dict, InterPairList_of_last_TMD, NoninterPairList_of_last_TMD, TMD_start_of_last_TMD = calc_av_frac_DI_single_prot_struct(sub_dict, s, pd_int,i, logging,  is_first_TMD,
-                                                                                                                                        df_set,randomise_int_res, InterPairList_of_last_TMD,NoninterPairList_of_last_TMD,
-                                                                                                                                        TMD_start_of_last_TMD,remove_residues_outside_interface_region)
+            InterPairList_of_last_TMD_max = np.array(InterPairList_of_last_TMD).max()
+            NonInterPairList_of_last_TMD_max = np.array(NonInterPairList_of_last_TMD).max()
+            print("InterPairList_of_last_TMD_max", InterPairList_of_last_TMD_max, "NonInterPairList_of_last_TMD_max", NonInterPairList_of_last_TMD_max, "TMD_len", TMD_len)
+            TMD_len = len(df_set.at[i, "TMD_seq"])
+            print("TMD_len", TMD_len)
+        #if not all([randomise_int_res == True and i == 0]):
+
+        #is_first_TMD = False
+        sub_dict, InterPairList, NoninterPairList, TMD_start_of_last_TMD = calc_retrospective_coev_from_struct_contacts_single_prot(sub_dict, s, pd_int, i, logging, is_first_TMD, df_set, randomise_int_res, InterPairList_of_last_TMD, NonInterPairList_of_last_TMD, TMD_start_of_last_TMD, remove_residues_outside_interface_region)
         # save all lists of interacting and non-interacting pairs
-        InterPairList_dict[acc] = str(InterPairList_of_last_TMD)
-        NoninterPairList_dict[acc] = str(NoninterPairList_of_last_TMD)
+        InterPairList_dict[acc] = str(InterPairList)
+        NoninterPairList_dict[acc] = str(NoninterPairList)
+
+        InterPairList_of_last_TMD = InterPairList
+        NonInterPairList_of_last_TMD = NoninterPairList
+
+
+    if randomise_int_res == True:
+        # need to add the data for the first TMD, which was skipped above
+        i = 0
+        acc = df_set.at[i, "acc"]
+        is_first_TMD = False
+        TMD_len = len(df_set.at[i, "TMD_seq"])
+        print("TMD_len", TMD_len)
+        print("InterPairList_of_last_TMD", InterPairList_of_last_TMD)
+        print("starting first TMD")
+        sub_dict, InterPairList, NoninterPairList, TMD_start_of_last_TMD = calc_retrospective_coev_from_struct_contacts_single_prot(sub_dict, s, pd_int, i, logging, is_first_TMD, df_set, randomise_int_res, InterPairList_of_last_TMD, NonInterPairList_of_last_TMD, TMD_start_of_last_TMD, remove_residues_outside_interface_region)
+        print("real InterPairList of the first TMD", InterPairList)
+
+
 
     df_retro = pd.DataFrame(sub_dict).T
     df_retro.to_excel(writer, sheet_name="DI")
@@ -917,9 +992,32 @@ def create_average_fraction_DI_file_OLD_PAIRWISE_VERSION(s, dfset, logging):
 
     writer.close()
     sys.stdout.write("\n")
-    logging.info('create_average_fraction_DI_file finished')
+    logging.info('calc_retrospective_coev_from_list_interf_res finished')
 
-def calc_av_frac_DI_single_prot_struct(sub_dict, s,  pd_int,i, logging,  is_first_TMD, df_set,randomise_int_res, InterPairList_of_last_TMD, NoninterPairList_of_last_TMD, TMD_start_of_last_TMD,remove_residues_outside_interface_region):
+def calc_retrospective_coev_from_struct_contacts_single_prot(sub_dict, s, pd_int, i, logging, is_first_TMD, df_set, randomise_int_res, InterPairList_of_last_TMD, NonInterPairList_of_last_TMD, TMD_start_of_last_TMD, remove_residues_outside_interface_region):
+    """Calculate retrospective coevolution from structural data with interpair contacts, for a single protein.
+
+    see docstring above for calc_retrospective_coev_from_struct_contacts
+
+    Parameters
+    ----------
+    sub_dict
+    s
+    pd_int
+    i
+    logging
+    is_first_TMD
+    df_set
+    randomise_int_res
+    InterPairList
+    NonInterPairList
+    TMD_start_of_last_TMD
+    remove_residues_outside_interface_region
+
+    Returns
+    -------
+
+    """
     acc = df_set.loc[i,'acc']
     database = df_set.loc[i,'database']
     InterPairList= pd_int[["inter1", "inter2"]][pd_int["acc"] == acc].values.tolist()
@@ -962,33 +1060,46 @@ def calc_av_frac_DI_single_prot_struct(sub_dict, s,  pd_int,i, logging,  is_firs
                 ninter_DI.append(float(inter_within8_dict[key]))
         average_inter = np.mean(inter_DI)
         average_ninter = np.mean(ninter_DI)
-        print(acc,average_inter,average_ninter)
+        #print(acc,average_inter,average_ninter, "is first TMD", is_first_TMD, "randomise_int_res", randomise_int_res)
         sub_dict[acc] = {"AverageInter": average_inter, "AverageNoninter": average_ninter}
 
+    # Randomisation of first TMD not possible. Skip and return the true interface only.
     elif randomise_int_res == True and is_first_TMD == True:
+        #sub_dict = "First TMD when randomise_int_res == True"
+        #print("first TMD here")
+        #return sub_dict, InterPairList, NoninterPairList, TMD_start_of_last_TMD
         pass
+
     elif randomise_int_res == True and is_first_TMD != True:
-        InterPairList_of_last_TMD =[x for x in InterPairList_of_last_TMD if x[0] <= tmd_len and x[1] <= tmd_len ]
-        NoninterPairList_of_last_TMD = [x for x in NoninterPairList_of_last_TMD if x[0] <= tmd_len and x[1] <= tmd_len ]
-        print(acc,InterPairList_of_last_TMD,NoninterPairList_of_last_TMD)
+        # random interpair lists taken from a previous TMD
+        InterPairList_rand =[x for x in InterPairList_of_last_TMD if x[0] <= tmd_len and x[1] <= tmd_len ]
+        NonInterPairList_rand = [x for x in NonInterPairList_of_last_TMD if x[0] <= tmd_len and x[1] <= tmd_len ]
+
+        orig_max = np.array(InterPairList_of_last_TMD).max()
+        final_max_after_filtering_out_res_too_long = np.array(InterPairList_rand).max()
+        print(orig_max == final_max_after_filtering_out_res_too_long)
+        if orig_max != final_max_after_filtering_out_res_too_long:
+            print("must be the last TMD, if sorting is done correctly")
+
+        #print(acc,InterPairList_rand,NonInterPairList_rand, "is first TMD", is_first_TMD, "randomise_int_res", randomise_int_res)
         inter_DI = []
         ninter_DI = []
         for key, value in inter_within8_dict.items():
             inter_pair = [int(x) for x in key.split('_')]
-            if inter_pair in InterPairList_of_last_TMD:
+            if inter_pair in InterPairList_rand:
                 inter_DI.append(float(inter_within8_dict[key]))
-            elif inter_pair in NoninterPairList_of_last_TMD:
+            elif inter_pair in NonInterPairList_rand:
                 ninter_DI.append(float(inter_within8_dict[key]))
         average_inter = np.mean(inter_DI)
         average_ninter = np.mean(ninter_DI)
-        print(acc,average_inter,average_ninter)
+        #print(acc,average_inter,average_ninter, "is first TMD", is_first_TMD, "randomise_int_res", randomise_int_res)
         sub_dict[acc] = {"AverageInter": average_inter, "AverageNoninter": average_ninter}
 
-    InterPairList_of_last_TMD = InterPairList
-    NoninterPairList_of_last_TMD = NoninterPairList
+    #InterPairList = InterPairList
+    #NonInterPairList = NoninterPairList
 
 
-    return sub_dict, InterPairList_of_last_TMD, NoninterPairList_of_last_TMD, TMD_start_of_last_TMD
+    return sub_dict, InterPairList, NoninterPairList, TMD_start_of_last_TMD
 
 
 
