@@ -15,6 +15,9 @@ Purpose:        Self-interacting single-pass membrane protein interface residues
 # I'm getting sick of the warnings that occur due to imported seaborn and statsmodels.stats.api modules, and have nothing to do with your code.
 # you should turn on warnings once a month to check if there is anything related to your code
 import warnings
+
+import thoipapy.figs.retrospective
+
 warnings.filterwarnings("ignore")
 import argparse
 import sys
@@ -107,8 +110,8 @@ if __name__ == "__main__":
             pass
 
         if s["retrospective_coevolution"]:
-            thoipapy.structures.get_TMD_homodimer.get_tmd_nr_homodimer.calc_retrospective_coev_from_list_interf_res(s, dfset, logging)
-            thoipapy.structures.get_TMD_homodimer.get_tmd_nr_homodimer.calc_retrospective_coev_from_struct_contacts(s, dfset, logging)
+            #thoipapy.figs.retrospective.calc_retrospective_coev_from_list_interf_res(s, dfset, logging)
+            thoipapy.figs.retrospective.calc_retrospective_coev_from_struct_contacts(s, dfset, logging)
 
         if s["calc_NMR_closedist"] :
             thoipapy.structures.get_TMD_homodimer.NMR_data.calc_closedist_from_NMR_best_model(s)
@@ -268,7 +271,7 @@ if __name__ == "__main__":
         if "plot_coev_vs_res_dist" in s:
             if s["plot_coev_vs_res_dist"] == True:
                 #thoipapy.structures.get_TMD_homodimer.get_tmd_nr_homodimer.calc_coev_vs_res_dist(s, dfset, logging)
-                thoipapy.structures.get_TMD_homodimer.get_tmd_nr_homodimer.plot_coev_vs_res_dist(s, logging)
+                thoipapy.figs.retrospective.plot_coev_vs_res_dist(s, logging)
 
         if s["create_ROC_all_residues"]:
             thoipapy.features.feature_calculate.create_ROC_all_residues(s, df_set, logging)
