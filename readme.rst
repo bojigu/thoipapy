@@ -25,6 +25,16 @@ Installation
 
     pip install thoipapy
 
+THOIPA standalone can be currently installed on Linux.
+
+A version of THOIPA in a docker container is in development.
+
+See `Wiki`__ for full details.
+
+.. _Wiki: https://github.com/bojigu/thoipapy/wiki
+__ Wiki_
+
+
 Dependencies
 ------------
 
