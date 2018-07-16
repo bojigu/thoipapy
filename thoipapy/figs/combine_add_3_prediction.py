@@ -153,6 +153,8 @@ def create_AUC_BOAUC10_figs_THOIPA_PREDDIMER_TMDOCK(s, df_set, logging):
     predictors_mean_auc_barchart_csv = os.path.join(s["thoipapy_data_folder"], "Results", "compare_predictors",
                                                 "{}.4predictors_mean_auc_data.csv".format(s["setname"]))
 
+    if not os.path.isdir(os.path.dirname(predictors_BOAUC10_barchart_pdf)):
+        os.makedirs(os.path.dirname(predictors_BOAUC10_barchart_pdf))
 
     for predictor_name in predictor_name_list:
         BO_data_df = pd.DataFrame()
@@ -310,7 +312,7 @@ def create_4predictors_BOcurve_linechart(df_o_minus_r_mean_df, AUBOC10_list, lin
     fig.savefig(predictors_BOCURVE_linechart_png, dpi=140)
     print(predictors_BOCURVE_linechart_png)
 
-def create_4predictors_AUC_AUBOC10_barchart(AUC_AUBOC_df, predictors_AUC_barchart_png,predictors_AUC_barchart_pdf, predictors_BOAUC10_barchart_png,predictors_BOAUC10_barchart_pdf,namedict, THOIPA_best_set):
+def create_4predictors_AUC_AUBOC10_barchart(AUC_AUBOC_df, predictors_AUC_barchart_png, predictors_AUC_barchart_pdf, predictors_BOAUC10_barchart_png,predictors_BOAUC10_barchart_pdf,namedict, THOIPA_best_set):
     THOIPA_best_setnumber = int(THOIPA_best_set[3:])
     #colname = "THOIPA_5_LOOAUC"
     THOIPA_x_LOOAUC = "THOIPA_{}_LOO-AUC".format(THOIPA_best_setnumber)

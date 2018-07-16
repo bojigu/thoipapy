@@ -1856,6 +1856,7 @@ def return_num_tmd(s, acc,  full_seq, full_seq_fasta_file,phobius_outfile,loggin
         exect_str = "phobius {}> {}".format(full_seq_fasta_file, phobius_outfile)
         command = utils.Command(exect_str)
         command.run(timeout=400, log_stderr=False)
+
     if os.path.exists(phobius_outfile):
         tm_num = 0
         with open(phobius_outfile) as file:
