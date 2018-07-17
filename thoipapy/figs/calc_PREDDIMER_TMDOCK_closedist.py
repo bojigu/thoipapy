@@ -8,7 +8,20 @@ import pandas as pd
 import thoipapy
 
 
-def calc_closedist_from_PREDDIMER_TMDOCK_best_model(s):
+def calc_closedist_from_PREDDIMER_TMDOCK_best_model(s, logging):
+    """Calculate the closest heavy atom distances from PREDDIMER or TMDOCK structures for list of TMDs.
+
+    See closedist_calculate_from_dimer function for details.
+        This function simply runs closedist_calculate_from_dimer on each TMD in a list.
+
+    Parameters
+    ----------
+    s : dict
+        Settings dictionary
+    logging : logging.Logger
+        Python object with settings for logging to console and file.
+
+    """
     if isinstance(s["set_list"], int):
         pt_set_list = [str(s["set_list"])]
     elif isinstance(s["set_list"], str):
@@ -34,24 +47,40 @@ def calc_closedist_from_PREDDIMER_TMDOCK_best_model(s):
             #closedist_calculate_from_dimer(s,pdb_file_preddimer,preddimer_closedist_file)
             if os.path.isfile(pdb_file_tmdock):
                 closedist_calculate_from_dimer(s,pdb_file_tmdock,tmdock_closedist_file)
-                #sys.stdout.write("\nthe closedist calculation for preddimer and tmdock for protein: {} was finished".format(protein))
             else:
-                sys.stdout.write("\nthe tmdock pdb file for protein {} not exists".format(protein))
-                sys.stdout.flush()
-                continue
-            if os.path.isfile(pdb_file_preddimer):
-                closedist_calculate_from_dimer(s,pdb_file_preddimer,preddimer_closedist_file)
-                #sys.stdout.write("\nthe closedist calculation for preddimer and tmdock for protein: {} was finished".format(protein))
-            else:
-                sys.stdout.write("\nthe preddimer pdb file for protein {} not exists".format(protein))
-                sys.stdout.flush()
+                logging.warning("{} : TMDOCK pdb file not found".format(protein))
                 continue
 
-def closedist_calculate_from_dimer(s,pdb_file, closedist_out_csv):
+            if os.path.isfile(pdb_file_preddimer):
+                closedist_calculate_from_dimer(s,pdb_file_preddimer,preddimer_closedist_file)
+            else:
+                logging.warning("{} : PREDDIMER pdb file not found".format(protein))
+                continue
+
+def closedist_calculate_from_dimer(s, logging, pdb_file, closedist_out_csv):
+    """Calculate the closest heavy atom distance between TMD residues from top-ranked PREDDIMER or TMDOCK structure.
+
+    Distances are calculated between all heavy atoms.
+
+    For each residue in the TMD, finds the closest heavy atom distance to any other residue in the opposing chain.
+
+    This is used to define "interface" residues according to the PREDDIMER/TMDOCK prediction, in exactly the same way
+    as the experimental crystal or NMR structures.
+
+    Parameters
+    ----------
+    s : dict
+        Settings dictionary
+    logging : logging.Logger
+        Python object with settings for logging to console and file.
+    pdb_file : str
+        Path to pdb file that is the output from PREDDIMER or TMDOCK.
+    closedist_out_csv : str
+        Path to output file
+    """
     if not os.path.isfile(pdb_file):
-        sys.stdout.write("\nthe pdb file: {} is not existed, and skipped\n, this could be the tmdock prediction for this protein didn't exists, please try to run TMDOCK"
+        logging.warning("the pdb file: {} is not existed, and skipped\n, this could be the tmdock prediction for this protein didn't exists, please try to run TMDOCK"
                          " server again with different sequence TMD length input".format(pdb_file))
-        sys.stdout.flush()
         return None
     hash1arrayx = {}
     hash1arrayy = {}
