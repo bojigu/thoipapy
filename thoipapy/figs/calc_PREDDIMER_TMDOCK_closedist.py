@@ -2,17 +2,16 @@ import math
 import os
 import re
 import sys
-
 import pandas as pd
-
 import thoipapy
-
 
 def calc_closedist_from_PREDDIMER_TMDOCK_best_model(s, logging):
     """Calculate the closest heavy atom distances from PREDDIMER or TMDOCK structures for list of TMDs.
 
     See closedist_calculate_from_dimer function for details.
         This function simply runs closedist_calculate_from_dimer on each TMD in a list.
+
+    For some reason, this function currently uses the "set_list" in the settings file, rather than the more common "set_number".
 
     Parameters
     ----------
@@ -28,7 +27,7 @@ def calc_closedist_from_PREDDIMER_TMDOCK_best_model(s, logging):
         pt_set_list = s["set_list"].split(",")
     else:
         raise ValueError("set list type is not correct {}".format(s["set_list"]))
-    print(pt_set_list)
+    logging.info("starting calc_closedist_from_PREDDIMER_TMDOCK_best_model for set_list {}".format(pt_set_list))
     #pt_set_list = s["set_list"].split(",")
     for pt_set in pt_set_list:
         ptsetname = "set{:02d}".format(int(pt_set))
@@ -36,6 +35,7 @@ def calc_closedist_from_PREDDIMER_TMDOCK_best_model(s, logging):
         df_pt_set = pd.read_excel(ptset_path,sheetname="proteins")
         for i in df_pt_set.index:
             acc = df_pt_set.loc[i, "acc"]
+            sys.stdout.write("{}, ".format(acc)), sys.stdout.flush()
             database = df_pt_set.loc[i, "database"]
             protein = acc
             PREDDIMER_TMDOCK_folder = os.path.join(s["base_dir"], "figs", "FigBZ18-PreddimerTmdockComparison")
@@ -46,16 +46,18 @@ def calc_closedist_from_PREDDIMER_TMDOCK_best_model(s, logging):
 
             #closedist_calculate_from_dimer(s,pdb_file_preddimer,preddimer_closedist_file)
             if os.path.isfile(pdb_file_tmdock):
-                closedist_calculate_from_dimer(s,pdb_file_tmdock,tmdock_closedist_file)
+                closedist_calculate_from_dimer(s, logging, pdb_file_tmdock, tmdock_closedist_file)
             else:
                 logging.warning("{} : TMDOCK pdb file not found".format(protein))
                 continue
 
             if os.path.isfile(pdb_file_preddimer):
-                closedist_calculate_from_dimer(s,pdb_file_preddimer,preddimer_closedist_file)
+                closedist_calculate_from_dimer(s, logging, pdb_file_preddimer, preddimer_closedist_file)
             else:
                 logging.warning("{} : PREDDIMER pdb file not found".format(protein))
                 continue
+
+        sys.stdout.write("\n")
 
 def closedist_calculate_from_dimer(s, logging, pdb_file, closedist_out_csv):
     """Calculate the closest heavy atom distance between TMD residues from top-ranked PREDDIMER or TMDOCK structure.
@@ -94,12 +96,12 @@ def closedist_calculate_from_dimer(s, logging, pdb_file, closedist_out_csv):
     chain1 = 'A'
     chain2 = 'B'
 
-    if os.path.isfile(closedist_out_csv):
-        if s["rerun_closedist_calculation"] == False:
-            sys.stdout.write(
-                "\n\n the closedist file for pdb accession: {} already existed, skip calculation......".format(pdb_file))
-            sys.stdout.flush()
-            return None
+    # if os.path.isfile(closedist_out_csv):
+    #     if s["rerun_closedist_calculation"] == False:
+    #         sys.stdout.write(
+    #             "\n\n the closedist file for pdb accession: {} already existed, skip calculation......".format(pdb_file))
+    #         sys.stdout.flush()
+    #         return None
 
     with open(pdb_file, "r") as f:
         for line in f:
@@ -163,7 +165,7 @@ def closedist_calculate_from_dimer(s, logging, pdb_file, closedist_out_csv):
                     else:
                         if dist < hashclosedist[key2]:
                             hashclosedist[key2] = dist
-    closest_dist_arr = get_closedist_between_chiana_chainb(hashclosedist)
+    closest_dist_arr = get_closedist_between_chainA_and_chainB(hashclosedist)
     closest_dist_df = pd.DataFrame.from_records(closest_dist_arr, columns = ["residue_num","residue_name","closedist"])
     closest_dist_df.residue_num = closest_dist_df.residue_num.astype(int)
     closest_dist_df=closest_dist_df.sort_values(by=["residue_num"])
@@ -171,7 +173,7 @@ def closedist_calculate_from_dimer(s, logging, pdb_file, closedist_out_csv):
     closest_dist_df.to_csv(closedist_out_csv)
 
 
-def get_closedist_between_chiana_chainb(hashclosedist):
+def get_closedist_between_chainA_and_chainB(hashclosedist):
     i = 0
     j = 0
     hashA = {}
