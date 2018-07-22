@@ -129,7 +129,7 @@ def run_LOO_validation_od_non_multiprocessing(s, df_set, logging):
 
         fpr, tpr, thresholds = roc_curve(y_test, prediction, drop_intermediate=False)
         roc_auc = auc(fpr, tpr)
-        xv_dict[acc_db] = {"fpr": fpr, "tpr": tpr, "auc": roc_auc}
+        xv_dict[acc_db] = {"fpr": fpr, "tpr": tpr, "roc_auc": roc_auc}
         mean_tpr += interp(mean_fpr, fpr, tpr)
         mean_tpr[0] = 0.0
 
@@ -159,11 +159,11 @@ def run_LOO_validation_od_non_multiprocessing(s, df_set, logging):
     mean_tpr /= df_set.shape[0]
     mean_tpr[-1] = 1.0
 
-    mean_auc = auc(mean_fpr, mean_tpr)
+    mean_roc_auc = auc(mean_fpr, mean_tpr)
 
     xv_dict["true_positive_rate_mean"] = mean_tpr
     xv_dict["false_positive_rate_mean"] = mean_fpr
-    xv_dict["mean_auc"] = mean_auc
+    xv_dict["mean_roc_auc"] = mean_roc_auc
 
     # save dict as pickle
     thoipapy.utils.make_sure_path_exists(LOO_crossvalidation_pkl, isfile=True)
@@ -183,7 +183,7 @@ def run_LOO_validation_od_non_multiprocessing(s, df_set, logging):
     thoipapy.figs.create_BOcurve_files.parse_BO_data_csv_to_excel(BO_all_data_csv, BO_data_excel, logging)
 
     logging.info('{} LOO crossvalidation. Time taken = {:.2f}.'.format(s["setname"], duration))
-    logging.info('---AUC({:.2f})---'.format(mean_auc))
+    logging.info('---AUC({:.2f})---'.format(mean_roc_auc))
 
 
 def run_Rscipt_random_forest(s, output_file_loc, logging):

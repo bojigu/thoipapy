@@ -252,11 +252,11 @@ def run_10fold_cross_validation(s, logging):
     mean_tpr /= len(cv)
     mean_tpr[-1] = 1.0
 
-    mean_auc = auc(mean_fpr, mean_tpr)
+    mean_roc_auc = auc(mean_fpr, mean_tpr)
 
     xv_dict["true_positive_rate_mean"] = mean_tpr
     xv_dict["false_positive_rate_mean"] = mean_fpr
-    xv_dict["mean_auc"] = mean_auc
+    xv_dict["mean_roc_auc"] = mean_roc_auc
 
     # save dict as pickle
     with open(crossvalidation_pkl, "wb") as f:
@@ -264,7 +264,7 @@ def run_10fold_cross_validation(s, logging):
     
     features_ser = pd.Series(X.columns)
     features_ser.to_csv(features_csv)
-    logging.info('{} 10-fold validation. AUC({:.3f}). Time taken = {:.2f}.\nFeatures: {}'.format(s["setname"], mean_auc, duration, X.columns.tolist()))
+    logging.info('{} 10-fold validation. AUC({:.3f}). Time taken = {:.2f}.\nFeatures: {}'.format(s["setname"], mean_roc_auc, duration, X.columns.tolist()))
 
 def create_10fold_cross_validation_fig(s, logging):
     """Create figure showing ROC curve for each fold in a 10-fold validation.
@@ -294,9 +294,9 @@ def create_10fold_cross_validation_fig(s, logging):
         roc_auc = auc(xv_dict["fpr{}".format(i)], xv_dict["tpr{}".format(i)])
         ax.plot(xv_dict["fpr{}".format(i)], xv_dict["tpr{}".format(i)], lw=1, label='fold %d (area = %0.2f)' % (i, roc_auc), alpha=0.8)
 
-    mean_auc = xv_dict["mean_auc"]
+    mean_roc_auc = xv_dict["mean_roc_auc"]
 
-    ax.plot(xv_dict["false_positive_rate_mean"], xv_dict["true_positive_rate_mean"], color="k", label='mean (area = %0.2f)' % mean_auc, lw=1.5)
+    ax.plot(xv_dict["false_positive_rate_mean"], xv_dict["true_positive_rate_mean"], color="k", label='mean (area = %0.2f)' % mean_roc_auc, lw=1.5)
     ax.plot([0, 1], [0, 1], '--', color=(0.6, 0.6, 0.6), label='random')
     ax.set_xlim([-0.05, 1.05])
     ax.set_ylim([-0.05, 1.05])
@@ -443,7 +443,8 @@ def run_LOO_validation(s, df_set, logging):
     mean_fpr = np.linspace(0, 1, 100)
 
     BO_all_df = pd.DataFrame()
-    all_auc = []
+    all_roc_auc = []
+    all_pr_auc = []
     xv_dict = {}
     acc_db_list = df_set.acc_db.tolist()
 
@@ -451,7 +452,8 @@ def run_LOO_validation(s, df_set, logging):
     for nn, val_tuple in enumerate(val_list):
         acc_db = acc_db_list[nn]
         auc_dict = val_tuple[0]
-        all_auc.append(auc_dict["auc"])
+        all_roc_auc.append(auc_dict["roc_auc"])
+        all_pr_auc.append(auc_dict["pr_auc"])
         BO_df = val_tuple[1]
         # join the data for all BO curves together
         if nn == 0:
@@ -461,22 +463,24 @@ def run_LOO_validation(s, df_set, logging):
         mean_tpr += interp(mean_fpr, auc_dict["fpr"], auc_dict["tpr"])
         mean_tpr[0] = 0.0
 
-        xv_dict[acc_db] = {"fpr": auc_dict["fpr"], "tpr": auc_dict["tpr"], "auc": auc_dict["auc"]}
+        xv_dict[acc_db] = {"fpr": auc_dict["fpr"], "tpr": auc_dict["tpr"], "roc_auc": auc_dict["roc_auc"]}
 
     # copied from original mean_tpr code
     mean_tpr /= df_set.shape[0]
     mean_tpr[-1] = 1.0
-    mean_auc_from_joined_data = auc(mean_fpr, mean_tpr)
-
+    mean_roc_auc_from_joined_data = auc(mean_fpr, mean_tpr)
+    
     # calculate mean of each protein AUC separately
-    mean_auc_all_prot = np.array(all_auc).mean()
-    xv_dict["mean_auc_all_prot"] = mean_auc_all_prot
+    mean_roc_auc_all_prot = np.array(all_roc_auc).mean()
+    xv_dict["mean_roc_auc_all_prot"] = mean_roc_auc_all_prot
+    mean_pr_auc_all_prot = np.array(all_pr_auc).mean()
+    xv_dict["mean_pr_auc_all_prot"] = mean_pr_auc_all_prot
 
     # add to dict that can be used for figure creation later
     xv_dict["true_positive_rate_mean"] = mean_tpr
     xv_dict["false_positive_rate_mean"] = mean_fpr
-    xv_dict["mean_auc_from_joined_data"] = mean_auc_from_joined_data
-    xv_dict["mean_auc_all_prot"] = mean_auc_all_prot
+    xv_dict["mean_roc_auc_from_joined_data"] = mean_roc_auc_from_joined_data
+    xv_dict["mean_roc_auc_all_prot"] = mean_roc_auc_all_prot
 
     # save dict as pickle
     thoipapy.utils.make_sure_path_exists(LOO_crossvalidation_pkl, isfile=True)
@@ -496,7 +500,8 @@ def run_LOO_validation(s, df_set, logging):
     thoipapy.figs.create_BOcurve_files.parse_BO_data_csv_to_excel(BO_all_data_csv, BO_data_excel, logging)
 
     logging.info('{} LOO crossvalidation. Time taken = {:.2f}.'.format(s["setname"], duration))
-    logging.info('---AUC({:.2f})({:.2f})---'.format(mean_auc_all_prot, mean_auc_from_joined_data))
+    logging.info('---ROC_AUC(mean each protein : {:.2f})(from joined data {:.2f})---'.format(mean_roc_auc_all_prot, mean_roc_auc_from_joined_data))
+    logging.info('---PR_AUC(mean each protein : {:.2f})---'.format(mean_pr_auc_all_prot))
 
 def LOO_single_prot(d):
     """Create Leave-One-Out cross-validation for a single protein in a dataset
@@ -566,8 +571,9 @@ def LOO_single_prot(d):
     roc_auc = auc(fpr, tpr)
 
     precision, recall, thresholds_PRC = precision_recall_curve(y_test, prediction)
+    pr_auc = auc(recall, precision)
 
-    auc_dict = {"fpr": fpr, "tpr": tpr, "auc": roc_auc, "precision" : precision, "recall" : recall}
+    auc_dict = {"fpr": fpr, "tpr": tpr, "roc_auc": roc_auc, "precision" : precision, "recall" : recall, "pr_auc" : pr_auc}
 
     if database == "crystal" or database == "NMR":
         # low closest distance means high importance at interface
@@ -636,15 +642,15 @@ def create_LOO_validation_fig(s, df_set, logging):
 
     for acc_db in df_set.acc_db:
         if acc_db in xv_dict:
-            roc_auc = xv_dict[acc_db]["auc"]
+            roc_auc = xv_dict[acc_db]["roc_auc"]
             auc_dict[acc_db] = roc_auc
             ax.plot(xv_dict[acc_db]["fpr"], xv_dict[acc_db]["tpr"], lw=1, label='{} ({:.2f})'.format(acc_db, roc_auc), alpha=0.8)
         else:
             logging.warning("{} not in xv_dict after LOO validation".format(acc_db))
 
-    mean_auc_all_prot = xv_dict["mean_auc_all_prot"]
+    mean_roc_auc_all_prot = xv_dict["mean_roc_auc_all_prot"]
 
-    ax.plot(xv_dict["false_positive_rate_mean"], xv_dict["true_positive_rate_mean"], color="k", label='mean (area = %0.2f)' % mean_auc_all_prot, lw=1.5)
+    ax.plot(xv_dict["false_positive_rate_mean"], xv_dict["true_positive_rate_mean"], color="k", label='mean (area = %0.2f)' % mean_roc_auc_all_prot, lw=1.5)
     ax.plot([0, 1], [0, 1], '--', color=(0.6, 0.6, 0.6), label='random')
     ax.set_xlim([-0.05, 1.05])
     ax.set_ylim([-0.05, 1.05])
@@ -657,7 +663,6 @@ def create_LOO_validation_fig(s, df_set, logging):
     fig.savefig(thoipapy.utils.pdf_subpath(LOO_crossvalidation_ROC_png))
 
     AUC_ser = pd.Series(auc_dict)
-    AUC_ser.sort_values(inplace=True, ascending=False)
     AUC_ser.to_csv(AUC_csv)
     plt.close("all")
     figsize = np.array([3.42, 3.42]) * 2 # DOUBLE the real size, due to problems on Bo computer with fontsizes

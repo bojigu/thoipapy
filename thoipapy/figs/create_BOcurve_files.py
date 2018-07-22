@@ -163,11 +163,11 @@ def validate_THOIPA_for_testset_trainset_combination(s, test_set_list, train_set
                 predictor_name = "THOIPA"
 
                 fpr, tpr, thresholds = roc_curve(df_for_roc.interface, df_for_roc[predictor_name], drop_intermediate=False)
-                auc_value = auc(fpr, tpr)
+                roc_auc_value = auc(fpr, tpr)
                 mean_tpr += interp(mean_fpr, fpr, tpr)
                 mean_tpr[0] = 0.0
 
-                xv_dict_THOIPA[acc_db] = {"fpr" : fpr, "tpr" : tpr, "auc" : auc_value}
+                xv_dict_THOIPA[acc_db] = {"fpr" : fpr, "tpr" : tpr, "roc_auc" : roc_auc_value}
 
             #######################################################################################################
             #                                                                                                     #
@@ -179,7 +179,7 @@ def validate_THOIPA_for_testset_trainset_combination(s, test_set_list, train_set
 
             #THOIPA_linechart_mean_obs_and_rand = analyse_bo_curve_underlying_data(THOIPA_BO_curve_data_csv, BO_curve_folder, names_excel_path)
             parse_BO_data_csv_to_excel(THOIPA_BO_curve_data_csv, BO_data_excel, logging)
-            AUC_ser = pd.Series(xv_dict_THOIPA[acc_db]["auc"])
+            AUC_ser = pd.Series(xv_dict_THOIPA[acc_db]["roc_auc"])
             AUBOC10 = save_BO_linegraph_and_barchart(s, BO_data_excel, BO_linechart_png, BO_barchart_png, namedict, logging, AUC_ser)
 
             if "you_want_more_details" == "TRUE":
@@ -194,12 +194,12 @@ def validate_THOIPA_for_testset_trainset_combination(s, test_set_list, train_set
             mean_tpr /= testdataset_df.shape[0]
             mean_tpr[-1] = 1.0
 
-            mean_auc = auc(mean_fpr, mean_tpr)
+            mean_roc_auc = auc(mean_fpr, mean_tpr)
 
             ROC_out_dict = {"xv_dict_THOIPA" : xv_dict_THOIPA}
             ROC_out_dict["true_positive_rate_mean"] = mean_tpr
             ROC_out_dict["false_positive_rate_mean"] = mean_fpr
-            ROC_out_dict["mean_auc"] = mean_auc
+            ROC_out_dict["mean_roc_auc"] = mean_roc_auc
 
             # save dict as pickle
             with open(THOIPA_ROC_pkl, "wb") as f:
@@ -207,7 +207,7 @@ def validate_THOIPA_for_testset_trainset_combination(s, test_set_list, train_set
 
             create_ROC_fig_for_testset_trainset_combination(THOIPA_ROC_pkl)
 
-            logging.info("Test{}_Train{} AUC({:.03f}), AUBOC10({:.2f}). ({})".format(testsetname, trainsetname, mean_auc, AUBOC10, BO_barchart_png))
+            logging.info("Test{}_Train{} AUC({:.03f}), AUBOC10({:.2f}). ({})".format(testsetname, trainsetname, mean_roc_auc, AUBOC10, BO_barchart_png))
 
 
 def validate_LIPS_for_testset(s, logging, LIPS_name = "LIPS_LE", pred_col="LIPS_L*E"):
@@ -285,11 +285,11 @@ def validate_LIPS_for_testset(s, logging, LIPS_name = "LIPS_LE", pred_col="LIPS_
             df_for_roc = combined_df.dropna(subset=["interface_score"])
 
             fpr, tpr, thresholds = roc_curve(df_for_roc.interface, df_for_roc[pred_col], drop_intermediate=False)
-            auc_value = auc(fpr, tpr)
+            roc_auc_value = auc(fpr, tpr)
             mean_tpr += interp(mean_fpr, fpr, tpr)
             mean_tpr[0] = 0.0
 
-            xv_dict_LIPS[acc_db] = {"fpr" : fpr, "tpr" : tpr, "auc" : auc_value}
+            xv_dict_LIPS[acc_db] = {"fpr" : fpr, "tpr" : tpr, "roc_auc" : roc_auc_value}
 
         #######################################################################################################
         #                                                                                                     #
@@ -304,7 +304,7 @@ def validate_LIPS_for_testset(s, logging, LIPS_name = "LIPS_LE", pred_col="LIPS_
 
         #parse_BO_data_csv_to_excel(LIPS_BO_curve_data_csv, BO_curve_folder, names_excel_path)
         parse_BO_data_csv_to_excel(LIPS_BO_curve_data_csv, BO_data_excel, logging)
-        AUC_ser = pd.Series(xv_dict_LIPS[acc_db]["auc"])
+        AUC_ser = pd.Series(xv_dict_LIPS[acc_db]["roc_auc"])
         AUBOC10 = save_BO_linegraph_and_barchart(s, BO_data_excel, BO_linechart_png, BO_barchart_png, namedict, logging, AUC_ser)
 
         if "you_want_more_details" == "TRUE":
@@ -319,12 +319,12 @@ def validate_LIPS_for_testset(s, logging, LIPS_name = "LIPS_LE", pred_col="LIPS_
         mean_tpr /= testdataset_df.shape[0]
         mean_tpr[-1] = 1.0
 
-        mean_auc = auc(mean_fpr, mean_tpr)
+        mean_roc_auc = auc(mean_fpr, mean_tpr)
 
         ROC_out_dict = {"xv_dict_THOIPA" : xv_dict_LIPS}
         ROC_out_dict["true_positive_rate_mean"] = mean_tpr
         ROC_out_dict["false_positive_rate_mean"] = mean_fpr
-        ROC_out_dict["mean_auc"] = mean_auc
+        ROC_out_dict["mean_roc_auc"] = mean_roc_auc
 
         # save dict as pickle
         with open(LIPS_ROC_pkl, "wb") as f:
@@ -332,7 +332,7 @@ def validate_LIPS_for_testset(s, logging, LIPS_name = "LIPS_LE", pred_col="LIPS_
 
         create_ROC_fig_for_testset_trainset_combination(LIPS_ROC_pkl)
 
-        logging.info("Test{}.{} AUC({:.03f}), AUBOC10({:.2f}). ({})".format(testsetname, LIPS_name, mean_auc, AUBOC10, BO_barchart_png))
+        logging.info("Test{}.{} AUC({:.03f}), AUBOC10({:.2f}). ({})".format(testsetname, LIPS_name, mean_roc_auc, AUBOC10, BO_barchart_png))
 
 def create_ROC_fig_for_testset_trainset_combination(THOIPA_ROC_pkl):
 
@@ -353,13 +353,13 @@ def create_ROC_fig_for_testset_trainset_combination(THOIPA_ROC_pkl):
     fig, ax = plt.subplots(figsize=figsize)
 
     for acc_db in xv_dict_THOIPA:
-        roc_auc = xv_dict_THOIPA[acc_db]["auc"]
+        roc_auc = xv_dict_THOIPA[acc_db]["roc_auc"]
         ax.plot(xv_dict_THOIPA[acc_db]["fpr"], xv_dict_THOIPA[acc_db]["tpr"], lw=1, label='{} ({:0.2f})'.format(acc_db, roc_auc), alpha=0.8)
 
-    #mean_auc = auc(df_xv["false_positive_rate"], df_xv["true_positive_rate"])
-    mean_auc = ROC_out_dict["mean_auc"]
+    #mean_roc_auc = auc(df_xv["false_positive_rate"], df_xv["true_positive_rate"])
+    mean_roc_auc = ROC_out_dict["mean_roc_auc"]
 
-    ax.plot(ROC_out_dict["false_positive_rate_mean"], ROC_out_dict["true_positive_rate_mean"], color="k", label='mean (area = %0.2f)' % mean_auc, lw=1.5)
+    ax.plot(ROC_out_dict["false_positive_rate_mean"], ROC_out_dict["true_positive_rate_mean"], color="k", label='mean (area = %0.2f)' % mean_roc_auc, lw=1.5)
     ax.plot([0, 1], [0, 1], '--', color=(0.6, 0.6, 0.6), label='random')
     ax.set_xlim([-0.05, 1.05])
     ax.set_ylim([-0.05, 1.05])

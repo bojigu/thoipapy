@@ -210,7 +210,7 @@ def compare_predictors(s):
         if os.path.isfile(ROC_pkl):
             with open(ROC_pkl, "rb") as f:
                 ROC_out_dict = pickle.load(f)
-                ax.plot(ROC_out_dict["false_positive_rate_mean"], ROC_out_dict["true_positive_rate_mean"], label='{} ({:0.2f})'.format(predictor_name, ROC_out_dict["mean_auc"]), lw=1.5)
+                ax.plot(ROC_out_dict["false_positive_rate_mean"], ROC_out_dict["true_positive_rate_mean"], label='{} ({:0.2f})'.format(predictor_name, ROC_out_dict["mean_roc_auc"]), lw=1.5)
         else:
             sys.stdout.write("PICKLE WITH ROC DATA NOT FOUND : {}".format(ROC_pkl))
 
