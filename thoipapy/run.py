@@ -18,13 +18,17 @@ Purpose:        Self-interacting single-pass membrane protein interface residues
 #warnings.filterwarnings("ignore")
 
 import argparse
-import sys
 import os
-import thoipapy
 import platform
+import sys
+
 import pandas as pd
 
+import thoipapy
+
 # read the command line arguments
+import thoipapy.validation.validation_test_train_deprecated
+
 parser = argparse.ArgumentParser()
 
 parser.add_argument("-s",  # "-settingsfile",
@@ -245,20 +249,24 @@ if __name__ == "__main__":
             thoipapy.figs.calc_PREDDIMER_TMDOCK_closedist.calc_closedist_from_PREDDIMER_TMDOCK_best_model(s, logging)
 
         if s["add_predictions_to_combined_files"] == True:
-            thoipapy.figs.combine_add_3_prediction.combine_file_add_PREDDIMER_TMDOCK_THOIPA_prediction(s, df_set, logging)
+            thoipapy.validation.indiv_validation.combine_file_add_PREDDIMER_TMDOCK_THOIPA_prediction(s, df_set, logging)
 
-        if s["create_AUC_BoAuc_fig_bestset"] == True:
-            thoipapy.figs.combine_add_3_prediction.create_AUC_BOAUC10_figs_THOIPA_PREDDIMER_TMDOCK(s, df_set, logging)
+        if s["run_indiv_validation_THOIPA_PREDDIMER_TMDOCK"] == True:
+            namedict = thoipapy.utils.create_namedict(os.path.join(os.path.dirname(s["sets_folder"]), "ETRA_NMR_names.xlsx"))
+            THOIPA_predictor_name = "THOIPA_{}_LOO".format(s["set_number"])
+            predictor_name_list = [THOIPA_predictor_name, "PREDDIMER", "TMDOCK", "LIPS_surface_ranked"]
+            thoipapy.validation.indiv_validation.collect_indiv_validation_data(s, df_set, logging, namedict, predictor_name_list)
+            thoipapy.validation.indiv_validation.create_indiv_validation_figs(s, logging, namedict, predictor_name_list, THOIPA_predictor_name)
 
         if s["create_merged_heatmap"] == True:
             thoipapy.figs.create_heatmap_from_merge_file.create_merged_heatmap(s, df_set, logging)
 
         if s["create_ROC_4predictors"] == True:
-            thoipapy.figs.combine_add_3_prediction.create_ROC_comp_4predictors(s, df_set, logging)
+            thoipapy.validation.indiv_validation.create_ROC_comp_4predictors(s, df_set, logging)
 
         if s["create_AUC_AUBOC_separate_database"] == True:
-            thoipapy.figs.combine_add_3_prediction.create_AUBOC10_4predictors_3databases_figs(s,df_set,logging)
-            thoipapy.figs.combine_add_3_prediction.create_AUC_4predictors_3databases_figs(s, df_set, logging)
+            thoipapy.validation.validation_test_train_deprecated.create_AUBOC10_4predictors_3databases_figs(s, df_set, logging)
+            thoipapy.validation.validation_test_train_deprecated.create_AUC_4predictors_3databases_figs(s, df_set, logging)
 
 
         if "download_10_homologues_from_ncbi" in s:
@@ -270,8 +278,9 @@ if __name__ == "__main__":
                 #thoipapy.structures.get_TMD_homodimer.get_tmd_nr_homodimer.calc_coev_vs_res_dist(s, dfset, logging)
                 thoipapy.figs.retrospective.plot_coev_vs_res_dist(s, logging)
 
-        if s["create_ROC_all_residues"]:
+        if s["ROC_PR_val_all_residues_combined"]:
             thoipapy.features.feature_calculate.create_ROC_all_residues(s, df_set, logging)
+            thoipapy.features.feature_calculate.create_precision_recall_all_residues(s, df_set, logging)
 
         # close the logger. A new one will be made for the next protein list.
         logging.info("FINISHED PROCESSING OF {}.".format(setname))
