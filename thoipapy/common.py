@@ -471,7 +471,7 @@ def process_set_protein_seqs(s, setname, df_set, set_path):
         df_set.loc[cluster_rep_list, "cdhit_cluster_rep"] = True
         df_set["cdhit_cluster_rep"] = df_set["cdhit_cluster_rep"].fillna(False)
     else:
-        logging.warning("No CD-HIT results found. Redundancy check for training and validation is not possible.")
+        logging.warning("No CD-HIT results found. Redundancy check for training and validation not conducted. It is assumed that dataset is already non-redundant.")
         df_set["cdhit_cluster_rep"] = "no_cdhit_results"
 
     """  Rearrange the dataframe columns so that the order is as follows.

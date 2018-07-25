@@ -13,7 +13,22 @@ from sklearn.metrics import roc_curve, auc, precision_recall_curve
 import thoipapy
 
 
-def collect_indiv_validation_data(s, df_set, logging, namedict, predictor_name_list):
+def collect_indiv_validation_data(s, df_set, logging, namedict, predictor_name_list, THOIPA_predictor_name):
+    """
+
+    Parameters
+    ----------
+    s
+    df_set
+    logging
+    namedict
+    predictor_name_list
+    THOIPA_predictor_name
+
+    Returns
+    -------
+
+    """
     logging.info("start collect_indiv_validation_data THOIPA_PREDDIMER_TMDOCK")
     ROC_AUC_df = pd.DataFrame()
     PR_AUC_df = pd.DataFrame()
@@ -43,7 +58,7 @@ def collect_indiv_validation_data(s, df_set, logging, namedict, predictor_name_l
         mean_tpr = 0.0
         mean_fpr = np.linspace(0, 1, 100)
 
-        predictor_dir = os.path.join(indiv_validation_dir, predictor_name.replace('*',""))
+        predictor_dir = os.path.join(indiv_validation_dir, predictor_name)
         auc_pkl = os.path.join(predictor_dir, "ROC_AUC_data.pkl")
         BO_curve_data_csv = os.path.join(predictor_dir, "BO_Curve_data.csv")
         BO_data_excel = os.path.join(predictor_dir, "BO_curve_data.xlsx")
@@ -163,6 +178,15 @@ def collect_indiv_validation_data(s, df_set, logging, namedict, predictor_name_l
 
         df_o_minus_r_mean_df.to_excel(writer, sheet_name="BO_o_minus_r")
 
+        if "TMDOCK" in PR_AUC_df.columns and "PREDDIMER" in PR_AUC_df.columns:
+            df_THOIPA_vs_others = pd.DataFrame()
+            df_THOIPA_vs_others["THOIPA_better_TMDOCK"] = PR_AUC_df[THOIPA_predictor_name] > PR_AUC_df.TMDOCK
+            df_THOIPA_vs_others["THOIPA_better_PREDDIMER"] = PR_AUC_df[THOIPA_predictor_name] > PR_AUC_df.PREDDIMER
+            df_THOIPA_vs_others["THOIPA_better_both"] = df_THOIPA_vs_others[["THOIPA_better_TMDOCK", "THOIPA_better_PREDDIMER"]].sum(axis=1) == 2
+            n_THOIPA_better_both = df_THOIPA_vs_others["THOIPA_better_both"].sum()
+            logging.info("THOIPA has higher precision-recall AUC than both TMDOCK and PREDDIMER for {}/{} proteins in {}".format(n_THOIPA_better_both, PR_AUC_df.shape[0], s["setname"]))
+            df_THOIPA_vs_others.to_excel(writer, sheet_name="THOIPA_vs_others")
+
         # #sys.stdout.write(roc_auc_mean_list)
         # AUBOC10_mean_df = pd.DataFrame.from_records([AUBOC10_list], columns=linechar_name_list)
         # #AUBOC10_mean_df.to_csv(mean_AUBOC_file)
@@ -217,8 +241,7 @@ def create_scatter_ROC_AUC_vs_PR_AUC(s, predictor_name_list, ROC_AUC_vs_PR_AUC_s
 
     fig, ax = plt.subplots(figsize=(8, 8))
     for predictor_name in predictor_name_list:
-        auc_pkl = os.path.join(s["thoipapy_data_folder"], "Results", "compare_predictors",
-                               "{}.{}_AUC_data.pkl".format(s["setname"], predictor_name.replace('*', "")))
+        auc_pkl = os.path.join(s["thoipapy_data_folder"], "Results", s["setname"], "indiv_validation", predictor_name, "ROC_AUC_data.pkl")
         with open(auc_pkl, "rb") as f:
             xv_dict = pickle.load(f)
         roc_auc_list = []
@@ -308,7 +331,6 @@ def create_BOcurve_linechart(df_o_minus_r_mean_df, BOCURVE_linechart_png):
     ax.legend()
     fig.tight_layout()
     fig.savefig(BOCURVE_linechart_png, dpi=140)
-    print(BOCURVE_linechart_png)
 
 def create_ROC_AUC_barchart(ROC_AUC_df, ROC_AUC_barchart_png, namedict, THOIPA_predictor_name):
 
@@ -594,8 +616,7 @@ def create_ROC_comp_4predictors(s, df_set, logging):
         for i in df_set.index:
             acc = df_set.loc[i, "acc"]
             database = df_set.loc[i, "database"]
-            merged_data_csv_path = os.path.join(s["thoipapy_data_folder"], "Merged", database,
-                                                "{}.merged.csv".format(acc))
+            merged_data_csv_path = os.path.join(s["thoipapy_data_folder"], "Merged", database, "{}.merged.csv".format(acc))
             dfm = pd.read_csv(merged_data_csv_path, engine="python", index_col=0)
             dfm.dropna(inplace=True)
             interface = dfm["interface"].values

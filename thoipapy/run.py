@@ -249,13 +249,13 @@ if __name__ == "__main__":
             thoipapy.figs.calc_PREDDIMER_TMDOCK_closedist.calc_closedist_from_PREDDIMER_TMDOCK_best_model(s, logging)
 
         if s["add_predictions_to_combined_files"] == True:
-            thoipapy.validation.indiv_validation.combine_file_add_PREDDIMER_TMDOCK_THOIPA_prediction(s, df_set, logging)
+            thoipapy.validation.combine_mult_predictors.combine_file_add_PREDDIMER_TMDOCK_THOIPA_prediction(s, df_set, logging)
 
         if s["run_indiv_validation_THOIPA_PREDDIMER_TMDOCK"] == True:
             namedict = thoipapy.utils.create_namedict(os.path.join(os.path.dirname(s["sets_folder"]), "ETRA_NMR_names.xlsx"))
             THOIPA_predictor_name = "THOIPA_{}_LOO".format(s["set_number"])
             predictor_name_list = [THOIPA_predictor_name, "PREDDIMER", "TMDOCK", "LIPS_surface_ranked"]
-            thoipapy.validation.indiv_validation.collect_indiv_validation_data(s, df_set, logging, namedict, predictor_name_list)
+            thoipapy.validation.indiv_validation.collect_indiv_validation_data(s, df_set, logging, namedict, predictor_name_list, THOIPA_predictor_name)
             thoipapy.validation.indiv_validation.create_indiv_validation_figs(s, logging, namedict, predictor_name_list, THOIPA_predictor_name)
 
         if s["create_merged_heatmap"] == True:
