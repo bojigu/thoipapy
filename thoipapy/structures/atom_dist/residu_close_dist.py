@@ -1,5 +1,4 @@
 import re
-import os
 import math
 ###in homotypic_data/daba/Bind/pdb  ZhelixPair gives interacting TMP homodimers
 
@@ -97,7 +96,7 @@ def homodimer_residue_closedist_calculate_from_complex(thoipapy,s,logging):
             for key1 in hash2arrayx.keys():
                 for i in range(len(arr_xvalue1)):
                     arr_xvalue2=hash2arrayx[key1].strip().split('_')
-                    #print(arr_xvalue2)
+                    #sys.stdout.write(arr_xvalue2)
                     arr_yvalue2=hash2arrayy[key1].strip().split('_')
                     arr_zvalue2=hash2arrayz[key1].strip().split('_')
                     for j in range(len(arr_xvalue2)):
@@ -134,5 +133,5 @@ def homodimer_residue_closedist_calculate_from_complex(thoipapy,s,logging):
                 else:
                     closedist_output_file_handle.write(str(key.strip().split('_')[0])+"\t"+str(key.strip().split('_')[1])+"\t"+str(key.strip().split('_')[2])+"\t"+str(key.strip().split('_')[3])+"\t"+str(hashclosedist[key])+"\t"+str(hashCAclosedist[key])+"\t"+"0"+"\n")
             except:
-                print("residue" + "%s" %key + "without CB" )
+                sys.stdout.write("residue" + "%s" %key + "without CB" )
         closedist_output_file_handle.close()

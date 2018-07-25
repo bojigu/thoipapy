@@ -3,7 +3,7 @@ import pandas as pd
 import thoipapy
 
 
-def combine_file_add_PREDDIMER_TMDOCK_THOIPA_prediction(s, df_set, logging):
+def merge_predictions(s, df_set, logging):
     """Combines all available predictions for a particular testset.
 
     The testset is determined by the original set_number, not the "test_datasets" list.
@@ -37,17 +37,17 @@ def combine_file_add_PREDDIMER_TMDOCK_THOIPA_prediction(s, df_set, logging):
         #if acc =="2axtM1":
         full_seq = df_set.loc[i, "full_seq"]
         database = df_set.loc[i, "database"]
-        train_data_file = os.path.join(s["features_folder"], "combined", database,"{}.surr20.gaps5.combined_features.csv".format(acc))
+        train_data_file = os.path.join(s["thoipapy_data_folder"], "Features", "combined", database,"{}.surr20.gaps5.combined_features.csv".format(acc))
         combined_data_file = os.path.join(s["dropbox_dir"], "THOIPA_data","Features","combined",database,
                                        "{}.surr20.gaps5.combined_features.csv".format(acc))
         thoipapy.utils.make_sure_path_exists(combined_data_file, isfile=True)
         THOIPA_prediction_csv = os.path.join(s["thoipapy_data_folder"], "Predictions", "leave_one_out", database, "{}.{}.{}.LOO.prediction.csv".format(acc, database, s["setname"]))
         PREDDIMER_prediction_file = os.path.join(PREDDIMER_TMDOCK_folder, database, "{}.preddimer.closedist.csv".format(acc))
         TMDOCK_prediction_file = os.path.join(PREDDIMER_TMDOCK_folder, database, "{}.tmdock.closedist.csv".format(acc))
-        merged_data_csv_path = os.path.join(s["thoipapy_data_folder"], "Merged", database, "{}.merged.csv".format(acc))
-        merged_data_xlsx_path = os.path.join(s["thoipapy_data_folder"], "Merged", database, "{}.merged.xlsx".format(acc))
-        thoipapy.utils.make_sure_path_exists(merged_data_xlsx_path, isfile=True)
-        #merge_4_files_alignment_metho(acc, full_seq, train_data_file, THOIPA_prediction_file, PREDDIMER_prediction_file, TMDOCK_prediction_file, merged_data_xlsx_path, columns_kept_in_combined_file)
+        merged_data_csv_path = os.path.join(s["thoipapy_data_folder"], "Results", s["setname"], "predictions", database, "{}.merged.csv".format(acc))
+        #merged_data_xlsx_path = os.path.join(s["thoipapy_data_folder"], "Results", s["setname"], "predictions", database, "{}.merged.xlsx".format(acc))
+        thoipapy.utils.make_sure_path_exists(merged_data_csv_path, isfile=True)
+        #merge_4_files_alignment_method_deprecated(acc, full_seq, train_data_file, THOIPA_prediction_file, PREDDIMER_prediction_file, TMDOCK_prediction_file, merged_data_xlsx_path, columns_kept_in_combined_file)
 
         # load the full feature file as the start of dfm
         dfm = pd.read_csv(train_data_file)

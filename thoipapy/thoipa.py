@@ -68,7 +68,6 @@ def run_THOIPA_prediction(protein_name, md5, TMD_seq, full_seq, out_dir):
     ###################################################################################################
 
     # various residue features needs a protein folder as output
-    s["Protein_folder"] = predictions_folder
     blast_xml_file = os.path.join(out_dir, "BLAST_results.xml")
     xml_txt = blast_xml_file[:-4] + "_details.txt"
     xml_tar_gz = os.path.join(out_dir, "BLAST_results.xml.tar.gz")

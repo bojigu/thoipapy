@@ -40,7 +40,7 @@ def calculate_fasta_file_length(s):
     FastaFile.close()
     return seqLen
 
-def create_TMD_surround20_fasta_file(s, database):
+def create_TMD_surround20_fasta_file(s, database, protein_folder):
     """create fasta file with tmd and surround 20 residues as new sequence for further blastp.
     also the input protein list file will be updated by adding "TMD_Sur_Left" and "TMD_Sur_Right"
 
@@ -78,7 +78,7 @@ def create_TMD_surround20_fasta_file(s, database):
             tmp_length = int(row.strip().split(",")[1])
             tmp_start = int(row.strip().split(",")[2])
             tmp_end = int(row.strip().split(",")[3])
-            tmp_protein_fasta = os.path.join(s["Protein_folder"], database,"%s.fasta") % acc
+            tmp_protein_fasta = os.path.join(protein_folder, database,"%s.fasta") % acc
             line=""
             if os.path.isfile(tmp_protein_fasta):
                 fasta_text = ""
@@ -99,7 +99,7 @@ def create_TMD_surround20_fasta_file(s, database):
                 else:
                     s["tmp_surr_right"]=tmp_length-tmp_end
                 tmp_surr_string=fasta_text[(tmp_start-s["tmp_surr_left"]-1):(tmp_end+s["tmp_surr_right"])]
-                tmp_surr_fasta_file=os.path.join(s["Protein_folder"], database, "%s.surr20.fasta") % acc
+                tmp_surr_fasta_file=os.path.join(protein_folder, database, "%s.surr20.fasta") % acc
                 tmp_surr_fasta_file_handle=open(tmp_surr_fasta_file,"w")
                 tmp_surr_fasta_file_handle.write("> %s TMD add surround 20 residues\n" % acc)
                 tmp_surr_fasta_file_handle.write(tmp_surr_string)
@@ -235,10 +235,10 @@ def create_settingdict(excel_file_with_settings):
         # join dictionaries together
         s.update(sheet_as_dict)
 
-    list_paths_to_normalise = ['dropbox_dir', 'sets_folder', 'base_dir', 'thoipapy_data_folder', 'Protein_folder', 'Train_proteins', 'Experimental_proteins',
+    list_paths_to_normalise = ['dropbox_dir', 'sets_folder', 'base_dir', 'thoipapy_data_folder',
                                'Results_folder', 'homologues_folder', 'output_oa3m_homologues', 'xml_file_folder', 'filtered_homo_folder', 'features_folder',
                                'feature_entropy', 'feature_pssm', 'feature_lipophilicity', 'feature_cumulative_coevolution', 'feature_relative_position',
-                               'feature_lips_score', 'feature_physical_parameters', 'structure_bind', 'RF_loc', 'Rcode', 'Sine_Curve_loc', 'logfile_dir',
+                               'feature_lips_score', 'structure_bind', 'RF_loc', 'Rcode', 'Sine_Curve_loc', 'logfile_dir',
                                'freecontact_dir', 'hhblits_dir', 'uniprot_database_dir', 'Rscript_dir']
     # normalise the paths for selected columns, so that they are appropriate for the operating system
     for path in list_paths_to_normalise:
@@ -260,7 +260,7 @@ def setup_keyboard_interrupt_and_error_logging(s, setname):
     date_string = strftime("%Y%m%d_%H_%M_%S")
 
     # designate the output logfile
-    logfile = os.path.join(s["logfile_dir"],'%s_%s_logfile.log' % (setname, date_string))
+    logfile = os.path.join(s["thoipapy_data_folder"], "Logging",'%s_%s_logfile.log' % (setname, date_string))
 
     # # if multiprocessing is used, disable logging except for critical messages.
     # if s["use_multiprocessing"]:
@@ -490,7 +490,7 @@ def process_set_protein_seqs(s, setname, df_set, set_path):
     s["list_of_tmd_start_end"] = list_of_tmd_start_end
     thoipapy.utils.make_sure_path_exists(list_of_tmd_start_end, isfile=True)
     df_set.set_index("acc").to_csv(list_of_tmd_start_end)
-    train_data_csv = os.path.join(s["set_results_folder"], "{}_processed_input_sequences.csv".format(s["setname"]))
+    train_data_csv = os.path.join(s["thoipapy_data_folder"], "Results", "{}_processed_input_sequences.csv".format(s["setname"]))
     df_set.set_index("acc").to_csv(train_data_csv)
 
     return df_set

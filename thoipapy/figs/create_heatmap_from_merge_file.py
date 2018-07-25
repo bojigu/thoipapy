@@ -34,7 +34,7 @@ def create_merged_heatmap(s, df_set, logging):
     #             EXTRACT NAMES FROM NAMES EXCEL FILE               #
     #################################################################
 
-    THOIPA_col = "THOIPA_5_LOO"
+    THOIPA_col = "THOIPA_{}_LOO".format(s["set_number"])
     LIPS_col = "LIPS_surface"#"LIPS_surface_ranked"
     coev_col = "DI4mean"
 
@@ -50,17 +50,10 @@ def create_merged_heatmap(s, df_set, logging):
         acc = df_set.loc[i, "acc"]
         database = df_set.loc[i, "database"]
         acc_db = acc + "_" + database
-
         #if acc =="1orqC4":
-
         #df_names = pd.read_excel(names_excel_path, index_col=0)
         # restrict names dict to only that database
         #df_names = df_names.loc[df_names.database == database]
-
-        # print(df_names.loc[acc_db, "shortname"])
-        # print(df_names.loc[acc_db, "shortname"].isnull())
-        # print(True in df_names.loc[acc_db, "shortname"].isnull())
-
 
         if database == "ETRA":
             ref = "".join(df_names.loc[acc_db, "source":"date"].dropna().astype(str).tolist())
@@ -88,14 +81,14 @@ def create_merged_heatmap(s, df_set, logging):
         create_single_merged_heatmap(s, acc, database,savename, fig_label, dfh_cols, THOIPA_col, LIPS_col, coev_col)
 
 def create_single_merged_heatmap(s, acc, database, savename, fig_label, dfh_cols, THOIPA_col, LIPS_col, coev_col):
-        merged_data_csv_path = os.path.join(s["thoipapy_data_folder"], "Merged", database, "{}.merged.csv".format(acc))
+        merged_data_csv_path = os.path.join(s["thoipapy_data_folder"], "Results", s["setname"], "predictions", database, "{}.merged.csv".format(acc))
         dfm = pd.read_csv(merged_data_csv_path, engine = "python")
 
 
         heatmap_path = os.path.join(s["thoipapy_data_folder"], "heatmap",database, "{}.png".format(acc))
         heatmap_pdf_path = os.path.join(s["thoipapy_data_folder"], "heatmap",database,"pdf","{}.pdf".format(acc))
         heatmap_data_xlsx_path = os.path.join(s["thoipapy_data_folder"], "heatmap",database,"xlsx","{}_merged.xlsx".format(acc))
-        hetero_bind_file = os.path.join(s["features_folder"], "Structure",database, "{}.hetero.bind.csv").format(acc)
+        hetero_bind_file = os.path.join(s["thoipapy_data_folder"], "Features", "Structure",database, "{}.hetero.bind.csv").format(acc)
         thoipapy.utils.make_sure_path_exists(heatmap_pdf_path, isfile=True)
         thoipapy.utils.make_sure_path_exists(heatmap_data_xlsx_path, isfile=True)
 

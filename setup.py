@@ -26,7 +26,7 @@ setup(
     'Topic :: Scientific/Engineering :: Physics',
     'Topic :: Scientific/Engineering :: Bio-Informatics',
     ],
-    install_requires=["pandas", "numpy", "scipy", "biopython", "matplotlib", "seaborn", "plotly", "django", "pytoxr"],
+    install_requires=["pandas", "numpy", "scipy", "biopython", "matplotlib", "seaborn", "django", "pytoxr"],
     project_urls=
     {
     'BoZeng': 'http://frishman.wzw.tum.de/index.php?id=50',

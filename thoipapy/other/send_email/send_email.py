@@ -39,7 +39,7 @@ def send_email_when_finished(s, output_file_loc, output_png_loc):
     #     for email_fig in email_fig_list:
     #         Fig_name = email_fig[:-6]
     #         filepath = os.path.join(pathdict["single_list_fig_path"], Fig_name + ".png")
-    #         print("filepath", filepath)
+    #         sys.stdout.write("filepath", filepath)
     #         if os.path.isfile(filepath):
     #             attachment = open(filepath, "rb")
     #             part = MIMEBase('application', 'octet-stream')

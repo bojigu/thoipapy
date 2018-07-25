@@ -46,7 +46,7 @@ def download_trpdb_calc_inter_rr_pairs(s, logging):
     tm_homo_pair_file_lists = glob.glob(os.path.join(s["pdbtm_homodimer_folder"],"xml","*.interhelix.csv" ))
     for tm_homo_pair_file in tm_homo_pair_file_lists:
         pdb_id = tm_homo_pair_file.split('\\')[-1][0:4]
-        print(pdb_id)
+        sys.stdout.write(pdb_id)
         tr_pdb_path = os.path.join(s["pdbtm_homodimer_folder"],"xml")
         utils.make_sure_path_exists(tr_pdb_path)
         pdbtm_trpdb_file = os.path.join(tr_pdb_path, "{}.trpdb.gz".format(pdb_id))
@@ -97,7 +97,7 @@ def create_redundant_interact_homodimer_rm_shorttm(s, logging):
     try:
         os.remove(redundant_interact_homodimer_file)
     except:
-        print("{} could not be deleted".format(redundant_interact_homodimer_file))
+        sys.stdout.write("{} could not be deleted".format(redundant_interact_homodimer_file))
     sys.stdout.write("the header of the redundant inter homodimers I: {}\n".format(dfc.head()))
     sys.stdout.flush()
     sys.stdout.write("the dimension of the redundant inter homodimers is: {} \n".format(dfc.shape))
@@ -123,9 +123,7 @@ def extract_crystal_resolv035_interact_pairs_and_create_fasta_file(s,logging):
         resolv = get_pdb_experimental_resolution(s, pdb_id)
         resolve_list.append(resolv)
     df_rd["resolv"] = resolve_list
-    print(df_rd.shape)
     df_rd =df_rd[df_rd["resolv"].astype(float) <= 3.5]
-    print(df_rd.shape)
 
     #save tmseq into one fasta file for cd-hit use
     for i in range(df_rd.shape[0]):
@@ -147,11 +145,11 @@ def extract_crystal_resolv035_interact_pairs_and_create_fasta_file(s,logging):
     non_self_inter_pair_num_list, all_inter_pair_num_list = get_inter_pair_rr_num(df_rd)
     df_rd["total_intpair_num"] = all_inter_pair_num_list
     df_rd["nonself_intpair_num"] = non_self_inter_pair_num_list
-    print(df_rd[["pdb_id", "cdhit0.6_clusternum", "total_intpair_num", "nonself_intpair_num"]])
+    sys.stdout.write(df_rd[["pdb_id", "cdhit0.6_clusternum", "total_intpair_num", "nonself_intpair_num"]])
     a = df_rd["cdhit0.6_clusternum"].unique()
     # for j in sorted(a):
-    #     #print(df_rd[df_rd["cdhit0.6_clusternum"].astype(int) == j,["pdb_id", "cdhit0.6_clusternum", "total_intpair_num", "nonself_intpair_num"]])
-    #     print(df_rd[["pdb_id", "cdhit0.6_clusternum", "total_intpair_num", "nonself_intpair_num"]].loc[df_rd['cdhit0.6_clusternum'] == j])
+    #     #sys.stdout.write(df_rd[df_rd["cdhit0.6_clusternum"].astype(int) == j,["pdb_id", "cdhit0.6_clusternum", "total_intpair_num", "nonself_intpair_num"]])
+    #     sys.stdout.write(df_rd[["pdb_id", "cdhit0.6_clusternum", "total_intpair_num", "nonself_intpair_num"]].loc[df_rd['cdhit0.6_clusternum'] == j])
 
     ##update redundant_interact_homodimer_file only keep crystal with resolution less than 0.35, and add 'cdhit60_clusternum
     crystal035_redundant_interact_homodimer_file_handle = open(crystal035_redundant_interact_homodimer_file,'w')
@@ -167,7 +165,7 @@ def extract_crystal_resolv035_interact_pairs_and_create_fasta_file(s,logging):
     cdhit60_nr_represent228_pair_handle.close()
 
     ##create set228 file used for thoipapy , the inter pair with non-self intor rr pair number bigger than 1
-    set_file = os.path.join(s["sets_folder"],'set228_crystal.xlsx')
+    set_file = os.path.join(s["dropbox_dir"], "sets",'set228_crystal.xlsx')
     create_inter_rr_number_bt1_set228_file(df_new, set_file)
 
 def create_multiple_bind_closedist_file(s,df_set, logging):
@@ -245,7 +243,7 @@ def create_single_bind_closedist_file(s, df_homo,i, inter_pair_max):
             if j in closedistAB_dict:
                 row.append([j + 1, tm_seq[j], '1' if str(j + 1) in tm_inter_list else '0', closedistAB_dict[j]])
             else:
-                print("residue{}not in {} closedist".format(j, pdb_id_chain))
+                sys.stdout.write("residue{}not in {} closedist".format(j, pdb_id_chain))
                 if j - 1 in closedistAB_dict:
                     closedistAB_dict[j] = closedistAB_dict[j - 1]
                 if j + 1 in closedistAB_dict:
@@ -341,7 +339,7 @@ def get_interpair_cdhist_cluster_number(df_rd,cdhit60_crystal035_clr_file):
                     dict_cluster_pair[pair.group(1)] = cluster_number
     return dict_cluster_pair
 
-    #print(cdhit60_crystal035_clr_file)
+    #sys.stdout.write(cdhit60_crystal035_clr_file)
     #return df_rd
 
 def get_pdb_experimental_resolution(s, pdb_id):
@@ -637,8 +635,8 @@ def get_tmd_alpha_helix_infor(pdb_id, pdbtm_xml_path, logging):
 
 
             # for Chain in root.findall('CHAIN'):
-            #     print(Chain)
-            #     print(Chain.tag, Chain.attrib)
+            #     sys.stdout.write(Chain)
+            #     sys.stdout.write(Chain.tag, Chain.attrib)
 
 def get_xml_file(pdb_id, pdbtm_xml_path, logging):
     """
@@ -657,7 +655,7 @@ def get_xml_file(pdb_id, pdbtm_xml_path, logging):
     pdb_xml_file = os.path.join(pdbtm_xml_path,  "{}.xml".format(pdb_id))
     if not os.path.isfile(pdb_xml_file):
         xml_file_url = 'http://pdbtm.enzim.hu/data/database/{}/{}.xml'.format(pdb_id[1:3],pdb_id)
-        print("downloading xml file with urllib")
+        logging.info("downloading xml file with urllib")
         urllib.request.urlretrieve(xml_file_url,pdb_xml_file )
         logging.info("Output file:     %s\n" % pdb_xml_file)
         if not os.path.exists(pdb_xml_file):
@@ -677,7 +675,7 @@ def get_trpdb_file(pdb_id, pdbtm_trpdb_file, logging):
 
     '''
     trpdb_file_url = 'http://pdbtm.enzim.hu/data/database/{}/{}.trpdb.gz'.format(pdb_id[1:3],pdb_id)
-    print(trpdb_file_url)
+    sys.stdout.write(trpdb_file_url)
     try:
         urllib.request.urlretrieve(trpdb_file_url,pdbtm_trpdb_file )
         logging.info("Output file:     %s\n" % pdbtm_trpdb_file)

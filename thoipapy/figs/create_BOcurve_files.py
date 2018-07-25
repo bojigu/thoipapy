@@ -34,7 +34,7 @@ warnings.filterwarnings("ignore")
 #         for i in testdataset_df.index:
 #             acc = testdataset_df.loc[i, "acc"]
 #             database = testdataset_df.loc[i, "database"]
-#             testdata_combined_file = os.path.join(s["features_folder"], "combined", database, "{}.surr20.gaps5.combined_features.csv".format(acc))
+#             testdata_combined_file = os.path.join(s["thoipapy_data_folder"], "Features", "combined", database, "{}.surr20.gaps5.combined_features.csv".format(acc))
 #             test_df = pd.read_csv(testdata_combined_file, sep=',', engine='python', index_col=0)
 #
 #             #odf = save_THOIPA_pred_indiv_prot(acc, train_df, test_df)
@@ -90,7 +90,7 @@ def validate_THOIPA_for_testset_trainset_combination(s, test_set_list, train_set
         Could not be saved easily as a dataframe, because the number of residues is different for each protein
 
     """
-    names_excel_path = os.path.join(os.path.dirname(s["sets_folder"]), "ETRA_NMR_names.xlsx")
+    names_excel_path = os.path.join(s["dropbox_dir"], "ETRA_NMR_names.xlsx")
     namedict = thoipapy.utils.create_namedict(names_excel_path)
 
     for n, train_set in enumerate(train_set_list):
@@ -123,11 +123,11 @@ def validate_THOIPA_for_testset_trainset_combination(s, test_set_list, train_set
                 acc = testdataset_df.loc[i, "acc"]
                 database = testdataset_df.loc[i, "database"]
                 acc_db = acc + "-" + database
-                testdata_combined_file = os.path.join(s["features_folder"], "combined", database,
+                testdata_combined_file = os.path.join(s["thoipapy_data_folder"], "Features", "combined", database,
                                                       "{}.surr20.gaps5.combined_features.csv".format(acc))
-                THOIPA_pred_csv = os.path.join(os.path.dirname(s["features_folder"]), "Predictions", "testset_trainset", database,
+                THOIPA_pred_csv = os.path.join(os.path.dirname(s["thoipapy_data_folder"], "Features"), "Predictions", "testset_trainset", database,
                                                       "{}.THOIPA.train{}.csv".format(acc, trainsetname))
-                combined_incl_THOIPA_csv = os.path.join(os.path.dirname(s["features_folder"]), "Predictions", "testset_trainset", database,
+                combined_incl_THOIPA_csv = os.path.join(os.path.dirname(s["thoipapy_data_folder"], "Features"), "Predictions", "testset_trainset", database,
                                                       "{}.THOIPA_incl_combined.train{}.csv".format(acc, trainsetname))
                 thoipapy.utils.make_sure_path_exists(combined_incl_THOIPA_csv, isfile=True)
 
@@ -212,7 +212,7 @@ def validate_THOIPA_for_testset_trainset_combination(s, test_set_list, train_set
 
 def validate_LIPS_for_testset(s, logging, LIPS_name = "LIPS_LE", pred_col="LIPS_L*E"):
 
-    names_excel_path = os.path.join(os.path.dirname(s["sets_folder"]), "ETRA_NMR_names.xlsx")
+    names_excel_path = os.path.join(s["dropbox_dir"], "ETRA_NMR_names.xlsx")
     namedict = thoipapy.utils.create_namedict(names_excel_path)
 
     # create list of test and train datasets
@@ -245,7 +245,7 @@ def validate_LIPS_for_testset(s, logging, LIPS_name = "LIPS_LE", pred_col="LIPS_
             database = testdataset_df.loc[i, "database"]
             acc_db = acc + "-" + database
 
-            testdata_combined_file = os.path.join(s["features_folder"], "combined", database,
+            testdata_combined_file = os.path.join(s["thoipapy_data_folder"], "Features", "combined", database,
                                                   "{}.surr20.gaps5.combined_features.csv".format(acc))
 
             combined_df = pd.read_csv(testdata_combined_file, index_col=0)
@@ -257,7 +257,7 @@ def validate_LIPS_for_testset(s, logging, LIPS_name = "LIPS_LE", pred_col="LIPS_
             #######################################################################################################
             # SAVE LIPS PREDICTION DATA
             # this is somewhat inefficient, as it is conducted for every test dataset
-            LIPS_pred_csv = os.path.join(os.path.dirname(s["features_folder"]), "Predictions", "testset_trainset", database, "{}.LIPS_pred.csv".format(acc, testsetname))
+            LIPS_pred_csv = os.path.join(os.path.dirname(s["thoipapy_data_folder"], "Features"), "Predictions", "testset_trainset", database, "{}.LIPS_pred.csv".format(acc, testsetname))
             LIPS_pred_df = combined_df[["residue_name", "residue_num", "LIPS_polarity", "LIPS_entropy", "LIPS_L*E", "LIPS_surface", "LIPS_surface_ranked"]]
             thoipapy.utils.make_sure_path_exists(LIPS_pred_csv, isfile=True)
             LIPS_pred_df.to_csv(LIPS_pred_csv)
@@ -298,7 +298,7 @@ def validate_LIPS_for_testset(s, logging, LIPS_name = "LIPS_LE", pred_col="LIPS_
         #######################################################################################################
 
         LIPS_BO_data_df.to_csv(LIPS_BO_curve_data_csv)
-        names_excel_path = os.path.join(os.path.dirname(s["sets_folder"]), "ETRA_NMR_names.xlsx")
+        names_excel_path = os.path.join(s["dropbox_dir"], "ETRA_NMR_names.xlsx")
 
         #LIPS_linechart_mean_obs_and_rand = analyse_bo_curve_underlying_data(LIPS_BO_curve_data_csv, BO_curve_folder, names_excel_path)
 
@@ -486,7 +486,7 @@ def save_THOIPA_pred_indiv_prot(s, model_pkl, testdata_combined_file, THOIPA_pre
 #     -----
 #     import datoxr
 #     bo_data_csv = r"D:\drive\TMD_homodimer\figs\SuppDataX02-best_overlap_data\SuppDataX02.csv"
-#     names_excel_path = r"D:\drive\TMD_homodimer\data_xy\ETRA_NMR_names.xlsx"
+#     names_excel_path = os.path.join(s["dropbox_dir"], "ETRA_NMR_names.xlsx")
 #     datoxr.figs.bo_curve_analysis.analyse_bo_curve_underlying_data(bo_data_csv, names_excel_path)
 #     """
 #
@@ -932,7 +932,7 @@ def save_BO_linegraph_and_barchart(s, BO_data_excel, BO_linechart_png, BO_barcha
     for col in df_valid_indiv.columns:
         df_valid_indiv[col] = normalise_0_1(df_valid_indiv[col])[0] + 0.01
 
-    BO_curve_folder = os.path.join(s["set_results_folder"], "crossvalidation")
+    BO_curve_folder = os.path.join(s["thoipapy_data_folder"], "Results", "crossvalidation")
     BO_data_excel = os.path.join(BO_curve_folder, "data", "{}_BO_curve_data.xlsx".format(s["setname"]))
     df_valid_indiv = df_valid_indiv.reindex(columns=["AUBOC10", 5, 10, "ROC AUC"])
     df_valid_indiv.columns = ["AUBOC10", "sample size 5", "sample size 10", "ROC AUC"]

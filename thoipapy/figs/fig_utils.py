@@ -182,7 +182,7 @@ def create_one_out_train_data(acc_db,set_path,s):
         acc1 = df_set04.loc[j, "acc_db"]
         if not acc1 == acc_db:
             database = df_set04.loc[j, "database"]
-            feature_combined_file = os.path.join(s["features_folder"], "combined", database,
+            feature_combined_file = os.path.join(s["thoipapy_data_folder"], "Features", "combined", database,
                                                  "{}.surr20.gaps5.combined_features.csv".format(acc1))
 
             df_features_new_protein1 = pd.read_csv(feature_combined_file, index_col=0)

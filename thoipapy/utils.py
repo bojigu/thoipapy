@@ -20,7 +20,6 @@ import numpy as np
 import pandas as pd
 from shutil import copyfile
 from time import strftime
-import plotly
 import platform
 import matplotlib.colors as colors
 import ctypes
@@ -174,7 +173,7 @@ def create_tarballs_from_xml_files_in_folder(xml_dir, download_date="2017.11.02"
                 os.remove(xml_renamed)
                 os.remove(xml_txt)
             except:
-                print("{} could not be deleted".format(xml_renamed))
+                sys.stdout.write("{} could not be deleted".format(xml_renamed))
 
 def delete_BLAST_xml(blast_xml_file):
     """Small function to remove files that are already compressed in a tarball.
@@ -192,13 +191,14 @@ def delete_BLAST_xml(blast_xml_file):
     try:
         os.remove(blast_xml_file)
     except:
-        print("{} could not be deleted".format(blast_xml_file))
+        sys.stdout.write("{} could not be deleted".format(blast_xml_file))
     try:
         os.remove(xml_txt)
     except:
-        print("{} could not be deleted".format(xml_txt))
+        sys.stdout.write("{} could not be deleted".format(xml_txt))
 
 def setup_biopol_plotly(username, api_key):
+    import plotly
     plotly.tools.set_config_file(world_readable=False, sharing='private')
     plotly.tools.set_credentials_file(username=username, api_key=api_key)
 
@@ -548,38 +548,31 @@ def denormalise_0_1(value_or_array, array_min, array_max):
     import numpy as np
     original_array = np.linspace(10,130,10)
     original_array[2], original_array[4] = 3, 140
-    print(original_array)
     # normalise original array
     normalised_array, min_, max_ = normalise_0_1(original_array)
-    print(normalised_array)
     # do stuff to normalised array (e.g., multiply by 0.5)
     normalised_array_halved = normalised_array * 0.5
     # denormalise values to match the equivalents in the original array.
     # Note that the min value (3) was normalised to zero, and was therefore not affected by multiplication.
     normalised_array_halved_denorm = denormalise_0_1(normalised_array_halved, min_, max_)
-    print(normalised_array_halved_denorm)
     # now calculate average values, and check that they match
     norm_array_mean = np.mean(normalised_array)
     norm_array_mean_denormalised = denormalise_0_1(norm_array_mean, min_, max_)
     orig_array_mean = np.mean(original_array)
     # print the two mean values. They should be equal.
-    print(norm_array_mean_denormalised)
-    print(orig_array_mean)
+    norm_array_mean_denormalised == orig_array_mean
     """
     if isinstance(value_or_array, list):
         raise ValueError('this function accepts arraylike data, not a list. '
                          'Please check data or convert list to numpy array')
     elif isinstance(value_or_array, float):
-        #print("found a float")
         denormalised = value_or_array*(array_max - array_min) + array_min
     elif isinstance(value_or_array, np.ndarray):
-        #print("found an array")
         denormalised = value_or_array*(array_max - array_min) + array_min
     elif isinstance(value_or_array, pd.Series):
-        #print("found a series")
         denormalised = value_or_array*(array_max - array_min) + array_min
     else:
-        print("Unknown datatype. denormalise_0_1 has been given an input that does not appear to be "
+        sys.stdout.write("Unknown datatype. denormalise_0_1 has been given an input that does not appear to be "
               "an int, float, np.ndarray or pandas Series\n"
               "Attempting to process as if it is arraylike.....")
     return denormalised

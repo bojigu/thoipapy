@@ -1,14 +1,11 @@
-import os
-from collections import Counter
 import sys
 import numpy as np
 import pandas as pd
 from matplotlib import pyplot as plt
-plt.rcParams["font.family"] = "Verdana"
 import matplotlib as mpl
+plt.rcParams["font.family"] = "Verdana"
 import statistics
 import os
-plt.rcParams["font.family"] = "Verdana"
 from thoipapy.utils import create_colour_lists
 colour_dict = create_colour_lists()
 color_thoipa = "k"
@@ -18,7 +15,7 @@ blue5 = colour_dict["TUM_colours"]['TUM5']
 black = "k"
 TUMblue = colour_dict["TUM_colours"]['TUMBlue']
 
-def FigZB_07(Fontsize, Width, Size, s):
+def FigZB_07_hardlinked(Fontsize, Width, Size, s):
     """ use bar chart to show the interface based on the cutoff and limit to max 7 min 3,
     use different to show pattern
 
@@ -42,7 +39,7 @@ def FigZB_07(Fontsize, Width, Size, s):
         example of notes describing output files
 
     """
-    sys.stdout.write('\n~~~~~~~~~~~~                 starting FigZB_07              ~~~~~~~~~~~~\n')
+    sys.stdout.write('\n~~~~~~~~~~~~                 starting FigZB_07_hardlinked              ~~~~~~~~~~~~\n')
     sys.stdout.flush()
     Width=0.35
 
@@ -264,6 +261,6 @@ def FigZB_07(Fontsize, Width, Size, s):
     plt.savefig(output_basename_pdf + m + "_mean_fraction_DI.pdf")
     plt.close()
 
-    sys.stdout.write('\n~~~~~~~~~~~~                 finished FigZB_07              ~~~~~~~~~~~~')
+    sys.stdout.write('\n~~~~~~~~~~~~                 finished FigZB_07_hardlinked              ~~~~~~~~~~~~')
     sys.stdout.flush()
 

@@ -5,7 +5,7 @@ def extract_NCBI_homolgous_as_xml(acc,s,logging,pathdict):
     protein=filename[-12:-6]
     #for uniprot_acc in dfset['Protein']:
     #if(uniprot_acc == protein):
-    #print(uniprot_acc)
+    #sys.stdout.write(uniprot_acc)
     #index1=dfset['Protein'].tolist().index(protein)
     #TMD_start=dfset['TMD_start'][index1]
     #TMD_end=dfset['TMD_end'][index1]
@@ -24,7 +24,7 @@ def extract_NCBI_homolgous_as_xml(acc,s,logging,pathdict):
     #blast_record = NCBIXML.parse(xml_result_handle)
     #i=0
     #for description in blast_record.descriptions:
-        #print(description.score)
+        #sys.stdout.write(description.score)
     '''
     #if protein=="P02724":
         #for alignment in blast_record.alignments:
@@ -38,18 +38,18 @@ def extract_NCBI_homolgous_as_xml(acc,s,logging,pathdict):
                     tmstr=''
                     sbjstr=''
                     if query_start<=TMD_start and query_end >= TMD_end:
-                        print('****Alignment****',i)
-                        #print('>', alignment.title)
-                        #print('length:', alignment.length)
-                        #print('identity:', hsp.identities)
-                        #print('query_start:', hsp.query_start)
-                        #print('query_end:', hsp.query_end)
-                        #print('subject_start:', hsp.sbjct_start)
-                        #print('subject_end:', hsp.sbjct_end)
-                        #print('e value:', hsp.expect)
-                        #print(hsp.query)
-                        #print(hsp.match)
-                        #print(hsp.sbjct)
+                        sys.stdout.write('****Alignment****',i)
+                        #sys.stdout.write('>', alignment.title)
+                        #sys.stdout.write('length:', alignment.length)
+                        #sys.stdout.write('identity:', hsp.identities)
+                        #sys.stdout.write('query_start:', hsp.query_start)
+                        #sys.stdout.write('query_end:', hsp.query_end)
+                        #sys.stdout.write('subject_start:', hsp.sbjct_start)
+                        #sys.stdout.write('subject_end:', hsp.sbjct_end)
+                        #sys.stdout.write('e value:', hsp.expect)
+                        #sys.stdout.write(hsp.query)
+                        #sys.stdout.write(hsp.match)
+                        #sys.stdout.write(hsp.sbjct)
                         tm_str_start=TMD_start-query_start
                         tm_str_end=TMD_end-query_start+1
                         k=0
@@ -63,5 +63,5 @@ def extract_NCBI_homolgous_as_xml(acc,s,logging,pathdict):
                                     sbjtstr+=sbjt_seq[k]
                                 j=j+1
                             k=k+1
-                        print(tmstr)
-                        print(sbjtstr)'''
+                        sys.stdout.write(tmstr)
+                        sys.stdout.write(sbjtstr)'''

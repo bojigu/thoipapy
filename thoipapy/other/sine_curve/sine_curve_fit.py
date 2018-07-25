@@ -32,7 +32,7 @@ def make_interpolater(left_min, left_max, right_min, right_max):
 
 def save_sine_vurve_result(s, output_file_loc, output_png_loc):
     uniprot_acc=s["tm_protein_name"]
-    #Pred_disruption=os.path.join(s["Sine_Curve_loc"],"TMD16/%s_prediction.xls") %uniprot_acc
+    #Pred_disruption=os.path.join(s["thoipapy_data_folder"], "Sine_Curve","TMD16/%s_prediction.xls") %uniprot_acc
     #Pred_disruption=r"/home/students/zeng/workspace/test2/out/58f795953dc45/output.csv"
     #Pred_disruption = r"sine_curve/TMD16/%s_prediction.xls" %uniprot_acc
     #prd_disruption = pd.read_csv(Pred_disruption)
@@ -119,9 +119,6 @@ def save_sine_vurve_result(s, output_file_loc, output_png_loc):
     #comele_pred_sine=list(set(sine_peak_pred_index).intersection(pred_top5_index))
     #comele_exp_sine=list(set(sine_peak_exp_index).intersection(exp_top5_index))
     sys.stdout.write(uniprot_acc)
-    # print(sine_peak_pred)
-    # print(comele_pred_sine)
-    # print(comele_exp_sine)
     #ax.plot(x_sin, y_sin_disruption_scaled_data, color = 'orange',linestyle=":" ,linewidth=2.5,label = 'experimental data')
     ax.plot(x_sin, y_sin_pred_scaled_data, color = 'green',linewidth=2.5,linestyle=":", label = "predicted data")
     #ax.plot(x_smooth, yvalues_fitted_perfhelix, color = 'red',linewidth=2.5, linestyle="-", label = "experimental fit to sine")

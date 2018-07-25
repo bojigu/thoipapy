@@ -43,7 +43,7 @@ def fig_plot_BOcurve_mult_train_datasets(s):
     train_dataset_str = "-".join([str(n) for n in train_set_list])
 
     mult_testname = "testsets({})_trainsets({})".format(test_dataset_str, train_dataset_str)
-    print(mult_testname)
+    sys.stdout.write(mult_testname)
     mult_THOIPA_dir = os.path.join(s["thoipapy_data_folder"], "Results", "compare_testset_trainset", "summaries", mult_testname)
     thoipapy.utils.make_sure_path_exists(mult_THOIPA_dir)
 

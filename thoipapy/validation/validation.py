@@ -148,9 +148,9 @@ def train_machine_learning_model(s, logging):
     """
     logging.info('starting to predict etra data with THOIPA prediction model')
 
-    train_data_csv = os.path.join(s["set_results_folder"], "{}_train_data.csv".format(s["setname"]))
-    train_data_used_for_model_csv = os.path.join(s["set_results_folder"], "{}_train_data_used_for_model.csv".format(s["setname"]))
-    model_pkl = os.path.join(s["set_results_folder"], "{}_ML_model.lpkl".format(s["setname"]))
+    train_data_csv = os.path.join(s["thoipapy_data_folder"], "Results", "{}_train_data.csv".format(s["setname"]))
+    train_data_used_for_model_csv = os.path.join(s["thoipapy_data_folder"], "Results", "{}_train_data_used_for_model.csv".format(s["setname"]))
+    model_pkl = os.path.join(s["thoipapy_data_folder"], "Results", "{}_ML_model.lpkl".format(s["setname"]))
 
     df_data = pd.read_csv(train_data_csv, index_col=0)
 
@@ -205,10 +205,10 @@ def run_10fold_cross_validation(s, logging):
         Also contains the mean ROC curve, and the mean AUC.
     """
     logging.info('10-fold cross validation is running')
-    train_data_csv = os.path.join(s["set_results_folder"], "{}_train_data.csv".format(s["setname"]))
-    #crossvalidation_csv = os.path.join(s["set_results_folder"], "crossvalidation", "data", "{}_10F_data.csv".format(s["setname"]))
-    crossvalidation_pkl = os.path.join(s["set_results_folder"], "crossvalidation", "data", "{}_10F_data.pkl".format(s["setname"]))
-    features_csv = os.path.join(s["set_results_folder"], "{}_test_features.csv".format(s["setname"]))
+    train_data_csv = os.path.join(s["thoipapy_data_folder"], "Results", "{}_train_data.csv".format(s["setname"]))
+    #crossvalidation_csv = os.path.join(s["thoipapy_data_folder"], "Results", "crossvalidation", "data", "{}_10F_data.csv".format(s["setname"]))
+    crossvalidation_pkl = os.path.join(s["thoipapy_data_folder"], "Results", "crossvalidation", "data", "{}_10F_data.pkl".format(s["setname"]))
+    features_csv = os.path.join(s["thoipapy_data_folder"], "Results", "{}_test_features.csv".format(s["setname"]))
 
     thoipapy.utils.make_sure_path_exists(crossvalidation_pkl, isfile=True)
 
@@ -280,8 +280,8 @@ def create_10fold_cross_validation_fig(s, logging):
         Python object with settings for logging to console and file.
     """
     #plt.rcParams.update({'font.size': 7})
-    crossvalidation_png = os.path.join(s["set_results_folder"], "crossvalidation", "{}_10F_ROC.png".format(s["setname"]))
-    crossvalidation_pkl = os.path.join(s["set_results_folder"], "crossvalidation", "data", "{}_10F_data.pkl".format(s["setname"]))
+    crossvalidation_png = os.path.join(s["thoipapy_data_folder"], "Results", "crossvalidation", "{}_10F_ROC.png".format(s["setname"]))
+    crossvalidation_pkl = os.path.join(s["thoipapy_data_folder"], "Results", "crossvalidation", "data", "{}_10F_data.pkl".format(s["setname"]))
 
     # open pickle file
     with open(crossvalidation_pkl, "rb") as f:
@@ -348,15 +348,15 @@ def run_LOO_validation(s, df_set, logging):
         excel file with the processed BO-curve data
     """
     logging.info('Leave-One-Out cross validation is running')
-    names_excel_path = os.path.join(os.path.dirname(s["sets_folder"]), "ETRA_NMR_names.xlsx")
+    names_excel_path = os.path.join(s["dropbox_dir"], "ETRA_NMR_names.xlsx")
 
     # drop redundant proteins according to CD-HIT
     df_set = thoipapy.utils.drop_redundant_proteins_from_list(df_set, logging)
 
-    train_data_csv = os.path.join(s["set_results_folder"], "{}_train_data.csv".format(s["setname"]))
-    LOO_crossvalidation_pkl = os.path.join(s["set_results_folder"], "crossvalidation", "data", "{}_LOO_crossvalidation.pkl".format(s["setname"]))
-    BO_all_data_csv = os.path.join(s["set_results_folder"], "crossvalidation", "data", "{}_LOO_BO_data.csv".format(s["setname"]))
-    BO_curve_folder = os.path.join(s["set_results_folder"], "crossvalidation")
+    train_data_csv = os.path.join(s["thoipapy_data_folder"], "Results", "{}_train_data.csv".format(s["setname"]))
+    LOO_crossvalidation_pkl = os.path.join(s["thoipapy_data_folder"], "Results", "crossvalidation", "data", "{}_LOO_crossvalidation.pkl".format(s["setname"]))
+    BO_all_data_csv = os.path.join(s["thoipapy_data_folder"], "Results", "crossvalidation", "data", "{}_LOO_BO_data.csv".format(s["setname"]))
+    BO_curve_folder = os.path.join(s["thoipapy_data_folder"], "Results", "crossvalidation")
     BO_data_excel = os.path.join(BO_curve_folder, "data", "{}_BO_curve_data.xlsx".format(s["setname"]))
 
     thoipapy.utils.make_sure_path_exists(BO_data_excel, isfile=True)
@@ -387,7 +387,7 @@ def run_LOO_validation(s, df_set, logging):
     for n, i in enumerate(df_set.index):
         acc, acc_db, database  = df_set.loc[i, "acc"], df_set.loc[i, "acc_db"], df_set.loc[i, "database"]
         THOIPA_prediction_csv = os.path.join(s["thoipapy_data_folder"], "Predictions", "leave_one_out", database, "{}.{}.{}.LOO.prediction.csv".format(acc, database, s["setname"]))
-        testdata_combined_file = os.path.join(s["features_folder"], "combined", database, "{}.surr20.gaps5.combined_features.csv".format(acc))
+        testdata_combined_file = os.path.join(s["thoipapy_data_folder"], "Features", "combined", database, "{}.surr20.gaps5.combined_features.csv".format(acc))
         thoipapy.utils.make_sure_path_exists(THOIPA_prediction_csv, isfile=True)
         #######################################################################################################
         #                                                                                                     #
@@ -494,7 +494,7 @@ def run_LOO_validation(s, df_set, logging):
     #######################################################################################################
 
     BO_all_df.to_csv(BO_all_data_csv)
-    #names_excel_path = os.path.join(os.path.dirname(s["sets_folder"]), "ETRA_NMR_names.xlsx")
+    #names_excel_path = os.path.join(s["dropbox_dir"], "ETRA_NMR_names.xlsx")
 
     #linechart_mean_obs_and_rand = thoipapy.figs.Create_Bo_Curve_files.analyse_bo_curve_underlying_data(BO_all_data_csv, crossvalidation_folder, names_excel_path)
     thoipapy.figs.create_BOcurve_files.parse_BO_data_csv_to_excel(BO_all_data_csv, BO_data_excel, logging)
@@ -618,17 +618,17 @@ def create_LOO_validation_fig(s, df_set, logging):
     df_set = thoipapy.utils.drop_redundant_proteins_from_list(df_set, logging)
 
     #plt.rcParams.update({'font.size': 7})
-    LOO_crossvalidation_pkl = os.path.join(s["set_results_folder"], "crossvalidation", "data", "{}_LOO_crossvalidation.pkl".format(s["setname"]))
-    LOO_crossvalidation_ROC_png = os.path.join(s["set_results_folder"], "crossvalidation", "{}_LOO_crossvalidation_ROC.png".format(s["setname"]))
-    LOO_crossvalidation_AUC_bar_png = os.path.join(s["set_results_folder"], "crossvalidation", "{}_LOO_crossvalidation_AUC_bar.png".format(s["setname"]))
-    AUC_csv = os.path.join(s["set_results_folder"], "crossvalidation", "data", "{}_LOO_AUC.csv".format(s["setname"]))
-    BO_all_data_csv = os.path.join(s["set_results_folder"], "crossvalidation", "data", "{}_LOO_BO_data.csv".format(s["setname"]))
-    BO_curve_folder = os.path.join(s["set_results_folder"], "crossvalidation")
+    LOO_crossvalidation_pkl = os.path.join(s["thoipapy_data_folder"], "Results", "crossvalidation", "data", "{}_LOO_crossvalidation.pkl".format(s["setname"]))
+    LOO_crossvalidation_ROC_png = os.path.join(s["thoipapy_data_folder"], "Results", "crossvalidation", "{}_LOO_crossvalidation_ROC.png".format(s["setname"]))
+    LOO_crossvalidation_AUC_bar_png = os.path.join(s["thoipapy_data_folder"], "Results", "crossvalidation", "{}_LOO_crossvalidation_AUC_bar.png".format(s["setname"]))
+    AUC_csv = os.path.join(s["thoipapy_data_folder"], "Results", "crossvalidation", "data", "{}_LOO_AUC.csv".format(s["setname"]))
+    BO_all_data_csv = os.path.join(s["thoipapy_data_folder"], "Results", "crossvalidation", "data", "{}_LOO_BO_data.csv".format(s["setname"]))
+    BO_curve_folder = os.path.join(s["thoipapy_data_folder"], "Results", "crossvalidation")
     BO_data_excel = os.path.join(BO_curve_folder, "data", "{}_BO_curve_data.xlsx".format(s["setname"]))
     BO_linechart_png = os.path.join(BO_curve_folder, "{}_BO_linechart.png".format(s["setname"]))
     BO_barchart_png = os.path.join(BO_curve_folder, "{}_LOO_AUBOC10_barchart.png".format(s["setname"]))
 
-    names_excel_path = os.path.join(os.path.dirname(s["sets_folder"]), "ETRA_NMR_names.xlsx")
+    names_excel_path = os.path.join(s["dropbox_dir"], "ETRA_NMR_names.xlsx")
     namedict = thoipapy.utils.create_namedict(names_excel_path)
 
     # open pickle file
@@ -700,9 +700,9 @@ def calculate_variable_importance(s, logging):
         Also includes the standard deviation supplied by the machine learning algorithm
     """
     #logging.info('RF_variable_importance_calculate is running\n')
-    train_data_csv = os.path.join(s["set_results_folder"], "{}_train_data.csv".format(s["setname"]))
+    train_data_csv = os.path.join(s["thoipapy_data_folder"], "Results", "{}_train_data.csv".format(s["setname"]))
 
-    variable_importance_csv = os.path.join(s["set_results_folder"], "crossvalidation", "data", "{}_variable_importance.csv".format(s["setname"]))
+    variable_importance_csv = os.path.join(s["thoipapy_data_folder"], "Results", "crossvalidation", "data", "{}_variable_importance.csv".format(s["setname"]))
     thoipapy.utils.make_sure_path_exists(variable_importance_csv, isfile=True)
 
     df_data = pd.read_csv(train_data_csv, index_col=0)
@@ -779,9 +779,9 @@ def fig_variable_importance(s, logging):
     from thoipapy.utils import create_colour_lists
     colour_dict = create_colour_lists()
 
-    variable_importance_csv = os.path.join(s["set_results_folder"], "crossvalidation", "data", "{}_variable_importance.csv".format(s["setname"]))
-    variable_importance_all_png = os.path.join(s["set_results_folder"], "crossvalidation", "{}_all_var_import.png".format(s["setname"]))
-    variable_importance_top_png = os.path.join(s["set_results_folder"], "crossvalidation", "{}_top_var_import.png".format(s["setname"]))
+    variable_importance_csv = os.path.join(s["thoipapy_data_folder"], "Results", "crossvalidation", "data", "{}_variable_importance.csv".format(s["setname"]))
+    variable_importance_all_png = os.path.join(s["thoipapy_data_folder"], "Results", "crossvalidation", "{}_all_var_import.png".format(s["setname"]))
+    variable_importance_top_png = os.path.join(s["thoipapy_data_folder"], "Results", "crossvalidation", "{}_top_var_import.png".format(s["setname"]))
 
     df_imp = pd.read_csv(variable_importance_csv, index_col = 0)
 

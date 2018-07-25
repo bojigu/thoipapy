@@ -49,16 +49,16 @@ def run_LOO_validation_od_non_multiprocessing(s, df_set, logging):
         Also contains the mean ROC curve, and the mean AUC.
     """
     logging.info('Leave-One-Out cross validation is running')
-    names_excel_path = os.path.join(os.path.dirname(s["sets_folder"]), "ETRA_NMR_names.xlsx")
+    names_excel_path = os.path.join(s["dropbox_dir"], "ETRA_NMR_names.xlsx")
 
     # drop redundant proteins according to CD-HIT
     df_set = thoipapy.utils.drop_redundant_proteins_from_list(df_set, logging)
 
-    train_data_csv = os.path.join(s["set_results_folder"], "{}_train_data.csv".format(s["setname"]))
-    crossvalidation_folder = os.path.join(s["set_results_folder"], "crossvalidation")
-    LOO_crossvalidation_pkl = os.path.join(s["set_results_folder"], "crossvalidation", "data", "{}_LOO_crossvalidation.pkl".format(s["setname"]))
-    BO_all_data_csv = os.path.join(s["set_results_folder"], "crossvalidation", "data", "{}_LOO_BO_data.csv".format(s["setname"]))
-    BO_curve_folder = os.path.join(s["set_results_folder"], "crossvalidation")
+    train_data_csv = os.path.join(s["thoipapy_data_folder"], "Results", "{}_train_data.csv".format(s["setname"]))
+    crossvalidation_folder = os.path.join(s["thoipapy_data_folder"], "Results", "crossvalidation")
+    LOO_crossvalidation_pkl = os.path.join(s["thoipapy_data_folder"], "Results", "crossvalidation", "data", "{}_LOO_crossvalidation.pkl".format(s["setname"]))
+    BO_all_data_csv = os.path.join(s["thoipapy_data_folder"], "Results", "crossvalidation", "data", "{}_LOO_BO_data.csv".format(s["setname"]))
+    BO_curve_folder = os.path.join(s["thoipapy_data_folder"], "Results", "crossvalidation")
     BO_data_excel = os.path.join(BO_curve_folder, "data", "{}_BO_curve_data.xlsx".format(s["setname"]))
 
     thoipapy.utils.make_sure_path_exists(BO_data_excel, isfile=True)
@@ -108,7 +108,7 @@ def run_LOO_validation_od_non_multiprocessing(s, df_set, logging):
         #                                                                                                     #
         #######################################################################################################
         #df_test = df_data.loc[df_data.acc_db == acc_db]
-        testdata_combined_file = os.path.join(s["features_folder"], "combined", database, "{}.surr20.gaps5.combined_features.csv".format(acc))
+        testdata_combined_file = os.path.join(s["thoipapy_data_folder"], "Features", "combined", database, "{}.surr20.gaps5.combined_features.csv".format(acc))
         df_test = pd.read_csv(testdata_combined_file)
 
         X_test = thoipapy.validation.validation.drop_cols_not_used_in_ML(logging, df_test, s["excel_file_with_settings"])
@@ -177,7 +177,7 @@ def run_LOO_validation_od_non_multiprocessing(s, df_set, logging):
     #######################################################################################################
 
     BO_all_df.to_csv(BO_all_data_csv)
-    names_excel_path = os.path.join(os.path.dirname(s["sets_folder"]), "ETRA_NMR_names.xlsx")
+    names_excel_path = os.path.join(s["dropbox_dir"], "ETRA_NMR_names.xlsx")
 
     #linechart_mean_obs_and_rand = thoipapy.figs.Create_Bo_Curve_files.analyse_bo_curve_underlying_data(BO_all_data_csv, crossvalidation_folder, names_excel_path)
     thoipapy.figs.create_BOcurve_files.parse_BO_data_csv_to_excel(BO_all_data_csv, BO_data_excel, logging)
@@ -186,16 +186,16 @@ def run_LOO_validation_od_non_multiprocessing(s, df_set, logging):
     logging.info('---AUC({:.2f})---'.format(mean_roc_auc))
 
 
-def run_Rscipt_random_forest(s, output_file_loc, logging):
+def run_Rscipt_random_forest(s, output_file_loc, logging, Random_Forest_R_code_file):
     logging.info('begining to run machine learning R code')
     Rscript_loc = s["Rscript_dir"]
-    Random_Forest_R_code_file=s["Rcode"]
-    train_data_file=os.path.join(s["RF_loc"],"NoRedundPro/TRAINDATA68.csv")
+    #Random_Forest_R_code_file=s["Rcode"]
+    train_data_file=os.path.join(s["thoipapy_data_folder"], "RandomForest","NoRedundPro/TRAINDATA68.csv")
     acc = s["tm_protein_name"]
-    tmp_protein_test_data = os.path.join(s["RF_loc"], "TestData/%s/%s.mem.2gap.physipara.testdata.csv") % (s["Datatype"],acc)
+    tmp_protein_test_data = os.path.join(s["thoipapy_data_folder"], "RandomForest", "TestData/%s/%s.mem.2gap.physipara.testdata.csv") % (s["Datatype"],acc)
     #out_put_file_loc_handle=open(output_file_loc,"w")
     if os.path.isfile(tmp_protein_test_data):
-        prediction_output_file = os.path.join(s["RF_loc"],"%s.pred.out") % acc
+        prediction_output_file = os.path.join(s["thoipapy_data_folder"], "RandomForest","%s.pred.out") % acc
         prediction_output_file = os.path.join("/home/students/zeng/workspace/test2/out", "%s.pred.out") % acc
         prediction_output_file_handle=open(prediction_output_file,"w")
         exect_str = "{Rscript} {Random_Forest_R_code} {train_data} {test_data} {output}".format(Rscript=Rscript_loc, Random_Forest_R_code=Random_Forest_R_code_file,train_data=train_data_file,test_data=tmp_protein_test_data,output=output_file_loc)
@@ -265,9 +265,9 @@ def predict_test_dataset_with_THOIPA_DEPRECATED(train_setname, test_setname, s, 
         rows = range(0, number of AA in test set)
     """
 
-    model_pkl = os.path.join(s["set_results_folder"], "{}_ML_model.lpkl".format(train_setname))
+    model_pkl = os.path.join(s["thoipapy_data_folder"], "Results", "{}_ML_model.lpkl".format(train_setname))
     test_data_csv = os.path.join(s["Results_folder"], test_setname, "{}_train_data.csv".format(test_setname))
-    THOIPA_pred_csv = os.path.join(s["set_results_folder"], "trainset{}_testset{}_predictions.csv".format(train_setname[-2:], test_setname[-2:]))
+    THOIPA_pred_csv = os.path.join(s["thoipapy_data_folder"], "Results", "trainset{}_testset{}_predictions.csv".format(train_setname[-2:], test_setname[-2:]))
 
     fit = joblib.load(model_pkl)
 

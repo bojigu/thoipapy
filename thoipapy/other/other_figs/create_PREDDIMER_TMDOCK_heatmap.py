@@ -23,7 +23,7 @@ black = "k"
 TUMblue = colour_dict["TUM_colours"]['TUMBlue']
 
 
-def FigZB_18(Fontsize,Width,Size):
+def FigZB_18(s,Fontsize,Width,Size):
     """ use bar chart to show the interface based on the cutoff and limit to max 7 min 3,
         use different to show pattern
 

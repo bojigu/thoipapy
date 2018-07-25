@@ -96,7 +96,7 @@ def calc_lipophilicity(seq, method = "mean"):
         return sum_of_multiplied
 
 def mem_a3m_homologues_filter(s,logging):
-
+    p_r_i_n_t = print
     tmp_list_loc = s["list_of_tmd_start_end"]
     tmp_file_handle = open(tmp_list_loc, 'r')
     # skip header
@@ -106,13 +106,13 @@ def mem_a3m_homologues_filter(s,logging):
         TMD_start = int(row.strip().split(",")[4]) + 1
         TMD_end = int(row.strip().split(",")[4]) + (int(row.strip().split(",")[3]) - int(row.strip().split(",")[2]) + 1)
         #return TMD_end
-        homo_a3m_file = os.path.join(s["output_oa3m_homologues"], "SinglePassTmd/%s.surr20.parse.a3m") % acc
+        homo_a3m_file = os.path.join(s["thoipapy_data_folder"], "homologues", "a3m", "SinglePassTmd/%s.surr20.parse.a3m") % acc
         if os.path.isfile(homo_a3m_file):
 
             homo_a3m_file_handle=open(homo_a3m_file,"r")
-            homo_filter_file=os.path.join(s["output_oa3m_homologues"], "SinglePassTmd/%s.surr20.a3m.mem.uniq.2gaps") %acc
+            homo_filter_file=os.path.join(s["thoipapy_data_folder"], "homologues", "a3m", "SinglePassTmd/%s.surr20.a3m.mem.uniq.2gaps") %acc
             homo_filter_file_handle = open(homo_filter_file,"w")
-            homo_mem_lips_input_file = os.path.join(s["output_oa3m_homologues"], "SinglePassTmd/%s.surr20.mem.lips.input") %acc
+            homo_mem_lips_input_file = os.path.join(s["thoipapy_data_folder"], "homologues", "a3m", "SinglePassTmd/%s.surr20.mem.lips.input") %acc
             homo_mem_lips_input_file_handle = open(homo_mem_lips_input_file, "w")
             logging.info("starting parsing a3m file: %s\n" %homo_filter_file)
             i = 0
@@ -122,18 +122,18 @@ def mem_a3m_homologues_filter(s,logging):
                 if i == 0:
                     tm_query = tm_str
                     i = i + 1
-                    print("{}".format(tm_str), file=homo_mem_lips_input_file_handle)
-                    print("{}".format(tm_str), file=homo_filter_file_handle)
+                    p_r_i_n_t("{}".format(tm_str), file=homo_mem_lips_input_file_handle)
+                    p_r_i_n_t("{}".format(tm_str), file=homo_filter_file_handle)
                     continue
                 mean_hydrophobicity = calc_lipophilicity(tm_str)
                 ratio = SequenceMatcher(None, tm_query, tm_str).ratio()
                 if not re.search("-", tm_str) and not re.search("X",
                                                                 tm_str) and ratio >= s["min_identity_of_TMD_seq"] and ratio < s["max_identity_of_TMD_seq"]and mean_hydrophobicity < s["max_hydrophilicity_Hessa"]:  ##No X and gap in each alignment
-                    print("{}".format(tm_str), file=homo_mem_lips_input_file_handle)
+                    p_r_i_n_t("{}".format(tm_str), file=homo_mem_lips_input_file_handle)
                 gap_num = tm_str.count("-")
                 if (gap_num <= 3 and not re.search("X",
                                                    tm_str) and ratio >= s["min_identity_of_TMD_seq"] and ratio < s["max_identity_of_TMD_seq"] and mean_hydrophobicity < s["max_hydrophilicity_Hessa"]):  # gap number le 3 and no X in each alignment
-                    print("{}".format(tm_str), file=homo_filter_file_handle)
+                    p_r_i_n_t("{}".format(tm_str), file=homo_filter_file_handle)
                     # homo_filter_file_handle.write(line)
                     # homo_mem_lips_input_file_handle.write(tm_str
             homo_filter_file_handle.close()
@@ -167,15 +167,15 @@ def create_PSSM_from_MSA_mult_prot(s, df_set, logging):
         database = df_set.loc[i, "database"]
         TMD_seq = df_set.loc[i, "TMD_seq"]
         TMD_seq_pl_surr5 = df_set.loc[i, "TMD_seq_pl_surr5"]
-        alignments_dir = os.path.join(s["homologues_folder"], "alignments", database)
+        alignments_dir = os.path.join(s["thoipapy_data_folder"], "homologues", "alignments", database)
         path_uniq_TMD_seqs_for_PSSM_FREECONTACT = os.path.join(alignments_dir,"{}.surr{}.gaps{}.uniq.for_PSSM_FREECONTACT.txt".format(acc, s["num_of_sur_residues"],s["max_n_gaps_in_TMD_subject_seq"]))
-        pssm_csv = os.path.join(s["feature_pssm"], database, "{}.surr{}.gaps{}.pssm.csv".format(acc, s["num_of_sur_residues"], s["max_n_gaps_in_TMD_subject_seq"]))
+        pssm_csv = os.path.join(s["thoipapy_data_folder"], "Features", "pssm", database, "{}.surr{}.gaps{}.pssm.csv".format(acc, s["num_of_sur_residues"], s["max_n_gaps_in_TMD_subject_seq"]))
 
         create_PSSM_from_MSA(path_uniq_TMD_seqs_for_PSSM_FREECONTACT, pssm_csv, acc, TMD_seq, logging)
 
         path_uniq_TMD_seqs_surr5_for_LIPO = os.path.join(alignments_dir, "{}.surr5.gaps{}.uniq.for_LIPO.txt".format(acc, s["max_n_gaps_in_TMD_subject_seq"]))
 
-        pssm_csv_surr5 = os.path.join(s["feature_pssm"], database, "{}.surr5.gaps{}.pssm.csv".format(acc, s["max_n_gaps_in_TMD_subject_seq"]))
+        pssm_csv_surr5 = os.path.join(s["thoipapy_data_folder"], "Features", "pssm", database, "{}.surr5.gaps{}.pssm.csv".format(acc, s["max_n_gaps_in_TMD_subject_seq"]))
         create_PSSM_from_MSA(path_uniq_TMD_seqs_surr5_for_LIPO, pssm_csv_surr5, acc, TMD_seq_pl_surr5, logging)
 
 def create_PSSM_from_MSA(path_uniq_TMD_seqs_for_PSSM_FREECONTACT, pssm_csv, acc, TMD_seq, logging):
@@ -286,9 +286,9 @@ def lipo_from_pssm_mult_prot(s, df_set, logging):
         if tm_surr_right >= 5:
             tm_surr_right = 5
 
-        # pssm_csv = os.path.join(s["feature_pssm"], database, "{}.mem.2gap.pssm_surr5.csv".format(acc))
-        pssm_csv_surr5 = os.path.join(s["feature_pssm"], database, "{}.surr5.gaps{}.pssm.csv".format(acc, s["max_n_gaps_in_TMD_subject_seq"]))
-        lipo_csv = os.path.join(s["feature_lipophilicity"], database, "{}_{}_lipo.csv".format(acc, scalename))
+        # pssm_csv = os.path.join(s["thoipapy_data_folder"], "Features", "pssm", database, "{}.mem.2gap.pssm_surr5.csv".format(acc))
+        pssm_csv_surr5 = os.path.join(s["thoipapy_data_folder"], "Features", "pssm", database, "{}.surr5.gaps{}.pssm.csv".format(acc, s["max_n_gaps_in_TMD_subject_seq"]))
+        lipo_csv = os.path.join(s["thoipapy_data_folder"], "Features", "Lipophilicity", database, "{}_{}_lipo.csv".format(acc, scalename))
 
         result_tuple = lipo_from_pssm(acc, pssm_csv_surr5, lipo_csv, tm_surr_left, tm_surr_right, scalename, logging, plot_linechart)
 
@@ -589,10 +589,10 @@ def entropy_calculation_mult_prot(s, df_set, logging):
         acc = df_set.loc[i, "acc"]
         database = df_set.loc[i, "database"]
         TMD_seq = df_set.loc[i, "TMD_seq"]
-        #homo_filter_fasta_file = os.path.join(s["output_oa3m_homologues"],database,"%s.a3m.mem.uniq.2gaps%s") % (acc,s["surres"])
-        alignments_dir = os.path.join(s["homologues_folder"], "alignments", database)
+        #homo_filter_fasta_file = os.path.join(s["thoipapy_data_folder"], "homologues", "a3m",database,"%s.a3m.mem.uniq.2gaps%s") % (acc,s["surres"])
+        alignments_dir = os.path.join(s["thoipapy_data_folder"], "homologues", "alignments", database)
         path_uniq_TMD_seqs_for_PSSM_FREECONTACT = os.path.join(alignments_dir, "{}.surr{}.gaps{}.uniq.for_PSSM_FREECONTACT.txt".format(acc, s["num_of_sur_residues"], s["max_n_gaps_in_TMD_subject_seq"]))
-        entropy_file = os.path.join(s["feature_entropy"], database, "{}.surr{}.gaps{}.uniq.entropy.csv".format(acc, s["num_of_sur_residues"], s["max_n_gaps_in_TMD_subject_seq"]))
+        entropy_file = os.path.join(s["thoipapy_data_folder"], "Features", "Entropy", database, "{}.surr{}.gaps{}.uniq.entropy.csv".format(acc, s["num_of_sur_residues"], s["max_n_gaps_in_TMD_subject_seq"]))
 
         entropy_calculation(acc, path_uniq_TMD_seqs_for_PSSM_FREECONTACT, TMD_seq, entropy_file, logging)
 
@@ -686,9 +686,9 @@ def coevolution_calculation_with_freecontact_mult_prot(s, df_set, logging):
     for i in df_set.index:
         acc = df_set.loc[i, "acc"]
         database = df_set.loc[i, "database"]
-        alignments_dir = alignments_dir = os.path.join(s["homologues_folder"], "alignments", database)
+        alignments_dir = alignments_dir = os.path.join(s["thoipapy_data_folder"], "homologues", "alignments", database)
         path_uniq_TMD_seqs_for_PSSM_FREECONTACT = os.path.join(alignments_dir, "{}.surr{}.gaps{}.uniq.for_PSSM_FREECONTACT.txt".format(acc, s["num_of_sur_residues"], s["max_n_gaps_in_TMD_subject_seq"]))
-        freecontact_file = os.path.join(s["feature_cumulative_coevolution"], database, "{}.surr{}.gaps{}.freecontact.csv".format(acc, s["num_of_sur_residues"], s["max_n_gaps_in_TMD_subject_seq"]))
+        freecontact_file = os.path.join(s["thoipapy_data_folder"], "Features", "cumulative_coevolution", database, "{}.surr{}.gaps{}.freecontact.csv".format(acc, s["num_of_sur_residues"], s["max_n_gaps_in_TMD_subject_seq"]))
         coevolution_calculation_with_freecontact(path_uniq_TMD_seqs_for_PSSM_FREECONTACT, freecontact_file, freecontact_loc, logging)
 
 def coevolution_calculation_with_freecontact(path_uniq_TMD_seqs_for_PSSM_FREECONTACT, freecontact_file, freecontact_loc, logging):
@@ -743,8 +743,8 @@ def parse_freecontact_coevolution_mult_prot(s, df_set, logging):
         database = df_set.loc[i, "database"]
         TMD_start = int(df_set.loc[i, "TMD_start"])
         TMD_end = int(df_set.loc[i, "TMD_end"])
-        freecontact_file = os.path.join(s["feature_cumulative_coevolution"], database, "{}.surr{}.gaps{}.freecontact.csv".format(acc, s["num_of_sur_residues"], s["max_n_gaps_in_TMD_subject_seq"]))
-        freecontact_parsed_csv = os.path.join(s["feature_cumulative_coevolution"], database, "{}.surr{}.gaps{}.freecontact_parsed.csv".format(acc, s["num_of_sur_residues"], s["max_n_gaps_in_TMD_subject_seq"]))
+        freecontact_file = os.path.join(s["thoipapy_data_folder"], "Features", "cumulative_coevolution", database, "{}.surr{}.gaps{}.freecontact.csv".format(acc, s["num_of_sur_residues"], s["max_n_gaps_in_TMD_subject_seq"]))
+        freecontact_parsed_csv = os.path.join(s["thoipapy_data_folder"], "Features", "cumulative_coevolution", database, "{}.surr{}.gaps{}.freecontact_parsed.csv".format(acc, s["num_of_sur_residues"], s["max_n_gaps_in_TMD_subject_seq"]))
 
         parse_freecontact_coevolution(acc, freecontact_file, freecontact_parsed_csv, TMD_start, TMD_end, logging)
     sys.stdout.write("\n")
@@ -1093,9 +1093,9 @@ def calc_relative_position_mult_prot(s, df_set, logging):
         tm_seq = df_set.loc[i, "full_seq"]
         seqlen = df_set.loc[i, "seqlen"]
 
-        relative_position_file = os.path.join(s["feature_relative_position"], database, "%s.relative_position%s.csv") % (acc, s["surres"])
+        relative_position_file = os.path.join(s["thoipapy_data_folder"], "Features", "relative_position", database, "%s.relative_position%s.csv") % (acc, s["surres"])
         thoipapy.utils.make_sure_path_exists(relative_position_file, isfile=True)
-        alignments_dir = os.path.join(s["homologues_folder"], "alignments", database)
+        alignments_dir = os.path.join(s["thoipapy_data_folder"], "homologues", "alignments", database)
         path_uniq_TMD_seqs_for_PSSM_FREECONTACT = os.path.join(alignments_dir, "{}.surr{}.gaps{}.uniq.for_PSSM_FREECONTACT.txt".format(acc, s["num_of_sur_residues"], s["max_n_gaps_in_TMD_subject_seq"]))
 
         calc_relative_position(acc, path_uniq_TMD_seqs_for_PSSM_FREECONTACT, relative_position_file, TMD_start, seqlen, logging)
@@ -1170,15 +1170,15 @@ def LIPS_score_calculation_mult_prot(s, df_set, logging):
     for i in df_set.index:
         acc = df_set.loc[i, "acc"]
         database = df_set.loc[i, "database"]
-        #LIPS_input_file = os.path.join(s["output_oa3m_homologues"],database, "%s.mem.lips.input%s") % (acc,s["surres"])
-        alignments_dir = os.path.join(s["homologues_folder"], "alignments", database)
+        #LIPS_input_file = os.path.join(s["thoipapy_data_folder"], "homologues", "a3m",database, "%s.mem.lips.input%s") % (acc,s["surres"])
+        alignments_dir = os.path.join(s["thoipapy_data_folder"], "homologues", "alignments", database)
         path_uniq_TMD_seqs_no_gaps_for_LIPS = os.path.join(alignments_dir, "{}.surr{}.gaps0.uniq.for_LIPS.txt".format(acc, s["num_of_sur_residues"]))
 
         if os.path.isfile(path_uniq_TMD_seqs_no_gaps_for_LIPS):
-            # LIPS_output_file = os.path.join(s["feature_lips_score"], "zpro/NoRedundPro/%s.mem.lips.output") % acc
+            # LIPS_output_file = os.path.join(s["thoipapy_data_folder"], "Features", "lips_score", "zpro/NoRedundPro/%s.mem.lips.output") % acc
             #path_uniq_TMD_seqs_no_gaps_for_LIPS = os.path.join(alignments_dir, "{}.surr{}.gaps0.uniq.for_LIPS.txt".format(acc, s["num_of_sur_residues"]))
 
-            #LIPS_output_file = os.path.join(s["feature_lips_score"], database, "%s.mem.lips.output%s") % (acc, s["surres"])
+            #LIPS_output_file = os.path.join(s["thoipapy_data_folder"], "Features", "lips_score", database, "%s.mem.lips.output%s") % (acc, s["surres"])
 
             LIPS_output_file = os.path.join(alignments_dir, "{}.surr{}.LIPS_output.csv".format(acc, s["num_of_sur_residues"]))
 
@@ -1199,6 +1199,8 @@ def LIPS_score_calculation(input_seq_file, LIPS_output_file):
     LIPS_output_file : str
         Path to file with LIPS output result.
     """
+    # use different reference to the print function, to aid in finding areas that are being debugged
+    p_r_i_n_t = print
 
     thoipapy.utils.make_sure_path_exists(LIPS_output_file, isfile=True)
 
@@ -1315,7 +1317,7 @@ def LIPS_score_calculation(input_seq_file, LIPS_output_file):
             sumlip = sumlip + lips[j]
 
         for i in range(4):  # for the first 4 surfaces
-            print("SURFACE", "%s" % i, ":", file=LIPS_output_file_handle)
+            p_r_i_n_t("SURFACE", "%s" % i, ":", file=LIPS_output_file_handle)
             # LIPS_output_file_handle.write("SURFACE", "%s" % i, ":")
             j = i
             while j < ncol:
@@ -1335,7 +1337,7 @@ def LIPS_score_calculation(input_seq_file, LIPS_output_file):
                     aanum[i] = 1
                 rn = j + resnum
                 # r3=residuename123(res)
-                print("%3s" % rn, res, "%6.3f" % prop,
+                p_r_i_n_t("%3s" % rn, res, "%6.3f" % prop,
                       "%6.3f" % exp_entropy[j],
                       file=LIPS_output_file_handle)  # print residue information which is in surface i
                 # LIPS_output_file_handle.write("%3s" % rn, res, "%6.3f" % prop,"%6.3f" % exp_entropy[j])
@@ -1358,13 +1360,13 @@ def LIPS_score_calculation(input_seq_file, LIPS_output_file):
                         else:
                             aanum[i] = 1
                         rn = k + resnum
-                        print("%3s" % rn, res, "%6.3f" % prob, "%6.3f" % exp_entropy[k],
+                        p_r_i_n_t("%3s" % rn, res, "%6.3f" % prob, "%6.3f" % exp_entropy[k],
                               file=LIPS_output_file_handle)
                         # LIPS_output_file_handle.write("%3s" % rn, res, "%6.3f" % prob, "%6.3f" % exp_entropy[k])
                     k = k + 1
                 j = j + 7
         for i in range(4, 7):  # for surfaces from 4 to 6
-            print("SURFACE", "%s" % i, ":", file=LIPS_output_file_handle)
+            p_r_i_n_t("SURFACE", "%s" % i, ":", file=LIPS_output_file_handle)
             # LIPS_output_file_handle.write("SURFACE", "%s" % i, ":")
             j = i
             while j < ncol:
@@ -1384,7 +1386,7 @@ def LIPS_score_calculation(input_seq_file, LIPS_output_file):
                     aanum[i] = 1
                 rn = j + resnum
                 # r3=residuename123(res)
-                print("%3s" % rn, res, "%6.3f" % prob, "%6.3f" % exp_entropy[j], file=LIPS_output_file_handle)
+                p_r_i_n_t("%3s" % rn, res, "%6.3f" % prob, "%6.3f" % exp_entropy[j], file=LIPS_output_file_handle)
                 # LIPS_output_file_handle.write("%3s" % rn, res, "%6.3f" % prob, "%6.3f" % exp_entropy[j])
                 k = j + 3
                 while (k <= j + 4):
@@ -1405,7 +1407,7 @@ def LIPS_score_calculation(input_seq_file, LIPS_output_file):
                         else:
                             aanum[i] = 1
                         rn = k + resnum
-                        print("%3s" % rn, res, "%6.3f" % prob, "%6.3f" % exp_entropy[k],
+                        p_r_i_n_t("%3s" % rn, res, "%6.3f" % prob, "%6.3f" % exp_entropy[k],
                               file=LIPS_output_file_handle)
                         # LIPS_output_file_handle.write("%3s" % rn, res, "%6.3f" % prob, "%6.3f" % exp_entropy[k])
                     k = k + 1
@@ -1429,17 +1431,17 @@ def LIPS_score_calculation(input_seq_file, LIPS_output_file):
                     else:
                         aanum[i] = 1
                     rn = k + resnum
-                    print("%3s" % rn, res, "%6.3f" % prob, "%6.3f" % exp_entropy[k], file=LIPS_output_file_handle)
+                    p_r_i_n_t("%3s" % rn, res, "%6.3f" % prob, "%6.3f" % exp_entropy[k], file=LIPS_output_file_handle)
                     # LIPS_output_file_handle.write("%3s" % rn, res, "%6.3f" % prob, "%6.3f" % exp_entropy[k])
                 k = k + 1
-        print("SURFACE LIPOPHILICITY ENTROPY   LIPS", file=LIPS_output_file_handle)
+        p_r_i_n_t("SURFACE LIPOPHILICITY ENTROPY   LIPS", file=LIPS_output_file_handle)
         # LIPS_output_file_handle.write("SURFACE LIPOPHILICITY ENTROPY   LIPS")
         for i in sumim.keys():
             avpim = sumim[i] / aanum[i]  # average lipophilicity for surface i
             avpim = avpim * 2
             ave = sume[i] / aanum[i]  # average entropy for surface i
             peim = avpim * ave  # average entropy*lipophilicity for surface i which is LIPS score
-            print("%s" % i, "%10.3f" % avpim, "%8.3f" % ave,
+            p_r_i_n_t("%s" % i, "%10.3f" % avpim, "%8.3f" % ave,
                   "%8.3f" % peim,
                   file=LIPS_output_file_handle)  # print seven surfaces and see which surface with lowewst LIPS score
             # LIPS_output_file_handle.write("%s" % i, "%10.3f" % avpim, "%8.3f" % ave, "%8.3f" % peim)
@@ -1463,9 +1465,9 @@ def parse_LIPS_score_mult_prot(s, df_set, logging):
     for i in df_set.index:
         acc = df_set.loc[i, "acc"]
         database = df_set.loc[i, "database"]
-        alignments_dir = os.path.join(s["homologues_folder"], "alignments", database)
+        alignments_dir = os.path.join(s["thoipapy_data_folder"], "homologues", "alignments", database)
         LIPS_output_file = os.path.join(alignments_dir, "{}.surr{}.LIPS_output.csv".format(acc, s["num_of_sur_residues"]))
-        LIPS_parsed_csv = os.path.join(s["feature_lips_score"], database, "{}.surr{}.LIPS_score_parsed.csv".format(acc, s["num_of_sur_residues"]))
+        LIPS_parsed_csv = os.path.join(s["thoipapy_data_folder"], "Features", "lips_score", database, "{}.surr{}.LIPS_score_parsed.csv".format(acc, s["num_of_sur_residues"]))
         parse_LIPS_score(acc, LIPS_output_file, LIPS_parsed_csv, logging)
 
 def parse_LIPS_score(acc, LIPS_output_file, LIPS_parsed_csv, logging):
@@ -1562,7 +1564,7 @@ def motifs_from_seq_mult_protein(s, df_set, logging):
         database = df_set.loc[i, "database"]
         TMD_seq = df_set.loc[i, "TMD_seq"]
         TMD_seq_pl_surr = df_set.loc[i, "TMD_seq_pl_surr"]
-        motifs_file = os.path.join(s["features_folder"], "motifs", database, "{}.motifs.csv".format(acc))
+        motifs_file = os.path.join(s["thoipapy_data_folder"], "Features", "motifs", database, "{}.motifs.csv".format(acc))
         thoipapy.utils.make_sure_path_exists(motifs_file, isfile=True)
         tm_surr_left = int(df_set.loc[i, "tm_surr_left"])
         tm_surr_right = int(df_set.loc[i, "tm_surr_right"])
@@ -1628,12 +1630,12 @@ def convert_bind_data_to_csv(s, df_set, logging):
     """
     for i in df_set.index:
         acc = df_set.loc[i, "acc"]
-        bind_file = os.path.join(s["structure_bind"], "%s.4.0closedist") % acc
-        csv_output_file = os.path.join(s["structure_bind"], "%s.4.0closedist.csv") % acc
+        bind_file = os.path.join(s["thoipapy_data_folder"], "Features", "Structure", "%s.4.0closedist") % acc
+        csv_output_file = os.path.join(s["thoipapy_data_folder"], "Features", "Structure", "%s.4.0closedist.csv") % acc
         if os.path.isfile(bind_file):
             try:
                 with open(bind_file,"r") as bind_file_handle:
-                    #csv_output_file=os.path.join(s["structure_bind"],"NoRedundPro/%s.csv") %acc
+                    #csv_output_file=os.path.join(s["thoipapy_data_folder"], "Features", "Structure","NoRedundPro/%s.csv") %acc
                     with open(csv_output_file,"w") as csv_output_file_handle:
                         writer = csv.writer(csv_output_file_handle, delimiter=',', lineterminator='\n')
                         writer.writerow(["residue_num", "residue_name", "bind","closedist"])
@@ -1679,18 +1681,18 @@ def combine_all_features_mult_prot(s, df_set, logging):
         TMD_start = df_set.loc[i, "TMD_start"]
         full_seq = df_set.loc[i, "full_seq"]
         scalename = s["lipophilicity_scale"]
-        lipo_csv = os.path.join(s["feature_lipophilicity"], database, "{}_{}_lipo.csv".format(acc, scalename))
-        relative_position_file = os.path.join(s["feature_relative_position"], database, "%s.relative_position%s.csv") % (acc, s["surres"])
-        LIPS_parsed_csv = os.path.join(s["feature_lips_score"], database, "{}.surr{}.LIPS_score_parsed.csv".format(acc, s["num_of_sur_residues"]))
-        pssm_csv = os.path.join(s["feature_pssm"], database, "{}.surr{}.gaps{}.pssm.csv".format(acc, s["num_of_sur_residues"], s["max_n_gaps_in_TMD_subject_seq"]))
-        entropy_file = os.path.join(s["feature_entropy"], database, "{}.surr{}.gaps{}.uniq.entropy.csv".format(acc, s["num_of_sur_residues"], s["max_n_gaps_in_TMD_subject_seq"]))
-        freecontact_parsed_csv = os.path.join(s["feature_cumulative_coevolution"], database, "{}.surr{}.gaps{}.freecontact_parsed.csv".format(acc, s["num_of_sur_residues"], s["max_n_gaps_in_TMD_subject_seq"]))
-        motifs_file = os.path.join(s["features_folder"], "motifs", database, "{}.motifs.csv".format(acc))
-        feature_combined_file = os.path.join(s["features_folder"], "combined", database, "{}.surr{}.gaps{}.combined_features.csv".format(acc, s["num_of_sur_residues"], s["max_n_gaps_in_TMD_subject_seq"]))
-        alignments_dir = os.path.join(s["homologues_folder"], "alignments", database)
+        lipo_csv = os.path.join(s["thoipapy_data_folder"], "Features", "Lipophilicity", database, "{}_{}_lipo.csv".format(acc, scalename))
+        relative_position_file = os.path.join(s["thoipapy_data_folder"], "Features", "relative_position", database, "%s.relative_position%s.csv") % (acc, s["surres"])
+        LIPS_parsed_csv = os.path.join(s["thoipapy_data_folder"], "Features", "lips_score", database, "{}.surr{}.LIPS_score_parsed.csv".format(acc, s["num_of_sur_residues"]))
+        pssm_csv = os.path.join(s["thoipapy_data_folder"], "Features", "pssm", database, "{}.surr{}.gaps{}.pssm.csv".format(acc, s["num_of_sur_residues"], s["max_n_gaps_in_TMD_subject_seq"]))
+        entropy_file = os.path.join(s["thoipapy_data_folder"], "Features", "Entropy", database, "{}.surr{}.gaps{}.uniq.entropy.csv".format(acc, s["num_of_sur_residues"], s["max_n_gaps_in_TMD_subject_seq"]))
+        freecontact_parsed_csv = os.path.join(s["thoipapy_data_folder"], "Features", "cumulative_coevolution", database, "{}.surr{}.gaps{}.freecontact_parsed.csv".format(acc, s["num_of_sur_residues"], s["max_n_gaps_in_TMD_subject_seq"]))
+        motifs_file = os.path.join(s["thoipapy_data_folder"], "Features", "motifs", database, "{}.motifs.csv".format(acc))
+        feature_combined_file = os.path.join(s["thoipapy_data_folder"], "Features", "combined", database, "{}.surr{}.gaps{}.combined_features.csv".format(acc, s["num_of_sur_residues"], s["max_n_gaps_in_TMD_subject_seq"]))
+        alignments_dir = os.path.join(s["thoipapy_data_folder"], "homologues", "alignments", database)
         alignment_summary_csv = os.path.join(alignments_dir, "{}.surr{}.gaps{}.alignment_summary.csv".format(acc, s["num_of_sur_residues"], s["max_n_gaps_in_TMD_subject_seq"]))
-        full_seq_fasta_file = os.path.join(s["Protein_folder"], database, "{}.fasta".format(acc))
-        phobius_outfile = os.path.join(s["Protein_folder"], database, "{}.phobius".format(acc))
+        full_seq_fasta_file = os.path.join(s["thoipapy_data_folder"], "Proteins", database, "{}.fasta".format(acc))
+        phobius_outfile = os.path.join(s["thoipapy_data_folder"], "Proteins", database, "{}.phobius".format(acc))
         combine_all_features(s, full_seq,acc, database, TMD_seq, TMD_start, feature_combined_file, entropy_file, pssm_csv, lipo_csv, freecontact_parsed_csv, relative_position_file, LIPS_parsed_csv, motifs_file, alignment_summary_csv,full_seq_fasta_file,phobius_outfile, logging)
 
 
@@ -1970,13 +1972,13 @@ def add_experimental_data_to_combined_features_mult_prot(s, df_set, logging):
         acc = df_set.loc[i, "acc"]
         database = df_set.loc[i, "database"]
         TMD_seq = df_set.loc[i, "TMD_seq"]
-        feature_combined_file = os.path.join(s["features_folder"], "combined", database, "{}.surr{}.gaps{}.combined_features.csv".format(acc, s["num_of_sur_residues"], s["max_n_gaps_in_TMD_subject_seq"]))
+        feature_combined_file = os.path.join(s["thoipapy_data_folder"], "Features", "combined", database, "{}.surr{}.gaps{}.combined_features.csv".format(acc, s["num_of_sur_residues"], s["max_n_gaps_in_TMD_subject_seq"]))
         if database == "ETRA":
             #experimental_data_file = os.path.join(s["base_dir"], "data_xy", "Figure", "Show_interface", "Interface_xlsx", "{}.xlsx".format(acc))
             experimental_data_file = os.path.join(s["dropbox_dir"], "ETRA_data", "Average_with_interface", "{}_mul_scan_average_data.xlsx".format(acc))
         else:
-            #experimental_data_file = os.path.join(s["features_folder"], 'Structure', database, '{}.{}pairmax.bind.closedist.csv'.format(acc,s['inter_pair_max']))
-            experimental_data_file = os.path.join(s["features_folder"], 'Structure', database, '{}.{}pairmax.bind.closedist.csv'.format(acc,s['inter_pair_max']))
+            #experimental_data_file = os.path.join(s["thoipapy_data_folder"], "Features", 'Structure', database, '{}.{}pairmax.bind.closedist.csv'.format(acc,s['inter_pair_max']))
+            experimental_data_file = os.path.join(s["thoipapy_data_folder"], "Features", 'Structure', database, '{}.{}pairmax.bind.closedist.csv'.format(acc,s['inter_pair_max']))
 
         add_experimental_data_to_combined_features(acc, database, TMD_seq, feature_combined_file, experimental_data_file, logging)
 
@@ -2009,7 +2011,7 @@ def add_experimental_data_to_combined_features(acc, database, TMD_seq, feature_c
 
     if os.path.isfile(experimental_data_file):
         if database == "ETRA":
-            print(experimental_data_file)
+            sys.stdout.write(experimental_data_file)
             df_experiment_data = pd.read_excel(experimental_data_file)
             df_experiment_data = df_experiment_data.rename(columns={"aa_position" : "residue_num", "orig_aa" : "residue_name", "Interface" : "interface", "Disruption" : "interface_score"})
         else:
@@ -2033,7 +2035,7 @@ def add_experimental_data_to_combined_features(acc, database, TMD_seq, feature_c
             sys.stdout.write("\n{}, TMD_seq_in_combined_file = {}".format(acc, TMD_seq_in_combined_file))
             sys.stdout.write("\n{}, TMD_seq_in_bind_file     = {}".format(acc, TMD_seq_in_bind_file))
             sys.stdout.write("\n{}, TMD_seq_in_merged_file   = {}\n".format(acc, TMD_seq_in_merged_file))
-            #print("TMD_seq in original settings file and final merged features dataframe does not match.")
+            #sys.stdout.write("TMD_seq in original settings file and final merged features dataframe does not match.")
             raise IndexError("TMD_seq in original settings file and final merged features dataframe does not match.")
 
         # create normalised interface scores from both ETRA and closedist(NMR/crystal) data
@@ -2095,21 +2097,20 @@ def add_random_interface_to_combined_features_mult_prot(s, df_set, logging):
     for i in df_set.index:
         acc = df_set.loc[i, "acc"]
         database = df_set.loc[i, "database"]
-        feature_combined_file = os.path.join(s["features_folder"], "combined", database, "{}.surr{}.gaps{}.combined_features.csv".format(acc, s["num_of_sur_residues"], s["max_n_gaps_in_TMD_subject_seq"]))
-        feature_combined_file_rand_int = os.path.join(s["features_folder"], "combined", "rand_int", database, "{}.surr{}.gaps{}.combined_features.csv".format(acc, s["num_of_sur_residues"], s["max_n_gaps_in_TMD_subject_seq"]))
+        feature_combined_file = os.path.join(s["thoipapy_data_folder"], "Features", "combined", database, "{}.surr{}.gaps{}.combined_features.csv".format(acc, s["num_of_sur_residues"], s["max_n_gaps_in_TMD_subject_seq"]))
+        feature_combined_file_rand_int = os.path.join(s["thoipapy_data_folder"], "Features", "combined", "rand_int", database, "{}.surr{}.gaps{}.combined_features.csv".format(acc, s["num_of_sur_residues"], s["max_n_gaps_in_TMD_subject_seq"]))
         thoipapy.utils.make_sure_path_exists(feature_combined_file_rand_int, isfile=True)
 
         if database == "ETRA":
             #experimental_data_file = os.path.join(s["base_dir"], "data_xy", "Figure", "Show_interface", "Interface_xlsx", "{}.xlsx".format(acc))
             experimental_data_file = os.path.join(s["dropbox_dir"], "ETRA_data", "Average_with_interface", "{}_mul_scan_average_data.xlsx".format(acc))
         else:
-            #experimental_data_file = os.path.join(s["features_folder"], 'Structure', database, '{}.{}pairmax.bind.closedist.csv'.format(acc,s['inter_pair_max']))
-            experimental_data_file = os.path.join(s["features_folder"], 'Structure', database, '{}.{}pairmax.bind.closedist.csv'.format(acc,s['inter_pair_max']))
+            #experimental_data_file = os.path.join(s["thoipapy_data_folder"], "Features", 'Structure', database, '{}.{}pairmax.bind.closedist.csv'.format(acc,s['inter_pair_max']))
+            experimental_data_file = os.path.join(s["thoipapy_data_folder"], "Features", 'Structure', database, '{}.{}pairmax.bind.closedist.csv'.format(acc,s['inter_pair_max']))
 
         df_combined = pd.read_csv(feature_combined_file, index_col=0)
 
         if database == "ETRA":
-            print(experimental_data_file)
             df_experiment_data = pd.read_excel(experimental_data_file)
             df_experiment_data = df_experiment_data.rename(columns={"aa_position" : "residue_num", "orig_aa" : "residue_name", "Interface" : "interface", "Disruption" : "interface_score"})
         else:
@@ -2167,8 +2168,8 @@ def add_PREDDIMER_TMDOCK_to_combined_features_mult_prot(s, df_set, logging):
         acc = df_set.loc[i, "acc"]
         database = df_set.loc[i, "database"]
         TMD_seq = df_set.loc[i, "TMD_seq"]
-        feature_combined_file = os.path.join(s["features_folder"], "combined", database, "{}.surr{}.gaps{}.combined_features.csv".format(acc, s["num_of_sur_residues"], s["max_n_gaps_in_TMD_subject_seq"]))
-        merged_data_csv_path = os.path.join(s["thoipapy_data_folder"], "Merged", database, "{}.merged.csv".format(acc))
+        feature_combined_file = os.path.join(s["thoipapy_data_folder"], "Features", "combined", database, "{}.surr{}.gaps{}.combined_features.csv".format(acc, s["num_of_sur_residues"], s["max_n_gaps_in_TMD_subject_seq"]))
+        merged_data_csv_path = os.path.join(s["thoipapy_data_folder"], "Results", s["setname"], "predictions", database, "{}.merged.csv".format(acc))
 
         add_PREDDIMER_TMDOCK_to_combined_features(acc, feature_combined_file, merged_data_csv_path, logging)
 
@@ -2230,7 +2231,7 @@ def add_PREDDIMER_TMDOCK_to_combined_features(acc, feature_combined_file, merged
         #     sys.stdout.write("\n{}, TMD_seq_in_combined_file = {}".format(acc, TMD_seq_in_combined_file))
         #     sys.stdout.write("\n{}, TMD_seq_in_predictions_file     = {}".format(acc, TMD_seq_in_predictions_file))
         #     sys.stdout.write("\n{}, TMD_seq_in_new_combined_file   = {}\n".format(acc, TMD_seq_in_new_combined_file))
-        #     #print("TMD_seq in original settings file and final merged features dataframe does not match.")
+        #     #sys.stdout.write("TMD_seq in original settings file and final merged features dataframe does not match.")
         #     raise IndexError("TMD_seq in original settings file and final merged features dataframe does not match.")
 
         # revert back to original index. Maybe not necessary?
@@ -2261,8 +2262,8 @@ def add_physical_parameters_to_features_mult_prot(s, df_set, logging):
     for i in df_set.index:
         acc = df_set.loc[i, "acc"]
         database = df_set.loc[i, "database"]
-        feature_combined_file = os.path.join(s["features_folder"], "combined", database, "{}.surr{}.gaps{}.combined_features.csv".format(acc, s["num_of_sur_residues"], s["max_n_gaps_in_TMD_subject_seq"]))
-        #feature_combined_file_incl_phys_param = os.path.join(s["features_folder"], "combined", database,
+        feature_combined_file = os.path.join(s["thoipapy_data_folder"], "Features", "combined", database, "{}.surr{}.gaps{}.combined_features.csv".format(acc, s["num_of_sur_residues"], s["max_n_gaps_in_TMD_subject_seq"]))
+        #feature_combined_file_incl_phys_param = os.path.join(s["thoipapy_data_folder"], "Features", "combined", database,
         #                                                     "{}.surr{}.gaps{}.combined_features_incl_phys_param.csv".format(acc, s["num_of_sur_residues"], s["max_n_gaps_in_TMD_subject_seq"]))
         add_physical_parameters_to_features(acc, feature_combined_file, logging)
 
@@ -2352,18 +2353,18 @@ def remove_crystal_hetero_contact_residues_mult_prot(s, df_set, logging):
         acc = df_set.loc[i, "acc"]
         database = df_set.loc[i, "database"]
         if database == "crystal":
-            feature_combined_file = os.path.join(s["features_folder"], "combined", database,
+            feature_combined_file = os.path.join(s["thoipapy_data_folder"], "Features", "combined", database,
                                              "{}.surr{}.gaps{}.combined_features.csv".format(acc,
                                                                                              s["num_of_sur_residues"],
                                                                                              s[
                                                                                                  "max_n_gaps_in_TMD_subject_seq"]))
-            no_hetero_feature_combined_file = os.path.join(s["features_folder"], "combined", database,
+            no_hetero_feature_combined_file = os.path.join(s["thoipapy_data_folder"], "Features", "combined", database,
                                                  "{}.nohetero.surr{}.gaps{}.combined_features.csv".format(acc,
                                                                                                  s[
                                                                                                      "num_of_sur_residues"],
                                                                                                  s[
                                                                                                      "max_n_gaps_in_TMD_subject_seq"]))
-            homo_hetero_contact_file = os.path.join(s["features_folder"], "Structure", database, "{}.homohetero.bind.closedist.csv".format(acc))
+            homo_hetero_contact_file = os.path.join(s["thoipapy_data_folder"], "Features", "Structure", database, "{}.homohetero.bind.closedist.csv".format(acc))
 
             hetero_contact_num = remove_crystal_hetero_contact_residues(acc, feature_combined_file, homo_hetero_contact_file,no_hetero_feature_combined_file, logging)
             sum_hetero_contact = sum_hetero_contact + hetero_contact_num
@@ -2451,10 +2452,10 @@ def create_ROC_all_residues(s, df_set, logging):
     logging.info('Starting combine_all_residue_predictions.')
 
     # output file with all predictions
-    pred_all_res_csv = os.path.join(s["set_results_folder"], "ROC", "{}_pred_all_res.csv".format(s["setname"]))
-    #all_res_ROC_data_dict_pkl = os.path.join(s["set_results_folder"], "ROC", "{}_all_res_ROC_data_dict.pickle".format(s["setname"]))
-    all_res_ROC_data_csv = os.path.join(s["set_results_folder"], "ROC", "{}_all_res_ROC_data.csv".format(s["setname"]))
-    all_res_ROC_png = os.path.join(s["set_results_folder"], "ROC", "{}_all_res_ROC.png".format(s["setname"]))
+    pred_all_res_csv = os.path.join(s["thoipapy_data_folder"], "Results", "ROC", "{}_pred_all_res.csv".format(s["setname"]))
+    #all_res_ROC_data_dict_pkl = os.path.join(s["thoipapy_data_folder"], "Results", "ROC", "{}_all_res_ROC_data_dict.pickle".format(s["setname"]))
+    all_res_ROC_data_csv = os.path.join(s["thoipapy_data_folder"], "Results", "ROC", "{}_all_res_ROC_data.csv".format(s["setname"]))
+    all_res_ROC_png = os.path.join(s["thoipapy_data_folder"], "Results", "ROC", "{}_all_res_ROC.png".format(s["setname"]))
 
     thoipapy.utils.make_sure_path_exists(pred_all_res_csv, isfile=True)
 
@@ -2465,7 +2466,7 @@ def create_ROC_all_residues(s, df_set, logging):
     for i in df_set_nonred.index:
         acc = df_set_nonred.loc[i, "acc"]
         database = df_set_nonred.loc[i, "database"]
-        merged_data_csv_path = os.path.join(s["thoipapy_data_folder"], "Merged", database, "{}.merged.csv".format(acc))
+        merged_data_csv_path = os.path.join(s["thoipapy_data_folder"], "Results", s["setname"], "predictions", database, "{}.merged.csv".format(acc))
 
         df_merged_new_protein = pd.read_csv(merged_data_csv_path, index_col=0)
         df_merged_new_protein["acc_db"] = "{}-{}".format(acc, database)
@@ -2492,7 +2493,7 @@ def create_ROC_all_residues(s, df_set, logging):
 
     df_all.to_csv(pred_all_res_csv)
 
-    save_fig_ROC_all_residues(df_all, all_res_ROC_png, all_res_ROC_data_csv, logging)
+    save_fig_ROC_all_residues(s, df_all, all_res_ROC_png, all_res_ROC_data_csv, logging)
 
     df_all["subset"] = df_all.acc_db.str.split("-").str[1]
 
@@ -2502,18 +2503,18 @@ def create_ROC_all_residues(s, df_set, logging):
         if not df_subset.empty:
             ROC_png = all_res_ROC_png[:-4] + "_{}_subset.png".format(subset)
             ROC_data_csv = all_res_ROC_data_csv[:-4] + "_{}_subset.csv".format(subset)
-            save_fig_ROC_all_residues(df_subset, ROC_png, ROC_data_csv, logging)
+            save_fig_ROC_all_residues(s, df_subset, ROC_png, ROC_data_csv, logging)
 
     # with open(all_res_ROC_data_pkl, "wb") as f:
     #     pickle.dump(output_dict, f, protocol=pickle.HIGHEST_PROTOCOL)
     logging.info('Finished combine_all_residue_predictions.')
 
 
-def save_fig_ROC_all_residues(df, all_res_ROC_png, all_res_ROC_data_csv, logging):
+def save_fig_ROC_all_residues(s, df, all_res_ROC_png, all_res_ROC_data_csv, logging):
     fontsize=8
     fig, ax = plt.subplots(figsize=(5,5))
     ax.plot([0, 1], [0, 1], color="0.5", linestyle="--", label="random", linewidth=1)
-    THOIPA_predictor = "THOIPA_5_LOO"
+    THOIPA_predictor = "THOIPA_{}_LOO".format(s["set_number"])
     predictors = [THOIPA_predictor, "TMDOCK", "LIPS_surface_ranked", "PREDDIMER"]
     output_dict = {}
     for predictor in predictors:
@@ -2524,13 +2525,8 @@ def save_fig_ROC_all_residues(df, all_res_ROC_png, all_res_ROC_data_csv, logging
         else:
             pred = df_sel[predictor]
         fpr, tpr, thresholds = roc_curve(df_sel.interface, pred, drop_intermediate=False)
-
-        # logging.info("fpr {}".format(list(fpr)))
-        # logging.info("tpr {}".format(list(tpr)))
-        # logging.info("thresholds {}".format(list(thresholds)))
-
         pred_auc = auc(fpr, tpr)
-        sys.stdout.write("{} AUC : {:.03f}\n".format(predictor, pred_auc))
+        #sys.stdout.write("{} AUC : {:.03f}\n".format(predictor, pred_auc))
         label = "{}. AUC : {:.03f}".format(predictor, pred_auc)
         ax.plot(fpr, tpr, label=label, linewidth=1)
         # output_dict["fpr_{}".format(predictor)] = fpr
@@ -2580,10 +2576,10 @@ def create_precision_recall_all_residues(s, df_set, logging):
     logging.info('Starting combine_all_residue_predictions.')
 
     # output file with all predictions
-    pred_all_res_csv = os.path.join(s["set_results_folder"], "precision_recall", "{}_pred_all_res.csv".format(s["setname"]))
-    #all_res_precision_recall_data_dict_pkl = os.path.join(s["set_results_folder"], "precision_recall", "{}_all_res_precision_recall_data_dict.pickle".format(s["setname"]))
-    all_res_precision_recall_data_csv = os.path.join(s["set_results_folder"], "precision_recall", "{}_all_res_precision_recall_data.csv".format(s["setname"]))
-    all_res_precision_recall_png = os.path.join(s["set_results_folder"], "precision_recall", "{}_all_res_precision_recall.png".format(s["setname"]))
+    pred_all_res_csv = os.path.join(s["thoipapy_data_folder"], "Results", "precision_recall", "{}_pred_all_res.csv".format(s["setname"]))
+    #all_res_precision_recall_data_dict_pkl = os.path.join(s["thoipapy_data_folder"], "Results", "precision_recall", "{}_all_res_precision_recall_data_dict.pickle".format(s["setname"]))
+    all_res_precision_recall_data_csv = os.path.join(s["thoipapy_data_folder"], "Results", "precision_recall", "{}_all_res_precision_recall_data.csv".format(s["setname"]))
+    all_res_precision_recall_png = os.path.join(s["thoipapy_data_folder"], "Results", "precision_recall", "{}_all_res_precision_recall.png".format(s["setname"]))
 
     thoipapy.utils.make_sure_path_exists(pred_all_res_csv, isfile=True)
 
@@ -2594,7 +2590,7 @@ def create_precision_recall_all_residues(s, df_set, logging):
     for i in df_set_nonred.index:
         acc = df_set_nonred.loc[i, "acc"]
         database = df_set_nonred.loc[i, "database"]
-        merged_data_csv_path = os.path.join(s["thoipapy_data_folder"], "Merged", database, "{}.merged.csv".format(acc))
+        merged_data_csv_path = os.path.join(s["thoipapy_data_folder"], "Results", s["setname"], "predictions", database, "{}.merged.csv".format(acc))
 
         df_merged_new_protein = pd.read_csv(merged_data_csv_path, index_col=0)
         df_merged_new_protein["acc_db"] = "{}-{}".format(acc, database)
@@ -2621,7 +2617,7 @@ def create_precision_recall_all_residues(s, df_set, logging):
 
     df_all.to_csv(pred_all_res_csv)
 
-    save_fig_precision_recall_all_residues(df_all, all_res_precision_recall_png, all_res_precision_recall_data_csv, logging)
+    save_fig_precision_recall_all_residues(s, df_all, all_res_precision_recall_png, all_res_precision_recall_data_csv, logging)
 
     df_all["subset"] = df_all.acc_db.str.split("-").str[1]
 
@@ -2631,14 +2627,14 @@ def create_precision_recall_all_residues(s, df_set, logging):
         if not df_subset.empty:
             precision_recall_png = all_res_precision_recall_png[:-4] + "_{}_subset.png".format(subset)
             precision_recall_data_csv = all_res_precision_recall_data_csv[:-4] + "_{}_subset.csv".format(subset)
-            save_fig_precision_recall_all_residues(df_subset, precision_recall_png, precision_recall_data_csv, logging)
+            save_fig_precision_recall_all_residues(s, df_subset, precision_recall_png, precision_recall_data_csv, logging)
 
     # with open(all_res_precision_recall_data_pkl, "wb") as f:
     #     pickle.dump(output_dict, f, protocol=pickle.HIGHEST_PROTOCOL)
     logging.info('Finished combine_all_residue_predictions.')
 
 
-def save_fig_precision_recall_all_residues(df, all_res_precision_recall_png, all_res_precision_recall_data_csv, logging):
+def save_fig_precision_recall_all_residues(s, df, all_res_precision_recall_png, all_res_precision_recall_data_csv, logging):
     """Save figure for precision recall plot of all residues joined together.
 
     Code is directly copied and modified from save_fig_ROC_all_residues
@@ -2646,7 +2642,7 @@ def save_fig_precision_recall_all_residues(df, all_res_precision_recall_png, all
     """
     fontsize=8
     fig, ax = plt.subplots(figsize=(5,5))
-    THOIPA_predictor = "THOIPA_5_LOO"
+    THOIPA_predictor = "THOIPA_{}_LOO".format(s["set_number"])
     predictors = [THOIPA_predictor, "TMDOCK", "LIPS_surface_ranked", "PREDDIMER", "random"]
     output_dict = {}
     interface_random = df.interface_score.tolist()
@@ -2663,7 +2659,7 @@ def save_fig_precision_recall_all_residues(df, all_res_precision_recall_png, all
         precision, recall, thresholds_PRC = precision_recall_curve(df_sel.interface, pred)
 
         pred_auc = auc(recall, precision)
-        sys.stdout.write("{} AUC : {:.03f}\n".format(predictor, pred_auc))
+        #sys.stdout.write("{} AUC : {:.03f}\n".format(predictor, pred_auc))
         label = "{}. AUC : {:.03f}".format(predictor, pred_auc)
         ax.plot(recall, precision, label=label, linewidth=1)
 
@@ -2708,7 +2704,7 @@ def combine_all_train_data_for_machine_learning(s, df_set, logging):
     """
     logging.info('creating train or test data for machine learning')
 
-    train_data_csv = os.path.join(s["set_results_folder"], "{}_train_data.csv".format(s["setname"]))
+    train_data_csv = os.path.join(s["thoipapy_data_folder"], "Results", "{}_train_data.csv".format(s["setname"]))
 
     df_set_nonred = thoipapy.utils.drop_redundant_proteins_from_list(df_set, logging)
 
@@ -2719,13 +2715,13 @@ def combine_all_train_data_for_machine_learning(s, df_set, logging):
         database = df_set_nonred.loc[i, "database"]
         if s["remove_crystal_hetero"]:
             if database == "crystal":
-                feature_combined_file = os.path.join(s["features_folder"], "combined", database,
+                feature_combined_file = os.path.join(s["thoipapy_data_folder"], "Features", "combined", database,
                                                      "{}.nohetero.surr{}.gaps{}.combined_features.csv".format(acc, s[
                                                          "num_of_sur_residues"], s["max_n_gaps_in_TMD_subject_seq"]))
             else:
-                feature_combined_file = os.path.join(s["features_folder"], "combined", database, "{}.surr{}.gaps{}.combined_features.csv".format(acc, s["num_of_sur_residues"], s["max_n_gaps_in_TMD_subject_seq"]))
+                feature_combined_file = os.path.join(s["thoipapy_data_folder"], "Features", "combined", database, "{}.surr{}.gaps{}.combined_features.csv".format(acc, s["num_of_sur_residues"], s["max_n_gaps_in_TMD_subject_seq"]))
         else:
-            feature_combined_file = os.path.join(s["features_folder"], "combined", database,
+            feature_combined_file = os.path.join(s["thoipapy_data_folder"], "Features", "combined", database,
                                                  "{}.surr{}.gaps{}.combined_features.csv".format(acc, s[
                                                      "num_of_sur_residues"], s["max_n_gaps_in_TMD_subject_seq"]))
         df_features_new_protein = pd.read_csv(feature_combined_file, index_col=0)

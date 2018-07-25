@@ -53,7 +53,7 @@ def calc_closedist_from_NMR_best_model(s):
                 pdb_file_NMR = os.path.join(NMR_data_folder, "{}.pdb".format(pdb.upper()))
                 NMR_closedist_file = os.path.join(NMR_data_folder, "{}_{}_{}.closedist.csv".format(protein,pdb,cutoff))
                 hashclosedist = {}
-                print(pdb)
+                sys.stdout.write(pdb)
                 #if pdb =="1afo":
                 with open(pdb_file_NMR, 'r') as file:
                     for row in file:

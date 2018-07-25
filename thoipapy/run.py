@@ -21,10 +21,7 @@ import argparse
 import os
 import platform
 import sys
-
 import pandas as pd
-
-import thoipapy
 
 # read the command line arguments
 import thoipapy.validation.validation_test_train_deprecated
@@ -49,7 +46,7 @@ if __name__ == "__main__":
     #                               setname, logging, results folder                             #
     #                                                                                            #
     ##############################################################################################
-    sets_folder = s["sets_folder"]
+    sets_folder = os.path.join(s["dropbox_dir"], "sets")
 
     # if multiple sets need to be run, split them by comma
     if isinstance(s["set_number"], str) and "," in s["set_number"]:
@@ -64,9 +61,8 @@ if __name__ == "__main__":
         # add to the dictionary itself
         s["setname"] = setname
         # create a results folder for that set
-        s["set_results_folder"] = os.path.join(s["Results_folder"], setname)
-        if not os.path.isdir(s["set_results_folder"]):
-            os.makedirs(s["set_results_folder"])
+        if not os.path.isdir(os.path.join(s["thoipapy_data_folder"], "Results", setname)):
+            os.makedirs(os.path.join(s["thoipapy_data_folder"], "Results", setname))
 
         logging = thoipapy.common.setup_keyboard_interrupt_and_error_logging(s, setname)
         logging.info("STARTING PROCESSING OF {}.".format(setname))
@@ -102,7 +98,6 @@ if __name__ == "__main__":
         ###################################################################################################
 
         if s["Get_Tmd_Homodimers"] :
-
             #thoipapy.structures.get_TMD_homodimer.get_tmd_nr_homodimer.download_xml_get_alphahelix_get_homo_pair(s, logging)
             #thoipapy.structures.get_Tmd_Homodimer.get_tmd_nr_homodimer.Download_trpdb_Calc_inter_rr_pairs(s, logging)
             #thoipapy.structures.get_TMD_homodimer.get_tmd_nr_homodimer.create_redundant_interact_homodimer_rm_shorttm(s, logging)
@@ -118,7 +113,7 @@ if __name__ == "__main__":
             thoipapy.structures.get_TMD_homodimer.NMR_data.calc_closedist_from_NMR_best_model(s)
 
         if s["Atom_Close_Dist"]:
-            infor = thoipapy.structures.get_TMD_homodimer.atom_dist.residu_closest_dist.homodimer_residue_closedist_calculate_from_complex(thoipapy, s, logging)
+            infor = thoipapy.structures.atom_dist.residu_close_dist.homodimer_residue_closedist_calculate_from_complex(thoipapy, s, logging)
             sys.stdout.write(infor)
 
         ###################################################################################################
@@ -207,7 +202,6 @@ if __name__ == "__main__":
         if s["train_machine_learning_model"]:
             thoipapy.validation.validation.train_machine_learning_model(s, logging)
 
-
         if s["run_testset_trainset_validation"] == True:
             thoipapy.figs.create_BOcurve_files.run_testset_trainset_validation(s, logging)
 
@@ -223,14 +217,13 @@ if __name__ == "__main__":
         Size= s["Size"]
         Linewidth= s["Linewidth"]
 
-        if s["FigZB_07"] == True:
+        if s["FigZB_07_hardlinked"] == True:
             # barcharts of coevolution values for interface and non-interface
-            thoipapy.figs.average_fraction_DI.FigZB_07(Fontsize, Width, Size, s)
+            thoipapy.figs.average_fraction_DI.FigZB_07_hardlinked(Fontsize, Width, Size, s)
 
-        if s["FigZB_18"] == True:
-            # heatmap of prediction from THOIPA, PREDDIMER, TMDOCK
-            thoipapy.figs.create_PREDDIMER_TMDOCK_heatmap.FigZB_18(Fontsize, Width, Size)
-
+        #if s["FigZB_18"] == True:
+        #    # heatmap of prediction from THOIPA, PREDDIMER, TMDOCK
+        #    thoipapy.other.other_figs.create_PREDDIMER_TMDOCK_heatmap.FigZB_18(s, Fontsize, Width, Size)
 
         #if s["combine_BOcurve_files_hardlinked"] == True:
         #    thoipapy.figs.Combine_Bo_Curve_files.combine_BOcurve_files_hardlinked(s)
@@ -242,17 +235,17 @@ if __name__ == "__main__":
         if s["compare_predictors"] == True:
             thoipapy.figs.combine_BOcurve_files.compare_predictors(s)
 
-        if s["run_BOcurve_comp_hardlinked"] == True:
-            thoipapy.figs.BOcurve_THOIPAbest_comp_LIPS_and_NMR.run_BOcurve_comp_hardlinked(Fontsize, Width, Size, s, Linewidth)
+        #if s["run_BOcurve_comp_hardlinked"] == True:
+        #    thoipapy.figs.BOcurve_THOIPAbest_comp_LIPS_and_NMR.run_BOcurve_comp_hardlinked(Fontsize, Width, Size, s, Linewidth)
 
         if s["calc_PREDDIMER_TMDOCK_closedist"] == True:
             thoipapy.figs.calc_PREDDIMER_TMDOCK_closedist.calc_closedist_from_PREDDIMER_TMDOCK_best_model(s, logging)
 
-        if s["add_predictions_to_combined_files"] == True:
-            thoipapy.validation.combine_mult_predictors.combine_file_add_PREDDIMER_TMDOCK_THOIPA_prediction(s, df_set, logging)
+        if s["merge_predictions"] == True:
+            thoipapy.validation.combine_mult_predictors.merge_predictions(s, df_set, logging)
 
-        if s["run_indiv_validation_THOIPA_PREDDIMER_TMDOCK"] == True:
-            namedict = thoipapy.utils.create_namedict(os.path.join(os.path.dirname(s["sets_folder"]), "ETRA_NMR_names.xlsx"))
+        if s["run_indiv_validation_each_TMD"] == True:
+            namedict = thoipapy.utils.create_namedict(os.path.join(s["dropbox_dir"], "ETRA_NMR_names.xlsx"))
             THOIPA_predictor_name = "THOIPA_{}_LOO".format(s["set_number"])
             predictor_name_list = [THOIPA_predictor_name, "PREDDIMER", "TMDOCK", "LIPS_surface_ranked"]
             thoipapy.validation.indiv_validation.collect_indiv_validation_data(s, df_set, logging, namedict, predictor_name_list, THOIPA_predictor_name)
@@ -268,10 +261,9 @@ if __name__ == "__main__":
             thoipapy.validation.validation_test_train_deprecated.create_AUBOC10_4predictors_3databases_figs(s, df_set, logging)
             thoipapy.validation.validation_test_train_deprecated.create_AUC_4predictors_3databases_figs(s, df_set, logging)
 
-
         if "download_10_homologues_from_ncbi" in s:
             if s["download_10_homologues_from_ncbi"] == True:
-                thoipapy.other.NCBI.download.download.download_10_homologues_from_ncbi(s, df_set, logging)
+                thoipapy.homologues.NCBI_download.download_10_homologues_from_ncbi(s, df_set, logging)
 
         if "plot_coev_vs_res_dist" in s:
             if s["plot_coev_vs_res_dist"] == True:

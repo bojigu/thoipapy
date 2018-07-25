@@ -74,7 +74,7 @@ def collect_indiv_validation_data(s, df_set, logging, namedict, predictor_name_l
 
             database = df_set.loc[i, "database"]
             acc_db = acc + "-" + database
-            merged_data_csv_path = os.path.join(s["thoipapy_data_folder"], "Merged", database, "{}.merged.csv".format(acc))
+            merged_data_csv_path = os.path.join(s["thoipapy_data_folder"], "Results", s["setname"], "predictions", database, "{}.merged.csv".format(acc))
             merged_data_df = pd.read_csv(merged_data_csv_path,engine="python")
             merged_data_df["LIPS_L*E"] = -1 * merged_data_df["LIPS_L*E"]
             merged_data_df["PREDDIMER"] = -1 * merged_data_df["PREDDIMER"]
@@ -444,7 +444,24 @@ def create_ROC_AUC_barchart_DEPRECATED(ROC_AUC_df, ROC_AUC_barchart_png, ROC_AUC
     fig.savefig(BOAUC10_barchart_pdf, dpi=240)
 
 
-def merge_4_files_alignment_metho(acc, full_seq, train_data_file, THOIPA_prediction_file, PREDDIMER_prediction_file, TMDOCK_prediction_file, merged_data_xlsx_path, columns_kept_in_combined_file):
+def merge_4_files_alignment_method_deprecated(acc, full_seq, train_data_file, THOIPA_prediction_file, PREDDIMER_prediction_file, TMDOCK_prediction_file, merged_data_xlsx_path, columns_kept_in_combined_file):
+    """Deprecated method to merge predictions, with lots of checks to ensure sequences are the same.
+
+    Parameters
+    ----------
+    acc
+    full_seq
+    train_data_file
+    THOIPA_prediction_file
+    PREDDIMER_prediction_file
+    TMDOCK_prediction_file
+    merged_data_xlsx_path
+    columns_kept_in_combined_file
+
+    Returns
+    -------
+
+    """
     all_files_exist = True
     for path in [train_data_file, THOIPA_prediction_file,PREDDIMER_prediction_file,TMDOCK_prediction_file]:
         if not os.path.isfile(path):
@@ -616,7 +633,7 @@ def create_ROC_comp_4predictors(s, df_set, logging):
         for i in df_set.index:
             acc = df_set.loc[i, "acc"]
             database = df_set.loc[i, "database"]
-            merged_data_csv_path = os.path.join(s["thoipapy_data_folder"], "Merged", database, "{}.merged.csv".format(acc))
+            merged_data_csv_path = os.path.join(s["thoipapy_data_folder"], "Results", s["setname"], "predictions", database, "{}.merged.csv".format(acc))
             dfm = pd.read_csv(merged_data_csv_path, engine="python", index_col=0)
             dfm.dropna(inplace=True)
             interface = dfm["interface"].values
