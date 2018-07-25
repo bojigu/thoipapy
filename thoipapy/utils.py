@@ -356,7 +356,7 @@ def drop_redundant_proteins_from_list(df_set, logging):
     logging.info("CDHIT redundancy reduction : n_prot_initial = {}, n_prot_final = {}, n_prot_dropped = {}".format(n_prot_initial, n_prot_final, n_prot_initial - n_prot_final))
     return df_set_nonred
 
-def add_res_num_full_seq_to_df(acc, df, TMD_seq, full_seq):
+def add_res_num_full_seq_to_df(acc, df, TMD_seq, full_seq, prediction_name, file):
     """
 
     Parameters
@@ -378,7 +378,8 @@ def add_res_num_full_seq_to_df(acc, df, TMD_seq, full_seq):
         TMD_end = m.end()
         df["res_num_full_seq"] = np.array(range(df.shape[0])) + TMD_start
     else:
-        raise IndexError("TMD seq not found in full_seq.\nacc = {}\nTMD_seq = {}\nfull_seq = {}".format(acc, TMD_seq, full_seq))
+        raise IndexError("TMD seq not found in full_seq.\nacc = {}\nTMD_seq = {}\nfull_seq = {}\n"
+                         "prediction_name={},file={}".format(acc, TMD_seq, full_seq, prediction_name, file))
     return df
 
 def calculate_identity(sequenceA, sequenceB):

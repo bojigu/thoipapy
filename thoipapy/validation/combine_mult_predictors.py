@@ -61,19 +61,20 @@ def merge_predictions(s, df_set, logging):
             prediction_name = [prediction_name_list[n]]
             if os.path.isfile(file):
                 df = pd.read_csv(file, index_col=0)
-                seq = df["residue_name"].str.cat()
-                if seq not in full_seq:
+                TMD_seq = df["residue_name"].str.cat()
+                if TMD_seq not in full_seq:
                     logging.warning(prediction_name)
                     logging.warning("Sequence in residue_name column of dataframe is not found in the original df_set sequence."
-                                     "\nacc : {}\nfile number : {}\nTMD_seq : {}\nfull seq in df_set : {}\nTHOIPA_prediction_csv:{}".format(acc, n, seq, full_seq, THOIPA_prediction_csv))
+                                     "\nacc : {}\nfile number : {}\nTMD_seq : {}\nfull_seq in df_set : {}\n"
+                                    "THOIPA_prediction_csv:{}\ncsv file:{}".format(acc, n, TMD_seq, full_seq, THOIPA_prediction_csv, file))
                     if prediction_name == [pred_colname]:
                         df = thoipapy.utils.add_mutation_missed_residues_with_na(s, acc, database, df)
-                        seq = df["residue_name"].str.cat()
+                        TMD_seq = df["residue_name"].str.cat()
                     # skip protein
                     #continue
 
                 # add the residue number in the full sequence
-                df = thoipapy.utils.add_res_num_full_seq_to_df(acc, df, seq, full_seq)
+                df = thoipapy.utils.add_res_num_full_seq_to_df(acc, df, TMD_seq, full_seq, prediction_name, file)
 
                 if n == 0:
                     #logging.info(df.columns)

@@ -5,13 +5,11 @@ import sys
 import pandas as pd
 import thoipapy
 
-def calc_closedist_from_PREDDIMER_TMDOCK_best_model(s, logging):
+def calc_closedist_from_PREDDIMER_TMDOCK_best_model(s, df_set, logging):
     """Calculate the closest heavy atom distances from PREDDIMER or TMDOCK structures for list of TMDs.
 
     See closedist_calculate_from_dimer function for details.
         This function simply runs closedist_calculate_from_dimer on each TMD in a list.
-
-    For some reason, this function currently uses the "set_list" in the settings file, rather than the more common "set_number".
 
     Parameters
     ----------
@@ -21,45 +19,38 @@ def calc_closedist_from_PREDDIMER_TMDOCK_best_model(s, logging):
         Python object with settings for logging to console and file.
 
     """
-    if isinstance(s["set_list"], int):
-        pt_set_list = [str(s["set_list"])]
-    elif isinstance(s["set_list"], str):
-        pt_set_list = s["set_list"].split(",")
-    else:
-        raise ValueError("set list type is not correct {}".format(s["set_list"]))
-    logging.info("starting calc_closedist_from_PREDDIMER_TMDOCK_best_model for set_list {}".format(pt_set_list))
-    #pt_set_list = s["set_list"].split(",")
-    for pt_set in pt_set_list:
-        ptsetname = "set{:02d}".format(int(pt_set))
-        ptset_path = thoipapy.common.get_path_of_protein_set(ptsetname, s["sets_folder"])
-        df_pt_set = pd.read_excel(ptset_path,sheetname="proteins")
-        for i in df_pt_set.index:
-            acc = df_pt_set.loc[i, "acc"]
-            sys.stdout.write("{}, ".format(acc)), sys.stdout.flush()
-            database = df_pt_set.loc[i, "database"]
-            protein = acc
-            PREDDIMER_TMDOCK_folder = os.path.join(s["base_dir"], "figs", "FigBZ18-PreddimerTmdockComparison")
-            pdb_file_preddimer = os.path.join(PREDDIMER_TMDOCK_folder,database,"{}.preddimer.pdb".format(protein))
-            pdb_file_tmdock = os.path.join(PREDDIMER_TMDOCK_folder, database, "{}.tmdock.pdb".format(protein))
-            preddimer_closedist_file = os.path.join(PREDDIMER_TMDOCK_folder, database,"{}.preddimer.closedist.csv".format(protein))
-            tmdock_closedist_file = os.path.join(PREDDIMER_TMDOCK_folder, database,"{}.tmdock.closedist.csv".format(protein))
+    logging.info("starting calc_closedist_from_PREDDIMER_TMDOCK_best_model for {}".format(s["setname"]))
 
-            #closedist_calculate_from_dimer(s,pdb_file_preddimer,preddimer_closedist_file)
-            if os.path.isfile(pdb_file_tmdock):
-                closedist_calculate_from_dimer(s, logging, pdb_file_tmdock, tmdock_closedist_file)
-            else:
-                logging.warning("{} : TMDOCK pdb file not found".format(protein))
-                continue
+    for i in df_set.index:
+        acc = df_set.loc[i, "acc"]
+        sys.stdout.write("{}, ".format(acc)), sys.stdout.flush()
+        database = df_set.loc[i, "database"]
+        protein = acc
+        PREDDIMER_TMDOCK_folder = os.path.join(s["base_dir"], "figs", "FigBZ18-PreddimerTmdockComparison")
+        pdb_file_preddimer = os.path.join(PREDDIMER_TMDOCK_folder,database,"{}.preddimer.pdb".format(protein))
+        pdb_file_tmdock = os.path.join(PREDDIMER_TMDOCK_folder, database, "{}.tmdock.pdb".format(protein))
+        preddimer_closedist_file = os.path.join(PREDDIMER_TMDOCK_folder, database,"{}.preddimer.closedist.csv".format(protein))
+        tmdock_closedist_file = os.path.join(PREDDIMER_TMDOCK_folder, database,"{}.tmdock.closedist.csv".format(protein))
 
-            if os.path.isfile(pdb_file_preddimer):
-                closedist_calculate_from_dimer(s, logging, pdb_file_preddimer, preddimer_closedist_file)
-            else:
-                logging.warning("{} : PREDDIMER pdb file not found".format(protein))
-                continue
+        #closedist_calculate_from_dimer(s,pdb_file_preddimer,preddimer_closedist_file)
+        if os.path.isfile(pdb_file_tmdock):
+            closedist_calculate_from_dimer(acc, s, logging, pdb_file_tmdock, tmdock_closedist_file)
+        else:
+            logging.warning("{} : TMDOCK pdb file not found".format(protein))
+            continue
 
-        sys.stdout.write("\n")
+        if os.path.isfile(pdb_file_preddimer):
+            closedist_calculate_from_dimer(acc, s, logging, pdb_file_preddimer, preddimer_closedist_file)
+        else:
+            logging.warning("{} : PREDDIMER pdb file not found".format(protein))
+            continue
 
-def closedist_calculate_from_dimer(s, logging, pdb_file, closedist_out_csv):
+        if i % 10 == 0:
+            sys.stdout.write("\n")
+
+    sys.stdout.write("\n")
+
+def closedist_calculate_from_dimer(acc, s, logging, pdb_file, closedist_out_csv):
     """Calculate the closest heavy atom distance between TMD residues from top-ranked PREDDIMER or TMDOCK structure.
 
     Distances are calculated between all heavy atoms.
@@ -96,48 +87,52 @@ def closedist_calculate_from_dimer(s, logging, pdb_file, closedist_out_csv):
     chain1 = 'A'
     chain2 = 'B'
 
-    # if os.path.isfile(closedist_out_csv):
-    #     if s["rerun_closedist_calculation"] == False:
-    #         sys.stdout.write(
-    #             "\n\n the closedist file for pdb accession: {} already existed, skip calculation......".format(pdb_file))
-    #         sys.stdout.flush()
-    #         return None
-
     with open(pdb_file, "r") as f:
         for line in f:
             if re.search("^MODEL\s+2", line):
                 break
             if re.search("^ATOM", line):
                 atom = line[12:16]
-                if not re.search("^\s*H", atom):  # non-H atom distance
-                    index = line[6:11]
-                    x = line[30:38]
-                    y = line[38:46]
-                    z = line[46:54]
-                    chain = line[21:22]
-                    residue_num = line[22:26]
-                    residue_name = line[17:20]
-                    if chain == chain1:
-                        kk = ':'.join([pdb, chain, residue_num, residue_name])
-                        if kk not in hash1arrayx:
-                            hash1arrayx[kk] = x
-                            hash1arrayy[kk] = y
-                            hash1arrayz[kk] = z
-                        else:
-                            hash1arrayx[kk] = hash1arrayx[kk] + ':' + x
-                            hash1arrayy[kk] = hash1arrayy[kk] + ':' + y
-                            hash1arrayz[kk] = hash1arrayz[kk] + ':' + z
+                #sys.stdout.write("{},".format(atom))
+                # skip any hydrogens
+                if re.search("^\s*H", atom):  # non-H atom distance
+                    continue
+                index = line[6:11]
+                x = line[30:38]
+                y = line[38:46]
+                z = line[46:54]
+                chain = line[21:22]
+                residue_num = line[22:26]
+                residue_name = line[17:20]
+                # skip any "OCT" atoms, which are C-terminal atoms that are often erroneously labelled by TMDOCK as
+                # part of a new residue (e.g. ATALFVLVPSVFLIILYV of 2axt chain M, TMD1, where residue 18 is actually a Val
+                # but  "275  OCT TYR B  18" suggests a TYR at positions 17 and 18
+                if atom == " OCT" and residue_name != "CEN":
+                    sys.stdout.write("\n")
+                    logging.warning("{}  possible mislabelling of terminal residue (OCT for residue {})\nFull line:\n{}".format(acc, residue_name, line))
+                    # skip this line
+                    continue
+                if chain == chain1:
+                    kk = ':'.join([pdb, chain, residue_num, residue_name])
+                    if kk not in hash1arrayx:
+                        hash1arrayx[kk] = x
+                        hash1arrayy[kk] = y
+                        hash1arrayz[kk] = z
+                    else:
+                        hash1arrayx[kk] = hash1arrayx[kk] + ':' + x
+                        hash1arrayy[kk] = hash1arrayy[kk] + ':' + y
+                        hash1arrayz[kk] = hash1arrayz[kk] + ':' + z
 
-                    if chain == chain2:
-                        kk = ':'.join([pdb, chain, residue_num, residue_name])
-                        if kk not in hash2arrayx:
-                            hash2arrayx[kk] = x
-                            hash2arrayy[kk] = y
-                            hash2arrayz[kk] = z
-                        else:
-                            hash2arrayx[kk] = hash2arrayx[kk] + ':' + x
-                            hash2arrayy[kk] = hash2arrayy[kk] + ':' + y
-                            hash2arrayz[kk] = hash2arrayz[kk] + ':' + z
+                if chain == chain2:
+                    kk = ':'.join([pdb, chain, residue_num, residue_name])
+                    if kk not in hash2arrayx:
+                        hash2arrayx[kk] = x
+                        hash2arrayy[kk] = y
+                        hash2arrayz[kk] = z
+                    else:
+                        hash2arrayx[kk] = hash2arrayx[kk] + ':' + x
+                        hash2arrayy[kk] = hash2arrayy[kk] + ':' + y
+                        hash2arrayz[kk] = hash2arrayz[kk] + ':' + z
 
     for key1, count in hash1arrayx.items():
         arr_xvalue1 = hash1arrayx[key1].split(':')
@@ -171,7 +166,6 @@ def closedist_calculate_from_dimer(s, logging, pdb_file, closedist_out_csv):
     closest_dist_df=closest_dist_df.sort_values(by=["residue_num"])
     closest_dist_df.reset_index(inplace=True,drop=True)
     closest_dist_df.to_csv(closedist_out_csv)
-
 
 def get_closedist_between_chainA_and_chainB(hashclosedist):
     i = 0

@@ -239,7 +239,7 @@ if __name__ == "__main__":
         #    thoipapy.figs.BOcurve_THOIPAbest_comp_LIPS_and_NMR.run_BOcurve_comp_hardlinked(Fontsize, Width, Size, s, Linewidth)
 
         if s["calc_PREDDIMER_TMDOCK_closedist"] == True:
-            thoipapy.figs.calc_PREDDIMER_TMDOCK_closedist.calc_closedist_from_PREDDIMER_TMDOCK_best_model(s, logging)
+            thoipapy.figs.calc_PREDDIMER_TMDOCK_closedist.calc_closedist_from_PREDDIMER_TMDOCK_best_model(s, df_set, logging)
 
         if s["merge_predictions"] == True:
             thoipapy.validation.combine_mult_predictors.merge_predictions(s, df_set, logging)
