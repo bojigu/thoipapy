@@ -1,9 +1,10 @@
-import thoipapy.common
+import thoipapy.other
 import thoipapy.features
 import thoipapy.figs
 import thoipapy.homologues
-import thoipapy.other
+import thoipapy.homologues.hhblits
+import thoipapy.validation
+import thoipapy.utils
 import thoipapy.structures
 import thoipapy.thoipa
-import thoipapy.utils
-import thoipapy.validation
+import thoipapy.common
