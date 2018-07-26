@@ -306,8 +306,8 @@ def lipo_from_pssm(acc, pssm_csv_surr5, lipo_csv, tm_surr_left, tm_surr_right, s
     Takes a PSSM as an input. The PSSM should have the fractions of each residue at each position.
     1) Normalises the PSSM so that it adds up to 1.0 (excluding gaps)
     2) Calculates the polarity for each position by multiplying the residue propensities by a hydrophobicity scale
-    3) Uses the weighslide module to get the average lipophilicity of the 3 N-terminal aa to each position (e.g. polarity_i1-i3_N)
-       and the 3 C-terminal aa to each position (e.g. polarity_i1-i3_C), and the 3 residues centred on the residue of interest (polarity_i_i1)
+    3) Uses the weighslide module to get the average lipophilicity of the 3 N-terminal aa to each position (e.g. polarity3Nmean)
+       and the 3 C-terminal aa to each position (e.g. polarity3Cmean), and the 3 residues centred on the residue of interest (polarity1mean)
 
     Utilises the excel file containing hydrophobicity scales, within the THOIPApy module.
 
@@ -337,7 +337,7 @@ def lipo_from_pssm(acc, pssm_csv_surr5, lipo_csv, tm_surr_left, tm_surr_right, s
     lipo_csv - csv
         csv output file with the polarity values for each position
         index = ["A1", "I2", ....]
-        columns = polarity  polarity_i1-i3_N  polarity_i1-i3_C  polarity_i_i1, etc
+        columns = polarity  polarity3Nmean  polarity3Cmean  polarity1mean, etc
 
     Returns
     -------
@@ -494,7 +494,7 @@ def lipo_from_pssm(acc, pssm_csv_surr5, lipo_csv, tm_surr_left, tm_surr_right, s
     df_lipo = df_lipo + lowest_polarity_value
 
     # lowest_polarity_value = 0.6
-    # columns = ["polarity", "polarity_i1-i3_N", "polarity_i1-i3_C", "polarity_i_i1"]
+    # columns = ["polarity", "polarity3Nmean", "polarity3Cmean", "polarity1mean"]
     # for col in columns:
     #     df_lipo[col] = df_lipo[col] + lowest_polarity_value
 
@@ -505,7 +505,7 @@ def lipo_from_pssm(acc, pssm_csv_surr5, lipo_csv, tm_surr_left, tm_surr_right, s
     window = [0, 0, 0, "x", 1, 1, 1]
     polarity_i1_i3_C = calculate_weighted_windows(df_lipo["polarity"], window, statistic="mean", full_output=False)
     window = [1, 1, 1]
-    polarity_i_i1 = calculate_weighted_windows(df_lipo["polarity"], window, statistic="mean", full_output=False)
+    polarity1mean = calculate_weighted_windows(df_lipo["polarity"], window, statistic="mean", full_output=False)
     # calculate polarity of central position relative to 6 surrounding residues
     window = [1, 1, 1, "x", 1, 1, 1]
     mean_polarity_surr_6_res = calculate_weighted_windows(df_lipo["polarity"], window, statistic="mean", full_output=False)
@@ -517,14 +517,14 @@ def lipo_from_pssm(acc, pssm_csv_surr5, lipo_csv, tm_surr_left, tm_surr_right, s
     polarity_i1_i3_N.iloc[0:3] = np.nan
     polarity_i1_i3_C.iloc[-3:] = np.nan
 
-    df_lipo["polarity_i1-i3_N"] = polarity_i1_i3_N
-    df_lipo["polarity_i1-i3_C"] = polarity_i1_i3_C
-    df_lipo["polarity_i_i1"] = polarity_i_i1
+    df_lipo["polarity3Nmean"] = polarity_i1_i3_N
+    df_lipo["polarity3Cmean"] = polarity_i1_i3_C
+    df_lipo["polarity1mean"] = polarity1mean
     df_lipo["relative_polarity"] = relative_polarity
 
     """df_lipo now looks like this.
 
-              polarity  polarity_i1-i3_N  polarity_i1-i3_C  polarity_i_i1
+              polarity  polarity3Nmean  polarity3Cmean  polarity1mean
     position                                                             
     0         0.587961               NaN          0.752395       1.051956
     1         1.515952               NaN          0.216839       1.055965
@@ -540,7 +540,7 @@ def lipo_from_pssm(acc, pssm_csv_surr5, lipo_csv, tm_surr_left, tm_surr_right, s
     df_lipo["residue_num"] = [int(i) - tm_surr_left for i in df_lipo["residue_num"]]
     df_lipo.index = df_lipo["residue_num"]
 
-    df_lipo = df_lipo[["residue_name", "polarity", "polarity_i1-i3_N", "polarity_i1-i3_C", "polarity_i_i1", "relative_polarity"]]
+    df_lipo = df_lipo[["residue_name", "polarity", "polarity3Nmean", "polarity3Cmean", "polarity1mean", "relative_polarity"]]
     #df_lipo.set_index("IND", inplace=True)
     if tm_surr_right ==0 :
         df_lipo = df_lipo[tm_surr_left:]
@@ -1910,8 +1910,8 @@ def normalise_features(df_features_single_protein):
 
     # add the mean polarity or conservation of positions i, i+4 and i-4
     window = [1,0,0,0,1,0,0,0,1]
-    df_features_single_protein["cons_i4"] = calculate_weighted_windows(df_features_single_protein["conservation"], window, statistic="mean", full_output=False)
-    df_features_single_protein["polar_i4"] = calculate_weighted_windows(df_features_single_protein["polarity"], window, statistic="mean", full_output=False)
+    df_features_single_protein["cons4mean"] = calculate_weighted_windows(df_features_single_protein["conservation"], window, statistic="mean", full_output=False)
+    df_features_single_protein["polarity4mean"] = calculate_weighted_windows(df_features_single_protein["polarity"], window, statistic="mean", full_output=False)
 
     df_features_single_protein["CS"] = df_features_single_protein["C"] + df_features_single_protein["S"]
     df_features_single_protein["DE"] = df_features_single_protein["D"] + df_features_single_protein["E"]
@@ -2305,8 +2305,8 @@ def add_physical_parameters_to_features(acc, feature_combined_file, logging):
                 for row1 in train_data_file_handle:
                     if re.search("residue_num", row1):
                         array1 = row1.rstrip().split(",")
-                        array1[42:14] = ["Hydrophobicity_sAA", "Charge_sAA", "PI_sAA", "LIPSI_sAA", "LIPSM_sAA", "Hydrophobic_sAA", "Aliphatic_sAA", "Aromatic_sAA", "Polar_sAA", "Negative_sAA", "Positive_sAA", "Small_sAA", "Cbbranched_sAA",
-                                         "residue_mass", "Volume_sAA"]#Mass_sAA
+                        array1[42:14] = ["Hydrophobicity_sAA", "Charge_sAA", "PI_sAA", "LIPSI_sAA", "LIPSM_sAA", "Hydrophobic_sAA", "Aliphatic_sAA", "Aromatic_sAA", "Polar_sAA", "Negative_sAA", "Positive_sAA", "Small_sAA", "branched",
+                                         "mass", "Volume_sAA"]#Mass_sAA
                         # array2 = array1[0:31]
                         # array2.extend(["Hydrophobicity", "Charge", "PI", "LIPS", "LIPSM", "Hydrophobic", "Aliphatic", "Aromatic", "Polar","Negative", "Positive", "Small", "Cbbranched", "Mass", "Volumn", array1[30].rstrip()])
                         writer.writerow(array1)
