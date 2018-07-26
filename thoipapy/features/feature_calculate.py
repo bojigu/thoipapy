@@ -2452,10 +2452,10 @@ def create_ROC_all_residues(s, df_set, logging):
     logging.info('Starting combine_all_residue_predictions.')
 
     # output file with all predictions
-    pred_all_res_csv = os.path.join(s["thoipapy_data_folder"], "Results", "ROC", "{}_pred_all_res.csv".format(s["setname"]))
-    #all_res_ROC_data_dict_pkl = os.path.join(s["thoipapy_data_folder"], "Results", "ROC", "{}_all_res_ROC_data_dict.pickle".format(s["setname"]))
-    all_res_ROC_data_csv = os.path.join(s["thoipapy_data_folder"], "Results", "ROC", "{}_all_res_ROC_data.csv".format(s["setname"]))
-    all_res_ROC_png = os.path.join(s["thoipapy_data_folder"], "Results", "ROC", "{}_all_res_ROC.png".format(s["setname"]))
+    pred_all_res_csv = os.path.join(s["thoipapy_data_folder"], "Results", s["setname"], "ROC", "{}_pred_all_res.csv".format(s["setname"]))
+    #all_res_ROC_data_dict_pkl = os.path.join(s["thoipapy_data_folder"], "Results", s["setname"], "ROC", "{}_all_res_ROC_data_dict.pickle".format(s["setname"]))
+    all_res_ROC_data_csv = os.path.join(s["thoipapy_data_folder"], "Results", s["setname"], "ROC", "{}_all_res_ROC_data.csv".format(s["setname"]))
+    all_res_ROC_png = os.path.join(s["thoipapy_data_folder"], "Results", s["setname"], "ROC", "{}_all_res_ROC.png".format(s["setname"]))
 
     thoipapy.utils.make_sure_path_exists(pred_all_res_csv, isfile=True)
 
@@ -2576,10 +2576,10 @@ def create_precision_recall_all_residues(s, df_set, logging):
     logging.info('Starting combine_all_residue_predictions.')
 
     # output file with all predictions
-    pred_all_res_csv = os.path.join(s["thoipapy_data_folder"], "Results", "precision_recall", "{}_pred_all_res.csv".format(s["setname"]))
-    #all_res_precision_recall_data_dict_pkl = os.path.join(s["thoipapy_data_folder"], "Results", "precision_recall", "{}_all_res_precision_recall_data_dict.pickle".format(s["setname"]))
-    all_res_precision_recall_data_csv = os.path.join(s["thoipapy_data_folder"], "Results", "precision_recall", "{}_all_res_precision_recall_data.csv".format(s["setname"]))
-    all_res_precision_recall_png = os.path.join(s["thoipapy_data_folder"], "Results", "precision_recall", "{}_all_res_precision_recall.png".format(s["setname"]))
+    pred_all_res_csv = os.path.join(s["thoipapy_data_folder"], "Results", s["setname"], "precision_recall", "{}_pred_all_res.csv".format(s["setname"]))
+    #all_res_precision_recall_data_dict_pkl = os.path.join(s["thoipapy_data_folder"], "Results", s["setname"], "precision_recall", "{}_all_res_precision_recall_data_dict.pickle".format(s["setname"]))
+    all_res_precision_recall_data_csv = os.path.join(s["thoipapy_data_folder"], "Results", s["setname"], "precision_recall", "{}_all_res_precision_recall_data.csv".format(s["setname"]))
+    all_res_precision_recall_png = os.path.join(s["thoipapy_data_folder"], "Results", s["setname"], "precision_recall", "{}_all_res_precision_recall.png".format(s["setname"]))
 
     thoipapy.utils.make_sure_path_exists(pred_all_res_csv, isfile=True)
 
@@ -2704,7 +2704,7 @@ def combine_all_train_data_for_machine_learning(s, df_set, logging):
     """
     logging.info('creating train or test data for machine learning')
 
-    train_data_csv = os.path.join(s["thoipapy_data_folder"], "Results", "{}_train_data.csv".format(s["setname"]))
+    train_data_csv = os.path.join(s["thoipapy_data_folder"], "Results", s["setname"], "{}_train_data.csv".format(s["setname"]))
 
     df_set_nonred = thoipapy.utils.drop_redundant_proteins_from_list(df_set, logging)
 

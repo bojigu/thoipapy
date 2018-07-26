@@ -76,7 +76,7 @@ def calc_coev_vs_res_dist(s, df_set, logging):
     """
 
     logging.info('calc_coev_vs_res_dist starting')
-    coev_vs_res_dist_xlsx = os.path.join(s["thoipapy_data_folder"], "Results", "{}_coev_vs_res_dist.xlsx".format(s["setname"]))
+    coev_vs_res_dist_xlsx = os.path.join(s["thoipapy_data_folder"], "Results", s["setname"], "{}_coev_vs_res_dist.xlsx".format(s["setname"]))
     writer = pd.ExcelWriter(coev_vs_res_dist_xlsx)
 
     for XI in ["MI", "DI"]:
@@ -202,7 +202,7 @@ def plot_coev_vs_res_dist(s, logging):
     TUMblue = colour_dict["TUM_colours"]['TUMBlue']
 
     fontsize = 9
-    coev_vs_res_dist_xlsx = os.path.join(s["thoipapy_data_folder"], "Results", "{}_coev_vs_res_dist.xlsx".format(s["setname"]))
+    coev_vs_res_dist_xlsx = os.path.join(s["thoipapy_data_folder"], "Results", s["setname"], "{}_coev_vs_res_dist.xlsx".format(s["setname"]))
 
     fig, ax = plt.subplots(figsize=(4.5, 3.42))
 
@@ -294,12 +294,12 @@ def calc_retrospective_coev_from_list_interf_res(s, df_set, logging):
     for randomise_int_res in [False, True]:
 
         if randomise_int_res == True:
-            retrospective_coev_from_list_interf_res_xlsx = os.path.join(s["thoipapy_data_folder"], "Results", "retrospective", "{}_retrospective_coev_from_list_interf_res_random.xlsx".format(s["setname"]))
+            retrospective_coev_from_list_interf_res_xlsx = os.path.join(s["thoipapy_data_folder"], "Results", s["setname"], "retrospective", "{}_retrospective_coev_from_list_interf_res_random.xlsx".format(s["setname"]))
         else:
-            retrospective_coev_from_list_interf_res_xlsx = os.path.join(s["thoipapy_data_folder"], "Results", "retrospective", "{}_retrospective_coev_from_list_interf_res.xlsx".format(s["setname"]))
+            retrospective_coev_from_list_interf_res_xlsx = os.path.join(s["thoipapy_data_folder"], "Results", s["setname"], "retrospective", "{}_retrospective_coev_from_list_interf_res.xlsx".format(s["setname"]))
 
-        if not os.path.exists(os.path.join(s["thoipapy_data_folder"], "Results", "retrospective")):
-            os.makedirs(os.path.join(s["thoipapy_data_folder"], "Results", "retrospective"))
+        if not os.path.exists(os.path.join(s["thoipapy_data_folder"], "Results", s["setname"], "retrospective")):
+            os.makedirs(os.path.join(s["thoipapy_data_folder"], "Results", s["setname"], "retrospective"))
         writer = pd.ExcelWriter(retrospective_coev_from_list_interf_res_xlsx)
 
         #randomise_int_res = False
@@ -635,11 +635,11 @@ def calc_retrospective_coev_from_struct_contacts(s, dfset, logging):
     logging.info('calc_retrospective_coev_from_struct_contacts starting')
 
     # if randomise_int_res == True:
-    #     retrospective_coev_xlsx = os.path.join(s["thoipapy_data_folder"], "Results", "retrospective", "{}_retrospective_coev_from_struct_contact_random.xlsx".format(s["setname"]))
+    #     retrospective_coev_xlsx = os.path.join(s["thoipapy_data_folder"], "Results", s["setname"], "retrospective", "{}_retrospective_coev_from_struct_contact_random.xlsx".format(s["setname"]))
     # else:
-    #     retrospective_coev_xlsx = os.path.join(s["thoipapy_data_folder"], "Results", "retrospective", "{}_retrospective_coev_from_struct_contact.xlsx".format(s["setname"]))
+    #     retrospective_coev_xlsx = os.path.join(s["thoipapy_data_folder"], "Results", s["setname"], "retrospective", "{}_retrospective_coev_from_struct_contact.xlsx".format(s["setname"]))
 
-    retrospective_coev_xlsx = os.path.join(s["thoipapy_data_folder"], "Results", "retrospective", "{}_retrospective_coev_from_struct_contact.xlsx".format(s["setname"]))
+    retrospective_coev_xlsx = os.path.join(s["thoipapy_data_folder"], "Results", s["setname"], "retrospective", "{}_retrospective_coev_from_struct_contact.xlsx".format(s["setname"]))
     writer = pd.ExcelWriter(retrospective_coev_xlsx)
 
     for randomise_int_res in [False, True]:

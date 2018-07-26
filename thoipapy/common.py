@@ -490,7 +490,7 @@ def process_set_protein_seqs(s, setname, df_set, set_path):
     s["list_of_tmd_start_end"] = list_of_tmd_start_end
     thoipapy.utils.make_sure_path_exists(list_of_tmd_start_end, isfile=True)
     df_set.set_index("acc").to_csv(list_of_tmd_start_end)
-    train_data_csv = os.path.join(s["thoipapy_data_folder"], "Results", "{}_processed_input_sequences.csv".format(s["setname"]))
+    train_data_csv = os.path.join(s["thoipapy_data_folder"], "Results", s["setname"], "{}_processed_input_sequences.csv".format(s["setname"]))
     df_set.set_index("acc").to_csv(train_data_csv)
 
     return df_set

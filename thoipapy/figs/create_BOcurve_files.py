@@ -932,7 +932,7 @@ def save_BO_linegraph_and_barchart(s, BO_data_excel, BO_linechart_png, BO_barcha
     for col in df_valid_indiv.columns:
         df_valid_indiv[col] = normalise_0_1(df_valid_indiv[col])[0] + 0.01
 
-    BO_curve_folder = os.path.join(s["thoipapy_data_folder"], "Results", "crossvalidation")
+    BO_curve_folder = os.path.join(s["thoipapy_data_folder"], "Results", s["setname"], "crossvalidation")
     BO_data_excel = os.path.join(BO_curve_folder, "data", "{}_BO_curve_data.xlsx".format(s["setname"]))
     df_valid_indiv = df_valid_indiv.reindex(columns=["AUBOC10", 5, 10, "ROC AUC"])
     df_valid_indiv.columns = ["AUBOC10", "sample size 5", "sample size 10", "ROC AUC"]

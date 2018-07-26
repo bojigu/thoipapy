@@ -148,9 +148,9 @@ def train_machine_learning_model(s, logging):
     """
     logging.info('starting to predict etra data with THOIPA prediction model')
 
-    train_data_csv = os.path.join(s["thoipapy_data_folder"], "Results", "{}_train_data.csv".format(s["setname"]))
-    train_data_used_for_model_csv = os.path.join(s["thoipapy_data_folder"], "Results", "{}_train_data_used_for_model.csv".format(s["setname"]))
-    model_pkl = os.path.join(s["thoipapy_data_folder"], "Results", "{}_ML_model.lpkl".format(s["setname"]))
+    train_data_csv = os.path.join(s["thoipapy_data_folder"], "Results", s["setname"], "{}_train_data.csv".format(s["setname"]))
+    train_data_used_for_model_csv = os.path.join(s["thoipapy_data_folder"], "Results", s["setname"], "{}_train_data_used_for_model.csv".format(s["setname"]))
+    model_pkl = os.path.join(s["thoipapy_data_folder"], "Results", s["setname"], "{}_ML_model.lpkl".format(s["setname"]))
 
     df_data = pd.read_csv(train_data_csv, index_col=0)
 
@@ -205,10 +205,10 @@ def run_10fold_cross_validation(s, logging):
         Also contains the mean ROC curve, and the mean AUC.
     """
     logging.info('10-fold cross validation is running')
-    train_data_csv = os.path.join(s["thoipapy_data_folder"], "Results", "{}_train_data.csv".format(s["setname"]))
-    #crossvalidation_csv = os.path.join(s["thoipapy_data_folder"], "Results", "crossvalidation", "data", "{}_10F_data.csv".format(s["setname"]))
-    crossvalidation_pkl = os.path.join(s["thoipapy_data_folder"], "Results", "crossvalidation", "data", "{}_10F_data.pkl".format(s["setname"]))
-    features_csv = os.path.join(s["thoipapy_data_folder"], "Results", "{}_test_features.csv".format(s["setname"]))
+    train_data_csv = os.path.join(s["thoipapy_data_folder"], "Results", s["setname"], "{}_train_data.csv".format(s["setname"]))
+    #crossvalidation_csv = os.path.join(s["thoipapy_data_folder"], "Results", s["setname"], "crossvalidation", "data", "{}_10F_data.csv".format(s["setname"]))
+    crossvalidation_pkl = os.path.join(s["thoipapy_data_folder"], "Results", s["setname"], "crossvalidation", "data", "{}_10F_data.pkl".format(s["setname"]))
+    features_csv = os.path.join(s["thoipapy_data_folder"], "Results", s["setname"], "{}_test_features.csv".format(s["setname"]))
 
     thoipapy.utils.make_sure_path_exists(crossvalidation_pkl, isfile=True)
 
@@ -280,8 +280,8 @@ def create_10fold_cross_validation_fig(s, logging):
         Python object with settings for logging to console and file.
     """
     #plt.rcParams.update({'font.size': 7})
-    crossvalidation_png = os.path.join(s["thoipapy_data_folder"], "Results", "crossvalidation", "{}_10F_ROC.png".format(s["setname"]))
-    crossvalidation_pkl = os.path.join(s["thoipapy_data_folder"], "Results", "crossvalidation", "data", "{}_10F_data.pkl".format(s["setname"]))
+    crossvalidation_png = os.path.join(s["thoipapy_data_folder"], "Results", s["setname"], "crossvalidation", "{}_10F_ROC.png".format(s["setname"]))
+    crossvalidation_pkl = os.path.join(s["thoipapy_data_folder"], "Results", s["setname"], "crossvalidation", "data", "{}_10F_data.pkl".format(s["setname"]))
 
     # open pickle file
     with open(crossvalidation_pkl, "rb") as f:
@@ -353,10 +353,10 @@ def run_LOO_validation(s, df_set, logging):
     # drop redundant proteins according to CD-HIT
     df_set = thoipapy.utils.drop_redundant_proteins_from_list(df_set, logging)
 
-    train_data_csv = os.path.join(s["thoipapy_data_folder"], "Results", "{}_train_data.csv".format(s["setname"]))
-    LOO_crossvalidation_pkl = os.path.join(s["thoipapy_data_folder"], "Results", "crossvalidation", "data", "{}_LOO_crossvalidation.pkl".format(s["setname"]))
-    BO_all_data_csv = os.path.join(s["thoipapy_data_folder"], "Results", "crossvalidation", "data", "{}_LOO_BO_data.csv".format(s["setname"]))
-    BO_curve_folder = os.path.join(s["thoipapy_data_folder"], "Results", "crossvalidation")
+    train_data_csv = os.path.join(s["thoipapy_data_folder"], "Results", s["setname"], "{}_train_data.csv".format(s["setname"]))
+    LOO_crossvalidation_pkl = os.path.join(s["thoipapy_data_folder"], "Results", s["setname"], "crossvalidation", "data", "{}_LOO_crossvalidation.pkl".format(s["setname"]))
+    BO_all_data_csv = os.path.join(s["thoipapy_data_folder"], "Results", s["setname"], "crossvalidation", "data", "{}_LOO_BO_data.csv".format(s["setname"]))
+    BO_curve_folder = os.path.join(s["thoipapy_data_folder"], "Results", s["setname"], "crossvalidation")
     BO_data_excel = os.path.join(BO_curve_folder, "data", "{}_BO_curve_data.xlsx".format(s["setname"]))
 
     thoipapy.utils.make_sure_path_exists(BO_data_excel, isfile=True)
@@ -618,12 +618,12 @@ def create_LOO_validation_fig(s, df_set, logging):
     df_set = thoipapy.utils.drop_redundant_proteins_from_list(df_set, logging)
 
     #plt.rcParams.update({'font.size': 7})
-    LOO_crossvalidation_pkl = os.path.join(s["thoipapy_data_folder"], "Results", "crossvalidation", "data", "{}_LOO_crossvalidation.pkl".format(s["setname"]))
-    LOO_crossvalidation_ROC_png = os.path.join(s["thoipapy_data_folder"], "Results", "crossvalidation", "{}_LOO_crossvalidation_ROC.png".format(s["setname"]))
-    LOO_crossvalidation_AUC_bar_png = os.path.join(s["thoipapy_data_folder"], "Results", "crossvalidation", "{}_LOO_crossvalidation_AUC_bar.png".format(s["setname"]))
-    AUC_csv = os.path.join(s["thoipapy_data_folder"], "Results", "crossvalidation", "data", "{}_LOO_AUC.csv".format(s["setname"]))
-    BO_all_data_csv = os.path.join(s["thoipapy_data_folder"], "Results", "crossvalidation", "data", "{}_LOO_BO_data.csv".format(s["setname"]))
-    BO_curve_folder = os.path.join(s["thoipapy_data_folder"], "Results", "crossvalidation")
+    LOO_crossvalidation_pkl = os.path.join(s["thoipapy_data_folder"], "Results", s["setname"], "crossvalidation", "data", "{}_LOO_crossvalidation.pkl".format(s["setname"]))
+    LOO_crossvalidation_ROC_png = os.path.join(s["thoipapy_data_folder"], "Results", s["setname"], "crossvalidation", "{}_LOO_crossvalidation_ROC.png".format(s["setname"]))
+    LOO_crossvalidation_AUC_bar_png = os.path.join(s["thoipapy_data_folder"], "Results", s["setname"], "crossvalidation", "{}_LOO_crossvalidation_AUC_bar.png".format(s["setname"]))
+    AUC_csv = os.path.join(s["thoipapy_data_folder"], "Results", s["setname"], "crossvalidation", "data", "{}_LOO_AUC.csv".format(s["setname"]))
+    BO_all_data_csv = os.path.join(s["thoipapy_data_folder"], "Results", s["setname"], "crossvalidation", "data", "{}_LOO_BO_data.csv".format(s["setname"]))
+    BO_curve_folder = os.path.join(s["thoipapy_data_folder"], "Results", s["setname"], "crossvalidation")
     BO_data_excel = os.path.join(BO_curve_folder, "data", "{}_BO_curve_data.xlsx".format(s["setname"]))
     BO_linechart_png = os.path.join(BO_curve_folder, "{}_BO_linechart.png".format(s["setname"]))
     BO_barchart_png = os.path.join(BO_curve_folder, "{}_LOO_AUBOC10_barchart.png".format(s["setname"]))
@@ -700,9 +700,9 @@ def calculate_variable_importance(s, logging):
         Also includes the standard deviation supplied by the machine learning algorithm
     """
     #logging.info('RF_variable_importance_calculate is running\n')
-    train_data_csv = os.path.join(s["thoipapy_data_folder"], "Results", "{}_train_data.csv".format(s["setname"]))
+    train_data_csv = os.path.join(s["thoipapy_data_folder"], "Results", s["setname"], "{}_train_data.csv".format(s["setname"]))
 
-    variable_importance_csv = os.path.join(s["thoipapy_data_folder"], "Results", "crossvalidation", "data", "{}_variable_importance.csv".format(s["setname"]))
+    variable_importance_csv = os.path.join(s["thoipapy_data_folder"], "Results", s["setname"], "crossvalidation", "data", "variable_importance.csv".format(s["setname"]))
     thoipapy.utils.make_sure_path_exists(variable_importance_csv, isfile=True)
 
     df_data = pd.read_csv(train_data_csv, index_col=0)
@@ -741,7 +741,7 @@ def calculate_variable_importance(s, logging):
         for f in range(X.shape[1]):
             if f < 10 :
                 logging.info("%d. feature %d (%f) %s" % (f + 1, indices_arr[f], importances_arr[indices_arr[f]], importances_text_list[indices_arr[f]]))
-            single_feature_dict = {"original_order" : indices_arr[f], "mean_decrease_gini{}".format(model_type) : importances_arr[indices_arr[f]], "feature{}".format(model_type) : importances_text_list[indices_arr[f]],  "std{}".format(model_type) : std_arr[f]}
+            single_feature_dict = {"original_order" : indices_arr[f], "mean_decrease_impurity{}".format(model_type) : importances_arr[indices_arr[f]], "feature{}".format(model_type) : importances_text_list[indices_arr[f]],  "std{}".format(model_type) : std_arr[f]}
             nested_dict[f + 1] = single_feature_dict
 
         sys.stdout.write("\n\n"), sys.stdout.flush()
@@ -779,14 +779,16 @@ def fig_variable_importance(s, logging):
     from thoipapy.utils import create_colour_lists
     colour_dict = create_colour_lists()
 
-    variable_importance_csv = os.path.join(s["thoipapy_data_folder"], "Results", "crossvalidation", "data", "{}_variable_importance.csv".format(s["setname"]))
-    variable_importance_all_png = os.path.join(s["thoipapy_data_folder"], "Results", "crossvalidation", "{}_all_var_import.png".format(s["setname"]))
-    variable_importance_top_png = os.path.join(s["thoipapy_data_folder"], "Results", "crossvalidation", "{}_top_var_import.png".format(s["setname"]))
+    variable_importance_csv = os.path.join(s["thoipapy_data_folder"], "Results", s["setname"], "crossvalidation", "data", "variable_importance.csv".format(s["setname"]))
+    variable_importance_all_png = os.path.join(s["thoipapy_data_folder"], "Results", s["setname"], "crossvalidation", "all_var_import.png".format(s["setname"]))
+    variable_importance_top_png = os.path.join(s["thoipapy_data_folder"], "Results", s["setname"], "crossvalidation", "top_var_import.png".format(s["setname"]))
+    thoipapy.utils.make_sure_path_exists(variable_importance_csv, isfile=True)
 
     df_imp = pd.read_csv(variable_importance_csv, index_col = 0)
 
     create_var_imp_plot(df_imp, colour_dict, variable_importance_all_png, df_imp.shape[0])
-    create_var_imp_plot(df_imp, colour_dict, variable_importance_top_png, 30)
+    #create_var_imp_plot(df_imp, colour_dict, variable_importance_top_png, 30)
+    print(variable_importance_top_png)
 
 
 def create_var_imp_plot(df_imp, colour_dict, variable_importance_png, n_features_in_plot):
@@ -802,8 +804,8 @@ def create_var_imp_plot(df_imp, colour_dict, variable_importance_png, n_features
         # add suffix for the totally randomised trees
         variable_importance_png = variable_importance_png[:-4] + model_type + ".png"
 
-        df_sel.sort_values("mean_decrease_gini{}".format(model_type), ascending=True, inplace=True)
-        #min_ = df_sel.mean_decrease_gini.min()
+        df_sel.sort_values("mean_decrease_impurity{}".format(model_type), ascending=True, inplace=True)
+        #min_ = df_sel.mean_decrease_impurity.min()
 
         # determine the plot height by the number of features
         # currently set for 30
@@ -812,8 +814,8 @@ def create_var_imp_plot(df_imp, colour_dict, variable_importance_png, n_features
         fig, ax = plt.subplots(figsize=figsize)
 
         TUMblue = colour_dict["TUM_colours"]['TUMBlue']
-        df_sel["mean_decrease_gini{}".format(model_type)].plot(kind="barh", color=TUMblue, ax=ax)# xerr=df_sel["std"]
-        ax.errorbar(df_sel["mean_decrease_gini{}".format(model_type)], range(len(df_sel.index)), xerr=df_sel["std{}".format(model_type)], fmt="none", ecolor="k", ls="none", capthick=0.5, elinewidth=0.5, capsize=1, label=None)
+        df_sel["mean_decrease_impurity{}".format(model_type)].plot(kind="barh", color=TUMblue, ax=ax)# xerr=df_sel["std"]
+        ax.errorbar(df_sel["mean_decrease_impurity{}".format(model_type)], range(len(df_sel.index)), xerr=df_sel["std{}".format(model_type)], fmt="none", ecolor="k", ls="none", capthick=0.5, elinewidth=0.5, capsize=1, label=None)
 
         ax.set_ylabel("")
         ax.set_xlabel("variable importance\n(mean decrease gini)")

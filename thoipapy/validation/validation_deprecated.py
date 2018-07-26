@@ -54,11 +54,11 @@ def run_LOO_validation_od_non_multiprocessing(s, df_set, logging):
     # drop redundant proteins according to CD-HIT
     df_set = thoipapy.utils.drop_redundant_proteins_from_list(df_set, logging)
 
-    train_data_csv = os.path.join(s["thoipapy_data_folder"], "Results", "{}_train_data.csv".format(s["setname"]))
-    crossvalidation_folder = os.path.join(s["thoipapy_data_folder"], "Results", "crossvalidation")
-    LOO_crossvalidation_pkl = os.path.join(s["thoipapy_data_folder"], "Results", "crossvalidation", "data", "{}_LOO_crossvalidation.pkl".format(s["setname"]))
-    BO_all_data_csv = os.path.join(s["thoipapy_data_folder"], "Results", "crossvalidation", "data", "{}_LOO_BO_data.csv".format(s["setname"]))
-    BO_curve_folder = os.path.join(s["thoipapy_data_folder"], "Results", "crossvalidation")
+    train_data_csv = os.path.join(s["thoipapy_data_folder"], "Results", s["setname"], "{}_train_data.csv".format(s["setname"]))
+    crossvalidation_folder = os.path.join(s["thoipapy_data_folder"], "Results", s["setname"], "crossvalidation")
+    LOO_crossvalidation_pkl = os.path.join(s["thoipapy_data_folder"], "Results", s["setname"], "crossvalidation", "data", "{}_LOO_crossvalidation.pkl".format(s["setname"]))
+    BO_all_data_csv = os.path.join(s["thoipapy_data_folder"], "Results", s["setname"], "crossvalidation", "data", "{}_LOO_BO_data.csv".format(s["setname"]))
+    BO_curve_folder = os.path.join(s["thoipapy_data_folder"], "Results", s["setname"], "crossvalidation")
     BO_data_excel = os.path.join(BO_curve_folder, "data", "{}_BO_curve_data.xlsx".format(s["setname"]))
 
     thoipapy.utils.make_sure_path_exists(BO_data_excel, isfile=True)
@@ -265,9 +265,9 @@ def predict_test_dataset_with_THOIPA_DEPRECATED(train_setname, test_setname, s, 
         rows = range(0, number of AA in test set)
     """
 
-    model_pkl = os.path.join(s["thoipapy_data_folder"], "Results", "{}_ML_model.lpkl".format(train_setname))
+    model_pkl = os.path.join(s["thoipapy_data_folder"], "Results", s["setname"], "{}_ML_model.lpkl".format(train_setname))
     test_data_csv = os.path.join(s["Results_folder"], test_setname, "{}_train_data.csv".format(test_setname))
-    THOIPA_pred_csv = os.path.join(s["thoipapy_data_folder"], "Results", "trainset{}_testset{}_predictions.csv".format(train_setname[-2:], test_setname[-2:]))
+    THOIPA_pred_csv = os.path.join(s["thoipapy_data_folder"], "Results", s["setname"], "trainset{}_testset{}_predictions.csv".format(train_setname[-2:], test_setname[-2:]))
 
     fit = joblib.load(model_pkl)
 
