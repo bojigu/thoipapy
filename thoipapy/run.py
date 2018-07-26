@@ -196,7 +196,7 @@ if __name__ == "__main__":
                     thoipapy.validation.validation.create_LOO_validation_fig(s, df_set, logging)
 
         if s["calculate_variable_importance"]:
-            thoipapy.validation.validation.calculate_variable_importance(s, logging)
+            #thoipapy.validation.validation.calculate_variable_importance(s, logging)
             thoipapy.validation.validation.fig_variable_importance(s, logging)
 
         if s["train_machine_learning_model"]:

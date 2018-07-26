@@ -814,11 +814,13 @@ def create_var_imp_plot(df_imp, colour_dict, variable_importance_png, n_features
         fig, ax = plt.subplots(figsize=figsize)
 
         TUMblue = colour_dict["TUM_colours"]['TUMBlue']
-        df_sel["mean_decrease_impurity{}".format(model_type)].plot(kind="barh", color=TUMblue, ax=ax)# xerr=df_sel["std"]
+        df_sel["mean_decrease_impurity{}".format(model_type)].plot(kind="barh", color="#058287", ax=ax)# xerr=df_sel["std"]
         ax.errorbar(df_sel["mean_decrease_impurity{}".format(model_type)], range(len(df_sel.index)), xerr=df_sel["std{}".format(model_type)], fmt="none", ecolor="k", ls="none", capthick=0.5, elinewidth=0.5, capsize=1, label=None)
 
+        ax.set_xlim(0)
+
         ax.set_ylabel("")
-        ax.set_xlabel("variable importance\n(mean decrease gini)")
+        ax.set_xlabel("variable importance\n(mean decrease impurity)")
         ax.grid(False)
         fig.tight_layout()
         fig.savefig(variable_importance_png, dpi=240)
