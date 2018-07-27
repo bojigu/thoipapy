@@ -9,7 +9,6 @@ import sys
 import tarfile
 import urllib.request
 import xml.etree.ElementTree as ET
-
 import numpy as np
 import pandas as pd
 from Bio import pairwise2
@@ -32,7 +31,7 @@ def download_xml_get_alphahelix_get_homo_pair(s, logging):
     """
     logging.info('****start to download xml file for all alpha helix proteins from database pdbtm*********')
     thoipapy_module_path = os.path.dirname(os.path.abspath(thoipapy.__file__))
-    pdbtm_alpha_list = os.path.join(thoipapy_module_path, "get_TMD_homodimer", "pdbtm_alpha_list","pdbtm_alpha_20170616.list")
+    pdbtm_alpha_list = os.path.join(thoipapy_module_path, "deprecated", "pdbtm_alpha_list","pdbtm_alpha_20170616.list")
     pdbtm_xml_path = os.path.join(s["pdbtm_homodimer_folder"],"xml")
     with open(pdbtm_alpha_list , 'r' ) as f:
         for line in f:

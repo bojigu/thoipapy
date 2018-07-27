@@ -1,6 +1,4 @@
 import pandas as pd
-import os
-import thoipapy
 from scipy.special import comb
 
 #
@@ -174,34 +172,6 @@ def calc_best_overlap(acc_db, df, experiment_col="interface_score", pred_col="TH
     odf.set_index(["sample_size", "parameters"], inplace=True, drop=True)
     return odf
 
-
-def create_one_out_train_data(acc_db,set_path,s):
-    df_train = pd.DataFrame()
-    df_set04 = pd.read_excel(set_path, sheetname='proteins')
-    for j in df_set04.index:
-        acc1 = df_set04.loc[j, "acc_db"]
-        if not acc1 == acc_db:
-            database = df_set04.loc[j, "database"]
-            feature_combined_file = os.path.join(s["thoipapy_data_folder"], "Features", "combined", database,
-                                                 "{}.surr20.gaps5.combined_features.csv".format(acc1))
-
-            df_features_new_protein1 = pd.read_csv(feature_combined_file, index_col=0)
-            df_features_new_protein1["acc_db"] = "{}-{}".format(acc1, database)
-
-            # reorder the columns
-            df_features_new_protein1 = thoipapy.utils.reorder_dataframe_columns(df_features_new_protein1,
-                                                                                ['acc_db', 'residue_num', 'residue_name',
-                                                                           'n_homologues'])
-            # for the first protein, replace the empty dataframe
-            if df_train.empty:
-                df_train = df_features_new_protein1
-            else:
-                # concatenate the growing dataframe of combined proteins and new dataframe
-                df_train = pd.concat([df_train, df_features_new_protein1])
-
-                # reset the index to be a range (0,...).
-    df_train.index = range(df_train.shape[0])
-    return df_train
 
 def get_test_and_train_set_lists(s):
 

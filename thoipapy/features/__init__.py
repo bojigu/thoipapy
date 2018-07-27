@@ -1,2 +1,0 @@
-import thoipapy.features.feature_calculate
-import thoipapy.features.output_parse

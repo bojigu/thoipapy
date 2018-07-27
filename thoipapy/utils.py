@@ -3,8 +3,7 @@
 """
 Utilities file containing useful functions.
 More recent functions are at the top.
-Authors: Mark Teese, Rimma Jenske
-Created on Fri Nov  8 15:45:06 2013
+Many of these are taken from he korbinian python package by Mark Teese. This is allowed under the permissive MIT license.
 """
 import csv
 import errno
@@ -23,7 +22,6 @@ from time import strftime
 import platform
 import matplotlib.colors as colors
 import ctypes
-
 from scipy.special import comb
 
 
@@ -735,6 +733,8 @@ def create_regex_string(inputseq):
 def convert_truelike_to_bool(input_item, convert_int=False, convert_float=False, convert_nontrue=False):
     """Converts true-like values ("true", 1, True", "WAHR", etc) to python boolean True.
 
+    Taken from korbinian python package by Mark Teese. This is allowed under the permissive MIT license.
+
     Parameters
     ----------
     input_item : string or int
@@ -788,6 +788,8 @@ def convert_truelike_to_bool(input_item, convert_int=False, convert_float=False,
 
 def convert_falselike_to_bool(input_item, convert_int=False, convert_float=False):
     """Converts false-like values ("false", 0, FALSE", "FALSCH", etc) to python boolean False.
+
+    Taken from korbinian python package by Mark Teese. This is allowed under the permissive MIT license.
 
     Parameters
     ----------

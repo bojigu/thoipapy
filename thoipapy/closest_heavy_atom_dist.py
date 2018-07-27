@@ -1,5 +1,6 @@
 import re
 import math
+import sys
 ###in homotypic_data/daba/Bind/pdb  ZhelixPair gives interacting TMP homodimers
 
 def homodimer_residue_closedist_calculate_from_complex(thoipapy,s,logging):

@@ -145,6 +145,8 @@ def tmd_positions_match_fasta(s):
 def calc_lipophilicity(seq, method = "mean"):
     """ Calculates the average hydrophobicity of a sequence according to the Hessa biological scale.
 
+    Function taken from korbinian.utils (allowed under MIT license).
+
     Hessa T, Kim H, Bihlmaier K, Lundin C, Boekel J, Andersson H, Nilsson I, White SH, von Heijne G. Nature. 2005 Jan 27;433(7024):377-81
 
     The Hessa scale has been calculated empirically, using the glycosylation assay of TMD insertion.
@@ -248,6 +250,7 @@ def create_settingdict(excel_file_with_settings):
 
 def setup_keyboard_interrupt_and_error_logging(s, setname):
     ''' -------Setup keyboard interrupt----------
+        Taken from korbinian python package by Mark Teese. This is allowed under the permissive MIT license.
     '''
     # import arcgisscripting
 
@@ -276,6 +279,8 @@ def setup_keyboard_interrupt_and_error_logging(s, setname):
 
 def setup_error_logging(logfile, level_console="DEBUG", level_logfile="DEBUG", print_system_info=True):
     """ Sets up error logging, and logs a number of system settings.
+
+    Taken from korbinian python package by Mark Teese. This is allowed under the permissive MIT license.
 
     Parameters:
     -----------

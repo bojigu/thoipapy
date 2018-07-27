@@ -21,10 +21,11 @@ import argparse
 import os
 import platform
 import sys
+
 import pandas as pd
 
 # read the command line arguments
-import thoipapy.validation.validation_test_train_deprecated
+import thoipapy.other.validation_deprecated.validation_test_train_deprecated
 
 parser = argparse.ArgumentParser()
 
@@ -33,7 +34,6 @@ parser.add_argument("-s",  # "-settingsfile",
                          r'E.g. "\Path\to\your\settingsfile.xlsx"')
 
 if __name__ == "__main__":
-
     sys.stdout.write('\nRun thoipapy as follows:')
     sys.stdout.write(r'python \Path\to\run.py -s \Path\to\your\settingsfile.xlsx')
     # get the command-line arguments
@@ -97,23 +97,24 @@ if __name__ == "__main__":
         #                                                                                                 #
         ###################################################################################################
 
-        if s["Get_Tmd_Homodimers"] :
-            #thoipapy.structures.get_TMD_homodimer.get_tmd_nr_homodimer.download_xml_get_alphahelix_get_homo_pair(s, logging)
-            #thoipapy.structures.get_Tmd_Homodimer.get_tmd_nr_homodimer.Download_trpdb_Calc_inter_rr_pairs(s, logging)
-            #thoipapy.structures.get_TMD_homodimer.get_tmd_nr_homodimer.create_redundant_interact_homodimer_rm_shorttm(s, logging)
-            #thoipapy.structures.get_TMD_homodimer.get_tmd_nr_homodimer.extract_crystal_resolv035_interact_pairs_and_create_fasta_file(s, logging)
-            #thoipapy.structures.get_Tmd_Homodimer.get_tmd_nr_homodimer.create_multiple_bind_closedist_file(s, logging)
-            pass
+        # DEPRECATED. Use atom_dist module instead to get closest heavy-atom distances
+        # if s["Get_Tmd_Homodimers"] :
+        #     #thoipapy.structures.deprecated.get_tmd_nr_homodimer.download_xml_get_alphahelix_get_homo_pair(s, logging)
+        #     #thoipapy.structures.deprecated.get_tmd_nr_homodimer.Download_trpdb_Calc_inter_rr_pairs(s, logging)
+        #     #thoipapy.structures.deprecated.get_tmd_nr_homodimer.create_redundant_interact_homodimer_rm_shorttm(s, logging)
+        #     #thoipapy.structures.deprecated.get_tmd_nr_homodimer.extract_crystal_resolv035_interact_pairs_and_create_fasta_file(s, logging)
+        #     thoipapy.structures.deprecated.get_tmd_nr_homodimer.create_multiple_bind_closedist_file(s, logging)
+        #     pass
 
         if s["retrospective_coevolution"]:
             #thoipapy.figs.retrospective.calc_retrospective_coev_from_list_interf_res(s, dfset, logging)
             thoipapy.figs.retrospective.calc_retrospective_coev_from_struct_contacts(s, dfset, logging)
 
         if s["calc_NMR_closedist"] :
-            thoipapy.structures.get_TMD_homodimer.NMR_data.calc_closedist_from_NMR_best_model(s)
+            thoipapy.structures.deprecated.NMR_data.calc_closedist_from_NMR_best_model(s)
 
         if s["Atom_Close_Dist"]:
-            infor = thoipapy.structures.atom_dist.residu_close_dist.homodimer_residue_closedist_calculate_from_complex(thoipapy, s, logging)
+            infor = thoipapy.closest_heavy_atom_dist.homodimer_residue_closedist_calculate_from_complex(thoipapy, s, logging)
             sys.stdout.write(infor)
 
         ###################################################################################################
@@ -139,44 +140,44 @@ if __name__ == "__main__":
         ###################################################################################################
 
         if s["pssm_feature_calculation"]:
-            thoipapy.features.feature_calculate.create_PSSM_from_MSA_mult_prot(s, df_set, logging)
+            thoipapy.residue_properties.create_PSSM_from_MSA_mult_prot(s, df_set, logging)
 
         if s["entropy_feature_calculation"]:
-            thoipapy.features.feature_calculate.entropy_calculation_mult_prot(s, df_set, logging)
+            thoipapy.residue_properties.entropy_calculation_mult_prot(s, df_set, logging)
 
         if s["cumulative_coevolution_feature_calculation"]:
             if "Windows" in platform.system():
                 sys.stdout.write("\n Freecontact cannot be run in Windows! Skipping coevolution_calculation_with_freecontact_mult_prot.")
-                thoipapy.features.feature_calculate.parse_freecontact_coevolution_mult_prot(s, df_set, logging)
+                thoipapy.residue_properties.parse_freecontact_coevolution_mult_prot(s, df_set, logging)
             else:
-                thoipapy.features.feature_calculate.coevolution_calculation_with_freecontact_mult_prot(s, df_set, logging)
-                thoipapy.features.feature_calculate.parse_freecontact_coevolution_mult_prot(s, df_set, logging)
+                thoipapy.residue_properties.coevolution_calculation_with_freecontact_mult_prot(s, df_set, logging)
+                thoipapy.residue_properties.parse_freecontact_coevolution_mult_prot(s, df_set, logging)
 
         if s["clac_relative_position"]:
-            thoipapy.features.feature_calculate.calc_relative_position_mult_prot(s, df_set, logging)
+            thoipapy.residue_properties.calc_relative_position_mult_prot(s, df_set, logging)
 
         if s["calc_lipo_from_pssm"]:
-            thoipapy.features.feature_calculate.lipo_from_pssm_mult_prot(s, df_set, logging)
+            thoipapy.residue_properties.lipo_from_pssm_mult_prot(s, df_set, logging)
 
         if s["lips_score_feature_calculation"]:
-            thoipapy.features.feature_calculate.LIPS_score_calculation_mult_prot(s, df_set, logging)
-            thoipapy.features.feature_calculate.parse_LIPS_score_mult_prot(s, df_set, logging)
+            thoipapy.residue_properties.LIPS_score_calculation_mult_prot(s, df_set, logging)
+            thoipapy.residue_properties.parse_LIPS_score_mult_prot(s, df_set, logging)
 
         if s["motifs_from_seq"]:
-            thoipapy.features.feature_calculate.motifs_from_seq_mult_protein(s, df_set, logging)
+            thoipapy.residue_properties.motifs_from_seq_mult_protein(s, df_set, logging)
 
         if s["combine_feature_into_train_data"]:
-            thoipapy.features.feature_calculate.combine_all_features_mult_prot(s, df_set, logging)
-            thoipapy.features.feature_calculate.add_physical_parameters_to_features_mult_prot(s, df_set, logging)
-            thoipapy.features.feature_calculate.add_experimental_data_to_combined_features_mult_prot(s, df_set, logging)
+            thoipapy.residue_properties.combine_all_features_mult_prot(s, df_set, logging)
+            thoipapy.residue_properties.add_physical_parameters_to_features_mult_prot(s, df_set, logging)
+            thoipapy.residue_properties.add_experimental_data_to_combined_features_mult_prot(s, df_set, logging)
             if s["generate_randomised_interfaces"]:
-                thoipapy.features.feature_calculate.add_random_interface_to_combined_features_mult_prot(s, df_set, logging)
+                thoipapy.residue_properties.add_random_interface_to_combined_features_mult_prot(s, df_set, logging)
             if "add_PREDDIMER_TMDOCK_to_combined_features" in s:
                 if s["add_PREDDIMER_TMDOCK_to_combined_features"]:
-                    thoipapy.features.feature_calculate.add_PREDDIMER_TMDOCK_to_combined_features_mult_prot(s, df_set, logging)
+                    thoipapy.residue_properties.add_PREDDIMER_TMDOCK_to_combined_features_mult_prot(s, df_set, logging)
             if s["remove_crystal_hetero"]:
-                thoipapy.features.feature_calculate.remove_crystal_hetero_contact_residues_mult_prot(s, df_set, logging)
-            thoipapy.features.feature_calculate.combine_all_train_data_for_machine_learning(s, df_set, logging)
+                thoipapy.residue_properties.remove_crystal_hetero_contact_residues_mult_prot(s, df_set, logging)
+            thoipapy.residue_properties.combine_all_train_data_for_machine_learning(s, df_set, logging)
 
         ###################################################################################################
         #                                                                                                 #
@@ -217,14 +218,17 @@ if __name__ == "__main__":
         Size= s["Size"]
         Linewidth= s["Linewidth"]
 
-        if s["FigZB_07_hardlinked"] == True:
-            # barcharts of coevolution values for interface and non-interface
-            thoipapy.figs.average_fraction_DI.FigZB_07_hardlinked(Fontsize, Width, Size, s)
+        # DEPRECATED
+        #if s["FigZB_07_hardlinked"] == True:
+        #    # barcharts of coevolution values for interface and non-interface
+        #    thoipapy.figs.other.other_figs.average_fraction_DI.FigZB_07_hardlinked(Fontsize, Width, Size, s)
 
+        #DEPRECATED
         #if s["FigZB_18"] == True:
         #    # heatmap of prediction from THOIPA, PREDDIMER, TMDOCK
         #    thoipapy.other.other_figs.create_PREDDIMER_TMDOCK_heatmap.FigZB_18(s, Fontsize, Width, Size)
 
+        # DEPRECATED
         #if s["combine_BOcurve_files_hardlinked"] == True:
         #    thoipapy.figs.Combine_Bo_Curve_files.combine_BOcurve_files_hardlinked(s)
 
@@ -235,6 +239,7 @@ if __name__ == "__main__":
         if s["compare_predictors"] == True:
             thoipapy.figs.combine_BOcurve_files.compare_predictors(s)
 
+        # DEPRECATED
         #if s["run_BOcurve_comp_hardlinked"] == True:
         #    thoipapy.figs.BOcurve_THOIPAbest_comp_LIPS_and_NMR.run_BOcurve_comp_hardlinked(Fontsize, Width, Size, s, Linewidth)
 
@@ -258,8 +263,8 @@ if __name__ == "__main__":
             thoipapy.validation.indiv_validation.create_ROC_comp_4predictors(s, df_set, logging)
 
         if s["create_AUC_AUBOC_separate_database"] == True:
-            thoipapy.validation.validation_test_train_deprecated.create_AUBOC10_4predictors_3databases_figs(s, df_set, logging)
-            thoipapy.validation.validation_test_train_deprecated.create_AUC_4predictors_3databases_figs(s, df_set, logging)
+            thoipapy.other.validation_deprecated.validation_test_train_deprecated.create_AUBOC10_4predictors_3databases_figs(s, df_set, logging)
+            thoipapy.other.validation_deprecated.validation_test_train_deprecated.create_AUC_4predictors_3databases_figs(s, df_set, logging)
 
         if "download_10_homologues_from_ncbi" in s:
             if s["download_10_homologues_from_ncbi"] == True:
@@ -267,12 +272,12 @@ if __name__ == "__main__":
 
         if "plot_coev_vs_res_dist" in s:
             if s["plot_coev_vs_res_dist"] == True:
-                #thoipapy.structures.get_TMD_homodimer.get_tmd_nr_homodimer.calc_coev_vs_res_dist(s, dfset, logging)
+                #thoipapy.structures.deprecated.get_tmd_nr_homodimer.calc_coev_vs_res_dist(s, dfset, logging)
                 thoipapy.figs.retrospective.plot_coev_vs_res_dist(s, logging)
 
         if s["ROC_PR_val_all_residues_combined"]:
-            thoipapy.features.feature_calculate.create_ROC_all_residues(s, df_set, logging)
-            thoipapy.features.feature_calculate.create_precision_recall_all_residues(s, df_set, logging)
+            thoipapy.residue_properties.create_ROC_all_residues(s, df_set, logging)
+            thoipapy.residue_properties.create_precision_recall_all_residues(s, df_set, logging)
 
         # close the logger. A new one will be made for the next protein list.
         logging.info("FINISHED PROCESSING OF {}.".format(setname))
