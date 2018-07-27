@@ -1,0 +1,1 @@
+import thoipapy.other.sine_curve.sine_curve_fit
