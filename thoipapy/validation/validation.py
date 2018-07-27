@@ -814,7 +814,7 @@ def create_var_imp_plot(df_imp, colour_dict, variable_importance_png, n_features
         fig, ax = plt.subplots(figsize=figsize)
 
         TUMblue = colour_dict["TUM_colours"]['TUMBlue']
-        df_sel["mean_decrease_impurity{}".format(model_type)].plot(kind="barh", color="#058287", ax=ax)# xerr=df_sel["std"]
+        df_sel["mean_decrease_impurity{}".format(model_type)].plot(kind="barh", color="#17a8a5", ax=ax)# xerr=df_sel["std"]
         ax.errorbar(df_sel["mean_decrease_impurity{}".format(model_type)], range(len(df_sel.index)), xerr=df_sel["std{}".format(model_type)], fmt="none", ecolor="k", ls="none", capthick=0.5, elinewidth=0.5, capsize=1, label=None)
 
         ax.set_xlim(0)
@@ -826,4 +826,80 @@ def create_var_imp_plot(df_imp, colour_dict, variable_importance_png, n_features
         fig.savefig(variable_importance_png, dpi=240)
         #fig.savefig(variable_importance_png[:-4] + ".pdf")
         fig.savefig(thoipapy.utils.pdf_subpath(variable_importance_png))
+
+
+def run_calc_feat_import_mean_decrease_PR_AUC(s, logging):
+    """Run 10-fold cross-validation for a particular set of TMDs (e.g. set04).
+
+    The SAME SET is used for both training and cross-validation.
+
+    The number of folds is determined by "cross_validation_number_of_splits" in the settings file.
+
+    The number of estimators in the machine learning algorithm is determined by "RF_number_of_estimators" in the settings file,
+    therefore it should match the full training result of the whole dataset.
+
+    IMPORTANT. CURRENTLY THERE IS NO AUTOMATIC REDUNDANCY CHECK.
+     - homologues of the tested protein could be in the training dataset
+
+    Parameters
+    ----------
+    s : dict
+        Settings dictionary
+    logging : logging.Logger
+        Python object with settings for logging to console and file.
+
+    Saved Files
+    -----------
+    crossvalidation_pkl : pickle
+        Pickled dictionary (xv_dict) containing the results for each fold of validation.
+        Also contains the mean ROC curve, and the mean AUC.
+    """
+    logging.info('run_calc_feat_import_mean_decrease_PR_AUC is running')
+    train_data_csv = os.path.join(s["thoipapy_data_folder"], "Results", s["setname"], "{}_train_data.csv".format(s["setname"]))
+    # crossvalidation_csv = os.path.join(s["thoipapy_data_folder"], "Results", s["setname"], "crossvalidation", "data", "{}_10F_data.csv".format(s["setname"]))
+    crossvalidation_pkl = os.path.join(s["thoipapy_data_folder"], "Results", s["setname"], "feat_imp", "data", "{}_10F_data.pkl".format(s["setname"]))
+    features_csv = os.path.join(s["thoipapy_data_folder"], "Results", s["setname"], "{}_test_features.csv".format(s["setname"]))
+
+    thoipapy.utils.make_sure_path_exists(crossvalidation_pkl, isfile=True)
+
+    df_data = pd.read_csv(train_data_csv, index_col=0)
+    df_data = df_data.dropna()
+
+    # drop training data (full protein) that don't have enough homologues
+    df_data = df_data.loc[df_data.n_homologues >= s["min_n_homol_training"]]
+
+    X = drop_cols_not_used_in_ML(logging, df_data, s["excel_file_with_settings"])
+    y = df_data["interface"]
+
+    skf = StratifiedKFold(n_splits=s["cross_validation_number_of_splits"])
+    cv = list(skf.split(X, y))
+
+    n_features = X.shape[1]
+    forest = THOIPA_classifier_with_settings(s, n_features)
+
+    # save all outputs to a cross-validation dictionary, to be saved as a pickle file
+    xv_dict = {}
+
+    start = time.clock()
+
+    for i, (train, test) in enumerate(cv):
+        sys.stdout.write("f{}.".format(i + 1)), sys.stdout.flush()
+        probas_ = forest.fit(X.iloc[train], y.iloc[train]).predict_proba(X.iloc[test])
+        precision, recall, thresholds_PRC = precision_recall_curve(y.iloc[test], probas_[:, 1])
+        pred_auc = auc(recall, precision)
+
+
+    sys.stdout.write("\n"), sys.stdout.flush()
+
+    logging.info("tree depths : {}".format([estimator.tree_.max_depth for estimator in forest.estimators_]))
+
+    duration = time.clock() - start
+
+    # save dict as pickle
+    with open(crossvalidation_pkl, "wb") as f:
+        pickle.dump(xv_dict, f, protocol=pickle.HIGHEST_PROTOCOL)
+
+    features_ser = pd.Series(X.columns)
+    features_ser.to_csv(features_csv)
+    logging.info('{} 10-fold validation. AUC({:.3f}). Time taken = {:.2f}.\nFeatures: {}'.format(s["setname"], mean_roc_auc, duration, X.columns.tolist()))
 

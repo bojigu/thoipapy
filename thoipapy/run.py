@@ -197,8 +197,9 @@ if __name__ == "__main__":
                     thoipapy.validation.validation.create_LOO_validation_fig(s, df_set, logging)
 
         if s["calculate_variable_importance"]:
-            thoipapy.validation.validation.calculate_variable_importance(s, logging)
-            thoipapy.validation.validation.fig_variable_importance(s, logging)
+            #thoipapy.validation.validation.calculate_variable_importance(s, logging)
+            #thoipapy.validation.validation.fig_variable_importance(s, logging)
+            thoipapy.validation.validation.run_calc_feat_import_mean_decrease_PR_AUC
 
         if s["train_machine_learning_model"]:
             thoipapy.validation.validation.train_machine_learning_model(s, logging)
@@ -272,7 +273,7 @@ if __name__ == "__main__":
 
         if "plot_coev_vs_res_dist" in s:
             if s["plot_coev_vs_res_dist"] == True:
-                #thoipapy.structures.deprecated.get_tmd_nr_homodimer.calc_coev_vs_res_dist(s, dfset, logging)
+                thoipapy.figs.retrospective.calc_coev_vs_res_dist(s, dfset, logging)
                 thoipapy.figs.retrospective.plot_coev_vs_res_dist(s, logging)
 
         if s["ROC_PR_val_all_residues_combined"]:

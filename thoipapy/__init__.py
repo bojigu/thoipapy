@@ -1,8 +1,7 @@
-import thoipapy.features
 import thoipapy.homologues
 import thoipapy.validation
 import thoipapy.utils
-import thoipapy.thoipa
 import thoipapy.common
 import thoipapy.figs
-import thoipapy.structures
+import thoipapy.residue_properties
+import thoipapy.closest_heavy_atom_dist
