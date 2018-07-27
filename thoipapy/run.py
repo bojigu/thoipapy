@@ -196,10 +196,11 @@ if __name__ == "__main__":
                 if s["create_LOO_validation_figs"]:
                     thoipapy.validation.validation.create_LOO_validation_fig(s, df_set, logging)
 
-        if s["calculate_variable_importance"]:
-            #thoipapy.validation.validation.calculate_variable_importance(s, logging)
-            #thoipapy.validation.validation.fig_variable_importance(s, logging)
-            thoipapy.validation.validation.run_calc_feat_import_mean_decrease_PR_AUC
+        if s["calc_feature_importances"]:
+            thoipapy.validation.validation.calc_feat_import_from_mean_decrease_impurity(s, logging)
+            thoipapy.validation.validation.fig_feat_import_from_mean_decrease_impurity(s, logging)
+            thoipapy.validation.validation.calc_feat_import_from_mean_decrease_accuracy(s, logging)
+            thoipapy.validation.validation.fig_feat_import_from_mean_decrease_accuracy(s, logging)
 
         if s["train_machine_learning_model"]:
             thoipapy.validation.validation.train_machine_learning_model(s, logging)
