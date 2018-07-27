@@ -13,7 +13,7 @@ import os
 from sklearn.externals import joblib
 import pickle
 import time
-from korbinian.utils import convert_truelike_to_bool, convert_falselike_to_bool, Log_Only_To_Console
+from thoipapy.utils import convert_truelike_to_bool, convert_falselike_to_bool, Log_Only_To_Console
 from multiprocessing import Pool
 from sklearn.metrics import precision_recall_curve
 
