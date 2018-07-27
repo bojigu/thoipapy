@@ -8,7 +8,6 @@ import re
 import signal
 import sys
 from time import strftime
-
 import numpy as np
 import pandas as pd
 import psutil
@@ -41,7 +40,7 @@ def calculate_fasta_file_length(s):
     FastaFile.close()
     return seqLen
 
-def create_TMD_surround20_fasta_file(s, database):
+def create_TMD_surround20_fasta_file(s, database, protein_folder):
     """create fasta file with tmd and surround 20 residues as new sequence for further blastp.
     also the input protein list file will be updated by adding "TMD_Sur_Left" and "TMD_Sur_Right"
 
@@ -79,7 +78,7 @@ def create_TMD_surround20_fasta_file(s, database):
             tmp_length = int(row.strip().split(",")[1])
             tmp_start = int(row.strip().split(",")[2])
             tmp_end = int(row.strip().split(",")[3])
-            tmp_protein_fasta = os.path.join(s["Protein_folder"], database,"%s.fasta") % acc
+            tmp_protein_fasta = os.path.join(protein_folder, database,"%s.fasta") % acc
             line=""
             if os.path.isfile(tmp_protein_fasta):
                 fasta_text = ""
@@ -100,7 +99,7 @@ def create_TMD_surround20_fasta_file(s, database):
                 else:
                     s["tmp_surr_right"]=tmp_length-tmp_end
                 tmp_surr_string=fasta_text[(tmp_start-s["tmp_surr_left"]-1):(tmp_end+s["tmp_surr_right"])]
-                tmp_surr_fasta_file=os.path.join(s["Protein_folder"], database, "%s.surr20.fasta") % acc
+                tmp_surr_fasta_file=os.path.join(protein_folder, database, "%s.surr20.fasta") % acc
                 tmp_surr_fasta_file_handle=open(tmp_surr_fasta_file,"w")
                 tmp_surr_fasta_file_handle.write("> %s TMD add surround 20 residues\n" % acc)
                 tmp_surr_fasta_file_handle.write(tmp_surr_string)
@@ -145,6 +144,8 @@ def tmd_positions_match_fasta(s):
 
 def calc_lipophilicity(seq, method = "mean"):
     """ Calculates the average hydrophobicity of a sequence according to the Hessa biological scale.
+
+    Function taken from korbinian.utils (allowed under MIT license).
 
     Hessa T, Kim H, Bihlmaier K, Lundin C, Boekel J, Andersson H, Nilsson I, White SH, von Heijne G. Nature. 2005 Jan 27;433(7024):377-81
 
@@ -236,10 +237,8 @@ def create_settingdict(excel_file_with_settings):
         # join dictionaries together
         s.update(sheet_as_dict)
 
-    list_paths_to_normalise = ['MiRMAK_data_folder', 'Results_folder', 'Train_proteins', 'Experimental_proteins',
-                               'Results_folder', 'homologues_folder', 'output_oa3m_homologues', 'xml_file_folder', 'filtered_homo_folder', 'features_folder',
-                               'feature_entropy', 'feature_pssm', 'feature_lipophilicity', 'feature_cumulative_coevolution', 'feature_relative_position',
-                               'feature_lips_score', 'feature_physical_parameters', 'structure_bind', 'RF_loc', 'Rcode', 'Sine_Curve_loc', 'logfile_dir',
+    list_paths_to_normalise = ['MiRMAK_data_folder', 'dropbox_dir', 'sets_folder', 'base_dir', 'thoipapy_data_folder',
+                               'Rcode', 'Sine_Curve_loc',
                                'freecontact_dir', 'hhblits_dir', 'uniprot_database_dir', 'Rscript_dir']
     # normalise the paths for selected columns, so that they are appropriate for the operating system
     for path in list_paths_to_normalise:
@@ -251,6 +250,7 @@ def create_settingdict(excel_file_with_settings):
 
 def setup_keyboard_interrupt_and_error_logging(s, setname):
     ''' -------Setup keyboard interrupt----------
+        Taken from korbinian python package by Mark Teese. This is allowed under the permissive MIT license.
     '''
     # import arcgisscripting
 
@@ -261,7 +261,7 @@ def setup_keyboard_interrupt_and_error_logging(s, setname):
     date_string = strftime("%Y%m%d_%H_%M_%S")
 
     # designate the output logfile
-    logfile = os.path.join(s["logfile_dir"],'%s_%s_logfile.log' % (setname, date_string))
+    logfile = os.path.join(s["thoipapy_data_folder"], "Logging", '%s_%s_logfile.log' % (setname, date_string))
 
     # # if multiprocessing is used, disable logging except for critical messages.
     # if s["use_multiprocessing"]:
@@ -279,6 +279,8 @@ def setup_keyboard_interrupt_and_error_logging(s, setname):
 
 def setup_error_logging(logfile, level_console="DEBUG", level_logfile="DEBUG", print_system_info=True):
     """ Sets up error logging, and logs a number of system settings.
+
+    Taken from korbinian python package by Mark Teese. This is allowed under the permissive MIT license.
 
     Parameters:
     -----------
@@ -472,7 +474,7 @@ def process_set_protein_seqs(s, setname, df_set, set_path):
         df_set.loc[cluster_rep_list, "cdhit_cluster_rep"] = True
         df_set["cdhit_cluster_rep"] = df_set["cdhit_cluster_rep"].fillna(False)
     else:
-        logging.warning("No CD-HIT results found. Redundancy check for training and validation is not possible.")
+        logging.warning("No CD-HIT results found. Redundancy check for training and validation not conducted. It is assumed that dataset is already non-redundant.")
         df_set["cdhit_cluster_rep"] = "no_cdhit_results"
 
     """  Rearrange the dataframe columns so that the order is as follows.
@@ -491,7 +493,7 @@ def process_set_protein_seqs(s, setname, df_set, set_path):
     s["list_of_tmd_start_end"] = list_of_tmd_start_end
     thoipapy.utils.make_sure_path_exists(list_of_tmd_start_end, isfile=True)
     df_set.set_index("acc").to_csv(list_of_tmd_start_end)
-    train_data_csv = os.path.join(s["set_results_folder"], "{}_processed_input_sequences.csv".format(s["setname"]))
+    train_data_csv = os.path.join(s["thoipapy_data_folder"], "Results", s["setname"], "{}_processed_input_sequences.csv".format(s["setname"]))
     df_set.set_index("acc").to_csv(train_data_csv)
 
     return df_set

@@ -67,6 +67,10 @@ def drop_cols_not_used_in_ML(logging, df_data, excel_file_with_settings, i=0):
                 raise IndexError("Unnamed column is in dataframe. Try opening csv with index_col=0.")
         if len(unused_features_in_excel) > 1:
             logging.info("\nunused_features_in_excel, {}".format(unused_features_in_excel))
+            if len(unused_features_in_excel) > 2:
+                raise ValueError("There are more than two unused features in excel."
+                                 "The two unused features should only be 'TMDOCK_feature', 'PREDDIMER_feature'."
+                                 "Check variables tab of excel file!")
     # drop any features that are not labeled TRUE for inclusion
     features_df = features_df.loc[features_df.include == True]
     # filter df_data to only keep the desired feature columns
@@ -252,11 +256,11 @@ def run_10fold_cross_validation(s, logging):
     mean_tpr /= len(cv)
     mean_tpr[-1] = 1.0
 
-    mean_roc_auc = auc(mean_fpr, mean_tpr)
+    ROC_AUC = auc(mean_fpr, mean_tpr)
 
     xv_dict["true_positive_rate_mean"] = mean_tpr
     xv_dict["false_positive_rate_mean"] = mean_fpr
-    xv_dict["mean_roc_auc"] = mean_roc_auc
+    xv_dict["ROC_AUC"] = ROC_AUC
 
     # save dict as pickle
     with open(crossvalidation_pkl, "wb") as f:
@@ -264,7 +268,7 @@ def run_10fold_cross_validation(s, logging):
     
     features_ser = pd.Series(X.columns)
     features_ser.to_csv(features_csv)
-    logging.info('{} 10-fold validation. AUC({:.3f}). Time taken = {:.2f}.\nFeatures: {}'.format(s["setname"], mean_roc_auc, duration, X.columns.tolist()))
+    logging.info('{} 10-fold validation. AUC({:.3f}). Time taken = {:.2f}.\nFeatures: {}'.format(s["setname"], ROC_AUC, duration, X.columns.tolist()))
 
 def create_10fold_cross_validation_fig(s, logging):
     """Create figure showing ROC curve for each fold in a 10-fold validation.
@@ -294,9 +298,9 @@ def create_10fold_cross_validation_fig(s, logging):
         roc_auc = auc(xv_dict["fpr{}".format(i)], xv_dict["tpr{}".format(i)])
         ax.plot(xv_dict["fpr{}".format(i)], xv_dict["tpr{}".format(i)], lw=1, label='fold %d (area = %0.2f)' % (i, roc_auc), alpha=0.8)
 
-    mean_roc_auc = xv_dict["mean_roc_auc"]
+    ROC_AUC = xv_dict["ROC_AUC"]
 
-    ax.plot(xv_dict["false_positive_rate_mean"], xv_dict["true_positive_rate_mean"], color="k", label='mean (area = %0.2f)' % mean_roc_auc, lw=1.5)
+    ax.plot(xv_dict["false_positive_rate_mean"], xv_dict["true_positive_rate_mean"], color="k", label='mean (area = %0.2f)' % ROC_AUC, lw=1.5)
     ax.plot([0, 1], [0, 1], '--', color=(0.6, 0.6, 0.6), label='random')
     ax.set_xlim([-0.05, 1.05])
     ax.set_ylim([-0.05, 1.05])
@@ -683,7 +687,7 @@ def create_LOO_validation_fig(s, df_set, logging):
     logging.info('{} LOO crossvalidation. AUBOC10({:.2f}).'.format(s["setname"], AUBOC10))
     logging.info("create_LOO_validation_fig finished ({})".format(LOO_crossvalidation_AUC_bar_png))
 
-def calculate_variable_importance(s, logging):
+def calc_feat_import_from_mean_decrease_impurity(s, logging):
     """Calculate the variable importance (mean decrease gini) for all variables in THOIPA.
 
     Parameters
@@ -759,7 +763,7 @@ def calculate_variable_importance(s, logging):
 
     df_imp2.to_csv(variable_importance_csv)
 
-def fig_variable_importance(s, logging):
+def fig_feat_import_from_mean_decrease_impurity(s, logging):
     """Create figures showing ML feature importance.
 
     Fig1 : Barchart all features
@@ -792,7 +796,7 @@ def fig_variable_importance(s, logging):
 
 
 def create_var_imp_plot(df_imp, colour_dict, variable_importance_png, n_features_in_plot):
-    """Plot function for fig_variable_importance, allowing a variable number of features.
+    """Plot function for fig_feat_import_from_mean_decrease_impurity, allowing a variable number of features.
     """
     df_sel = df_imp.iloc[:n_features_in_plot, :].copy()
 
@@ -814,7 +818,7 @@ def create_var_imp_plot(df_imp, colour_dict, variable_importance_png, n_features
         fig, ax = plt.subplots(figsize=figsize)
 
         TUMblue = colour_dict["TUM_colours"]['TUMBlue']
-        df_sel["mean_decrease_impurity{}".format(model_type)].plot(kind="barh", color="#058287", ax=ax)# xerr=df_sel["std"]
+        df_sel["mean_decrease_impurity{}".format(model_type)].plot(kind="barh", color="#17a8a5", ax=ax)# xerr=df_sel["std"]
         ax.errorbar(df_sel["mean_decrease_impurity{}".format(model_type)], range(len(df_sel.index)), xerr=df_sel["std{}".format(model_type)], fmt="none", ecolor="k", ls="none", capthick=0.5, elinewidth=0.5, capsize=1, label=None)
 
         ax.set_xlim(0)
@@ -827,3 +831,177 @@ def create_var_imp_plot(df_imp, colour_dict, variable_importance_png, n_features
         #fig.savefig(variable_importance_png[:-4] + ".pdf")
         fig.savefig(thoipapy.utils.pdf_subpath(variable_importance_png))
 
+
+def calc_feat_import_from_mean_decrease_accuracy(s, logging):
+    """Calculate feature importances using mean decrease in accuracy.
+
+    This method differs from calc_feat_import_from_mean_decrease_impurity.
+    It's much slower, and involves the use of 10-fold cross-validation for each variable separately.
+
+     - a feature (or group of features) is selected for randomisation
+     - in theory, randomising important features will cause a drop in prediction accuracy
+     - The feature (or group of features) is shuffled
+     - precision-recall AUC and ROC-AUC is measured
+     - the difference between the original AUC and the AUC with shuffled variable is measured
+     - higher values suggest more important features
+
+    feature groups:
+    polarity_and_pssm_features : ['polarity', 'relative_polarity', 'polarity4mean', 'polarity3Nmean', 'polarity3Cmean', 'polarity1mean', 'A', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'K', 'L', 'M', 'N', 'P', 'Q', 'R', 'S', 'T', 'V', 'W', 'Y', 'CS', 'DE', 'KR', 'QN', 'LIV']
+    coev_features : ['DImax', 'MImax', 'DItop4mean', 'MItop4mean', 'DItop8mean', 'MItop8mean', 'DI4max', 'MI4max', 'DI1mean', 'MI1mean', 'DI3mean', 'MI3mean', 'DI4mean', 'MI4mean', 'DI4cum', 'MI4cum']
+    cons_features : ['conservation', 'cons4mean']
+    motif_features : ['GxxxG', 'SmxxxSm']
+    physical_features : ['branched', 'mass']
+    TMD_features : ['residue_depth', 'n_TMDs', 'n_homologues']
+
+    Parameters
+    ----------
+    s : dict
+        Settings dictionary
+    logging : logging.Logger
+        Python object with settings for logging to console and file.
+
+    Saved Files
+    -----------
+    feat_imp_MDA_csv : csv
+        Comma separated values, showing decrease in AUC for each feature or group of features.
+    """
+    logging.info('calc_feat_import_from_mean_decrease_accuracy is running')
+    train_data_csv = os.path.join(s["thoipapy_data_folder"], "Results", s["setname"], "{}_train_data.csv".format(s["setname"]))
+    # crossvalidation_csv = os.path.join(s["thoipapy_data_folder"], "Results", s["setname"], "crossvalidation", "data", "{}_10F_data.csv".format(s["setname"]))
+    feat_imp_MDA_csv = os.path.join(s["thoipapy_data_folder"], "Results", s["setname"], "feat_imp", "data", "feat_imp_MDA.csv".format(s["setname"]))
+
+    thoipapy.utils.make_sure_path_exists(feat_imp_MDA_csv, isfile=True)
+
+    df_data = pd.read_csv(train_data_csv, index_col=0)
+    df_data = df_data.dropna()
+
+    # drop training data (full protein) that don't have enough homologues
+    df_data = df_data.loc[df_data.n_homologues >= s["min_n_homol_training"]]
+
+    X = drop_cols_not_used_in_ML(logging, df_data, s["excel_file_with_settings"])
+    y = df_data["interface"]
+
+    n_features = X.shape[1]
+    feat_list = X.columns.tolist()
+    coev_features = feat_list[0:16]
+    cons_features = feat_list[16:18]
+    polarity_features = feat_list[18:24]
+    motif_features = feat_list[24:26]
+    pssm_features = feat_list[26:51]
+    physical_features = feat_list[51:53]
+    TMD_features = feat_list[53:]
+
+    # DEPRECATED in favour of combined polarity_and_pssm_features
+    #features_nested_list = [coev_features, cons_features, polarity_features, motif_features, pssm_features, physical_features, TMD_features]
+    #features_nested_namelist = ["coev_features", "cons_features", "polarity_features", "motif_features", "pssm_features", "physical_features", "TMD_features"]
+
+    polarity_and_pssm_features = polarity_features + pssm_features
+    features_nested_list = [polarity_and_pssm_features, coev_features, cons_features, motif_features, physical_features, TMD_features]
+    features_nested_namelist = ["polarity_and_pssm_features", "coev_features", "cons_features", "motif_features", "physical_features", "TMD_features"]
+
+    for i in range(len(features_nested_list)):
+        sys.stdout.write("\n{} : {}".format(features_nested_namelist[i], features_nested_list[i]))
+
+    forest = THOIPA_classifier_with_settings(s, n_features)
+
+    pr_auc_orig, roc_auc_orig = calc_mean_AUC(X, y, forest)
+
+    start = time.clock()
+
+    sys.stdout.write("\nmean : {:.03f}\n".format(pr_auc_orig)), sys.stdout.flush()
+
+    decrease_PR_AUC_dict = {}
+    decrease_ROC_AUC_dict = {}
+
+    for feature_type, feature_list in zip(features_nested_namelist, features_nested_list):
+        logging.info("{} : {}".format(feature_type, feature_list))
+        X_t = X.copy()
+        for feature in feature_list:
+            # shuffle the data for that feature
+            row_to_shuffle = X_t[feature].as_matrix()
+            np.random.shuffle(row_to_shuffle)
+            X_t[feature] = row_to_shuffle
+        # calculate prediction performance after shuffling
+        PR_AUC, ROC_AUC = calc_mean_AUC(X_t, y, forest)
+
+        decrease_PR_AUC = pr_auc_orig - PR_AUC
+        decrease_PR_AUC_dict[feature_type] = decrease_PR_AUC
+
+        decrease_ROC_AUC = roc_auc_orig - ROC_AUC
+        decrease_ROC_AUC_dict[feature_type] = decrease_ROC_AUC
+
+        logging.info("  {} {:.03f} {:.03f}".format(feature_type, decrease_PR_AUC, decrease_ROC_AUC))
+
+    for feature in X.columns:
+        X_t = X.copy()
+        # shuffle the data for that feature
+        row_to_shuffle = X_t[feature].as_matrix()
+        np.random.shuffle(row_to_shuffle)
+        X_t[feature] = row_to_shuffle
+        # calculate prediction performance after shuffling
+        PR_AUC, ROC_AUC = calc_mean_AUC(X_t, y, forest)
+
+        decrease_PR_AUC = pr_auc_orig - PR_AUC
+        decrease_PR_AUC_dict[feature] = decrease_PR_AUC
+
+        decrease_ROC_AUC = roc_auc_orig - ROC_AUC
+        decrease_ROC_AUC_dict[feature] = decrease_ROC_AUC
+
+        logging.info("  {} {:.03f} {:.03f}".format(feature, decrease_PR_AUC, decrease_ROC_AUC))
+
+    df_fi = pd.DataFrame()
+    df_fi["PR_AUC"] = pd.Series(decrease_PR_AUC_dict)
+    df_fi["ROC_AUC"] = pd.Series(decrease_ROC_AUC_dict)
+
+    df_fi.to_csv(feat_imp_MDA_csv)
+
+    duration = time.clock() - start
+
+    logging.info('{} calc_feat_import_from_mean_decrease_accuracy. PR_AUC({:.3f}). Time taken = {:.2f}.\nFeatures: {}'.format(s["setname"], pr_auc_orig, duration, X.columns.tolist()))
+
+def calc_mean_AUC(X, y, forest):
+    """Calculate mean precision-recall and ROC AUC using 10-fold cross-validation.
+
+    Parameters
+    ----------
+    X : pd.DataFrame
+    y : pd.Series
+    forest : sklearn.ensemble.ExtraTreesClassifier
+
+    Returns
+    -------
+    (PR_AUC, ROC_AUC) : tuple
+        PR_AUC - float of precision-recall AUC
+        ROC_AUC - float of ROC-AUC
+    """
+
+    skf = StratifiedKFold(n_splits=10)
+    cv = list(skf.split(X, y))
+    # save precision-recall AUC of each fold
+    pr_auc_list = []
+    roc_auc_list = []
+    for i, (train, test) in enumerate(cv):
+        sys.stdout.write("f{}.".format(i + 1)), sys.stdout.flush()
+        probas_ = forest.fit(X.iloc[train], y.iloc[train]).predict_proba(X.iloc[test])
+        
+        precision, recall, thresholds_PRC = precision_recall_curve(y.iloc[test], probas_[:, 1])
+        pred_auc = auc(recall, precision)
+        pr_auc_list.append(pred_auc)
+
+        fpr, tpr, thresholds = roc_curve(y.iloc[test], probas_[:, 1], drop_intermediate=False)
+        roc_auc = auc(fpr, tpr)
+        roc_auc_list.append(roc_auc)
+        
+    PR_AUC = np.mean(pr_auc_list)
+    ROC_AUC = np.mean(roc_auc_list)
+    return PR_AUC, ROC_AUC
+
+def fig_feat_import_from_mean_decrease_accuracy(s, logging):
+
+    feat_imp_MDA_csv = os.path.join(s["thoipapy_data_folder"], "Results", s["setname"], "feat_imp", "data", "feat_imp_MDA.csv".format(s["setname"]))
+    feat_imp_MDA_png = os.path.join(s["thoipapy_data_folder"], "Results", s["setname"], "feat_imp", "feat_imp_MDA.png".format(s["setname"]))
+
+    df_fi = pd.read_csv(feat_imp_MDA_csv, index_col=0)
+
+
+    pass

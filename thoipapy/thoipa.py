@@ -5,16 +5,18 @@ import platform
 import re
 import sys
 import unicodedata
-from sklearn.externals import joblib
 from io import StringIO
-from django.utils.text import slugify
+
 import pandas as pd
+from django.utils.text import slugify
+from sklearn.externals import joblib
+
 import thoipapy
+import thoipapy.residue_properties as fc
 from thoipapy.homologues.NCBI_download import download_homologues_from_ncbi
+from thoipapy.homologues.NCBI_parser import parse_NCBI_xml_to_csv, extract_filtered_csv_homologues_to_alignments
 from thoipapy.validation.validation import drop_cols_not_used_in_ML
 
-import thoipapy.features.feature_calculate as fc
-from thoipapy.homologues.NCBI_parser import parse_NCBI_xml_to_csv, extract_filtered_csv_homologues_to_alignments
 
 def run_THOIPA_prediction(protein_name, md5, TMD_seq, full_seq, out_dir):
     """Function to run standalone THOIPA prediction for a protein transmembrane domain of interest.
