@@ -8,6 +8,8 @@ from difflib import SequenceMatcher
 from math import isclose
 from shutil import copyfile
 from sklearn.metrics import roc_curve, auc, precision_recall_curve
+import matplotlib as mpl
+mpl.use('Agg')
 import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
