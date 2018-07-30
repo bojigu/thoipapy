@@ -294,6 +294,7 @@ def create_mean_ROC_AUC_barchart(ROC_AUC_df, mean_ROC_AUC_barchart_png):
     
 def create_mean_PR_AUC_barchart(PR_AUC_df, mean_PR_AUC_barchart_png):
 
+
     figsize = np.array([3.42, 3.42])   # DOUBLE the real size, due to problems on Bo computer with fontsizes
     fig, ax = plt.subplots(figsize=figsize)
     PR_AUC_df.mean().plot(kind="bar", ax=ax)
@@ -302,10 +303,15 @@ def create_mean_PR_AUC_barchart(PR_AUC_df, mean_PR_AUC_barchart_png):
     #ax.set_ylabel("performance value\n(auc)")
     ax.set_ylim(0, 0.70)
     ax.legend()  # (["sample size = 5", "sample size = 10"])
+    ax.set_facecolor('white')
 
     fig.tight_layout()
     ax.grid(False)
     fig.savefig(mean_PR_AUC_barchart_png, dpi=240)
+
+
+
+
 
 
 def create_BOcurve_linechart(df_o_minus_r_mean_df, BOCURVE_linechart_png):
@@ -355,23 +361,77 @@ def create_ROC_AUC_barchart(ROC_AUC_df, ROC_AUC_barchart_png, namedict, THOIPA_p
 
 
 def create_PR_AUC_barchart(PR_AUC_df, indiv_PR_AUC_barchart_png, namedict, THOIPA_predictor_name):
-    # plt.rcParams.update({'font.size': 8})
-    # figsize = np.array([3.42, 3.42]) * 2  # DOUBLE the real size, due to problems on Bo computer with fontsizes
-    figsize = np.array([9, 6])  # DOUBLE the real size, due to problems on Bo computer with fontsizes
-
-    fig, ax = plt.subplots(figsize=figsize)
 
     # replace the protein names based on the naming file
     PR_AUC_df.index = pd.Series(PR_AUC_df.index).replace(namedict)
-    PR_AUC_df.sort_values([THOIPA_predictor_name], ascending=False, inplace=True)
-    PR_AUC_df.plot(kind="bar", ax=ax, alpha=0.7)
 
-    ax.set_ylabel("performance (precision recall AUC)")
-    ax.legend(loc="upper right")  # (["sample size = 5", "sample size = 10"])
+    # # plt.rcParams.update({'font.size': 8})
+    # # figsize = np.array([3.42, 3.42]) * 2  # DOUBLE the real size, due to problems on Bo computer with fontsizes
+    # figsize = np.array([9, 6])  # DOUBLE the real size, due to problems on Bo computer with fontsizes
+    # fig, ax = plt.subplots(figsize=figsize)
+    # PR_AUC_df.sort_values([THOIPA_predictor_name], ascending=False, inplace=True)
+    # PR_AUC_df.plot(kind="bar", ax=ax, alpha=0.7)
+    # ax.set_ylabel("performance (precision recall AUC)")
+    # ax.legend(loc="upper right")  # (["sample size = 5", "sample size = 10"])
+    # fig.tight_layout()
+    # ax.grid(False)
+    # fig.savefig(indiv_PR_AUC_barchart_png, dpi=240)
 
+
+    Width = 0.2
+    Fontsize = 14
+    #file_location = r"I:\THOIPA_data\Results\set05\indiv_validation\indiv_validation_data.xlsx"
+    #PR_AUC_df = pd.read_excel(file_location, sheet_name="PR_AUC_indiv")
+
+    for i in PR_AUC_df.index:
+        if "crystal" in i:
+            PR_AUC_df.loc[i, "sort_list"] = 2
+        if "NMR" in i:
+            PR_AUC_df.loc[i, "sort_list"] = 1
+        if "ETRA" in i:
+            PR_AUC_df.loc[i, "sort_list"] = 0
+
+    PR_AUC_df.sort_values(['sort_list', 'THOIPA_5_LOO'], ascending=[True, False], inplace=True)
+
+    PR_AUC_df.rename(columns=lambda x: x.replace('THOIPA_5_LOO', 'THOIPA'), inplace=True)
+    PR_AUC_df.rename(columns=lambda x: x.replace('LIPS_surface_ranked', 'LIPS'), inplace=True)
+
+    PR_AUC_df.drop(['LIPS', "sort_list"], axis=1, inplace=True)
+
+    color_list = ["#E95D12", "#0065BD", "k", "#B4B3B3"]
+
+    fig, ax = plt.subplots(figsize=(13, 7))
+    x = list(range(0, len(PR_AUC_df), 1))
+
+    m = 0
+    for i, color in zip(PR_AUC_df.columns, color_list):
+        y = PR_AUC_df[i].tolist()
+        plt.bar(x, y, width=Width, label=i, color=color)
+        x = [i + Width for i in x]
+
+    handles, labels = ax.get_legend_handles_labels()
+    lgd = ax.legend(handles, labels, ncol=31, loc=2, fontsize=Fontsize, frameon=True, bbox_to_anchor=(-0.0090, 1.15), facecolor='white', edgecolor="k")
+
+    plt.rcParams['xtick.labelsize'] = Fontsize
+    plt.rcParams['ytick.labelsize'] = Fontsize
+    ax.tick_params(axis='y', labelsize=Fontsize, pad=2)
+    ax.tick_params(axis='x', labelsize=Fontsize, pad=2)
+    x_label = list(range(0, len(PR_AUC_df), 1))
+    x_label = [i + Width for i in x_label]
+
+    ax.set_ylabel('performance (precision-recall AUC)', fontsize=Fontsize, labelpad=1)
+
+    ax.set_xticks(x_label)
+
+    ax.set_xticklabels(PR_AUC_df.index.tolist(), fontsize=Fontsize, rotation=90)
+    plt.ylim(0, 1.1)
     fig.tight_layout()
-    ax.grid(False)
-    fig.savefig(indiv_PR_AUC_barchart_png, dpi=240)
+    plt.xlim(-0.5, 54)
+
+    plt.savefig(indiv_PR_AUC_barchart_png, bbox_extra_artists=(lgd,), bbox_inches='tight', dpi=300)
+    plt.savefig(indiv_PR_AUC_barchart_png[:-4] + ".pdf", bbox_extra_artists=(lgd,), bbox_inches='tight', dpi=300)
+    plt.close()
+
 
 
 def create_AUBOC10_barchart(AUBOC10_df, AUBOC10_barchart_png, namedict, THOIPA_predictor_name):
@@ -381,8 +441,10 @@ def create_AUBOC10_barchart(AUBOC10_df, AUBOC10_barchart_png, namedict, THOIPA_p
     figsize = np.array([9, 6])  # DOUBLE the real size, due to problems on Bo computer with fontsizes
 
     fig, ax = plt.subplots(figsize=figsize)
-    # replace the protein names
-    AUBOC10_df.index = pd.Series(AUBOC10_df.index).replace(namedict)
+    ## replace the protein names
+    #AUBOC10_df.index = pd.Series(AUBOC10_df.index).replace(namedict)
+    # replace old "crystal" references with "X-ray"
+    AUBOC10_df.index = pd.Series(AUBOC10_df.index).replace("crystal", "X-ray")
     AUBOC10_df.sort_values([THOIPA_predictor_name], ascending=False, inplace=True)
     AUBOC10_df.plot(kind="bar", ax=ax, alpha=0.7)
 

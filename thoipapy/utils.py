@@ -297,6 +297,17 @@ def create_namedict(names_excel_path, style="shortname [acc-db]"):
     df_names["acc"] = df_names.index
     df_names["acc_db"] = df_names.acc + "-" + df_names.database
     df_names.set_index("acc_db", inplace=True, drop=False)
+    df_names.index.name = "acc_db_index"
+
+    #df_names.acc_db_for_figs = df_names.acc_db.replace("crystal", "X-ray")
+
+    # add old names in index "e.g. Q13563-crystal", so that they are replaced with new "X-ray" names in figs
+    xray_row_bool_ser = df_names.acc_db.str.contains("X-ray")
+    df_xray = df_names.loc[xray_row_bool_ser == True].copy()
+    df_xray.index = df_xray["PDB acc"] + "-crystal"
+    df_xray["acc_db"] = df_xray["PDB acc"] + "-" + df_xray.database
+    df_names = pd.concat([df_names.loc[xray_row_bool_ser == False], df_xray])
+
     #df_names = df_names.loc[df_names.database == database]
     if style == "shortname [acc-db]":
         df_names["label"] = df_names.shortname + " [" + df_names.acc_db + "]"
@@ -304,6 +315,7 @@ def create_namedict(names_excel_path, style="shortname [acc-db]"):
         df_names["label"] = df_names.shortname + " [" + df_names.acc + "]"
     else:
         raise ValueError("other styles not implemented")
+
     namedict = df_names["label"].to_dict()
     return namedict
 

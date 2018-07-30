@@ -792,7 +792,6 @@ def fig_feat_import_from_mean_decrease_impurity(s, logging):
 
     create_var_imp_plot(df_imp, colour_dict, variable_importance_all_png, df_imp.shape[0])
     #create_var_imp_plot(df_imp, colour_dict, variable_importance_top_png, 30)
-    print(variable_importance_top_png)
 
 
 def create_var_imp_plot(df_imp, colour_dict, variable_importance_png, n_features_in_plot):

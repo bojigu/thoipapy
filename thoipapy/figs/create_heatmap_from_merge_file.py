@@ -49,34 +49,31 @@ def create_merged_heatmap(s, df_set, logging):
     for i in df_set.index:
         acc = df_set.loc[i, "acc"]
         database = df_set.loc[i, "database"]
-        acc_db = acc + "_" + database
-        #if acc =="1orqC4":
-        #df_names = pd.read_excel(names_excel_path, index_col=0)
-        # restrict names dict to only that database
-        #df_names = df_names.loc[df_names.database == database]
+
+        if database == "crystal":
+            acc_db = acc + "_X-ray"
+        else:
+            acc_db = acc + "_" + database
+        shortname = df_names.loc[acc_db, "shortname"]
+        uniprot = df_names.loc[acc_db, "uniprot"]
 
         if database == "ETRA":
             ref = "".join(df_names.loc[acc_db, "source":"date"].dropna().astype(str).tolist())
-            savename = "{}_{}".format(acc, df_names.loc[acc_db, "shortname"])
-            fig_label = "{shortname} [{subset} subset, {acc}, {ref}]".format(shortname=df_names.loc[acc_db, "shortname"],
+            savename = "{}_{}".format(acc, shortname)
+            fig_label = "{shortname} [{subset} dataset, {acc}, {ref}]".format(shortname=shortname,
                                                                             subset=database, acc=acc, ref=ref)
         elif database == "NMR":
             ref = "".join(df_names.loc[acc_db, "source":"date"].dropna().astype(str).tolist())
-            savename = "{}_{}".format(acc, df_names.loc[acc_db, "shortname"])
-            fig_label = "{shortname} [{subset} subset, {acc}, PDB:{pdb}, {ref}]".format(shortname=df_names.loc[acc_db, "shortname"],
-                                                                                      subset=database, acc=acc, pdb=df_names.loc[acc_db, "PDB acc"],ref=ref)
+            savename = "{}_{}".format(acc, shortname)
+            fig_label = "{shortname} [{subset} dataset, {acc}, PDB:{pdb}, {ref}]".format(shortname=shortname,
+                        subset=database, acc=acc, pdb=df_names.loc[acc_db, "PDB acc"],ref=ref)
         elif database == "crystal":
-            savename = acc + "_{}".format(database)
-            fig_label = acc + " [{} subset, PDB:{}, chain:{}, TMD:{}]".format(database, acc[:-2], acc[-2], acc[-1])
+            savename = acc + "_".format(database)
+            #fig_label = acc + " [{} subset, PDB:{}, chain:{}, TMD:{}]".format(database, acc[:-2], acc[-2], acc[-1])
+            fig_label = "{} [X-ray dataset, {}, PDB:{}, chain:{}, TMD:{}]]".format(shortname, uniprot, acc[:-2], acc[-2], acc[-1])
         else:
             raise ValueError("database not recognised : {}".format(database))
-        # if acc_db in df_names.index:
-        #     "PTPRG [ETRA subset, P23470, PDB:5uld, this study]"
-        #     savename = "{}_{}".format(acc, df_names.loc[acc_db, "shortname"])
-        #     fig_label = df_names.loc[acc_db, "concatname"] + " [{} subset]".format(database)
-        # else:
-        #     savename = acc + "_{}".format(database)
-        #     fig_label = acc + " [{} subset, PDB:{}, chain:{}, TMD:{}]".format(database, acc[:-2], acc[-2], acc[-1])
+
         sys.stdout.write("\n{} {}".format(savename, fig_label))
         create_single_merged_heatmap(s, acc, database,savename, fig_label, dfh_cols, THOIPA_col, LIPS_col, coev_col)
 
