@@ -40,7 +40,7 @@ def create_merged_heatmap(s, df_set, logging):
 
     dfh_cols = ["res_num_full_seq", "residue_name", "interface", "interface_score", THOIPA_col, "PREDDIMER", "TMDOCK", LIPS_col, "conservation", "relative_polarity", coev_col]
 
-    names_excel_path = os.path.join(s["dropbox_dir"], "ETRA_NMR_names.xlsx")
+    names_excel_path = os.path.join(s["dropbox_dir"], "protein_names.xlsx")
     df_names = pd.read_excel(names_excel_path, index_col=0)
     df_names["acc_db"] = df_names.index + "_" + df_names["database"]
     df_names["acc"] = df_names.index

@@ -252,7 +252,7 @@ if __name__ == "__main__":
             thoipapy.validation.combine_mult_predictors.merge_predictions(s, df_set, logging)
 
         if s["run_indiv_validation_each_TMD"] == True:
-            namedict = thoipapy.utils.create_namedict(os.path.join(s["dropbox_dir"], "ETRA_NMR_names.xlsx"))
+            namedict = thoipapy.utils.create_namedict(os.path.join(s["dropbox_dir"], "protein_names.xlsx"))
             THOIPA_predictor_name = "THOIPA_{}_LOO".format(s["set_number"])
             predictor_name_list = [THOIPA_predictor_name, "PREDDIMER", "TMDOCK", "LIPS_surface_ranked"]
             #thoipapy.validation.indiv_validation.collect_indiv_validation_data(s, df_set, logging, namedict, predictor_name_list, THOIPA_predictor_name)

@@ -352,7 +352,7 @@ def run_LOO_validation(s, df_set, logging):
         excel file with the processed BO-curve data
     """
     logging.info('Leave-One-Out cross validation is running')
-    names_excel_path = os.path.join(s["dropbox_dir"], "ETRA_NMR_names.xlsx")
+    names_excel_path = os.path.join(s["dropbox_dir"], "protein_names.xlsx")
 
     # drop redundant proteins according to CD-HIT
     df_set = thoipapy.utils.drop_redundant_proteins_from_list(df_set, logging)
@@ -498,7 +498,7 @@ def run_LOO_validation(s, df_set, logging):
     #######################################################################################################
 
     BO_all_df.to_csv(BO_all_data_csv)
-    #names_excel_path = os.path.join(s["dropbox_dir"], "ETRA_NMR_names.xlsx")
+    #names_excel_path = os.path.join(s["dropbox_dir"], "protein_names.xlsx")
 
     #linechart_mean_obs_and_rand = thoipapy.figs.Create_Bo_Curve_files.analyse_bo_curve_underlying_data(BO_all_data_csv, crossvalidation_folder, names_excel_path)
     thoipapy.figs.create_BOcurve_files.parse_BO_data_csv_to_excel(BO_all_data_csv, BO_data_excel, logging)
@@ -632,7 +632,7 @@ def create_LOO_validation_fig(s, df_set, logging):
     BO_linechart_png = os.path.join(BO_curve_folder, "{}_BO_linechart.png".format(s["setname"]))
     BO_barchart_png = os.path.join(BO_curve_folder, "{}_LOO_AUBOC10_barchart.png".format(s["setname"]))
 
-    names_excel_path = os.path.join(s["dropbox_dir"], "ETRA_NMR_names.xlsx")
+    names_excel_path = os.path.join(s["dropbox_dir"], "protein_names.xlsx")
     namedict = thoipapy.utils.create_namedict(names_excel_path)
 
     # open pickle file
