@@ -57,6 +57,15 @@ The THOIPA standalone predictor is currently available to use. The settings file
 Usage as a standalone predictor
 -------------------------------
 
+For TMD interface residue predictions of a protein of interest, we recommend running THOIPA as a standalone program via Docker, as described in the `Wiki`__ .
+
+.. _Wiki: https://github.com/bojigu/thoipapy/wiki
+__ Wiki_
+
+THOIPA can also be installed in Linux and used as a standalone predictor:
+* The operating system needs to have freecontact, phobius, and NCBI_BLAST installed.
+* The biopython wrapper for NCBIblast should be installed.
+
 .. code:: python
 
     import thoipapy
@@ -69,19 +78,14 @@ Usage as a standalone predictor
     freecontact_executable = "freecontact"
     thoipapy.run_THOIPA_prediction(protein_name, TMD_seq, full_seq, predictions_folder, phobius_executable, freecontact_executable)
 
-* Standalone prediction is currently only available on Linux. 
-* The operating system needs to have freecontact, phobius, and NCBI_BLAST installed. 
-* The biopython wrapper for NCBIblast should be installed.
-* Send us an email if you have any troubles during standalone usage.
-
 **Example Output**
 
 .. image:: https://raw.githubusercontent.com/bojigu/thoipapy/master/thoipapy/docs/standalone_heatmap_example.png
 
-Training the machine learning algorithm using THOIPApy
-------------------------------------------------------
+Create your own machine learning predictor
+------------------------------------------
 
-This will be implemented after publication.
+Details on how to train THOIPA on your own datasets will be released after publication.
 
 .. code:: python
 
@@ -125,3 +129,4 @@ Citation
 
 Citation to be added.
 Full Credits: Bo Zeng, Yao Xiao, Dmitrij Frishman, Dieter Langosch, Mark Teese
+

@@ -349,10 +349,6 @@ def lipo_from_pssm(acc, pssm_csv_surr5, lipo_csv, tm_surr_left, tm_surr_right, s
         or if an error occurred,
         acc, False, "pssm_csv not found"
     """
-
-    thoipapy_module_path = os.path.dirname(os.path.abspath(thoipapy.__file__))
-    hydrophob_scale_path = os.path.join(thoipapy_module_path, "setting", "hydrophobicity_scales.xlsx")
-
     lipo_excel = lipo_csv[:-4] + ".xlsx"
     lipo_linechart = lipo_csv[:-4] + "_linechart.png"
 
@@ -423,10 +419,16 @@ def lipo_from_pssm(acc, pssm_csv_surr5, lipo_csv, tm_surr_left, tm_surr_right, s
 
     [3 rows x 26 columns]"""
 
-    df_hs = pd.read_excel(hydrophob_scale_path, skiprows=2)
-    df_hs.set_index("1aa", inplace=True)
-    df_hs.sort_index(inplace=True)
-    hs_arr = df_hs[scalename].as_matrix()
+    # DEPRECATED DUE TO PROBLEMS WITH LOCATING SETTINGS FILE IN DOCKER
+    # thoipapy_module_path = os.path.dirname(os.path.abspath(thoipapy.__file__))
+    # hydrophob_scale_path = os.path.join(thoipapy_module_path, "setting", "hydrophobicity_scales.xlsx")
+    # df_hs = pd.read_excel(hydrophob_scale_path, skiprows=2)
+    # df_hs.set_index("1aa", inplace=True)
+    # df_hs.sort_index(inplace=True)
+    # hs_arr = df_hs[scalename].as_matrix()
+
+    # hard-coded Engelman (GES) hydrophobicity scale
+    hs_arr = np.array([1.6,2.,-9.2,-8.2,3.7,1.,-3.,3.1,-8.8,2.8,3.4,-4.8,-0.2,-4.1,-12.3,0.6,1.2,2.6,1.9,-0.7])
 
     """The series should look like this for the Hessa scale. For speed, this is typically converted to a numpy array, sorted alphabetically according to the residue.
 

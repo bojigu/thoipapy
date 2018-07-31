@@ -15,7 +15,7 @@ setup(
     long_description=long_description,
     long_description_content_type='text/x-rst',
     url="https://github.com/bojigu/thoipapy",
-    download_url='https://github.com/bojigu/thoipapy/archive/0.0.1.tar.gz',
+    download_url='https://github.com/bojigu/thoipapy/archive/0.0.3.tar.gz',
     license='MIT',
     classifiers=
     [
@@ -26,7 +26,7 @@ setup(
     'Topic :: Scientific/Engineering :: Physics',
     'Topic :: Scientific/Engineering :: Bio-Informatics',
     ],
-    install_requires=["pandas", "numpy", "scipy", "biopython", "matplotlib", "seaborn", "django", "pytoxr","korbinian","statsmodels"],
+    install_requires=["pandas", "numpy", "scipy", "biopython", "matplotlib", "seaborn", "django", "pytoxr", "statsmodels", "scikit-learn"],
     project_urls=
     {
     'BoZeng': 'http://frishman.wzw.tum.de/index.php?id=50',
@@ -37,5 +37,5 @@ setup(
     keywords="bioinformatics protein transmembrane residue conservation coevolution covariance evolutionary "
              "couplings polarity hydrophobicity randomforest machinelearning interface LIPS evolution",
     packages=find_packages(),
-    version = "0.0.1",
+    version = "0.0.3",
     )

@@ -1,4 +1,4 @@
-![THOIPApy logo](thoipapy/docs/THOIPApy_logo.png)
+![THOIPApy logo](../docs/THOIPApy_logo.png)
 
 # THOIPApy
 THOIPApy is a program of Transmembrane HOmodimer Interface Prediction Algorithm (THOIPA) in python.

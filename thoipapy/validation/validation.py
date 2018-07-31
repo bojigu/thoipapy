@@ -68,9 +68,9 @@ def drop_cols_not_used_in_ML(logging, df_data, excel_file_with_settings, i=0):
         if len(unused_features_in_excel) > 1:
             logging.info("\nunused_features_in_excel, {}".format(unused_features_in_excel))
             if len(unused_features_in_excel) > 2:
-                logging.warning("There are more than two unused features in excel."
-                                 "The two unused features should only be 'TMDOCK_feature', 'PREDDIMER_feature'."
-                                 "Check variables tab of excel file!")
+                logging.warning("There are more than two unused features in the excel settings file. "
+                                "This is acceptable for standalone predictor, but otherwise the settings file "
+                                "might need to be checked.")
     # drop any features that are not labeled TRUE for inclusion
     features_df = features_df.loc[features_df.include == True]
     # filter df_data to only keep the desired feature columns

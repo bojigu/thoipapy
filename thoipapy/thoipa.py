@@ -6,16 +6,19 @@ import re
 import sys
 import unicodedata
 from io import StringIO
-
 import pandas as pd
 from django.utils.text import slugify
 from sklearn.externals import joblib
-
 import thoipapy
 import thoipapy.residue_properties as fc
 from thoipapy.homologues.NCBI_download import download_homologues_from_ncbi
 from thoipapy.homologues.NCBI_parser import parse_NCBI_xml_to_csv, extract_filtered_csv_homologues_to_alignments
 from thoipapy.validation.validation import drop_cols_not_used_in_ML
+from thoipapy.utils import normalise_between_2_values
+import seaborn as sns
+import numpy as np
+import matplotlib.pyplot as plt
+
 
 
 def run_THOIPA_prediction(protein_name, md5, TMD_seq, full_seq, out_dir):
@@ -60,45 +63,49 @@ def run_THOIPA_prediction(protein_name, md5, TMD_seq, full_seq, out_dir):
     #    sys.stdout.write("You shuld just email the results here.")
     #acc = md5[0:6]
     #out_dir = os.path.join(predictions_folder, md5)
-    
-    logfile = os.path.join(out_dir, "logfile.txt")
-    logging = thoipapy.common.setup_error_logging(logfile, "DEBUG", "DEBUG", print_system_info=False)
+
 
     ###################################################################################################
     #                                                                                                 #
     #                                     setup all file paths                                        #
     #                                                                                                 #
     ###################################################################################################
+    datafiles_dir = os.path.join(out_dir, "datafiles")
+    thoipapy.utils.make_sure_path_exists(datafiles_dir)
 
     # various residue features needs a protein folder as output
-    blast_xml_file = os.path.join(out_dir, "BLAST_results.xml")
+    blast_xml_file = os.path.join(datafiles_dir, "BLAST_results.xml")
     xml_txt = blast_xml_file[:-4] + "_details.txt"
-    xml_tar_gz = os.path.join(out_dir, "BLAST_results.xml.tar.gz")
-    BLAST_csv_tar = os.path.join(out_dir, "BLAST_results.csv.tar.gz")
-    fasta_all_TMD_seqs = os.path.join(out_dir,"homologues.redundant.fas")
-    path_uniq_TMD_seqs_for_PSSM_FREECONTACT = os.path.join(out_dir,"homologues.uniq.for_PSSM_FREECONTACT.txt")
-    path_uniq_TMD_seqs_no_gaps_for_LIPS = os.path.join(out_dir,"homologues.uniq.for_LIPS.txt")
-    path_uniq_TMD_seqs_surr5_for_LIPO = os.path.join(out_dir,"homologues.uniq.for_LIPO.txt")
-    pssm_csv = os.path.join(out_dir,"pssm.csv")
-    pssm_surr5_csv = os.path.join(out_dir,"pssm_surr5.csv")
-    lipo_csv = os.path.join(out_dir,"lipo.csv")
-    entropy_file = os.path.join(out_dir,"entropy.csv")
-    freecontact_file = os.path.join(out_dir,"freecontact_out.csv")
-    freecontact_parsed_csv = os.path.join(out_dir,"freecontact_parsed.csv")
-    relative_position_file = os.path.join(out_dir,"relative_position.csv")
-    LIPS_output_file = os.path.join(out_dir,"LIPS_output.csv")
-    LIPS_parsed_csv = os.path.join(out_dir,"LIPS_output_parsed.csv")
-    motifs_file = os.path.join(out_dir,  "motifs.csv")
-    full_seq_fasta_file = os.path.join(out_dir,  "protein.fasta")
-    full_seq_phobius_output_file = os.path.join(out_dir,  "protein.phobius")
-    feature_combined_file = os.path.join(out_dir, "features_combined.csv")
-    alignment_summary_csv = os.path.join(out_dir, "homologues.alignment_summary.csv")
-    THOIPA_full_out_csv = os.path.join(out_dir, "THOIPA_full_out.csv")
+    xml_tar_gz = os.path.join(datafiles_dir, "BLAST_results.xml.tar.gz")
+    BLAST_csv_tar = os.path.join(datafiles_dir, "BLAST_results.csv.tar.gz")
+    fasta_all_TMD_seqs = os.path.join(datafiles_dir,"homologues.redundant.fas")
+    path_uniq_TMD_seqs_for_PSSM_FREECONTACT = os.path.join(datafiles_dir,"homologues.uniq.for_PSSM_FREECONTACT.txt")
+    path_uniq_TMD_seqs_no_gaps_for_LIPS = os.path.join(datafiles_dir,"homologues.uniq.for_LIPS.txt")
+    path_uniq_TMD_seqs_surr5_for_LIPO = os.path.join(datafiles_dir,"homologues.uniq.for_LIPO.txt")
+    pssm_csv = os.path.join(datafiles_dir,"pssm.csv")
+    pssm_surr5_csv = os.path.join(datafiles_dir,"pssm_surr5.csv")
+    lipo_csv = os.path.join(datafiles_dir,"lipo.csv")
+    entropy_file = os.path.join(datafiles_dir,"entropy.csv")
+    freecontact_file = os.path.join(datafiles_dir,"freecontact_out.csv")
+    freecontact_parsed_csv = os.path.join(datafiles_dir,"freecontact_parsed.csv")
+    relative_position_file = os.path.join(datafiles_dir,"relative_position.csv")
+    LIPS_output_file = os.path.join(datafiles_dir,"LIPS_output.csv")
+    LIPS_parsed_csv = os.path.join(datafiles_dir,"LIPS_output_parsed.csv")
+    motifs_file = os.path.join(datafiles_dir,  "motifs.csv")
+    full_seq_fasta_file = os.path.join(datafiles_dir,  "protein.fasta")
+    full_seq_phobius_output_file = os.path.join(datafiles_dir,  "protein.phobius")
+    feature_combined_file = os.path.join(datafiles_dir, "features_combined.csv")
+    alignment_summary_csv = os.path.join(datafiles_dir, "homologues.alignment_summary.csv")
+    THOIPA_full_out_csv = os.path.join(datafiles_dir, "THOIPA_full_out.csv")
     THOIPA_pretty_out_xlsx = os.path.join(out_dir, "THOIPA_out.xlsx")
-    THOIPA_pretty_out_csv = os.path.join(out_dir, "THOIPA_out.csv")
+    THOIPA_pretty_out_txt = os.path.join(out_dir, "THOIPA_out.csv")
+    heatmap_path = os.path.join(out_dir, "heatmap.png")
+
+    logfile = os.path.join(out_dir, "logfile.txt")
+    logging = thoipapy.common.setup_error_logging(logfile, "DEBUG", "DEBUG", print_system_info=False)
 
     if os.path.isfile(THOIPA_full_out_csv):
-        sys.stdout.write("{} already analysed. Previous results will be overwritten.".format(protein_name))
+        logging.info("{} already analysed. Previous results will be overwritten.".format(protein_name))
 
     #logging.info("acc = md5[0:6] = {}".format(acc))
     #logging.shutdown()
@@ -268,13 +275,74 @@ def run_THOIPA_prediction(protein_name, md5, TMD_seq, full_seq, out_dir):
     df_pretty_out.set_index("residue number", inplace=True)
 
     df_out.to_csv(THOIPA_full_out_csv)
-    df_pretty_out.to_csv(THOIPA_pretty_out_csv, sep="\t")
+    df_pretty_out.to_csv(THOIPA_pretty_out_txt, sep="\t")
 
     # print exactly what the CSV looks like
     out = StringIO()
     df_pretty_out.to_csv(out, sep="\t")
-    sys.stdout.write(out.getvalue())
+    logging.info("\n\nTHOIPA homotypic TMD interface prediction:\n\n{}".format(out.getvalue()))
 
+
+    ###################################################################################################
+    #                                                                                                 #
+    #         Save a heatmap with THOIPA output, conservation, polarity, and coevolution              #
+    #                                                                                                 #
+    ###################################################################################################
+    fontsize = 12
+    tum_blue4_as_python_color = np.array([0, 82, 147]) / 255
+    cmap = sns.light_palette(tum_blue4_as_python_color, as_cmap=True)
+
+    cols_to_plot = ['THOIPA', 'conservation', 'relative_polarity', 'DImax']
+    cols_to_plot_renamed = ['THOIPA', 'conservation', 'relative polarity', 'coevolution']
+
+    # transpose dataframe so that "interface" etc is on the left
+    df = df_out[cols_to_plot]
+    df.columns = cols_to_plot_renamed
+    # start residue indexing from 1
+    df.index = df.index + 1
+
+    # normalise values so that they can all be plotted with same colour scheme and range of shading
+    df["THOIPA"] = normalise_between_2_values(df["THOIPA"], 0.15, 0.5, invert=False)
+    df["conservation"] = normalise_between_2_values(df["conservation"], 1.25, 3, invert=False)
+    df["relative polarity"] = normalise_between_2_values(df["relative polarity"], 0.5, 2.5, invert=False)
+
+    # transpose
+    df = df.T
+
+    """
+    IMPORTANT!!
+    The default fontsize controls the spacing between the subplots, EVEN IF THERE ARE NO TITLES or XLABELS!      
+    """
+    plt.rcParams['font.size'] = fontsize / 2
+
+    # create plot
+    fig, ax = plt.subplots(figsize=(16, 2))
+    # duplicate plot so it's possible to add label at top
+    ax2 = ax.twiny()
+
+    # create heatmap
+    sns.heatmap(df, ax=ax, cmap=cmap)
+
+    # format residue numbering at bottom
+    ax.set_xticklabels(df.columns, rotation=0, fontsize=fontsize)
+    ax.tick_params(axis="x", direction='out', pad=1.5, tick2On=False)
+    ax.set_xlabel("position in TMD", fontsize=fontsize)
+    ax.set_yticklabels(df.index, rotation=0, fontsize=fontsize)
+
+    # plot the same heatmap again, and format residue single-letter AA code at top
+    sns.heatmap(df, ax=ax2, cmap=cmap)
+    ax2.set_xlabel("{}, residue in TMD".format(protein_name), fontsize=fontsize)
+    ax2.set_xticks(ax.get_xticks())
+    ax2.xaxis.tick_top()
+    ax2.set_xticklabels(df_out.residue_name, fontsize=fontsize)
+    ax2.tick_params(axis="x", direction='out', pad=-0.1, tick2On=False)
+
+    plt.tight_layout()
+    fig.savefig(heatmap_path, dpi=240)
+    fig.savefig(heatmap_path[:-4] + ".pdf")
+    
+    logging.info("THOIPA standalone completed successfully.\n"
+                 "Output textfile : {}\nOutput heatmap : {}".format(THOIPA_pretty_out_txt, heatmap_path))
 
 def get_start_end_pl_surr(TMD_start, TMD_end, seqlen, surr):
     """Get start and end of TMD plus surrounding sequence

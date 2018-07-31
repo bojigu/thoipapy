@@ -7,7 +7,6 @@ from pytoxr.mathfunctions import residuals, sine_perfect_helix
 from scipy.optimize import leastsq
 from scipy.stats import ttest_ind
 from thoipapy.utils import create_colour_lists
-from korbinian.utils import aaa, pn
 
 def get_pivot_table_coev_data(s, i, XI, df_set):
     acc = df_set.loc[i, "acc"]
