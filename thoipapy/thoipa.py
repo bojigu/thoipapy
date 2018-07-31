@@ -355,7 +355,7 @@ if __name__ == "__main__":
     # convert protein_name to file-format-friendly text, without symbols etc, max 20 characters
     protein_name = slugify(input_ser["name"])[0:20]
     if protein_name != input_ser["name"]:
-        sys.stdout.write("\nprotein name slugified from {} to {}\n".format(input_ser["name"], protein_name))
+        sys.stdout.write("\nprotein name modified from {} to directory-folder-friendly {}\n".format(input_ser["name"], protein_name))
 
     input_ser["slugified_name"] = protein_name
 
