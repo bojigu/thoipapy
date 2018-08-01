@@ -1,0 +1,23 @@
+Scale taken from the Chimera docs. https://www.cgl.ucsf.edu/chimera/docs/UsersGuide/midas/hydrophob.html,,,,,,,,,,,,,,,
+,,"Kyte J, Doolittle RF. J Mol Biol. 1982 May 5;157(1):105-32.","Wimley WC, White SH. Nat Struct Biol. 1996 Oct;3(10):842-8.","Hessa T, Kim H, Bihlmaier K, Lundin C, Boekel J, Andersson H, Nilsson I, White SH, von Heijne G. Nature. 2005 Jan 27;433(7024):377-81","Elazar, A. A., Weinstein, J., Biran, I., Fridman, Y., Bibi, E., & Fleishman, S. J. (2016). Mutational scanning reveals the determinants of protein insertion and association energetics in the plasma membrane. Journal of Chemical Information and Modeling, 53(9), 1689–1699. http://doi.org/10.1017/CBO9781107415324.004",,,,,,,"Pilpel Y, Ben-Tal N, & Lancet D (1999) KPROT: A knowledge-based scale for the propensity of residue orientation in transmembrane segments. Application to membrane protein structure prediction11Edited by G. von Heijne. J. Mol. Biol. 294(4):921-935.","Pilpel Y, Ben-Tal N, & Lancet D (1999) KPROT: A knowledge-based scale for the propensity of residue orientation in transmembrane segments. Application to membrane protein structure prediction11Edited by G. von Heijne. J. Mol. Biol. 294(4):921-935.","Pilpel Y, Ben-Tal N, & Lancet D (1999) KPROT: A knowledge-based scale for the propensity of residue orientation in transmembrane segments. Application to membrane protein structure prediction11Edited by G. von Heijne. J. Mol. Biol. 294(4):921-935.","Pilpel Y, Ben-Tal N, & Lancet D (1999) KPROT: A knowledge-based scale for the propensity of residue orientation in transmembrane segments. Application to membrane protein structure prediction11Edited by G. von Heijne. J. Mol. Biol. 294(4):921-935."
+3aa,1aa,KyteDoolittle,Wimley,Hessa,Elazar,Hopp-Woods,Cornette,Eisenberg,Rose,Janin,Engelman(GES),kPROT_Extracellular,kPROT_Central,kPROT_Intracellular,kPROT_Both termini
+Ala,A,1.8,-0.17,0.11,0,-0.5,0.2,0.62,0.74,0.3,1.6,0.03,0.09,0.18,0.09
+Cys,C,2.5,0.24,-0.13,-0.12,-1,4.1,0.29,0.91,0.9,2,0.53,0.12,0.61,0.5
+Asp,D,-3.5,-1.23,3.49,1.54,3,-3.1,-0.9,0.62,-0.6,-9.2,1.35,1.1,1.23,0.73
+Glu,E,-3.5,-2.02,2.68,1.83,3,-1.8,-0.74,0.62,-0.7,-8.2,1.01,1.1,1.33,0.7
+Phe,F,2.8,1.13,-0.32,-1.63,-2.5,4.4,1.19,0.88,0.5,3.7,0.41,0.16,0.12,0.07
+Gly,G,-0.4,-0.01,0.74,1.58,0,0,0.48,0.72,0.3,1,0.02,0.05,0.33,0.23
+His,H,-3.2,-0.96,2.06,1.85,-0.5,0.5,-0.4,0.78,-0.1,-3,0.21,0.69,0.21,0.15
+Ile,I,4.5,0.31,-0.6,-1.57,-1.8,4.8,1.38,0.88,0.7,3.1,0.34,0.12,0.09,0.13
+Lys,K,-3.9,-0.99,2.71,1.51,3,-3.1,-1.5,0.52,-1.8,-8.8,0.85,0.56,0.66,0.46
+Leu,L,3.8,0.56,-0.55,-1.92,-1.8,5.7,1.06,0.85,0.5,2.8,0.11,0.26,0.17,0.09
+Met,M,1.9,0.23,-0.1,-0.8,-1.3,4.2,0.64,0.85,0.4,3.4,0.28,0.39,0.32,0.22
+Asn,N,-3.5,-0.42,2.05,1.28,0.2,-0.5,-0.78,0.63,-0.5,-4.8,0.69,1.11,0.75,0.38
+Pro,P,-1.6,-0.45,2.23,1.87,0,-2.2,0.12,0.64,-0.3,-0.2,0.16,0.66,0.75,0.37
+Gln,Q,-3.5,-0.58,2.36,0.97,0.2,-2.8,-0.85,0.62,-0.7,-4.1,0.78,0.83,0.39,0.33
+Arg,R,-4.5,-0.81,2.58,0.79,3,1.4,-2.53,0.64,-1.4,-12.3,0.53,0.84,0.44,0.4
+Ser,S,-0.8,-0.13,0.84,0.09,0.3,-0.5,-0.18,0.66,-0.1,0.6,0.11,0.22,0.41,0.21
+Thr,T,-0.7,-0.14,0.52,0.83,-0.4,-1.9,-0.05,0.7,-0.2,1.2,0.03,0.03,0.43,0
+Val,V,4.2,-0.07,-0.31,-0.6,-1.5,4.7,1.08,0.86,0.6,2.6,0.27,0.31,0,0.11
+Trp,W,-0.9,1.85,0.3,-0.35,-3.4,1,0.81,0.85,0.3,1.9,0.25,0.65,0.29,0.16
+Tyr,Y,-1.3,0.94,0.68,0.84,-2.3,3.2,0.26,0.76,-0.4,-0.7,0.18,0.7,0.26,0.23

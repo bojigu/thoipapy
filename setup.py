@@ -37,5 +37,32 @@ setup(
     keywords="bioinformatics protein transmembrane residue conservation coevolution covariance evolutionary "
              "couplings polarity hydrophobicity randomforest machinelearning interface LIPS evolution",
     packages=find_packages(),
+    # datafiles MUST be included, either as "modules" or as package directories..
+    package_dir={'thoipapy': 'thoipapy'},
+    package_data={'': ['*.txt', '*.xlsx', '*.csv', '*.lpkl']}, # If any package contains *.txt or *.rst files, include them:
+    include_package_data = True,
     version = "0.0.4",
     )
+
+
+"""
+https://docs.python.org/3.7/distutils/setupscript.html
+
+setup.py
+src/
+    mypkg/
+        __init__.py
+        module.py
+        data/
+            tables.dat
+            spoons.dat
+            forks.dat
+            
+            
+setup(...,
+      packages=['mypkg'],
+      package_dir={'mypkg': 'src/mypkg'},
+      package_data={'mypkg': ['data/*.dat']},
+      )  
+        
+"""
