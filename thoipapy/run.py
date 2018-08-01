@@ -22,7 +22,7 @@ import os
 import platform
 import sys
 import pandas as pd
-import thoipapy.validation.validation
+import thoipapy
 
 parser = argparse.ArgumentParser()
 
@@ -107,8 +107,8 @@ if __name__ == "__main__":
             #thoipapy.figs.retrospective.calc_retrospective_coev_from_list_interf_res(s, dfset, logging)
             thoipapy.figs.retrospective.calc_retrospective_coev_from_struct_contacts(s, dfset, logging)
 
-        if s["calc_NMR_closedist"] :
-            thoipapy.structures.deprecated.NMR_data.calc_closedist_from_NMR_best_model(s)
+        #if s["calc_NMR_closedist"] :
+        #    thoipapy.structures.deprecated.NMR_data.calc_closedist_from_NMR_best_model(s)
 
         if s["Atom_Close_Dist"]:
             infor = thoipapy.closest_heavy_atom_dist.homodimer_residue_closedist_calculate_from_complex(thoipapy, s, logging)
@@ -261,9 +261,9 @@ if __name__ == "__main__":
         if s["create_ROC_4predictors"] == True:
             thoipapy.validation.indiv_validation.create_ROC_comp_4predictors(s, df_set, logging)
 
-        if s["create_AUC_AUBOC_separate_database"] == True:
-            thoipapy.other.validation_deprecated.validation_test_train_deprecated.create_AUBOC10_4predictors_3databases_figs(s, df_set, logging)
-            thoipapy.other.validation_deprecated.validation_test_train_deprecated.create_AUC_4predictors_3databases_figs(s, df_set, logging)
+        #if s["create_AUC_AUBOC_separate_database"] == True:
+        #    thoipapy.other.validation_deprecated.validation_test_train_deprecated.create_AUBOC10_4predictors_3databases_figs(s, df_set, logging)
+        #    thoipapy.other.validation_deprecated.validation_test_train_deprecated.create_AUC_4predictors_3databases_figs(s, df_set, logging)
 
         if "download_10_homologues_from_ncbi" in s:
             if s["download_10_homologues_from_ncbi"] == True:
@@ -277,6 +277,9 @@ if __name__ == "__main__":
         if s["ROC_PR_val_all_residues_combined"]:
             thoipapy.validation.validation.create_ROC_all_residues(s, df_set, logging)
             thoipapy.validation.validation.create_precision_recall_all_residues(s, df_set, logging)
+
+        thoipapy.setting.deployment_helper.docker_deployment_had_better_work_now()
+        thoipapy.ML_model.deployment_helper2.docker_deployment_had_better_work_now2()
 
         # close the logger. A new one will be made for the next protein list.
         logging.info("FINISHED PROCESSING OF {}.".format(setname))

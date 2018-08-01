@@ -15,7 +15,7 @@ setup(
     long_description=long_description,
     long_description_content_type='text/x-rst',
     url="https://github.com/bojigu/thoipapy",
-    download_url='https://github.com/bojigu/thoipapy/archive/0.0.4.tar.gz',
+    download_url='https://github.com/bojigu/thoipapy/archive/0.2.6.tar.gz',
     license='MIT',
     classifiers=
     [
@@ -39,9 +39,11 @@ setup(
     packages=find_packages(),
     # datafiles MUST be included, either as "modules" or as package directories..
     package_dir={'thoipapy': 'thoipapy'},
-    package_data={'': ['*.txt', '*.xlsx', '*.csv', '*.lpkl']}, # If any package contains *.txt or *.rst files, include them:
+    package_data={'': ['*.txt', '*.xlsx', '*.csv', '*.lpkl'],# In theory f any package contains *.txt etc files, include them. Doesn't seem to work, though.
+                  'ML_model': ['*.lpkl'],
+                  'setting': ['*.txt', '*.xlsx', '*.csv', '*.lpkl']},
     include_package_data = True,
-    version = "0.0.4",
+    version = "0.2.6",
     )
 
 
