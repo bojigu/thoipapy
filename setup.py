@@ -15,7 +15,7 @@ setup(
     long_description=long_description,
     long_description_content_type='text/x-rst',
     url="https://github.com/bojigu/thoipapy",
-    download_url='https://github.com/bojigu/thoipapy/archive/0.0.3.tar.gz',
+    download_url='https://github.com/bojigu/thoipapy/archive/0.0.4.tar.gz',
     license='MIT',
     classifiers=
     [
@@ -37,5 +37,5 @@ setup(
     keywords="bioinformatics protein transmembrane residue conservation coevolution covariance evolutionary "
              "couplings polarity hydrophobicity randomforest machinelearning interface LIPS evolution",
     packages=find_packages(),
-    version = "0.0.3",
+    version = "0.0.4",
     )

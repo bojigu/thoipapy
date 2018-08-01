@@ -21,11 +21,8 @@ import argparse
 import os
 import platform
 import sys
-
 import pandas as pd
-
-# read the command line arguments
-import thoipapy.other.validation_deprecated.validation_test_train_deprecated
+import thoipapy.validation.validation
 
 parser = argparse.ArgumentParser()
 
@@ -278,8 +275,8 @@ if __name__ == "__main__":
                 thoipapy.figs.retrospective.plot_coev_vs_res_dist(s, logging)
 
         if s["ROC_PR_val_all_residues_combined"]:
-            thoipapy.residue_properties.create_ROC_all_residues(s, df_set, logging)
-            thoipapy.residue_properties.create_precision_recall_all_residues(s, df_set, logging)
+            thoipapy.validation.validation.create_ROC_all_residues(s, df_set, logging)
+            thoipapy.validation.validation.create_precision_recall_all_residues(s, df_set, logging)
 
         # close the logger. A new one will be made for the next protein list.
         logging.info("FINISHED PROCESSING OF {}.".format(setname))
