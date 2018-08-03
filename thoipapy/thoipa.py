@@ -428,7 +428,7 @@ if __name__ == "__main__":
         # process every input file in the args.d input folder
         input_dir = Path(args.d)
         infile_names = glob.glob(os.path.join(input_dir, "*.txt"))
-        infile_list = [input_dir.joinpath(file) for file in infile_names]
+        infile_list = [file for file in infile_names]
         if args.f:
             output_dir = Path(args.f)
         else:
