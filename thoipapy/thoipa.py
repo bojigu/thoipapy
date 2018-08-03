@@ -395,8 +395,8 @@ def get_md5_checksum(TMD_seq, full_seq):
 parser = argparse.ArgumentParser()
 
 parser.add_argument("-d",  # "-directory",
-                    help=r'Full path to your input directory that contains csv files (e.g. Q12983.txt) with protein sequences for analysis'
-                         r'E.g. "\Path\to\your\file\Q12983.txt"')
+                    help=r'Full path to your input directory that contains csv files (e.g. /input containing input/Q12983.txt and input/P13983.txt) with protein sequences for analysis'
+                         r'E.g. "\Path\to\your\file\input"')
 parser.add_argument("-i",  # "-input_file",
                     help=r'Full path to your input file with name, TMD_seq, and full_seq.'
                          r'E.g. "\Path\to\your\file\Q12983.txt"')
