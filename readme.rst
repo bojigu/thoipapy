@@ -9,6 +9,11 @@ THOIPA predicts TM homodimer interface residues from evolutionary sequence infor
 
 THOIPA was designed to complement experimental approaches, and also energy-based modelling of TM homodimers.
 
+See the `FAQ`__ in the THOIPA wiki for more information.
+
+.. _FAQ: https://github.com/bojigu/thoipapy/wiki/What-is-THOIPA%3F
+__ FAQ_
+
 What does thoipapy do?
 ----------------------
 
@@ -25,11 +30,11 @@ Installation
 
     pip install thoipapy
 
-THOIPA standalone can be currently installed on Linux.
+THOIPA has external dependencies such as FreeContact and Phobius that are only working on Linux.
 
-A version of THOIPA in a docker container is in development.
-
-See `Wiki`__ for full details.
+Use the "Docker" implementation detailed in the `Wiki`__ to:
+* run THOIPA standalone on platforms such as Windows or MacOS
+* run THOIPA standalone on Linux without installing the dependencies on your system
 
 .. _Wiki: https://github.com/bojigu/thoipapy/wiki
 __ Wiki_
@@ -68,15 +73,16 @@ THOIPA can also be installed in Linux and used as a standalone predictor:
 
 .. code:: python
 
-    import thoipapy
+    from thoipapy.thoipa import get_md5_checksum, run_THOIPA_prediction
+    from thoipapy.utils import make_sure_path_exists
+
     protein_name = "ERBB3"
     TMD_seq = "MALTVIAGLVVIFMMLGGTFL"
     full_seq = "MVQNECRPCHENCTQGCKGPELQDCLGQTLVLIGKTHLTMALTVIAGLVVIFMMLGGTFLYWRGRRIQNKRAMRRYLERGESIEPLDPSEKANKVLA"
-    predictions_folder = "/path/to/your/output/folder"
-    blastp_executable = "blastp"
-    phobius_executable = "phobius"
-    freecontact_executable = "freecontact"
-    thoipapy.run_THOIPA_prediction(protein_name, TMD_seq, full_seq, predictions_folder, phobius_executable, freecontact_executable)
+    out_dir = "/path/to/your/desired/output/folder"
+    make_sure_path_exists(out_dir)
+    md5 = get_md5_checksum(TMD_seq, full_seq)
+    run_THOIPA_prediction(protein_name, md5, TMD_seq, full_seq, out_dir)
 
 **Example Output**
 
