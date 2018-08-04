@@ -424,23 +424,31 @@ if __name__ == "__main__":
     # get the command-line arguments
     args = parser.parse_args()
 
-    if "d" in args:
+
+    if args.d is not None:
         # process every input file in the args.d input folder
         input_dir = Path(args.d)
         infile_names = glob.glob(os.path.join(input_dir, "*.txt"))
         infile_list = [file for file in infile_names]
-        if args.f:
-            output_dir = Path(args.f)
-        else:
-            output_dir = Path(os.path.split(input_dir)[0]).joinpath("output")
-            if not output_dir.is_dir():
-                os.makedirs(output_dir)
-    elif "i" in args:
+    elif args.i is not None:
         # process only a single input file
         infile_list = [Path(args.i)]
-    else:
-        raise ValueError("Please include either an input directory of files to process (-d directory),"
+    elif args.d is not None and args.i is not None:
+        raise ValueError("Please include either an input directory of files to process (-d D:\data),"
                          "or an input file (-i D:\data\Q12983.txt), but not both.")
+    else:
+        raise ValueError("Input error. The command should include an input directory of files to process (-d directory),"
+                         "or an input file (-i D:\data\Q12983.txt).")
+
+    # use the output directory given as -f
+    # or Q
+    if args.f is not None:
+        output_dir = Path(args.f)
+    else:
+        output_dir = Path(os.path.split(input_dir)[0]).joinpath("output")
+        if not output_dir.is_dir():
+            os.makedirs(output_dir)
+
 
     for input_csv in infile_list:
         # extract name and sequences from input csv
