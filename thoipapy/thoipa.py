@@ -22,7 +22,7 @@ import glob
 from pathlib import Path
 
 
-def run_THOIPA_prediction(protein_name, md5, TMD_seq, full_seq, out_dir):
+def run_THOIPA_prediction(protein_name, md5, TMD_seq, full_seq, out_dir, create_heatmap=True, set_number=5):
     """Function to run standalone THOIPA prediction for a protein transmembrane domain of interest.
 
     Parameters
@@ -49,14 +49,14 @@ def run_THOIPA_prediction(protein_name, md5, TMD_seq, full_seq, out_dir):
     predictions_folder = "/path/to/your/output/folder"
     thoipapy.run_THOIPA_prediction(protein_name, TMD_seq, full_seq, predictions_folder)
     """
-    # default model is the combined ETRA, NMR, crystal non-redundant dataset (set05)
-    set_number = 5
+
+    ## default model is the combined ETRA, NMR, crystal non-redundant dataset (set05)
+    #set_number = 5
 
     # create settings dict from xlsx file
     thoipapy_module_path = os.path.dirname(os.path.abspath(thoipapy.__file__))
     settings_path = os.path.join(thoipapy_module_path, "setting", "thoipapy_standalone_run_settings.xlsx")
     s = thoipapy.common.create_settingdict(settings_path)
-
 
     #folder_with_md5_exists = False
     #if folder_with_md5_exists:
@@ -104,6 +104,8 @@ def run_THOIPA_prediction(protein_name, md5, TMD_seq, full_seq, out_dir):
 
     logfile = os.path.join(out_dir, "logfile.txt")
     logging = thoipapy.common.setup_error_logging(logfile, "DEBUG", "DEBUG", print_system_info=False)
+
+    logging.info("Starting THOIPA standalone prediction for {}.".format(protein_name))
 
     if os.path.isfile(THOIPA_full_out_csv):
         logging.info("{} already analysed. Previous results will be overwritten.".format(protein_name))
@@ -283,67 +285,69 @@ def run_THOIPA_prediction(protein_name, md5, TMD_seq, full_seq, out_dir):
     df_pretty_out.to_csv(out, sep="\t")
     logging.info("\n\nTHOIPA homotypic TMD interface prediction:\n\n{}".format(out.getvalue()))
 
+    if create_heatmap:
 
-    ###################################################################################################
-    #                                                                                                 #
-    #         Save a heatmap with THOIPA output, conservation, polarity, and coevolution              #
-    #                                                                                                 #
-    ###################################################################################################
-    fontsize = 12
-    tum_blue4_as_python_color = np.array([0, 82, 147]) / 255
-    cmap = sns.light_palette(tum_blue4_as_python_color, as_cmap=True)
+        ###################################################################################################
+        #                                                                                                 #
+        #         Save a heatmap with THOIPA output, conservation, polarity, and coevolution              #
+        #                                                                                                 #
+        ###################################################################################################
+        fontsize = 12
+        tum_blue4_as_python_color = np.array([0, 82, 147]) / 255
+        cmap = sns.light_palette(tum_blue4_as_python_color, as_cmap=True)
 
-    cols_to_plot = ['THOIPA', 'conservation', 'relative_polarity', 'DImax']
-    cols_to_plot_renamed = ['THOIPA', 'conservation', 'relative polarity', 'coevolution']
+        cols_to_plot = ['THOIPA', 'conservation', 'relative_polarity', 'DImax']
+        cols_to_plot_renamed = ['THOIPA', 'conservation', 'relative polarity', 'coevolution']
 
-    # transpose dataframe so that "interface" etc is on the left
-    df = df_out[cols_to_plot]
-    df.columns = cols_to_plot_renamed
-    # start residue indexing from 1
-    df.index = df.index + 1
+        # transpose dataframe so that "interface" etc is on the left
+        df = df_out[cols_to_plot]
+        df.columns = cols_to_plot_renamed
+        # start residue indexing from 1
+        df.index = df.index + 1
 
-    # normalise values so that they can all be plotted with same colour scheme and range of shading
-    df["THOIPA"] = normalise_between_2_values(df["THOIPA"], 0.15, 0.5, invert=False)
-    df["conservation"] = normalise_between_2_values(df["conservation"], 1.25, 3, invert=False)
-    df["relative polarity"] = normalise_between_2_values(df["relative polarity"], 0.5, 2.5, invert=False)
+        # normalise values so that they can all be plotted with same colour scheme and range of shading
+        df["THOIPA"] = normalise_between_2_values(df["THOIPA"], 0.15, 0.5, invert=False)
+        df["conservation"] = normalise_between_2_values(df["conservation"], 1.25, 3, invert=False)
+        df["relative polarity"] = normalise_between_2_values(df["relative polarity"], 0.5, 2.5, invert=False)
 
-    # transpose
-    df = df.T
+        # transpose
+        df = df.T
 
-    """
-    IMPORTANT!!
-    The default fontsize controls the spacing between the subplots, EVEN IF THERE ARE NO TITLES or XLABELS!      
-    """
-    plt.rcParams['font.size'] = fontsize / 2
+        """
+        IMPORTANT!!
+        The default fontsize controls the spacing between the subplots, EVEN IF THERE ARE NO TITLES or XLABELS!      
+        """
+        plt.rcParams['font.size'] = fontsize / 2
 
-    # create plot
-    fig, ax = plt.subplots(figsize=(16, 2))
-    # duplicate plot so it's possible to add label at top
-    ax2 = ax.twiny()
+        # create plot
+        fig, ax = plt.subplots(figsize=(16, 2))
+        # duplicate plot so it's possible to add label at top
+        ax2 = ax.twiny()
 
-    # create heatmap
-    sns.heatmap(df, ax=ax, cmap=cmap)
+        # create heatmap
+        sns.heatmap(df, ax=ax, cmap=cmap)
 
-    # format residue numbering at bottom
-    ax.set_xticklabels(df.columns, rotation=0, fontsize=fontsize)
-    ax.tick_params(axis="x", direction='out', pad=1.5, tick2On=False)
-    ax.set_xlabel("position in TMD", fontsize=fontsize)
-    ax.set_yticklabels(df.index, rotation=0, fontsize=fontsize)
+        # format residue numbering at bottom
+        ax.set_xticklabels(df.columns, rotation=0, fontsize=fontsize)
+        ax.tick_params(axis="x", direction='out', pad=1.5, tick2On=False)
+        ax.set_xlabel("position in TMD", fontsize=fontsize)
+        ax.set_yticklabels(df.index, rotation=0, fontsize=fontsize)
 
-    # plot the same heatmap again, and format residue single-letter AA code at top
-    sns.heatmap(df, ax=ax2, cmap=cmap)
-    ax2.set_xlabel("{}, residue in TMD".format(protein_name), fontsize=fontsize)
-    ax2.set_xticks(ax.get_xticks())
-    ax2.xaxis.tick_top()
-    ax2.set_xticklabels(df_out.residue_name, fontsize=fontsize)
-    ax2.tick_params(axis="x", direction='out', pad=-0.1, tick2On=False)
+        # plot the same heatmap again, and format residue single-letter AA code at top
+        sns.heatmap(df, ax=ax2, cmap=cmap)
+        ax2.set_xlabel("{}, residue in TMD".format(protein_name), fontsize=fontsize)
+        ax2.set_xticks(ax.get_xticks())
+        ax2.xaxis.tick_top()
+        ax2.set_xticklabels(df_out.residue_name, fontsize=fontsize)
+        ax2.tick_params(axis="x", direction='out', pad=-0.1, tick2On=False)
 
-    plt.tight_layout()
-    fig.savefig(heatmap_path, dpi=240)
-    fig.savefig(heatmap_path[:-4] + ".pdf")
-    
-    logging.info("THOIPA standalone completed successfully.\n"
-                 "Output textfile : {}\nOutput heatmap : {}".format(THOIPA_pretty_out_txt, heatmap_path))
+        plt.tight_layout()
+        fig.savefig(heatmap_path, dpi=240)
+        fig.savefig(heatmap_path[:-4] + ".pdf")
+        logging.info("Output heatmap : {}".format(heatmap_path))
+
+    logging.info("Output file : {}\n"
+                 "THOIPA standalone completed successfully for {}.\n\n".format(THOIPA_pretty_out_xlsx, protein_name))
 
 def get_start_end_pl_surr(TMD_start, TMD_end, seqlen, surr):
     """Get start and end of TMD plus surrounding sequence
