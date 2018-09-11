@@ -1046,6 +1046,8 @@ def parse_freecontact_coevolution(acc, freecontact_file, freecontact_parsed_csv,
         new_column_names = pd.Series(df_out.columns).str.replace("XI", XI)
         df_out.columns = new_column_names
 
+    #"""
+
     # normalise all columns except for residue_num and residue_name
     column_list = ["residue_num", "residue_name"]
     coev_colname_list = df_out.columns.tolist()[len(column_list):]
@@ -1066,7 +1068,7 @@ def parse_freecontact_coevolution(acc, freecontact_file, freecontact_parsed_csv,
         # ASSUME NORMALISED VALUES ARE TO BE USED IN ALL CASES
         df_out["{}_nonnorm".format(col)] = df_out[col]
         df_out[col] = normalise_0_1(df_out[col])[0]
-
+    #"""
 
     df_out.to_csv(freecontact_parsed_csv)
 

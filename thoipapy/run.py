@@ -14,8 +14,8 @@ Purpose:        Self-interacting single-pass membrane protein interface residues
 """
 # I'm getting sick of the warnings that occur due to imported seaborn and statsmodels.stats.api modules, and have nothing to do with your code.
 # you should turn on warnings once a month to check if there is anything related to your code
-#import warnings
-#warnings.filterwarnings("ignore")
+import warnings
+warnings.filterwarnings("ignore")
 
 import argparse
 import os
@@ -251,8 +251,8 @@ if __name__ == "__main__":
         if s["run_indiv_validation_each_TMD"] == True:
             namedict = thoipapy.utils.create_namedict(os.path.join(s["dropbox_dir"], "protein_names.xlsx"))
             THOIPA_predictor_name = "THOIPA_{}_LOO".format(s["set_number"])
-            predictor_name_list = [THOIPA_predictor_name, "PREDDIMER", "TMDOCK", "LIPS_surface_ranked"]
-            #thoipapy.validation.indiv_validation.collect_indiv_validation_data(s, df_set, logging, namedict, predictor_name_list, THOIPA_predictor_name)
+            predictor_name_list = [THOIPA_predictor_name, "PREDDIMER", "TMDOCK", "LIPS_surface_ranked", "random"]
+            thoipapy.validation.indiv_validation.collect_indiv_validation_data(s, df_set, logging, namedict, predictor_name_list, THOIPA_predictor_name)
             thoipapy.validation.indiv_validation.create_indiv_validation_figs(s, logging, namedict, predictor_name_list, THOIPA_predictor_name)
 
         if s["create_merged_heatmap"] == True:

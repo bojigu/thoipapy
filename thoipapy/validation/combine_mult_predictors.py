@@ -1,7 +1,7 @@
 import os
 import pandas as pd
+import numpy as np
 import thoipapy
-
 
 def merge_predictions(s, df_set, logging):
     """Combines all available predictions for a particular testset.
@@ -92,9 +92,18 @@ def merge_predictions(s, df_set, logging):
                 dfm = pd.concat([dfm, df], axis=1, join="outer")
 
                 n_files_merged += 1
+
         # keep the desired columns
         new_columns_kept_in_combined_file = list(set(columns_kept_in_combined_file).intersection(set(dfm.columns)))
         dfm = dfm[new_columns_kept_in_combined_file]
+
+        # add a completely random "prediction"
+        interf_score = dfm.interface_score.dropna().copy()
+        dfm.loc[interf_score.index, "random"] = np.random.rand(len(interf_score))
+        # NOT RECOMMENDED, AS HEAVY ATOM DIST IS OPPOSITE OF DISRUPTION
+        #dfm.loc[interf_score.index, "random"] = shuffle(interf_score.as_matrix())
+
         # save to "Merged" folder, so as not to get confused with the "combined" files
         dfm.to_csv(merged_data_csv_path)
+
         logging.info("{} predictions combined. n_files_merged : {}. ({})".format(acc, n_files_merged, merged_data_csv_path))

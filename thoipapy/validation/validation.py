@@ -1245,6 +1245,7 @@ def save_fig_precision_recall_all_residues(s, df, all_res_precision_recall_png, 
 
         output_dict[predictor] = {"precision" : list(precision), "recall" : list(recall), "pred_auc" : pred_auc}
     ax.grid(False)
+
     ax.set_xlabel("recall", fontsize=fontsize)
     ax.set_ylabel("precision", fontsize=fontsize)
     ax.legend(fontsize=fontsize)

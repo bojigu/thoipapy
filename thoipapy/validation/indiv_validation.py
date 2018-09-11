@@ -94,6 +94,7 @@ def collect_indiv_validation_data(s, df_set, logging, namedict, predictor_name_l
             fpr, tpr, thresholds = roc_curve(df_for_roc.interface, df_for_roc[predictor_name], drop_intermediate=False)
 
             precision, recall, thresholds_PRC = precision_recall_curve(df_for_roc.interface, df_for_roc[predictor_name])
+
             pr_auc = auc(recall, precision)
             PR_AUC_dict[acc_db] = pr_auc
 
@@ -219,6 +220,7 @@ def create_indiv_validation_figs(s, logging, namedict, predictor_name_list, THOI
     mean_ROC_AUC_barchart_png = os.path.join(indiv_validation_dir, "mean_ROC_AUC_barchart.png")
     mean_PR_AUC_barchart_png = os.path.join(indiv_validation_dir, "mean_PR_AUC_barchart.png")
     ROC_AUC_vs_PR_AUC_scatter_png = os.path.join(indiv_validation_dir, "ROC_AUC_vs_PR_AUC_scatter.png")
+    linechart_perc_interf_vs_PR_cutoff_png = os.path.join(indiv_validation_dir, "linechart_perc_interf_vs_PR_cutoff.png")
 
     ROC_AUC_df = pd.read_excel(indiv_validation_data_xlsx, sheetname="ROC_AUC_indiv")
     PR_AUC_df = pd.read_excel(indiv_validation_data_xlsx, sheetname="PR_AUC_indiv")
@@ -235,7 +237,53 @@ def create_indiv_validation_figs(s, logging, namedict, predictor_name_list, THOI
     create_mean_PR_AUC_barchart(PR_AUC_df, mean_PR_AUC_barchart_png)
 
     create_scatter_ROC_AUC_vs_PR_AUC(s, predictor_name_list, ROC_AUC_vs_PR_AUC_scatter_png)
+
+    create_linechart_perc_interf_vs_PR_cutoff(s, predictor_name_list, linechart_perc_interf_vs_PR_cutoff_png)
+
+
     logging.info("finished run_indiv_validation_THOIPA_PREDDIMER_TMDOCK")
+
+
+def precision_recall_curve_rises_above_threshold(precision, recall, threshold=0.5):
+    """Determines whether the PR curve rises above a threshold P and R value at any point.
+
+    BOTH precision and recall need to simultaneously be above the threshold at some stage, for
+    the result to be True.
+
+    Validation inspired by Lensink, M. F., & Wodak, S. J. (2010). Blind predictions of protein interfaces
+    by docking calculations in CAPRI. Proteins: Structure, Function and Bioinformatics, 78(15), 3085–3095.
+    https://doi.org/10.1002/prot.22850
+
+    Parameters
+    ----------
+    precision : np.ndarray
+        array of precision values in precision-recall curve
+    recall : np.ndarray
+        array of recall values in precision-recall curve
+    threshold : float
+        minimum value that has to be attained by BOTH precision and recall
+
+    Returns
+    -------
+    PR_ rises_above_threshold : boolean
+        whether the thresholds were exceeded at any stage in the curve
+
+    Usage
+    -----
+    precision, recall, thresholds_PRC = precision_recall_curve(true_interface, prediction)
+    PR_rises_above_threshold = precision_recall_curve_rises_above_threshold(precision, recall)
+    """
+    df_pr = pd.DataFrame()
+    df_pr["precision"] = precision
+    df_pr["recall"] = recall
+    df_pr = df_pr > threshold
+    df_pr = df_pr.all(axis=1)
+    if True in df_pr.tolist():
+        PR_rises_above_threshold = True
+    else:
+        PR_rises_above_threshold = False
+    return PR_rises_above_threshold
+
 
 def create_scatter_ROC_AUC_vs_PR_AUC(s, predictor_name_list, ROC_AUC_vs_PR_AUC_scatter_png):
 
@@ -391,9 +439,9 @@ def create_PR_AUC_barchart(PR_AUC_df, indiv_PR_AUC_barchart_png, namedict, THOIP
         if "ETRA" in i:
             PR_AUC_df.loc[i, "sort_list"] = 0
 
-    PR_AUC_df.sort_values(['sort_list', 'THOIPA_5_LOO'], ascending=[True, False], inplace=True)
+    PR_AUC_df.sort_values(['sort_list', THOIPA_predictor_name], ascending=[True, False], inplace=True)
 
-    PR_AUC_df.rename(columns=lambda x: x.replace('THOIPA_5_LOO', 'THOIPA'), inplace=True)
+    PR_AUC_df.rename(columns=lambda x: x.replace(THOIPA_predictor_name, 'THOIPA'), inplace=True)
     PR_AUC_df.rename(columns=lambda x: x.replace('LIPS_surface_ranked', 'LIPS'), inplace=True)
 
     PR_AUC_df.drop(['LIPS', "sort_list"], axis=1, inplace=True)
@@ -724,3 +772,155 @@ def create_ROC_comp_4predictors(s, df_set, logging):
     df_tpr = pd.DataFrame.from_records(list(map(list, zip(*mean_tpr_list))),
                                        columns=prediction_name_list)
     df_tpr.to_csv(ROC_4predictor_csv)
+
+def create_linechart_perc_interf_vs_PR_cutoff(s, predictor_name_list, linechart_perc_interf_vs_PR_cutoff_png):
+    """ Create linechart (and barchart) showing percentage of interface residues correctly predicted, according
+    to precision-recall cutoffs.
+
+    Parameters
+    ----------
+    s : dict
+        Settings dictionary
+    predictor_name_list : list
+        List of predictors to include in plot
+    linechart_perc_interf_vs_PR_cutoff_png : str
+        Linechart path
+
+    Returns
+    -------
+
+    """
+
+    #######################################################################################################
+    #                                                                                                     #
+    #                            Linechart at various precision-recall cutoffs                            #
+    #                                                                                                     #
+    #######################################################################################################
+
+    plt.rcParams.update(plt.rcParamsDefault)
+    df_PR_cutoff_all = pd.DataFrame()
+
+    # list of cutoffs to plot on x-axis
+    cutoff_list = np.arange(0.1, 0.95, 0.05)
+
+    fig, ax = plt.subplots(figsize=(3.42, 3.42))
+    for predictor_name in predictor_name_list:
+
+        result_dict = {}
+
+        auc_pkl = os.path.join(s["thoipapy_data_folder"], "Results", s["setname"], "indiv_validation", predictor_name, "ROC_AUC_data.pkl")
+        with open(auc_pkl, "rb") as f:
+            xv_dict = pickle.load(f)
+
+        for acc_db in xv_dict:
+            precision = xv_dict[acc_db]["precision"]
+            recall = xv_dict[acc_db]["recall"]
+            result_list = []
+            for cutoff in cutoff_list:
+                PR_rises_above_threshold = precision_recall_curve_rises_above_threshold(precision, recall, threshold=cutoff)
+                result_list.append(PR_rises_above_threshold)
+            result_dict[acc_db] = result_list
+
+        df_cutoffs = pd.DataFrame(result_dict, index = cutoff_list)
+        # save percentage of TMDs that exceeds cutoff
+        df_PR_cutoff_all[predictor_name] = df_cutoffs.sum(axis=1) / df_cutoffs.shape[1]
+
+
+    THOIPA_name = [x for x in predictor_name_list if "THOIPA" in x][0]
+    df_PR_cutoff_all.columns = pd.Series(df_PR_cutoff_all.columns).replace(THOIPA_name, "THOIPA")
+
+    # round index so values at index 0.5 can be identified
+    df_PR_cutoff_all.index = pd.Series(df_PR_cutoff_all.index).round(2)
+
+    colour_dict = {"THOIPA" : "#E95D12", "TMDOCK" : "#0065BD", "PREDDIMER" : "k", "random" : "grey"}
+    colour_list = ["#E95D12","#0065BD","k","grey"]
+    fontsize = 8
+    linewidth = 0.7
+    #
+    cols = ['THOIPA', 'TMDOCK','PREDDIMER','random']
+    #df_PR_cutoff_all = df_PR_cutoff_all.reindex(columns = cols)
+    #df_PR_cutoff_all.plot(ax=ax, color=colour_list, linestyle=linestyle_list)
+    for col in cols:
+        # set dotted line for random
+        if col == "random":
+            linestyle = "--"
+        else:
+            linestyle = "-"
+
+        ax.plot(df_PR_cutoff_all.index, df_PR_cutoff_all[col], linestyle=linestyle, color=colour_dict[col], linewidth=linewidth, label=col)
+
+
+    # general properties
+    ax.grid(False)
+    ax.set_facecolor('white')
+    plt.rcParams["axes.edgecolor"] = "k"
+    plt.rcParams["axes.linewidth"] = 0.4
+    fig.patch.set_visible(True)
+    ax.legend(fontsize=fontsize)
+
+    # axis limitos
+    ax.set_xlim(0, 1)
+    ax.set_ylim(-0.05,1.05)
+
+    # tick properties
+    ax.set_xticks([0, 0.25, 0.5, 0.75, 1.0])
+    ax.tick_params(direction='out', length=0, width=1, colors='k')
+    ax.tick_params(axis='y', labelsize=fontsize,pad=2)
+    ax.tick_params(axis='x', labelsize=fontsize,pad=2)
+
+    ax.set_xlabel("recall and precision cut-off", fontsize=fontsize)
+    ax.set_ylabel("fraction of interfaces that meets the cut-off", fontsize=fontsize, labelpad=1)
+
+    fig.tight_layout()
+    fig.savefig(linechart_perc_interf_vs_PR_cutoff_png, dpi=300)
+    fig.savefig(linechart_perc_interf_vs_PR_cutoff_png[:-4] + ".pdf")
+
+    df_PR_cutoff_all.to_csv(linechart_perc_interf_vs_PR_cutoff_png[:-4] + "_data.csv")
+
+
+    #######################################################################################################
+    #                                                                                                     #
+    #                            Barchart at precision-recall cutoff of 0.5                               #
+    #                                                                                                     #
+    #######################################################################################################
+    x = [0.05,1.05,2]
+    labels = ['THOIPA', 'TMDOCK','PREDDIMER']
+
+    df = df_PR_cutoff_all.reindex(columns = labels)
+
+    plt.close("all")
+    fig, ax = plt.subplots(figsize=(1.32,2.32))
+
+    fontsize = 6.5
+    linewidth = 0.7
+    colour_list = ["#E95D12","#0065BD","k","grey"]
+    colour_list_anno = ["k", "white", "white"]
+    print(df.loc[0.5, :])
+    df.loc[0.5, :].plot(ax=ax, kind="bar", color = colour_list, width = 0.6)
+
+    # general properties
+    ax.grid(False)
+    plt.rcParams["axes.edgecolor"] = "k"
+    plt.rcParams["axes.linewidth"] = 0.4
+
+    # tick properties
+    ax.set_xticks(x)
+    ax.set_xticklabels("")
+    ax.tick_params(axis='y', labelsize=fontsize,pad=2)
+    ax.tick_params(direction='in', length=0, width=0, colors='k')
+
+    ax.set_ylim(0,0.55)
+
+    ax.set_ylabel('fraction correct interfaces (at 0.5 cutoff)   ', fontsize=fontsize, labelpad=1)
+
+    # text annotations in bars
+    for i, txt in enumerate(labels):
+        ax.annotate(txt, (x[i],0.005), size=fontsize, color=colour_list_anno[i], ha='center',rotation=90,va="bottom")
+
+    fig.tight_layout()
+    bar_png = os.path.join(os.path.dirname(linechart_perc_interf_vs_PR_cutoff_png), "barchart_perc_interf_exceed_PR_cutoff.png")
+    fig.savefig(bar_png, dpi=300)
+    fig.savefig(bar_png[:-4] + ".pdf")
+
+
+
