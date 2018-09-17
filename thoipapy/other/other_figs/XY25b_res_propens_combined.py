@@ -254,5 +254,3 @@ plt.tight_layout()
 plt.savefig(os.path.join(out_dir, "figures\\frequence_bar_chart_complete_plot_in_one_figure_{}.pdf".format(purpose)))
 plt.savefig(os.path.join(out_dir, "figures\\frequence_bar_chart_complete_plot_in_one_figure_{}.png".format(purpose)), dpi=300)
 plt.show()
-
-print("\n\nfinished")

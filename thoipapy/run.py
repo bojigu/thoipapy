@@ -252,8 +252,8 @@ if __name__ == "__main__":
             namedict = thoipapy.utils.create_namedict(os.path.join(s["dropbox_dir"], "protein_names.xlsx"))
             THOIPA_predictor_name = "THOIPA_{}_LOO".format(s["set_number"])
             predictor_name_list = [THOIPA_predictor_name, "PREDDIMER", "TMDOCK", "LIPS_surface_ranked", "random"]
-            thoipapy.validation.indiv_validation.collect_indiv_validation_data(s, df_set, logging, namedict, predictor_name_list, THOIPA_predictor_name)
-            thoipapy.validation.indiv_validation.create_indiv_validation_figs(s, logging, namedict, predictor_name_list, THOIPA_predictor_name)
+            thoipapy.validation.indiv_validation.collect_indiv_validation_data(s, df_set, logging, namedict, predictor_name_list, THOIPA_predictor_name, unique_database_labels)
+            thoipapy.validation.indiv_validation.create_indiv_validation_figs(s, logging, namedict, predictor_name_list, THOIPA_predictor_name, unique_database_labels)
 
         if s["create_merged_heatmap"] == True:
             thoipapy.figs.create_heatmap_from_merge_file.create_merged_heatmap(s, df_set, logging)

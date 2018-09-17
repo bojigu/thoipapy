@@ -13,7 +13,7 @@ from sklearn.metrics import roc_curve, auc, precision_recall_curve
 import thoipapy
 
 
-def collect_indiv_validation_data(s, df_set, logging, namedict, predictor_name_list, THOIPA_predictor_name):
+def collect_indiv_validation_data(s, df_set, logging, namedict, predictor_name_list, THOIPA_predictor_name, unique_database_labels):
     """
 
     Parameters
@@ -210,7 +210,7 @@ def collect_indiv_validation_data(s, df_set, logging, namedict, predictor_name_l
         # AUC_4pred_mean_all_indiv_prot_df.to_excel(writer, sheet_name="ROC_AUC_mean_indiv")
 
 
-def create_indiv_validation_figs(s, logging, namedict, predictor_name_list, THOIPA_predictor_name):
+def create_indiv_validation_figs(s, logging, namedict, predictor_name_list, THOIPA_predictor_name, unique_database_labels):
     indiv_validation_dir = os.path.join(s["thoipapy_data_folder"], "Results", s["setname"], "indiv_validation")
     indiv_validation_data_xlsx = os.path.join(indiv_validation_dir, "indiv_validation_data.xlsx")
     indiv_ROC_AUC_barchart_png = os.path.join(indiv_validation_dir, "indiv_ROC_AUC_barchart.png")
@@ -220,7 +220,7 @@ def create_indiv_validation_figs(s, logging, namedict, predictor_name_list, THOI
     mean_ROC_AUC_barchart_png = os.path.join(indiv_validation_dir, "mean_ROC_AUC_barchart.png")
     mean_PR_AUC_barchart_png = os.path.join(indiv_validation_dir, "mean_PR_AUC_barchart.png")
     ROC_AUC_vs_PR_AUC_scatter_png = os.path.join(indiv_validation_dir, "ROC_AUC_vs_PR_AUC_scatter.png")
-    linechart_perc_interf_vs_PR_cutoff_png = os.path.join(indiv_validation_dir, "linechart_perc_interf_vs_PR_cutoff.png")
+    perc_interf_vs_PR_cutoff_linechart_png = os.path.join(indiv_validation_dir, "perc_interf_vs_PR_cutoff_linechart.png")
 
     ROC_AUC_df = pd.read_excel(indiv_validation_data_xlsx, sheetname="ROC_AUC_indiv")
     PR_AUC_df = pd.read_excel(indiv_validation_data_xlsx, sheetname="PR_AUC_indiv")
@@ -238,11 +238,15 @@ def create_indiv_validation_figs(s, logging, namedict, predictor_name_list, THOI
 
     create_scatter_ROC_AUC_vs_PR_AUC(s, predictor_name_list, ROC_AUC_vs_PR_AUC_scatter_png)
 
-    create_linechart_perc_interf_vs_PR_cutoff(s, predictor_name_list, linechart_perc_interf_vs_PR_cutoff_png)
+    # for the complete list of proteins
+    create_linechart_perc_interf_vs_PR_cutoff(s, predictor_name_list, perc_interf_vs_PR_cutoff_linechart_png)
 
+    # for each dataset(e.g. ETRA) separately. Saved in "each_dataset" subfolder
+    for database in unique_database_labels:
+        perc_interf_vs_PR_cutoff_linechart_single_database_png = os.path.join(indiv_validation_dir, "each_dataset", "{}_perc_interf_vs_PR_cutoff_linechart.png".format(database))
+        create_linechart_perc_interf_vs_PR_cutoff(s, predictor_name_list, perc_interf_vs_PR_cutoff_linechart_single_database_png, database=database)
 
     logging.info("finished run_indiv_validation_THOIPA_PREDDIMER_TMDOCK")
-
 
 def precision_recall_curve_rises_above_threshold(precision, recall, threshold=0.5):
     """Determines whether the PR curve rises above a threshold P and R value at any point.
@@ -773,7 +777,7 @@ def create_ROC_comp_4predictors(s, df_set, logging):
                                        columns=prediction_name_list)
     df_tpr.to_csv(ROC_4predictor_csv)
 
-def create_linechart_perc_interf_vs_PR_cutoff(s, predictor_name_list, linechart_perc_interf_vs_PR_cutoff_png):
+def create_linechart_perc_interf_vs_PR_cutoff(s, predictor_name_list, perc_interf_vs_PR_cutoff_linechart_png, database="all"):
     """ Create linechart (and barchart) showing percentage of interface residues correctly predicted, according
     to precision-recall cutoffs.
 
@@ -783,8 +787,10 @@ def create_linechart_perc_interf_vs_PR_cutoff(s, predictor_name_list, linechart_
         Settings dictionary
     predictor_name_list : list
         List of predictors to include in plot
-    linechart_perc_interf_vs_PR_cutoff_png : str
+    perc_interf_vs_PR_cutoff_linechart_png : str
         Linechart path
+    database : str
+        Database for which figures are processed (e.g. ETRA). Default is all.
 
     Returns
     -------
@@ -798,6 +804,9 @@ def create_linechart_perc_interf_vs_PR_cutoff(s, predictor_name_list, linechart_
     #######################################################################################################
 
     plt.rcParams.update(plt.rcParamsDefault)
+
+    thoipapy.utils.make_sure_path_exists(perc_interf_vs_PR_cutoff_linechart_png, isfile=True)
+
     df_PR_cutoff_all = pd.DataFrame()
 
     # list of cutoffs to plot on x-axis
@@ -813,6 +822,11 @@ def create_linechart_perc_interf_vs_PR_cutoff(s, predictor_name_list, linechart_
             xv_dict = pickle.load(f)
 
         for acc_db in xv_dict:
+            if database is not "all":
+                if database not in acc_db:
+                    # skip the TMDs that are not in the right database
+                    continue
+
             precision = xv_dict[acc_db]["precision"]
             recall = xv_dict[acc_db]["recall"]
             result_list = []
@@ -832,6 +846,12 @@ def create_linechart_perc_interf_vs_PR_cutoff(s, predictor_name_list, linechart_
     # round index so values at index 0.5 can be identified
     df_PR_cutoff_all.index = pd.Series(df_PR_cutoff_all.index).round(2)
 
+
+    #######################################################################################################
+    #                                                                                                     #
+    #                   Linechart showing percentage TMDs above cutoff vs cutoffs                         #
+    #                                                                                                     #
+    #######################################################################################################
     colour_dict = {"THOIPA" : "#E95D12", "TMDOCK" : "#0065BD", "PREDDIMER" : "k", "random" : "grey"}
     colour_list = ["#E95D12","#0065BD","k","grey"]
     fontsize = 8
@@ -872,19 +892,19 @@ def create_linechart_perc_interf_vs_PR_cutoff(s, predictor_name_list, linechart_
     ax.set_ylabel("fraction of interfaces that meets the cut-off", fontsize=fontsize, labelpad=1)
 
     fig.tight_layout()
-    fig.savefig(linechart_perc_interf_vs_PR_cutoff_png, dpi=300)
-    fig.savefig(linechart_perc_interf_vs_PR_cutoff_png[:-4] + ".pdf")
+    fig.savefig(perc_interf_vs_PR_cutoff_linechart_png, dpi=300)
+    fig.savefig(perc_interf_vs_PR_cutoff_linechart_png[:-4] + ".pdf")
 
-    df_PR_cutoff_all.to_csv(linechart_perc_interf_vs_PR_cutoff_png[:-4] + "_data.csv")
-
+    df_PR_cutoff_all.to_csv(perc_interf_vs_PR_cutoff_linechart_png[:-4] + "_data.csv")
 
     #######################################################################################################
     #                                                                                                     #
     #                            Barchart at precision-recall cutoff of 0.5                               #
     #                                                                                                     #
     #######################################################################################################
-    x = [0.05,1.05,2]
-    labels = ['THOIPA', 'TMDOCK','PREDDIMER']
+    # bar positions and labels
+    x = [0.05, 1.05, 2, 3]
+    labels = ['THOIPA', 'TMDOCK','PREDDIMER', 'random']
 
     df = df_PR_cutoff_all.reindex(columns = labels)
 
@@ -893,9 +913,10 @@ def create_linechart_perc_interf_vs_PR_cutoff(s, predictor_name_list, linechart_
 
     fontsize = 6.5
     linewidth = 0.7
-    colour_list = ["#E95D12","#0065BD","k","grey"]
-    colour_list_anno = ["k", "white", "white"]
-    print(df.loc[0.5, :])
+    colour_list = ["#E95D12","#0065BD","k","0.5"]
+    colour_list_anno = ["k", "white", "white", "k"]
+
+    # plot only the row with a cutoff of 0.5
     df.loc[0.5, :].plot(ax=ax, kind="bar", color = colour_list, width = 0.6)
 
     # general properties
@@ -909,7 +930,7 @@ def create_linechart_perc_interf_vs_PR_cutoff(s, predictor_name_list, linechart_
     ax.tick_params(axis='y', labelsize=fontsize,pad=2)
     ax.tick_params(direction='in', length=0, width=0, colors='k')
 
-    ax.set_ylim(0,0.55)
+    #ax.set_ylim(0,0.55)
 
     ax.set_ylabel('fraction correct interfaces (at 0.5 cutoff)   ', fontsize=fontsize, labelpad=1)
 
@@ -918,9 +939,8 @@ def create_linechart_perc_interf_vs_PR_cutoff(s, predictor_name_list, linechart_
         ax.annotate(txt, (x[i],0.005), size=fontsize, color=colour_list_anno[i], ha='center',rotation=90,va="bottom")
 
     fig.tight_layout()
-    bar_png = os.path.join(os.path.dirname(linechart_perc_interf_vs_PR_cutoff_png), "barchart_perc_interf_exceed_PR_cutoff.png")
+    bar_png = os.path.join(perc_interf_vs_PR_cutoff_linechart_png[:-13] + "barchart.png")
     fig.savefig(bar_png, dpi=300)
     fig.savefig(bar_png[:-4] + ".pdf")
-
 
 

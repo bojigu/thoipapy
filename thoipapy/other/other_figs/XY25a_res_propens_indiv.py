@@ -253,5 +253,3 @@ ax.set_xticklabels(df_xticklabel, fontsize=Fontsize, rotation=0)
 plt.savefig(os.path.join(out_dir, "figures\\frequence_bar_chart_complete.png"), dpi=300)
 plt.savefig(os.path.join(out_dir, "figures\\frequence_bar_chart_complete.pdf"))
 plt.close()
-
-print("\n\nfinished")
