@@ -395,18 +395,31 @@ def get_md5_checksum(TMD_seq, full_seq):
     return md5
 
 
+def print_help():
+    sys.stdout.write("\nUsage example:\n")
+    sys.stdout.write(r"python thoipa.py -i D:\data\Q12983.txt -f D:\data\predictions")
+    sys.stdout.write("\n\nOR process every input file in the -d input folder. "
+                     "You can specify the output folder. Otherwise, a default 'output' folder will be "
+                     "created in the same directory as the input folder. \n")
+    sys.stdout.write(r"python thoipa.py -d D:\your\directory\with\input_text_files")
+    sys.stdout.write("\n\n")
+    sys.stdout.flush()
+
+usage = "\nthoipa.py [-h] [-d D] [-i I] [-f F]\n\nexample: \npython thoipa.py -d /Path/to/your/input/csv/text/files"
+
 # read the command line arguments
-parser = argparse.ArgumentParser()
+parser = argparse.ArgumentParser(usage=usage)
+
+#parser.add_argument("-h", help = "Prints help")
 
 parser.add_argument("-d",  # "-directory",
-                    help=r'Full path to your input directory that contains csv files (e.g. /input containing input/Q12983.txt and input/P13983.txt) with protein sequences for analysis'
-                         r'E.g. "\Path\to\your\file\input"')
+                    help=r'Path to directory containing input csv text files.')
 parser.add_argument("-i",  # "-input_file",
-                    help=r'Full path to your input file with name, TMD_seq, and full_seq.'
-                         r'E.g. "\Path\to\your\file\Q12983.txt"')
+                    help=r'Path to a single input csv text file, E.g. "/Path/to/your/file/Q12983.txt"')
 parser.add_argument("-f",  # "-folder",
-                    help=r'Path to your output folder.'
-                         r'E.g. "D:\data_thoipapy\Predictions"')
+                    help='Optional path to an output folder.\nIf no output folder is specified, '
+                         'a new output folder will be created\nin same directory as the input folder.')
+
 
 if __name__ == "__main__":
     """
@@ -417,17 +430,11 @@ if __name__ == "__main__":
     TMD_seq,AAVMMGLAAIGAAIGIGILG
     full_seq,MENLNMDLLYMAAAVMMGLAAIGAAIGIGILGGKFLEGAARQPDLIPLLRTQFFIVMGLVDAIPMIAVGLGLYVMFAVA
     """
-    sys.stdout.write("\nUsage example:\n")
-    sys.stdout.write(r"python thoipa.py -i D:\data\Q12983.txt -f D:\data\predictions")
-    sys.stdout.write("\n\nOR process every input file in the -d input folder. "
-                     "You can specify the output folder. Otherwise, a default 'output' folder will be "
-                     "created in the same directory as the input folder. \n")
-    sys.stdout.write(r"python thoipa.py -d D:\your\directory\with\input_text_files")
-    sys.stdout.write("\n\n")
-    sys.stdout.flush()
+
     # get the command-line arguments
     args = parser.parse_args()
 
+    print("args ", args)
 
     if args.d is not None:
         # process every input file in the args.d input folder
@@ -441,7 +448,8 @@ if __name__ == "__main__":
         raise ValueError("Please include either an input directory of files to process (-d D:\data),"
                          "or an input file (-i D:\data\Q12983.txt), but not both.")
     else:
-        raise ValueError("Input error. The command should include an input directory of files to process (-d directory),"
+        sys.stdout.write("usage: " + usage + "\n\n")
+        raise ValueError("Input error. The command should include an input directory of files to process (-d directory), "
                          "or an input file (-i D:\data\Q12983.txt).")
 
     # use the output directory given as -f

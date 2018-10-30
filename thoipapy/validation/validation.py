@@ -150,7 +150,7 @@ def train_machine_learning_model(s, logging):
         Pickle containing the trained machine learning model.
 
     """
-    logging.info('starting to predict etra data with THOIPA prediction model')
+    logging.info('starting train_machine_learning_model')
 
     train_data_csv = os.path.join(s["thoipapy_data_folder"], "Results", s["setname"], "{}_train_data.csv".format(s["setname"]))
     train_data_used_for_model_csv = os.path.join(s["thoipapy_data_folder"], "Results", s["setname"], "{}_train_data_used_for_model.csv".format(s["setname"]))

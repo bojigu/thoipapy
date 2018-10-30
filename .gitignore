@@ -32,3 +32,4 @@ var/
 *.egg
 
 # PyInstaller
+/thoipapy.egg-info/
