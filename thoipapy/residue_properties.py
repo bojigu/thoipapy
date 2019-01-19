@@ -1864,7 +1864,7 @@ def return_num_tmd(s, acc,  full_seq, full_seq_fasta_file,phobius_outfile,loggin
         command.run(timeout=400, log_stderr=False)
 
     if os.path.exists(phobius_outfile):
-        tm_num = 0
+        tm_num = 1
         with open(phobius_outfile) as file:
             for line in file:
                 if re.search('TRANSMEM', line):

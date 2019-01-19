@@ -178,7 +178,7 @@ def run_THOIPA_prediction(protein_name, md5, TMD_seq, full_seq, out_dir, create_
     ###################################################################################################
     # most scripts use uniprot accession as the protein name
     acc = protein_name
-    n_TMDs = fc.return_num_tmd(s, acc, full_seq, full_seq_fasta_file, full_seq_phobius_output_file, logging)
+    # n_TMDs = fc.return_num_tmd(s, acc, full_seq, full_seq_fasta_file, full_seq_phobius_output_file, logging)
 
     expect_value = s["expect_value"]
     hit_list_size = s["hit_list_size"]
@@ -322,13 +322,13 @@ def run_THOIPA_prediction(protein_name, md5, TMD_seq, full_seq, out_dir, create_
         # create plot
         fig, ax = plt.subplots(figsize=(16, 2))
         # duplicate plot so it's possible to add label at top
-        ax2 = ax.twiny()
+        ax2 = ax.twiny()ax.set_xticklabels(df.columns, rotation=0, fontsize=fontsize)
 
         # create heatmap
         sns.heatmap(df, ax=ax, cmap=cmap)
 
         # format residue numbering at bottom
-        ax.set_xticklabels(df.columns, rotation=0, fontsize=fontsize)
+
         ax.tick_params(axis="x", direction='out', pad=1.5, tick2On=False)
         ax.set_xlabel("position in TMD", fontsize=fontsize)
         ax.set_yticklabels(df.index, rotation=0, fontsize=fontsize)
