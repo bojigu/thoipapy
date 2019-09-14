@@ -26,7 +26,18 @@ setup(
     'Topic :: Scientific/Engineering :: Physics',
     'Topic :: Scientific/Engineering :: Bio-Informatics',
     ],
-    install_requires=["pandas", "numpy", "scipy", "biopython", "matplotlib", "seaborn", "django", "pytoxr", "statsmodels", "scikit-learn"],
+    install_requires=[
+    "pandas=0.23.3",
+    "numpy=1.13.3",
+    "scipy=0.19.1",
+    "seaborn=0.9.0",
+    "biopython=1.69",
+    "matplotlib=2.2.2",
+    "django=2.0.5",
+    "pytoxr=0.0.7",
+    "statsmodels=0.8.0",
+    "scikit-learn=0.19.1"
+    ],
     project_urls=
     {
     'BoZeng': 'http://frishman.wzw.tum.de/index.php?id=50',
