@@ -27,6 +27,9 @@ if os.environ.get('DISPLAY','') == '':
     mpl.use('Agg')
 import matplotlib.pyplot as plt
 
+import warnings
+warnings.filterwarnings("ignore")
+
 def run_THOIPA_prediction(protein_name, md5, TMD_seq, full_seq, out_dir, create_heatmap=True, set_number=5):
     """Function to run standalone THOIPA prediction for a protein transmembrane domain of interest.
 
@@ -470,7 +473,9 @@ if __name__ == "__main__":
 
     for input_csv in infile_list:
         # extract name and sequences from input csv
-        input_ser = pd.Series.from_csv(input_csv)
+        input_df = pd.read_csv(input_csv, header=None, index_col=0)
+        input_df.columns = ["data"]
+        input_ser = input_df["data"]
 
         # convert protein_name to file-format-friendly text, without symbols etc, max 20 characters
         protein_name = slugify(input_ser["name"])[0:20]
