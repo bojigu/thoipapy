@@ -27,16 +27,16 @@ setup(
     'Topic :: Scientific/Engineering :: Bio-Informatics',
     ],
     install_requires=[
-    "pandas=0.23.3",
-    "numpy=1.13.3",
-    "scipy=0.19.1",
-    "seaborn=0.9.0",
-    "biopython=1.69",
-    "matplotlib=2.2.2",
-    "django=2.0.5",
-    "pytoxr=0.0.7",
-    "statsmodels=0.8.0",
-    "scikit-learn=0.19.1"
+    "pandas",
+    "numpy",
+    "scipy",
+    "seaborn",
+    "biopython",
+    "matplotlib",
+    "django",
+    "pytoxr",
+    "statsmodels",
+    "scikit-learn"
     ],
     project_urls=
     {

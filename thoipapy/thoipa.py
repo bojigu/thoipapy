@@ -17,10 +17,15 @@ from thoipapy.validation.validation import drop_cols_not_used_in_ML
 from thoipapy.utils import normalise_between_2_values
 import seaborn as sns
 import numpy as np
-import matplotlib.pyplot as plt
 import glob
 from pathlib import Path
 
+import matplotlib as mpl
+# set matplotlib backend to Agg when run on a server
+if os.environ.get('DISPLAY','') == '':
+    print('no display found. Using non-interactive Agg backend')
+    mpl.use('Agg')
+import matplotlib.pyplot as plt
 
 def run_THOIPA_prediction(protein_name, md5, TMD_seq, full_seq, out_dir, create_heatmap=True, set_number=5):
     """Function to run standalone THOIPA prediction for a protein transmembrane domain of interest.
@@ -322,7 +327,8 @@ def run_THOIPA_prediction(protein_name, md5, TMD_seq, full_seq, out_dir, create_
         # create plot
         fig, ax = plt.subplots(figsize=(16, 2))
         # duplicate plot so it's possible to add label at top
-        ax2 = ax.twiny()ax.set_xticklabels(df.columns, rotation=0, fontsize=fontsize)
+        ax2 = ax.twiny()
+        ax.set_xticklabels(df.columns, rotation=0, fontsize=fontsize)
 
         # create heatmap
         sns.heatmap(df, ax=ax, cmap=cmap)

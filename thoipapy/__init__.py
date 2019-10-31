@@ -7,3 +7,4 @@ import thoipapy.residue_properties
 import thoipapy.closest_heavy_atom_dist
 import thoipapy.setting
 import thoipapy.ML_model
+from thoipapy.thoipa import run_THOIPA_prediction

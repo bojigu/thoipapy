@@ -18,8 +18,12 @@ from pandas import Series
 from thoipapy.utils import normalise_0_1, normalise_between_2_values
 from weighslide import calculate_weighted_windows
 
-# causes dependency issues in docker deployment. commented out. not sure why was necessary.
-# mpl.use('Agg')
+import matplotlib as mpl
+# set matplotlib backend to Agg when run on a server
+if os.environ.get('DISPLAY','') == '':
+    print('no display found. Using non-interactive Agg backend')
+    mpl.use('Agg')
+import matplotlib.pyplot as plt
 
 def calc_lipophilicity(seq, method = "mean"):
     """ Calculates the average hydrophobicity of a sequence according to the Hessa biological scale.
