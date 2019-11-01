@@ -1,3 +1,6 @@
+import warnings
+warnings.filterwarnings("ignore")
+
 import argparse
 import glob
 import hashlib
@@ -28,9 +31,6 @@ if os.environ.get('DISPLAY','') == '':
     print('no display found. Using non-interactive Agg backend')
     mpl.use('Agg')
 import matplotlib.pyplot as plt
-
-import warnings
-warnings.filterwarnings("ignore")
 
 def run_THOIPA_prediction(protein_name, md5, TMD_seq, full_seq, out_dir, create_heatmap=True, set_number=5):
     """Function to run standalone THOIPA prediction for a protein transmembrane domain of interest.
