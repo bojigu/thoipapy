@@ -11,7 +11,7 @@ from sklearn.ensemble import ExtraTreesClassifier, ExtraTreesRegressor
 from sklearn.metrics import roc_curve, auc, precision_recall_curve
 from sklearn.model_selection import StratifiedKFold
 import os
-from sklearn.externals import joblib
+import joblib
 import pickle
 import time
 from thoipapy.utils import convert_truelike_to_bool, convert_falselike_to_bool, Log_Only_To_Console

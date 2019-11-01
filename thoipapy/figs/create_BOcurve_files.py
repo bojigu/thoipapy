@@ -4,7 +4,7 @@ import thoipapy
 import pandas as pd
 import os
 import numpy as np
-from sklearn.externals import joblib
+import joblib
 from sklearn.metrics import roc_curve, auc
 from scipy import interp
 import matplotlib.pyplot as plt

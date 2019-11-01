@@ -17,7 +17,7 @@ import numpy as np
 import pandas as pd
 import seaborn as sns
 from django.utils.text import slugify
-from sklearn.externals import joblib
+import joblib
 
 import thoipapy
 import thoipapy.residue_properties as rp

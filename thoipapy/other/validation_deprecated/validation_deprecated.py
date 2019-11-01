@@ -8,7 +8,7 @@ import time
 import numpy as np
 import pandas as pd
 from numpy import interp
-from sklearn.externals import joblib
+import joblib
 from sklearn.metrics import roc_curve, auc
 
 import thoipapy
