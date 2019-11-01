@@ -1,26 +1,28 @@
 import argparse
+import glob
 import hashlib
 import os
 import platform
 import re
 import sys
-import unicodedata
 from io import StringIO
-import pandas as pd
-from django.utils.text import slugify
-from sklearn.externals import joblib
-import thoipapy
-import thoipapy.residue_properties as fc
-from thoipapy.homologues.NCBI_download import download_homologues_from_ncbi
-from thoipapy.homologues.NCBI_parser import parse_NCBI_xml_to_csv, extract_filtered_csv_homologues_to_alignments
-from thoipapy.validation.validation import drop_cols_not_used_in_ML
-from thoipapy.utils import normalise_between_2_values
-import seaborn as sns
-import numpy as np
-import glob
 from pathlib import Path
+import stat
 
 import matplotlib as mpl
+import numpy as np
+import pandas as pd
+import seaborn as sns
+from django.utils.text import slugify
+from sklearn.externals import joblib
+
+import thoipapy
+import thoipapy.residue_properties as rp
+from thoipapy.homologues.NCBI_download import download_homologues_from_ncbi
+from thoipapy.homologues.NCBI_parser import parse_NCBI_xml_to_csv, extract_filtered_csv_homologues_to_alignments
+from thoipapy.utils import normalise_between_2_values, open_csv_as_series
+from thoipapy.validation.validation import drop_cols_not_used_in_ML
+
 # set matplotlib backend to Agg when run on a server
 if os.environ.get('DISPLAY','') == '':
     print('no display found. Using non-interactive Agg backend')
@@ -186,7 +188,7 @@ def run_THOIPA_prediction(protein_name, md5, TMD_seq, full_seq, out_dir, create_
     ###################################################################################################
     # most scripts use uniprot accession as the protein name
     acc = protein_name
-    # n_TMDs = fc.return_num_tmd(s, acc, full_seq, full_seq_fasta_file, full_seq_phobius_output_file, logging)
+    # n_TMDs = rp.return_num_tmd(s, acc, full_seq, full_seq_fasta_file, full_seq_phobius_output_file, logging)
 
     expect_value = s["expect_value"]
     hit_list_size = s["hit_list_size"]
@@ -207,8 +209,8 @@ def run_THOIPA_prediction(protein_name, md5, TMD_seq, full_seq, out_dir, create_
                                                       path_uniq_TMD_seqs_no_gaps_for_LIPS, path_uniq_TMD_seqs_surr5_for_LIPO, BLAST_csv_tar,
                                                       TMD_seq, query_TMD_seq_surr5, logging)
 
-    fc.create_PSSM_from_MSA(path_uniq_TMD_seqs_for_PSSM_FREECONTACT, pssm_csv, acc, TMD_seq, logging)
-    fc.create_PSSM_from_MSA(path_uniq_TMD_seqs_surr5_for_LIPO, pssm_surr5_csv, acc, query_TMD_seq_surr5, logging)
+    rp.create_PSSM_from_MSA(path_uniq_TMD_seqs_for_PSSM_FREECONTACT, pssm_csv, acc, TMD_seq, logging)
+    rp.create_PSSM_from_MSA(path_uniq_TMD_seqs_surr5_for_LIPO, pssm_surr5_csv, acc, query_TMD_seq_surr5, logging)
 
     ###################################################################################################
     #                                                                                                 #
@@ -216,32 +218,32 @@ def run_THOIPA_prediction(protein_name, md5, TMD_seq, full_seq, out_dir, create_
     #                                                                                                 #
     ###################################################################################################
 
-    fc.lipo_from_pssm(acc, pssm_surr5_csv, lipo_csv, tm_surr_left_lipo, tm_surr_right_lipo, s["lipophilicity_scale"], logging, plot_linechart=True)
+    rp.lipo_from_pssm(acc, pssm_surr5_csv, lipo_csv, tm_surr_left_lipo, tm_surr_right_lipo, s["lipophilicity_scale"], logging, plot_linechart=True)
 
-    fc.entropy_calculation(acc, path_uniq_TMD_seqs_for_PSSM_FREECONTACT, TMD_seq, entropy_file, logging)
+    rp.entropy_calculation(acc, path_uniq_TMD_seqs_for_PSSM_FREECONTACT, TMD_seq, entropy_file, logging)
 
     if "Windows" in platform.system():
         logging.warning("\n Freecontact cannot be run in Windows! Skipping coevolution_calculation_with_freecontact."
                          "For testing, copy file from Linux and rename to {}".format(freecontact_file))
     else:
-        fc.coevolution_calculation_with_freecontact(path_uniq_TMD_seqs_for_PSSM_FREECONTACT, freecontact_file, s["freecontact_dir"], logging)
+        rp.coevolution_calculation_with_freecontact(path_uniq_TMD_seqs_for_PSSM_FREECONTACT, freecontact_file, s["freecontact_dir"], logging)
 
-    fc.parse_freecontact_coevolution(acc, freecontact_file, freecontact_parsed_csv, TMD_start, TMD_end, logging)
+    rp.parse_freecontact_coevolution(acc, freecontact_file, freecontact_parsed_csv, TMD_start, TMD_end, logging)
 
-    fc.calc_relative_position(acc, path_uniq_TMD_seqs_for_PSSM_FREECONTACT, relative_position_file, TMD_start, seqlen, logging)
+    rp.calc_relative_position(acc, path_uniq_TMD_seqs_for_PSSM_FREECONTACT, relative_position_file, TMD_start, seqlen, logging)
 
-    fc.LIPS_score_calculation(path_uniq_TMD_seqs_no_gaps_for_LIPS, LIPS_output_file)
+    rp.LIPS_score_calculation(path_uniq_TMD_seqs_no_gaps_for_LIPS, LIPS_output_file)
 
-    fc.parse_LIPS_score(acc, LIPS_output_file, LIPS_parsed_csv, logging)
-    fc.motifs_from_seq(TMD_seq, TMD_seq_pl_surr, tm_surr_left, tm_surr_right, motifs_file, logging)
+    rp.parse_LIPS_score(acc, LIPS_output_file, LIPS_parsed_csv, logging)
+    rp.motifs_from_seq(TMD_seq, TMD_seq_pl_surr, tm_surr_left, tm_surr_right, motifs_file, logging)
 
     database = "standalone_prediction"
     #combine_all_features(acc, database, TMD_seq, feature_combined_file, entropy_file, pssm_csv, lipo_csv, freecontact_parsed_csv, relative_position_file, LIPS_parsed_csv,motifs_file, alignment_summary_csv, logging)
-    fc.combine_all_features(s, full_seq, acc, database, TMD_seq, TMD_start, feature_combined_file, entropy_file, pssm_csv,
+    rp.combine_all_features(s, full_seq, acc, database, TMD_seq, TMD_start, feature_combined_file, entropy_file, pssm_csv,
                          lipo_csv, freecontact_parsed_csv, relative_position_file, LIPS_parsed_csv, motifs_file,
                          alignment_summary_csv, full_seq_fasta_file,full_seq_phobius_output_file,logging)
 
-    fc.add_physical_parameters_to_features(acc, feature_combined_file, logging)
+    rp.add_physical_parameters_to_features(acc, feature_combined_file, logging)
 
     ###################################################################################################
     #                                                                                                 #
@@ -398,7 +400,8 @@ def get_md5_checksum(TMD_seq, full_seq):
     """
     TMD_plus_full_seq = TMD_seq + "_" + full_seq
     # adjust encoding for md5 creation
-    TMD_plus_full_seq = unicodedata.normalize('NFKD', TMD_plus_full_seq).encode('ascii', 'ignore')
+    #TMD_plus_full_seq = unicodedata.normalize('NFKD', TMD_plus_full_seq).encode('ascii', 'ignore')
+    TMD_plus_full_seq = TMD_plus_full_seq.encode('ascii', 'ignore')
     hash_object = hashlib.md5(TMD_plus_full_seq)
     md5 = hash_object.hexdigest()
     return md5
@@ -428,7 +431,6 @@ parser.add_argument("-i",  # "-input_file",
 parser.add_argument("-f",  # "-folder",
                     help='Optional path to an output folder.\nIf no output folder is specified, '
                          'a new output folder will be created\nin same directory as the input folder.')
-
 
 if __name__ == "__main__":
     """
@@ -472,10 +474,7 @@ if __name__ == "__main__":
 
 
     for input_csv in infile_list:
-        # extract name and sequences from input csv
-        input_df = pd.read_csv(input_csv, header=None, index_col=0)
-        input_df.columns = ["data"]
-        input_ser = input_df["data"]
+        input_ser = open_csv_as_series(input_csv)
 
         # convert protein_name to file-format-friendly text, without symbols etc, max 20 characters
         protein_name = slugify(input_ser["name"])[0:20]
@@ -495,8 +494,10 @@ if __name__ == "__main__":
 
         # create output directory based on protein name
         # save the original csv
-        out_dir = os.path.join(output_dir, protein_name)
+        out_dir = output_dir.joinpath(protein_name)
+        #out_dir = os.path.join(output_dir, protein_name)
         thoipapy.utils.make_sure_path_exists(out_dir)
         input_ser.to_csv(os.path.join(out_dir, "input.csv"))
 
         run_THOIPA_prediction(protein_name, md5, TMD_seq, full_seq, out_dir)
+        os.chmod(out_dir, stat.S_IRUSR | stat.S_IWUSR | stat.S_IXUSR | stat.S_IRGRP | stat.S_IWGRP| stat.S_IXGRP)

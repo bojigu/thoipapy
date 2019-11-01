@@ -221,9 +221,9 @@ def calc_lipophilicity(seq, method = "mean"):
 def create_settingdict(excel_file_with_settings):
     sheetnames = ["run_settings", "file_locations", "variables"]
     s = {"excel_file_with_settings" : excel_file_with_settings}
-    for sheetname in sheetnames:
+    for sheet_name in sheetnames:
         # open excel file as pandas dataframe
-        dfset = pd.read_excel(excel_file_with_settings, sheetname=sheetname)
+        dfset = pd.read_excel(excel_file_with_settings, sheet_name=sheet_name)
         # exclude row with notes, set parameter as index
         dfset = dfset.dropna(subset=["parameter", "value"])
         dfset.set_index("parameter", inplace=True)

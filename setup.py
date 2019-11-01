@@ -36,7 +36,8 @@ setup(
     "django",
     "pytoxr",
     "statsmodels",
-    "scikit-learn"
+    "scikit-learn",
+    "weighslide"
     ],
     project_urls=
     {

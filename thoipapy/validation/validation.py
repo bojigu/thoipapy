@@ -49,7 +49,7 @@ def drop_cols_not_used_in_ML(logging, df_data, excel_file_with_settings, i=0):
         columns :
     """
     # read the features tab of the excel settings file
-    features_df = pd.read_excel(excel_file_with_settings, sheetname="features", index_col=0)
+    features_df = pd.read_excel(excel_file_with_settings, sheet_name="features", index_col=0)
     features_df.drop("Notes", axis=0, inplace=True)
     # convert "WAHR" etc to true and false
     features_df["include"] = features_df["include"].apply(convert_truelike_to_bool, convert_nontrue=False)

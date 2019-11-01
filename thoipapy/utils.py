@@ -970,3 +970,11 @@ def rename_features(df_features_single_protein):
                  "highest_face_MI": "MI_highest_face", "highest_face_DI": "DI_highest_face"})
 
     return df_features_single_protein
+
+
+def open_csv_as_series(input_csv):
+    # extract name and sequences from input csv
+    input_df = pd.read_csv(input_csv, header=None, index_col=0)
+    input_df.columns = ["data"]
+    input_ser = input_df["data"]
+    return input_ser

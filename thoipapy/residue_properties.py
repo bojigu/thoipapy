@@ -1803,7 +1803,7 @@ def combine_all_features(s, full_seq, acc, database, TMD_seq, TMD_start, feature
         sys.stdout.write("\n{}, motifs_df                = {}".format(acc, motifs_df.residue_name.str.cat()))
         raise IndexError("TMD_seq in original settings file and final merged features dataframe does not match.")
 
-    single_prot_aln_result_ser = pd.Series.from_csv(alignment_summary_csv)
+    single_prot_aln_result_ser = utils.open_csv_as_series(alignment_summary_csv)
     n_homologues = single_prot_aln_result_ser["n_uniq_TMD_seqs_for_PSSM_FREECONTACT"]
     # add the number of homologues (same number for all residues)
     df_features_single_protein["n_homologues"] = n_homologues
