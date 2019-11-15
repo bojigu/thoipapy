@@ -455,6 +455,7 @@ if __name__ == "__main__":
     elif args.i is not None:
         # process only a single input file
         infile_list = [Path(args.i)]
+        input_dir = Path(args.i).parent
     elif args.d is not None and args.i is not None:
         raise ValueError("Please include either an input directory of files to process (-d D:\data),"
                          "or an input file (-i D:\data\Q12983.txt), but not both.")
@@ -494,7 +495,7 @@ if __name__ == "__main__":
 
         # create output directory based on protein name
         # save the original csv
-        out_dir = output_dir.joinpath(protein_name)
+        out_dir = output_dir.joinpath(md5)
         #out_dir = os.path.join(output_dir, protein_name)
         thoipapy.utils.make_sure_path_exists(out_dir)
         input_ser.to_csv(os.path.join(out_dir, "input.csv"))
