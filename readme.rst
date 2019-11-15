@@ -118,7 +118,6 @@ For contact details, see the relevant TU-Munich websites:
 
 Author: `Bo Zeng`__  of the `Frishman lab`__, TU-Munich, Weihenstephan Campus
 
-Further coding and supervision: `Mark Teese`__ of the `Langosch lab`__, TU-Munich, Weihenstephan Campus
 
 .. _BoWebsite: http://frishman.wzw.tum.de/index.php?id=50
 .. _FrishmanWebsite: http://frishman.wzw.tum.de/index.php?id=2
