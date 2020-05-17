@@ -75,7 +75,8 @@ def drop_cols_not_used_in_ML(logging, df_data, excel_file_with_settings, i=0):
     features_df = features_df.loc[features_df.include == True]
     # filter df_data to only keep the desired feature columns
     feature_list = features_df.index.tolist()
-    df_data = df_data.loc[:, feature_list]
+    feature_list_shared_cols = list(set(feature_list).intersection(set(df_data.columns)))
+    df_data = df_data.loc[:, feature_list_shared_cols]
     return df_data
 
 def THOIPA_classifier_with_settings(s, n_features, totally_randomized_trees=False):
@@ -366,7 +367,8 @@ def run_LOO_validation(s, df_set, logging):
     thoipapy.utils.make_sure_path_exists(BO_data_excel, isfile=True)
 
     df_data = pd.read_csv(train_data_csv, index_col=0)
-    df_data = df_data.dropna()
+    assert "Unnamed" not in ", ".join(df_data.columns.tolist())
+    #df_data = df_data.dropna()
 
     # drop training data (full protein) that don't have enough homologues
     df_data = df_data.loc[df_data.n_homologues >= s["min_n_homol_training"]]
@@ -547,7 +549,9 @@ def LOO_single_prot(d):
     #                                                                                                     #
     #######################################################################################################
     # df_test = df_data.loc[df_data.acc_db == acc_db]
-    df_test = pd.read_csv(testdata_combined_file)
+    df_test = pd.read_csv(testdata_combined_file, index_col=0)
+    assert "Unnamed" not in ",".join(df_test.columns.tolist())
+    assert df_test.index.tolist() == list(range(df_test.shape[0]))
 
     X_test = thoipapy.validation.validation.drop_cols_not_used_in_ML(logger, df_test, excel_file_with_settings, i)
     y_test = df_test["interface"].fillna(0).astype(int)
@@ -882,21 +886,30 @@ def calc_feat_import_from_mean_decrease_accuracy(s, logging):
 
     n_features = X.shape[1]
     feat_list = X.columns.tolist()
-    coev_features = feat_list[0:16]
-    cons_features = feat_list[16:18]
-    polarity_features = feat_list[18:24]
-    motif_features = feat_list[24:26]
-    pssm_features = feat_list[26:51]
-    physical_features = feat_list[51:53]
-    TMD_features = feat_list[53:]
+    # coev_features = feat_list[0:16]
+    # cons_features = feat_list[16:18]
+    # polarity_features = feat_list[18:24]
+    # motif_features = feat_list[24:26]
+    # pssm_features = feat_list[26:51]
+    # physical_features = feat_list[51:53]
+    # TMD_features = feat_list[53:]
 
     # DEPRECATED in favour of combined polarity_and_pssm_features
     #features_nested_list = [coev_features, cons_features, polarity_features, motif_features, pssm_features, physical_features, TMD_features]
     #features_nested_namelist = ["coev_features", "cons_features", "polarity_features", "motif_features", "pssm_features", "physical_features", "TMD_features"]
 
+    polarity_features = ["test_dropping_of_features_not_included", "polarity", "relative_polarity", "polarity4mean", "polarity3Nmean", "polarity3Cmean", "polarity1mean"]
+    pssm_features = ["A", "C", "D", "E", "F", "G", "H", "I", "K", "L", "M", "N", "P", "Q", "R", "S", "T", "V", "W", "Y", "CS", "DE", "KR", "QN", "LIV"]
+    coev_features = ["DImax", "MImax", "DItop4mean", "MItop4mean", "DItop8mean", "MItop8mean", "DI4max", "MI4max", "DI1mean", "MI1mean", "DI3mean", "MI3mean", "DI4mean", "MI4mean", "DI4cum", "MI4cum"]
+    DI_features = ["DImax", "DItop4mean", "DItop8mean", "DI4max", "DI1mean", "DI3mean", "DI4mean", "DI4cum"]
+    MI_features = ["MImax", "MItop4mean", "MItop8mean", "MI4max", "MI1mean", "MI3mean", "MI4mean", "MI4cum"]
+    cons_features = ["conservation", "cons4mean"]
+    motif_features =  ["GxxxG", "SmxxxSm"]
+    physical_features = ["branched", "mass"]
+    TMD_features = ["residue_depth", "n_TMDs", "n_homologues"]
     polarity_and_pssm_features = polarity_features + pssm_features
-    features_nested_list = [polarity_and_pssm_features, coev_features, cons_features, motif_features, physical_features, TMD_features]
-    features_nested_namelist = ["polarity_and_pssm_features", "coev_features", "cons_features", "motif_features", "physical_features", "TMD_features"]
+    features_nested_list = [polarity_and_pssm_features, coev_features, DI_features, MI_features, cons_features, motif_features, physical_features, TMD_features]
+    features_nested_namelist = ["polarity_and_pssm_features", "coev_features",  "DI_features", "MI_features", "cons_features", "motif_features", "physical_features", "TMD_features"]
 
     for i in range(len(features_nested_list)):
         sys.stdout.write("\n{} : {}".format(features_nested_namelist[i], features_nested_list[i]))
@@ -913,11 +926,12 @@ def calc_feat_import_from_mean_decrease_accuracy(s, logging):
     decrease_ROC_AUC_dict = {}
 
     for feature_type, feature_list in zip(features_nested_namelist, features_nested_list):
+        feature_list = list(set(feature_list).intersection(set(X.columns.tolist())))
         logging.info("{} : {}".format(feature_type, feature_list))
         X_t = X.copy()
         for feature in feature_list:
             # shuffle the data for that feature
-            row_to_shuffle = X_t[feature].as_matrix()
+            row_to_shuffle = X_t[feature].to_numpy()
             np.random.shuffle(row_to_shuffle)
             X_t[feature] = row_to_shuffle
         # calculate prediction performance after shuffling
@@ -934,7 +948,7 @@ def calc_feat_import_from_mean_decrease_accuracy(s, logging):
     for feature in X.columns:
         X_t = X.copy()
         # shuffle the data for that feature
-        row_to_shuffle = X_t[feature].as_matrix()
+        row_to_shuffle = X_t[feature].to_numpy()
         np.random.shuffle(row_to_shuffle)
         X_t[feature] = row_to_shuffle
         # calculate prediction performance after shuffling

@@ -32,7 +32,7 @@ def create_AUBOC10_4predictors_3databases_figs(s,df_set,logging):
         for predictor_name in predictor_name_list:
             BO_data_excel = os.path.join(s["thoipapy_data_folder"], "Results", "compare_predictors",
                                          "{}.{}_BO_curve_data.xlsx".format(s['setname'], predictor_name.replace('*', "")))
-            df_o_minus_r = pd.read_excel(BO_data_excel,sheetname="df_o_minus_r",index_col=0)
+            df_o_minus_r = pd.read_excel(BO_data_excel,sheet_name="df_o_minus_r",index_col=0)
             df_o_minus_r = df_o_minus_r.filter(regex=database, axis=1)
             df_o_minus_r_mean = df_o_minus_r.T.mean()
             AUBOC10 = np.trapz(y=df_o_minus_r_mean, x=df_o_minus_r_mean.index)

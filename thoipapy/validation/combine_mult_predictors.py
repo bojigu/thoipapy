@@ -101,7 +101,7 @@ def merge_predictions(s, df_set, logging):
         interf_score = dfm.interface_score.dropna().copy()
         dfm.loc[interf_score.index, "random"] = np.random.rand(len(interf_score))
         # NOT RECOMMENDED, AS HEAVY ATOM DIST IS OPPOSITE OF DISRUPTION
-        #dfm.loc[interf_score.index, "random"] = shuffle(interf_score.as_matrix())
+        #dfm.loc[interf_score.index, "random"] = shuffle(interf_score.to_numpy())
 
         # save to "Merged" folder, so as not to get confused with the "combined" files
         dfm.to_csv(merged_data_csv_path)

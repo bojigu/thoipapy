@@ -72,7 +72,7 @@ if __name__ == "__main__":
         #                                                                                            #
         ##############################################################################################
         # load the protein set (e.g. set01.xlsx) as a dataframe
-        df_set = pd.read_excel(set_path, sheetname='proteins')
+        df_set = pd.read_excel(set_path, sheet_name='proteins')
 
         # create list of uniprot accessions to run
         acc_list = df_set.acc.tolist()
@@ -189,9 +189,9 @@ if __name__ == "__main__":
 
         if s["run_LOO_validation"]:
             thoipapy.validation.validation.run_LOO_validation(s, df_set, logging)
-            if "create_LOO_validation_figs" in s:
-                if s["create_LOO_validation_figs"]:
-                    thoipapy.validation.validation.create_LOO_validation_fig(s, df_set, logging)
+        if "create_LOO_validation_figs" in s:
+            if s["create_LOO_validation_figs"]:
+                thoipapy.validation.validation.create_LOO_validation_fig(s, df_set, logging)
 
         if s["calc_feature_importances"]:
             thoipapy.validation.validation.calc_feat_import_from_mean_decrease_impurity(s, logging)

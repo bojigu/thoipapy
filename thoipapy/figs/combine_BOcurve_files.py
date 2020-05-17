@@ -70,8 +70,8 @@ def plot_BOcurve(s, train_set_list, test_set_list, mult_THOIPA_dir, mult_testnam
     mult_testname : str
         String denoting this combination of test and training datasets
         E.g. testsets(2)_trainsets(2)
-    sheetname : str
-        Excel sheetname
+    sheet_name : str
+        Excel sheet_name
         This is the toggle deciding whether the OLD or NEW performance measure is used
         Default = new method ("df_o_minus_r"), where the overlap MINUS random_overlap is used
     suffix : str
@@ -93,7 +93,7 @@ def plot_BOcurve(s, train_set_list, test_set_list, mult_THOIPA_dir, mult_testnam
             #/media/mark/sindy/m_data/THOIPA_data/Results/Bo_Curve/Testset03_Trainset01.THOIPA.validation/BO_curve_data.xlsx
             BO_data_excel = os.path.join(s["thoipapy_data_folder"], "Results", "compare_testset_trainset", "data", "Test{}_Train{}.THOIPA".format(testsetname, trainsetname), "data", "BO_curve_data.xlsx")
 
-            df = pd.read_excel(BO_data_excel, sheetname=sheetname, index_col=0)
+            df = pd.read_excel(BO_data_excel, sheet_name=sheet_name, index_col=0)
 
             df["mean_"] = df.mean(axis=1)
 
@@ -150,7 +150,7 @@ def compare_predictors(s):
     # list of predictors to compare, e.g. ["Testset03_Trainset04.THOIPA", "Testset03.LIPS"]
     #predictor_list = ast.literal_eval(s["fig_plot_BO_curve_mult_predictors_list"])
 
-    predictors_df = pd.read_excel(s["excel_file_with_settings"], sheetname="predictors")
+    predictors_df = pd.read_excel(s["excel_file_with_settings"], sheet_name="predictors")
     predictors_df["include"] = predictors_df["include"].apply(convert_truelike_to_bool, convert_nontrue=False)
     predictors_df["include"] = predictors_df["include"].apply(convert_falselike_to_bool)
     predictors_df = predictors_df.loc[predictors_df.include == True]
@@ -166,7 +166,7 @@ def compare_predictors(s):
         if not os.path.isfile(BO_data_excel):
             raise FileNotFoundError("BO_data_excel does not exist ({}). Try running run_testset_trainset_validation".format(BO_data_excel))
 
-        df = pd.read_excel(BO_data_excel, sheetname="df_o_minus_r", index_col=0)
+        df = pd.read_excel(BO_data_excel, sheet_name="df_o_minus_r", index_col=0)
 
         df["mean_"] = df.mean(axis=1)
 

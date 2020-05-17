@@ -125,8 +125,8 @@ def collect_indiv_validation_data(s, df_set, logging, namedict, predictor_name_l
         PR_AUC_ser.sort_values(inplace=True, ascending=False)
 
         # BO curve AUBOC10 validation
-        AUBOC10_ser = pd.read_excel(BO_data_excel, sheetname="AUBOC10", index_col=0)["AUBOC10"].copy()
-        df_o_minus_r = pd.read_excel(BO_data_excel, sheetname="df_o_minus_r", index_col=0)
+        AUBOC10_ser = pd.read_excel(BO_data_excel, sheet_name="AUBOC10", index_col=0)["AUBOC10"].copy()
+        df_o_minus_r = pd.read_excel(BO_data_excel, sheet_name="df_o_minus_r", index_col=0)
         df_o_minus_r.columns = pd.Series(df_o_minus_r.columns).replace(namedict)
         df_o_minus_r_mean = df_o_minus_r.T.mean()
         #df_o_minus_r_mean_df= pd.concat([df_o_minus_r_mean_df,df_o_minus_r_mean],axis=1, join="outer")
@@ -222,10 +222,10 @@ def create_indiv_validation_figs(s, logging, namedict, predictor_name_list, THOI
     ROC_AUC_vs_PR_AUC_scatter_png = os.path.join(indiv_validation_dir, "ROC_AUC_vs_PR_AUC_scatter.png")
     perc_interf_vs_PR_cutoff_linechart_png = os.path.join(indiv_validation_dir, "perc_interf_vs_PR_cutoff_linechart.png")
 
-    ROC_AUC_df = pd.read_excel(indiv_validation_data_xlsx, sheetname="ROC_AUC_indiv")
-    PR_AUC_df = pd.read_excel(indiv_validation_data_xlsx, sheetname="PR_AUC_indiv")
-    AUBOC10_df = pd.read_excel(indiv_validation_data_xlsx, sheetname="BO_AUBOC10_indiv")
-    df_o_minus_r_mean_df = pd.read_excel(indiv_validation_data_xlsx, sheetname="BO_o_minus_r")
+    ROC_AUC_df = pd.read_excel(indiv_validation_data_xlsx, sheet_name="ROC_AUC_indiv")
+    PR_AUC_df = pd.read_excel(indiv_validation_data_xlsx, sheet_name="PR_AUC_indiv")
+    AUBOC10_df = pd.read_excel(indiv_validation_data_xlsx, sheet_name="BO_AUBOC10_indiv")
+    df_o_minus_r_mean_df = pd.read_excel(indiv_validation_data_xlsx, sheet_name="BO_o_minus_r")
 
     create_ROC_AUC_barchart(ROC_AUC_df, indiv_ROC_AUC_barchart_png, namedict, THOIPA_predictor_name)
     create_PR_AUC_barchart(PR_AUC_df, indiv_PR_AUC_barchart_png, namedict, THOIPA_predictor_name)

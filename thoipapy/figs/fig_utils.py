@@ -155,17 +155,17 @@ def calc_best_overlap(acc_db, df, experiment_col="interface_score", pred_col="TH
         #inter_num_random = calc_rand_overlap(tm_len, sample_size)
         inter_num_random = sample_size**2 / tm_len
 
-        odf.set_value(ind, acc_db, observed_overlap)
-        odf.set_value(ind, "sample_size", "Top" + str(sample_size))
-        odf.set_value(ind, "parameters", "observed_overlap")
+        odf.at[ind, acc_db] = observed_overlap
+        odf.at[ind, "sample_size"] = "Top" + str(sample_size)
+        odf.at[ind, "parameters"] = "observed_overlap"
         ind = ind + 1
-        odf.set_value(ind, acc_db, inter_num_random)
-        odf.set_value(ind, "sample_size", "Top" + str(sample_size))
-        odf.set_value(ind, "parameters", "random_overlap")
+        odf.at[ind, acc_db] = inter_num_random
+        odf.at[ind, "sample_size"] = "Top" + str(sample_size)
+        odf.at[ind, "parameters"] = "random_overlap"
         ind = ind + 1
-        odf.set_value(ind, acc_db, pval)
-        odf.set_value(ind, "sample_size", "Top" + str(sample_size))
-        odf.set_value(ind, "parameters", "p_value_from_obs_overlap")
+        odf.at[ind, acc_db] = pval
+        odf.at[ind, "sample_size"] = "Top" + str(sample_size)
+        odf.at[ind, "parameters"] = "p_value_from_obs_overlap"
         ind = ind + 1
 
         previous_overlap = observed_overlap

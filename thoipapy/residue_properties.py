@@ -425,7 +425,7 @@ def lipo_from_pssm(acc, pssm_csv_surr5, lipo_csv, tm_surr_left, tm_surr_right, s
     # df_hs = pd.read_excel(hydrophob_scale_path, skiprows=2)
     # df_hs.set_index("1aa", inplace=True)
     # df_hs.sort_index(inplace=True)
-    # hs_arr = df_hs[scalename].as_matrix()
+    # hs_arr = df_hs[scalename].to_numpy()
 
     # hard-coded Engelman (GES) hydrophobicity scale
     # if re-implementing flexible scale, use the csv instead
@@ -974,8 +974,8 @@ def parse_freecontact_coevolution(acc, freecontact_file, freecontact_parsed_csv,
         for pos in range(TMD_start, TMD_end + 1):
             #iterate from i-1 and i+1 to i-5 and i+5
             for n in range(1, 6):
-                i_minus = pos - n
-                i_plus = pos + n
+                i_minus = pos - n if pos - n in dfp.columns else dfp.columns.min()
+                i_plus = pos + n if pos + n in dfp.columns else dfp.columns.max()
                 # select the two datapoints (e.g. i-4 and i+4 relative to i)
                 sel_XI_ser = dfp.loc[pos, [i_minus, i_plus]]
                 df_out.loc[pos, "coev_i{}_XI".format(n)] = sel_XI_ser.mean()
@@ -2020,11 +2020,15 @@ def add_experimental_data_to_combined_features(acc, database, TMD_seq, feature_c
     if os.path.isfile(experimental_data_file):
         if database == "ETRA":
             sys.stdout.write(experimental_data_file)
-            df_experiment_data = pd.read_excel(experimental_data_file)
+            df_experiment_data = pd.read_excel(experimental_data_file, index_col=0)
+            # confirm that correct index_col is chosen
+            assert list(df_experiment_data.index) == list(range(1, df_experiment_data.shape[0] + 1))
             df_experiment_data = df_experiment_data.rename(columns={"aa_position" : "residue_num", "orig_aa" : "residue_name", "Interface" : "interface", "Disruption" : "interface_score"})
         else:
             df_experiment_data = pd.read_csv(experimental_data_file)
             df_experiment_data = df_experiment_data.rename(columns={"bind": "interface", "closedist": "interface_score"})
+            # confirm that correct index_col is chosen
+            assert list(df_experiment_data.index) == list(range(1, df_experiment_data.shape[0] + 1))
             closedist_notes = False
             if closedist_notes:
                 min_closedist = df_experiment_data.interface_score.min()

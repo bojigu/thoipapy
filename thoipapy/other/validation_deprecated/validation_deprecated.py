@@ -290,7 +290,7 @@ def predict_test_dataset_with_THOIPA_DEPRECATED(train_setname, test_setname, s, 
 
 def create_one_out_train_data(acc_db,set_path,s):
     df_train = pd.DataFrame()
-    df_set04 = pd.read_excel(set_path, sheetname='proteins')
+    df_set04 = pd.read_excel(set_path, sheet_name='proteins')
     for j in df_set04.index:
         acc1 = df_set04.loc[j, "acc_db"]
         if not acc1 == acc_db:

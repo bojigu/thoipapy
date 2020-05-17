@@ -65,7 +65,7 @@ def FigZB_07_hardlinked(Fontsize, Width, Size, s):
     # read name from name file
     #name_file = r"H:\data_xy\protein_names.xlsx"
     names_excel_path = os.path.join(s["dropbox_dir"], "ETRA_NMR_names.xlsx")
-    df_name_file = pd.read_excel(names_excel_path, sheetname='proteins', index_col=0)
+    df_name_file = pd.read_excel(names_excel_path, sheet_name='proteins', index_col=0)
 
 
     #read crustal raw data

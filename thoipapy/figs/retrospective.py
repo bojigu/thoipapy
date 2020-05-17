@@ -253,11 +253,11 @@ def plot_coev_vs_res_dist(s, logging):
 
     # plot MI on secondary axis
     ax2 = ax.twinx()
-    df = pd.read_excel(coev_vs_res_dist_xlsx, sheetname="{}MI".format(excel_tab))
+    df = pd.read_excel(coev_vs_res_dist_xlsx, sheet_name="{}MI".format(excel_tab))
     mean_ser = df.mean(axis=1)
     mean_ser.plot(ax=ax2, label="mutual information (MI)", fontsize=fontsize, color=colour_dict["TUM_accents"]['orange'])
 
-    df = pd.read_excel(coev_vs_res_dist_xlsx, sheetname="{}DI".format(excel_tab))
+    df = pd.read_excel(coev_vs_res_dist_xlsx, sheet_name="{}DI".format(excel_tab))
     mean_ser = df.mean(axis=1)
     mean_ser.plot(ax=ax, label="direct information (DI)", fontsize=fontsize, color=TUMblue)
 

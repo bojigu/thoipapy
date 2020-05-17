@@ -70,7 +70,7 @@ def create_redundant_interact_homodimer_rm_shorttm(s, logging):
         cols = [c for c in df_homo.columns if c[:7] != 'Unnamed']
         df_homo = df_homo[cols]
         df_homo.rename(columns={"interpari_4.5": "interpair_4.5"}, inplace=True)
-        df_homo_matrix = df_homo.as_matrix()
+        df_homo_matrix = df_homo.to_numpy()
         index_drop = []
         for i in range(df_homo.shape[0]):
             ## filter1: remove all pairs without interact pair
