@@ -16,9 +16,7 @@ thoipapy.egg-info/
 
 # Distribution / packaging
 env/
-build/
 develop-eggs/
-dist/
 downloads/
 eggs/
 .eggs/
@@ -33,3 +31,5 @@ var/
 
 # PyInstaller
 /thoipapy.egg-info/
+
+*__pycache__*
