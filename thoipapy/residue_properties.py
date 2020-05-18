@@ -2028,7 +2028,7 @@ def add_experimental_data_to_combined_features(acc, database, TMD_seq, feature_c
             df_experiment_data = pd.read_csv(experimental_data_file)
             df_experiment_data = df_experiment_data.rename(columns={"bind": "interface", "closedist": "interface_score"})
             # confirm that correct index_col is chosen
-            assert list(df_experiment_data.index) == list(range(1, df_experiment_data.shape[0] + 1))
+            assert list(df_experiment_data.index) == list(range(df_experiment_data.shape[0]))
             closedist_notes = False
             if closedist_notes:
                 min_closedist = df_experiment_data.interface_score.min()

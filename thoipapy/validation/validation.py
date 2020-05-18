@@ -368,12 +368,14 @@ def run_LOO_validation(s, df_set, logging):
 
     df_data = pd.read_csv(train_data_csv, index_col=0)
     assert "Unnamed" not in ", ".join(df_data.columns.tolist())
+
     #df_data = df_data.dropna()
 
     # drop training data (full protein) that don't have enough homologues
     df_data = df_data.loc[df_data.n_homologues >= s["min_n_homol_training"]]
 
     acc_db_list = df_data.acc_db.unique()
+    logging.info(f"Dataset has {len(acc_db_list)} unique proteins for training.")
     start = time.clock()
     pred_colname = "THOIPA_{}_LOO".format(s["set_number"])
 
