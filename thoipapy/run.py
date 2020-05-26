@@ -142,6 +142,9 @@ if __name__ == "__main__":
         if s["entropy_feature_calculation"]:
             thoipapy.residue_properties.entropy_calculation_mult_prot(s, df_set, logging)
 
+        if s["rate4site_feature_calculation"]:
+            thoipapy.residue_properties.rate4site_calculation(s, df_set, logging)
+
         if s["cumulative_coevolution_feature_calculation"]:
             if "Windows" in platform.system():
                 sys.stdout.write("\n Freecontact cannot be run in Windows! Skipping coevolution_calculation_with_freecontact_mult_prot.")

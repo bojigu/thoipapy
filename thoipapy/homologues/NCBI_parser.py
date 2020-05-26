@@ -350,6 +350,9 @@ def extract_filtered_csv_homologues_to_alignments(s, acc, TMD_len, fasta_all_TMD
 
                 # save unique sequences WITH gaps (FOR COEVOLUTION WITH FREECONTACT, ETC)
                 uniq_TMD_seqs_for_PSSM_FREECONTACT = df.subject_TMD_align_seq.unique()
+                # remove seqs with O, U, or J that are not accepted by rate4site
+                uniq_TMD_seqs_for_PSSM_FREECONTACT = [x for x in uniq_TMD_seqs_for_PSSM_FREECONTACT if not contains_unaccepted_letter(x)]
+
                 save_seqs(uniq_TMD_seqs_for_PSSM_FREECONTACT, path_uniq_TMD_seqs_for_PSSM_FREECONTACT, query_TMD_seq)
                 save_fasta_from_array(uniq_TMD_seqs_for_PSSM_FREECONTACT, fasta_uniq_TMD_seqs_for_PSSM_FREECONTACT, acc, query_TMD_seq)
 
@@ -366,6 +369,7 @@ def extract_filtered_csv_homologues_to_alignments(s, acc, TMD_len, fasta_all_TMD
                 # only keep the seqs that have the same length as the first one
                 df_no_gaps_in_q_plus5 = df.loc[df['subject_TMD_align_seq_surr5'].str.len() == TMD_plus_5_len]
                 uniq_TMD_seqs_surr5_for_LIPO = df_no_gaps_in_q_plus5['subject_TMD_align_seq_surr5'].unique()
+                uniq_TMD_seqs_surr5_for_LIPO = [x for x in uniq_TMD_seqs_surr5_for_LIPO if not contains_unaccepted_letter(x)]
                 save_seqs(uniq_TMD_seqs_surr5_for_LIPO, path_uniq_TMD_seqs_surr5_for_LIPO, query_TMD_seq=query_TMD_seq_surr5)
                 save_fasta_from_array(uniq_TMD_seqs_surr5_for_LIPO, fasta_uniq_TMD_seqs_surr5_for_LIPO, acc, query_TMD_seq=query_TMD_seq_surr5)
 
@@ -386,3 +390,7 @@ def extract_filtered_csv_homologues_to_alignments(s, acc, TMD_len, fasta_all_TMD
         sys.stdout.write("{} not found".format(BLAST_csv_tar))
 
     return single_prot_dict
+
+def contains_unaccepted_letter(seq):
+    unaccepted_letters = ['O', 'U', 'J']
+    return any([u in seq for u in unaccepted_letters])
