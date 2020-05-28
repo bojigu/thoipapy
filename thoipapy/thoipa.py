@@ -1,4 +1,15 @@
 import warnings
+
+import thoipapy.features.physical_parameters
+import thoipapy.features.combine_features
+import thoipapy.features.entropy
+import thoipapy.features.freecontact
+import thoipapy.features.lipophilicity
+import thoipapy.features.lips
+import thoipapy.features.motifs
+import thoipapy.features.pssm
+import thoipapy.features.relative_position
+
 warnings.filterwarnings("ignore")
 
 import argparse
@@ -209,8 +220,8 @@ def run_THOIPA_prediction(protein_name, md5, TMD_seq, full_seq, out_dir, create_
                                                       path_uniq_TMD_seqs_no_gaps_for_LIPS, path_uniq_TMD_seqs_surr5_for_LIPO, BLAST_csv_tar,
                                                       TMD_seq, query_TMD_seq_surr5, logging)
 
-    rp.create_PSSM_from_MSA(path_uniq_TMD_seqs_for_PSSM_FREECONTACT, pssm_csv, acc, TMD_seq, logging)
-    rp.create_PSSM_from_MSA(path_uniq_TMD_seqs_surr5_for_LIPO, pssm_surr5_csv, acc, query_TMD_seq_surr5, logging)
+    thoipapy.features.pssm.create_PSSM_from_MSA(path_uniq_TMD_seqs_for_PSSM_FREECONTACT, pssm_csv, acc, TMD_seq, logging)
+    thoipapy.features.pssm.create_PSSM_from_MSA(path_uniq_TMD_seqs_surr5_for_LIPO, pssm_surr5_csv, acc, query_TMD_seq_surr5, logging)
 
     ###################################################################################################
     #                                                                                                 #
@@ -218,32 +229,32 @@ def run_THOIPA_prediction(protein_name, md5, TMD_seq, full_seq, out_dir, create_
     #                                                                                                 #
     ###################################################################################################
 
-    rp.lipo_from_pssm(acc, pssm_surr5_csv, lipo_csv, tm_surr_left_lipo, tm_surr_right_lipo, s["lipophilicity_scale"], logging, plot_linechart=True)
+    thoipapy.features.lipophilicity.lipo_from_pssm(acc, pssm_surr5_csv, lipo_csv, tm_surr_left_lipo, tm_surr_right_lipo, s["lipophilicity_scale"], logging, plot_linechart=True)
 
-    rp.entropy_calculation(acc, path_uniq_TMD_seqs_for_PSSM_FREECONTACT, TMD_seq, entropy_file, logging)
+    thoipapy.features.entropy.entropy_calculation(acc, path_uniq_TMD_seqs_for_PSSM_FREECONTACT, TMD_seq, entropy_file, logging)
 
     if "Windows" in platform.system():
         logging.warning("\n Freecontact cannot be run in Windows! Skipping coevolution_calculation_with_freecontact."
                          "For testing, copy file from Linux and rename to {}".format(freecontact_file))
     else:
-        rp.coevolution_calculation_with_freecontact(path_uniq_TMD_seqs_for_PSSM_FREECONTACT, freecontact_file, s["freecontact_dir"], logging)
+        thoipapy.features.freecontact.coevolution_calculation_with_freecontact(path_uniq_TMD_seqs_for_PSSM_FREECONTACT, freecontact_file, s["freecontact_dir"], logging)
 
-    rp.parse_freecontact_coevolution(acc, freecontact_file, freecontact_parsed_csv, TMD_start, TMD_end, logging)
+    thoipapy.features.freecontact.parse_freecontact_coevolution(acc, freecontact_file, freecontact_parsed_csv, TMD_start, TMD_end, logging)
 
-    rp.calc_relative_position(acc, path_uniq_TMD_seqs_for_PSSM_FREECONTACT, relative_position_file, TMD_start, seqlen, logging)
+    thoipapy.features.relative_position.calc_relative_position(acc, path_uniq_TMD_seqs_for_PSSM_FREECONTACT, relative_position_file, TMD_start, seqlen, logging)
 
-    rp.LIPS_score_calculation(path_uniq_TMD_seqs_no_gaps_for_LIPS, LIPS_output_file)
+    thoipapy.features.lips.LIPS_score_calculation(path_uniq_TMD_seqs_no_gaps_for_LIPS, LIPS_output_file)
 
-    rp.parse_LIPS_score(acc, LIPS_output_file, LIPS_parsed_csv, logging)
-    rp.motifs_from_seq(TMD_seq, TMD_seq_pl_surr, tm_surr_left, tm_surr_right, motifs_file, logging)
+    thoipapy.features.lips.parse_LIPS_score(acc, LIPS_output_file, LIPS_parsed_csv, logging)
+    thoipapy.features.motifs.motifs_from_seq(TMD_seq, TMD_seq_pl_surr, tm_surr_left, tm_surr_right, motifs_file, logging)
 
     database = "standalone_prediction"
     #combine_all_features(acc, database, TMD_seq, feature_combined_file, entropy_file, pssm_csv, lipo_csv, freecontact_parsed_csv, relative_position_file, LIPS_parsed_csv,motifs_file, alignment_summary_csv, logging)
-    rp.combine_all_features(s, full_seq, acc, database, TMD_seq, TMD_start, feature_combined_file, entropy_file, pssm_csv,
-                         lipo_csv, freecontact_parsed_csv, relative_position_file, LIPS_parsed_csv, motifs_file,
-                         alignment_summary_csv, full_seq_fasta_file,full_seq_phobius_output_file,logging)
+    thoipapy.features.combine_features.combine_all_features(s, full_seq, acc, database, TMD_seq, TMD_start, feature_combined_file, entropy_file, pssm_csv,
+                                                            lipo_csv, freecontact_parsed_csv, relative_position_file, LIPS_parsed_csv, motifs_file,
+                                                            alignment_summary_csv, full_seq_fasta_file, full_seq_phobius_output_file, logging)
 
-    rp.add_physical_parameters_to_features(acc, feature_combined_file, logging)
+    thoipapy.features.physical_parameters.add_physical_parameters_to_features(acc, feature_combined_file, logging)
 
     ###################################################################################################
     #                                                                                                 #

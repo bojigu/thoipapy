@@ -15,6 +15,22 @@ Purpose:        Self-interacting single-pass membrane protein interface residues
 # I'm getting sick of the warnings that occur due to imported seaborn and statsmodels.stats.api modules, and have nothing to do with your code.
 # you should turn on warnings once a month to check if there is anything related to your code
 import warnings
+
+import thoipapy.experimental_data.add_experimental_data_to_train_set
+import thoipapy.experimental_data.remove_hetero_contacts
+import thoipapy.features.physical_parameters
+import thoipapy.features.combine_features
+import thoipapy.features.entropy
+import thoipapy.features.freecontact
+import thoipapy.features.lipophilicity
+import thoipapy.features.lips
+import thoipapy.features.motifs
+import thoipapy.features.preddimer_tmdock
+import thoipapy.features.pssm
+import thoipapy.features.rate4site
+import thoipapy.features.relative_position
+import thoipapy.validation.random_interface
+
 warnings.filterwarnings("ignore")
 
 import argparse
@@ -111,7 +127,7 @@ if __name__ == "__main__":
         #    thoipapy.structures.deprecated.NMR_data.calc_closedist_from_NMR_best_model(s)
 
         if s["Atom_Close_Dist"]:
-            infor = thoipapy.closest_heavy_atom_dist.homodimer_residue_closedist_calculate_from_complex(thoipapy, s, logging)
+            infor = thoipapy.experimental_data.closest_heavy_atom_dist.homodimer_residue_closedist_calculate_from_complex(thoipapy, s, logging)
             sys.stdout.write(infor)
 
         ###################################################################################################
@@ -137,47 +153,47 @@ if __name__ == "__main__":
         ###################################################################################################
 
         if s["pssm_feature_calculation"]:
-            thoipapy.residue_properties.create_PSSM_from_MSA_mult_prot(s, df_set, logging)
+            thoipapy.features.pssm.create_PSSM_from_MSA_mult_prot(s, df_set, logging)
 
         if s["entropy_feature_calculation"]:
-            thoipapy.residue_properties.entropy_calculation_mult_prot(s, df_set, logging)
+            thoipapy.features.entropy.entropy_calculation_mult_prot(s, df_set, logging)
 
         if s["rate4site_feature_calculation"]:
-            thoipapy.residue_properties.rate4site_calculation(s, df_set, logging)
+            thoipapy.features.rate4site.rate4site_calculation(s, df_set, logging)
 
         if s["cumulative_coevolution_feature_calculation"]:
             if "Windows" in platform.system():
                 sys.stdout.write("\n Freecontact cannot be run in Windows! Skipping coevolution_calculation_with_freecontact_mult_prot.")
-                thoipapy.residue_properties.parse_freecontact_coevolution_mult_prot(s, df_set, logging)
+                thoipapy.features.freecontact.parse_freecontact_coevolution_mult_prot(s, df_set, logging)
             else:
-                thoipapy.residue_properties.coevolution_calculation_with_freecontact_mult_prot(s, df_set, logging)
-                thoipapy.residue_properties.parse_freecontact_coevolution_mult_prot(s, df_set, logging)
+                thoipapy.features.freecontact.coevolution_calculation_with_freecontact_mult_prot(s, df_set, logging)
+                thoipapy.features.freecontact.parse_freecontact_coevolution_mult_prot(s, df_set, logging)
 
         if s["clac_relative_position"]:
-            thoipapy.residue_properties.calc_relative_position_mult_prot(s, df_set, logging)
+            thoipapy.features.relative_position.calc_relative_position_mult_prot(s, df_set, logging)
 
         if s["calc_lipo_from_pssm"]:
-            thoipapy.residue_properties.lipo_from_pssm_mult_prot(s, df_set, logging)
+            thoipapy.features.lipophilicity.lipo_from_pssm_mult_prot(s, df_set, logging)
 
         if s["lips_score_feature_calculation"]:
-            thoipapy.residue_properties.LIPS_score_calculation_mult_prot(s, df_set, logging)
-            thoipapy.residue_properties.parse_LIPS_score_mult_prot(s, df_set, logging)
+            thoipapy.features.lips.LIPS_score_calculation_mult_prot(s, df_set, logging)
+            thoipapy.features.lips.parse_LIPS_score_mult_prot(s, df_set, logging)
 
         if s["motifs_from_seq"]:
-            thoipapy.residue_properties.motifs_from_seq_mult_protein(s, df_set, logging)
+            thoipapy.features.motifs.motifs_from_seq_mult_protein(s, df_set, logging)
 
         if s["combine_feature_into_train_data"]:
-            thoipapy.residue_properties.combine_all_features_mult_prot(s, df_set, logging)
-            thoipapy.residue_properties.add_physical_parameters_to_features_mult_prot(s, df_set, logging)
-            thoipapy.residue_properties.add_experimental_data_to_combined_features_mult_prot(s, df_set, logging)
+            thoipapy.features.combine_features.combine_all_features_mult_prot(s, df_set, logging)
+            thoipapy.features.physical_parameters.add_physical_parameters_to_features_mult_prot(s, df_set, logging)
+            thoipapy.experimental_data.add_experimental_data_to_train_set.add_experimental_data_to_combined_features_mult_prot(s, df_set, logging)
             if s["generate_randomised_interfaces"]:
-                thoipapy.residue_properties.add_random_interface_to_combined_features_mult_prot(s, df_set, logging)
+                thoipapy.validation.random_interface.add_random_interface_to_combined_features_mult_prot(s, df_set, logging)
             if "add_PREDDIMER_TMDOCK_to_combined_features" in s:
                 if s["add_PREDDIMER_TMDOCK_to_combined_features"]:
-                    thoipapy.residue_properties.add_PREDDIMER_TMDOCK_to_combined_features_mult_prot(s, df_set, logging)
+                    thoipapy.features.preddimer_tmdock.add_PREDDIMER_TMDOCK_to_combined_features_mult_prot(s, df_set, logging)
             if s["remove_crystal_hetero"]:
-                thoipapy.residue_properties.remove_crystal_hetero_contact_residues_mult_prot(s, df_set, logging)
-            thoipapy.residue_properties.combine_all_train_data_for_machine_learning(s, df_set, logging)
+                thoipapy.experimental_data.remove_hetero_contacts.remove_crystal_hetero_contact_residues_mult_prot(s, df_set, logging)
+            thoipapy.features.combine_features.combine_all_train_data_for_machine_learning(s, df_set, logging)
 
         ###################################################################################################
         #                                                                                                 #
