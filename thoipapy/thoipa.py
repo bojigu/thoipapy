@@ -31,7 +31,6 @@ from django.utils.text import slugify
 import joblib
 
 import thoipapy
-import thoipapy.residue_properties as rp
 from thoipapy.homologues.NCBI_download import download_homologues_from_ncbi
 from thoipapy.homologues.NCBI_parser import parse_NCBI_xml_to_csv, extract_filtered_csv_homologues_to_alignments
 from thoipapy.utils import normalise_between_2_values, open_csv_as_series

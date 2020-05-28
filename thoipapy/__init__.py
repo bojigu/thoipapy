@@ -3,7 +3,6 @@ import thoipapy.validation
 import thoipapy.utils
 import thoipapy.common
 import thoipapy.figs
-import thoipapy.residue_properties
 import thoipapy.experimental_data.closest_heavy_atom_dist
 import thoipapy.setting
 import thoipapy.ML_model

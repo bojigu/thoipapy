@@ -27,8 +27,9 @@ def rate4site_calculation(s, df_set, logging):
         return False
 
     for i in df_set.index:
-        acc = df_set.loc[i, "acc"]
-        database = df_set.loc[i, "database"]
+        acc = df_set.at[i, "acc"]
+        database = df_set.at[i, "database"]
+        TMD_seq = df_set.at[i, "TMD_seq"]
         alignments_dir = os.path.join(s["thoipapy_data_folder"], "homologues", "alignments", database)
         path_uniq_TMD_seqs_surr5_for_LIPO = os.path.join(alignments_dir, "{}.surr5.gaps{}.uniq.for_LIPO.fas".format(acc, s["max_n_gaps_in_TMD_subject_seq"]))
         cons_cdhit_input_fasta: Path = Path(s["thoipapy_data_folder"]).joinpath("Features", "rate4site", database, f"{acc}.lipo_seqs_cdhit_input.fas")
@@ -37,7 +38,7 @@ def rate4site_calculation(s, df_set, logging):
         rate4site_input: Path = Path(s["thoipapy_data_folder"]).joinpath("Features", "rate4site", database, f"{acc}.rate4site_input.fas")
         rate4site_orig_output: Path = Path(s["thoipapy_data_folder"]).joinpath("Features", "rate4site", database, f"{acc}.rate4site_orig_output.txt")
 
-        rate4site_csv: Path = Path(s["thoipapy_data_folder"]).joinpath("Features", "rate4site", database, f"{acc}_rate4site.txt")
+        rate4site_csv: Path = Path(s["thoipapy_data_folder"]).joinpath("Features", "rate4site", database, f"{acc}_rate4site.csv")
 
         with open(str(cons_cdhit_input_fasta), "w") as f_out:
             with open(path_uniq_TMD_seqs_surr5_for_LIPO, "r") as f_in:
@@ -54,59 +55,61 @@ def rate4site_calculation(s, df_set, logging):
         cutoff_decrease_per_round = 0.01
         rerun = False
 
-        print(f"decreasing cdhit cutoff for {acc}: ")
-
-        while len_cdhit_cluster_reps > 200:
-            if rerun:
-                temp = str(cons_cdhit_output_fasta)[:-4] + "temp.fas"
-                if Path(temp).is_file():
-                    Path(temp).unlink()
-                os.rename(cons_cdhit_output_fasta, temp)
-                cdhit_cluster_reps = run_cdhit(temp, cons_cdhit_output_fasta, cutoff)
-            else:
-                cdhit_cluster_reps = run_cdhit(cons_cdhit_input_fasta, cons_cdhit_output_fasta, cutoff)
-
-            len_cdhit_cluster_reps = len(cdhit_cluster_reps)
-            sys.stdout.write(f"{cutoff:0.2f}({len_cdhit_cluster_reps}), ")
-            sys.stdout.flush()
-            cutoff -= cutoff_decrease_per_round
-            if cutoff <= 0.20:
-                to_be_truncated_fasta: str = str(cons_cdhit_output_fasta)[:-4] + "to_be_truncated.fas"
-                os.rename(cons_cdhit_output_fasta, to_be_truncated_fasta)
-                with open(to_be_truncated_fasta, "r") as f_in:
-                    with open(cons_cdhit_output_fasta, "w") as f_out:
-                        for n, line in enumerate(f_in):
-                            f_out.write(line)
-                            if n >= 400:
-                                break
-                break
-            rerun = True
-
-        final_cutoff_used = cutoff + cutoff_decrease_per_round
-        sys.stdout.write("\n")
-        logging.info(f"cd-hit for rate4site finished. Final cutoff = {final_cutoff_used:0.2f}. Clusters = {len_cdhit_cluster_reps}. Output = {cons_cdhit_output_fasta}")
-
-        #if len(cdhit_cluster_reps) > 200:
-        #    cutoff = 0.7
-        #    run_cdhit(cons_cdhit_input_fasta, cons_cdhit_output_fasta, cutoff)
-        #    logging.info(f"repeating cd-hit with a stricter cutoff\nafter cd-hit analysis, {cons_cdhit_output_fasta} has {len(cdhit_cluster_reps)} clusters")
-
-
-        copy_sequence = False
-        with open(path_uniq_TMD_seqs_surr5_for_LIPO, "r") as f_in:
-            with open(str(rate4site_input), "w") as f_out:
-                for line in f_in:
-                    if line[0] == ">":
-                        if line[1:] in cdhit_cluster_reps:
-                            f_out.write(line)
-                            copy_sequence = True
-                    else:
-                        if copy_sequence:
-                            f_out.write(line)
-                            copy_sequence = False
-
-
         if not rate4site_orig_output.is_file() or (s["rerun_rate4site"] in [True, 1]):
+
+            print(f"decreasing cdhit cutoff for {acc}: ")
+
+            while len_cdhit_cluster_reps > 200:
+                if rerun:
+                    temp = str(cons_cdhit_output_fasta)[:-4] + "temp.fas"
+                    if Path(temp).is_file():
+                        Path(temp).unlink()
+                    os.rename(cons_cdhit_output_fasta, temp)
+                    cdhit_cluster_reps = run_cdhit(temp, cons_cdhit_output_fasta, cutoff)
+                else:
+                    cdhit_cluster_reps = run_cdhit(cons_cdhit_input_fasta, cons_cdhit_output_fasta, cutoff)
+
+                len_cdhit_cluster_reps = len(cdhit_cluster_reps)
+                sys.stdout.write(f"{cutoff:0.2f}({len_cdhit_cluster_reps}), ")
+                sys.stdout.flush()
+                cutoff -= cutoff_decrease_per_round
+                if cutoff <= 0.20:
+                    to_be_truncated_fasta: str = str(cons_cdhit_output_fasta)[:-4] + "to_be_truncated.fas"
+                    os.rename(cons_cdhit_output_fasta, to_be_truncated_fasta)
+                    with open(to_be_truncated_fasta, "r") as f_in:
+                        with open(cons_cdhit_output_fasta, "w") as f_out:
+                            for n, line in enumerate(f_in):
+                                f_out.write(line)
+                                if n >= 400:
+                                    break
+                    break
+                rerun = True
+
+            final_cutoff_used = cutoff + cutoff_decrease_per_round
+            sys.stdout.write("\n")
+            logging.info(f"cd-hit for rate4site finished. Final cutoff = {final_cutoff_used:0.2f}. Clusters = {len_cdhit_cluster_reps}. Output = {cons_cdhit_output_fasta}")
+
+            #if len(cdhit_cluster_reps) > 200:
+            #    cutoff = 0.7
+            #    run_cdhit(cons_cdhit_input_fasta, cons_cdhit_output_fasta, cutoff)
+            #    logging.info(f"repeating cd-hit with a stricter cutoff\nafter cd-hit analysis, {cons_cdhit_output_fasta} has {len(cdhit_cluster_reps)} clusters")
+
+
+            copy_sequence = False
+            with open(path_uniq_TMD_seqs_surr5_for_LIPO, "r") as f_in:
+                with open(str(rate4site_input), "w") as f_out:
+                    for line in f_in:
+                        if line[0] == ">":
+                            if line[1:] in cdhit_cluster_reps:
+                                f_out.write(line)
+                                copy_sequence = True
+                        else:
+                            if copy_sequence:
+                                f_out.write(line)
+                                copy_sequence = False
+
+
+
 
             if os.path.isfile(rate4site_input):
 
@@ -140,13 +143,35 @@ def rate4site_calculation(s, df_set, logging):
         df.to_csv(str(rate4site_orig_output)[:-4] + ".orig.csv")
 
         # convert standard csv to csv for thoipa features
-        df_cons = df.reindex(["seq", "score"], axis=1)
-        df_cons.columns = ["residue_name", "rate4site"]
-        df_cons.index.name = "residue_num"
+        df_rate4site = df.reindex(["seq", "score"], axis=1)
+        df_rate4site.columns = ["residue_name", "rate4site"]
+        df_rate4site.index.name = "residue_num"
 
-        df_cons.to_csv(rate4site_csv)
+        # since the lipophilicity alignment was padded by 5 residues on each side, the index doesn't match the TMD residue number.
+        # first get the offset
+        alignment_TMD_plus_offset = "".join(df_rate4site["residue_name"].to_list())
+        TMD_seq_len = len(TMD_seq)
+        for offset in range(0, (len(alignment_TMD_plus_offset) - TMD_seq_len)):
+            TMD_seq_slice = alignment_TMD_plus_offset[offset: offset + TMD_seq_len]
+            if TMD_seq_slice == TMD_seq:
+                break
+
+        logging.info(f"alignment offset found ({offset})")
+
+        # minus all indices by the number of residues surrounding the TMD on the left
+        df_rate4site.index = pd.Series(df_rate4site.index) - offset
+
+        residue_num_to_keep = range(1, TMD_seq_len + 1)
+        df_rate4site = df_rate4site.reindex(residue_num_to_keep)
+
+        saved_TMD_seq = "".join(df_rate4site["residue_name"].to_list())
+        assert saved_TMD_seq == TMD_seq
+
+        df_rate4site.to_csv(rate4site_csv)
 
         logging.info(f"{rate4site_csv} saved")
+        logging.info(f"{TMD_seq} (orig TMD)")
+        logging.info("".join(df_rate4site["residue_name"].to_list()))
 
     logging.info("rate4site_calculation finished")
 
