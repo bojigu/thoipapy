@@ -222,10 +222,10 @@ def create_indiv_validation_figs(s, logging, namedict, predictor_name_list, THOI
     ROC_AUC_vs_PR_AUC_scatter_png = os.path.join(indiv_validation_dir, "ROC_AUC_vs_PR_AUC_scatter.png")
     perc_interf_vs_PR_cutoff_linechart_png = os.path.join(indiv_validation_dir, "perc_interf_vs_PR_cutoff_linechart.png")
 
-    ROC_AUC_df = pd.read_excel(indiv_validation_data_xlsx, sheet_name="ROC_AUC_indiv")
-    PR_AUC_df = pd.read_excel(indiv_validation_data_xlsx, sheet_name="PR_AUC_indiv")
-    AUBOC10_df = pd.read_excel(indiv_validation_data_xlsx, sheet_name="BO_AUBOC10_indiv")
-    df_o_minus_r_mean_df = pd.read_excel(indiv_validation_data_xlsx, sheet_name="BO_o_minus_r")
+    ROC_AUC_df = pd.read_excel(indiv_validation_data_xlsx, sheet_name="ROC_AUC_indiv", index_col=0)
+    PR_AUC_df = pd.read_excel(indiv_validation_data_xlsx, sheet_name="PR_AUC_indiv", index_col=0)
+    AUBOC10_df = pd.read_excel(indiv_validation_data_xlsx, sheet_name="BO_AUBOC10_indiv", index_col=0)
+    df_o_minus_r_mean_df = pd.read_excel(indiv_validation_data_xlsx, sheet_name="BO_o_minus_r", index_col=0)
 
     create_ROC_AUC_barchart(ROC_AUC_df, indiv_ROC_AUC_barchart_png, namedict, THOIPA_predictor_name)
     create_PR_AUC_barchart(PR_AUC_df, indiv_PR_AUC_barchart_png, namedict, THOIPA_predictor_name)
@@ -436,12 +436,17 @@ def create_PR_AUC_barchart(PR_AUC_df, indiv_PR_AUC_barchart_png, namedict, THOIP
     #PR_AUC_df = pd.read_excel(file_location, sheet_name="PR_AUC_indiv")
 
     for i in PR_AUC_df.index:
-        if "crystal" in i:
+        if "X-ray" in i:
             PR_AUC_df.loc[i, "sort_list"] = 2
+            continue
         if "NMR" in i:
             PR_AUC_df.loc[i, "sort_list"] = 1
+            continue
         if "ETRA" in i:
             PR_AUC_df.loc[i, "sort_list"] = 0
+            continue
+        else:
+            raise ValueError("Neither X-ray, NMR, nor ETRA found in protein description within dataframe index.")
 
     PR_AUC_df.sort_values(['sort_list', THOIPA_predictor_name], ascending=[True, False], inplace=True)
 

@@ -92,6 +92,8 @@ def merge_predictions(s, df_set, logging):
                 dfm = pd.concat([dfm, df], axis=1, join="outer")
 
                 n_files_merged += 1
+            else:
+                logging.warning(f"Input file not found: {file}")
 
         # keep the desired columns
         new_columns_kept_in_combined_file = list(set(columns_kept_in_combined_file).intersection(set(dfm.columns)))

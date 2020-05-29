@@ -1,4 +1,6 @@
 import warnings
+from pathlib import Path
+
 warnings.simplefilter(action='ignore', category=FutureWarning)
 import thoipapy
 import pandas as pd
@@ -125,9 +127,9 @@ def validate_THOIPA_for_testset_trainset_combination(s, test_set_list, train_set
                 acc_db = acc + "-" + database
                 testdata_combined_file = os.path.join(s["thoipapy_data_folder"], "Features", "combined", database,
                                                       "{}.surr20.gaps5.combined_features.csv".format(acc))
-                THOIPA_pred_csv = os.path.join(os.path.dirname(s["thoipapy_data_folder"], "Features"), "Predictions", "testset_trainset", database,
+                THOIPA_pred_csv = os.path.join(os.path.dirname(s["thoipapy_data_folder"]), "Features", "Predictions", "testset_trainset", database,
                                                       "{}.THOIPA.train{}.csv".format(acc, trainsetname))
-                combined_incl_THOIPA_csv = os.path.join(os.path.dirname(s["thoipapy_data_folder"], "Features"), "Predictions", "testset_trainset", database,
+                combined_incl_THOIPA_csv = os.path.join(os.path.dirname(s["thoipapy_data_folder"]), "Features", "Predictions", "testset_trainset", database,
                                                       "{}.THOIPA_incl_combined.train{}.csv".format(acc, trainsetname))
                 thoipapy.utils.make_sure_path_exists(combined_incl_THOIPA_csv, isfile=True)
 
@@ -257,7 +259,7 @@ def validate_LIPS_for_testset(s, logging, LIPS_name = "LIPS_LE", pred_col="LIPS_
             #######################################################################################################
             # SAVE LIPS PREDICTION DATA
             # this is somewhat inefficient, as it is conducted for every test dataset
-            LIPS_pred_csv = os.path.join(os.path.dirname(s["thoipapy_data_folder"], "Features"), "Predictions", "testset_trainset", database, "{}.LIPS_pred.csv".format(acc, testsetname))
+            LIPS_pred_csv = os.path.join(os.path.dirname(s["thoipapy_data_folder"]), "Features", "Predictions", "testset_trainset", database, "{}.LIPS_pred.csv".format(acc, testsetname))
             LIPS_pred_df = combined_df[["residue_name", "residue_num", "LIPS_polarity", "LIPS_entropy", "LIPS_L*E", "LIPS_surface", "LIPS_surface_ranked"]]
             thoipapy.utils.make_sure_path_exists(LIPS_pred_csv, isfile=True)
             LIPS_pred_df.to_csv(LIPS_pred_csv)
@@ -932,8 +934,12 @@ def save_BO_linegraph_and_barchart(s, BO_data_excel, BO_linechart_png, BO_barcha
     for col in df_valid_indiv.columns:
         df_valid_indiv[col] = normalise_0_1(df_valid_indiv[col])[0] + 0.01
 
-    BO_curve_folder = os.path.join(s["thoipapy_data_folder"], "Results", s["setname"], "crossvalidation")
+    BO_curve_folder = Path(s["thoipapy_data_folder"]) / "Results" / s["setname"] / "crossvalidation"
+    crossvalidation_data_dir = BO_curve_folder / "data"
+    if not crossvalidation_data_dir.is_dir():
+        crossvalidation_data_dir.mkdir(parents=True)
     BO_data_excel = os.path.join(BO_curve_folder, "data", "{}_BO_curve_data.xlsx".format(s["setname"]))
+
     df_valid_indiv = df_valid_indiv.reindex(columns=["AUBOC10", 5, 10, "ROC AUC"])
     df_valid_indiv.columns = ["AUBOC10", "sample size 5", "sample size 10", "ROC AUC"]
 
