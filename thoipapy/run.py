@@ -30,6 +30,7 @@ import thoipapy.features.pssm
 import thoipapy.features.rate4site
 import thoipapy.features.relative_position
 import thoipapy.validation.random_interface
+from thoipapy.clustering.pairwise_aln_similarity_matrix import create_identity_matrix_from_protein_set
 
 warnings.filterwarnings("ignore")
 
@@ -103,6 +104,11 @@ if __name__ == "__main__":
             database_for_full_set = unique_database_labels[0]
         else:
             database_for_full_set = "mixed"
+
+        if "create_identity_matrix_from_set_seqs" in s:
+            if s["create_identity_matrix_from_set_seqs"]:
+                create_identity_matrix_from_protein_set(s, logging)
+
 
         ###################################################################################################
         #                                                                                                 #
@@ -280,9 +286,9 @@ if __name__ == "__main__":
         if s["create_ROC_4predictors"] == True:
             thoipapy.validation.indiv_validation.create_ROC_comp_4predictors(s, df_set, logging)
 
-        #if s["create_AUC_AUBOC_separate_database"] == True:
-        #    thoipapy.other.validation_deprecated.validation_test_train_deprecated.create_AUBOC10_4predictors_3databases_figs(s, df_set, logging)
-        #    thoipapy.other.validation_deprecated.validation_test_train_deprecated.create_AUC_4predictors_3databases_figs(s, df_set, logging)
+        if s["create_AUC_AUBOC_separate_database"] == True:
+            thoipapy.other.validation_deprecated.validation_test_train_deprecated.create_AUBOC10_4predictors_3databases_figs(s, df_set, logging)
+            thoipapy.other.validation_deprecated.validation_test_train_deprecated.create_AUC_4predictors_3databases_figs(s, df_set, logging)
 
         if "download_10_homologues_from_ncbi" in s:
             if s["download_10_homologues_from_ncbi"] == True:
