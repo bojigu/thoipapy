@@ -4,6 +4,7 @@ import subprocess
 import sys
 import threading
 import time
+from pathlib import Path
 
 import numpy as np
 import pandas as pd
@@ -83,7 +84,7 @@ def run_LOO_validation_od_non_multiprocessing(s, df_set, logging):
     for i in df_set.index:
 
         acc, acc_db, database  = df_set.loc[i, "acc"], df_set.loc[i, "acc_db"], df_set.loc[i, "database"]
-        THOIPA_prediction_csv = os.path.join(s["thoipapy_data_folder"], "Predictions", "leave_one_out", database, "{}.{}.{}.LOO.prediction.csv".format(acc, database, s["setname"]))
+        THOIPA_prediction_csv = Path(s["thoipapy_data_folder"]) / "Results" / s["setname"] / f"crossvalidation/leave_one_out/protein_data/{acc}.{database}.LOO.prediction.csv"
         thoipapy.utils.make_sure_path_exists(THOIPA_prediction_csv, isfile=True)
 
         #######################################################################################################

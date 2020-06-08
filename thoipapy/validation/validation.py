@@ -1,4 +1,6 @@
 import warnings
+from pathlib import Path
+
 warnings.simplefilter(action='ignore', category=FutureWarning)
 from random import shuffle
 import pandas as pd
@@ -353,6 +355,7 @@ def run_LOO_validation(s, df_set, logging):
         excel file with the processed BO-curve data
     """
     logging.info('Leave-One-Out cross validation is running')
+    setname = s["setname"]
     names_excel_path = os.path.join(s["dropbox_dir"], "protein_names.xlsx")
 
     # drop redundant proteins according to CD-HIT
@@ -394,7 +397,7 @@ def run_LOO_validation(s, df_set, logging):
     val_list = []
     for n, i in enumerate(df_set.index):
         acc, acc_db, database  = df_set.loc[i, "acc"], df_set.loc[i, "acc_db"], df_set.loc[i, "database"]
-        THOIPA_prediction_csv = os.path.join(s["thoipapy_data_folder"], "Predictions", "leave_one_out", database, "{}.{}.{}.LOO.prediction.csv".format(acc, database, s["setname"]))
+        THOIPA_prediction_csv = Path(s["thoipapy_data_folder"]) / "Results" / s["setname"] / f"crossvalidation/leave_one_out/protein_data/{acc}.{database}.LOO.prediction.csv"
         testdata_combined_file = os.path.join(s["thoipapy_data_folder"], "Features", "combined", database, "{}.surr20.gaps5.combined_features.csv".format(acc))
         thoipapy.utils.make_sure_path_exists(THOIPA_prediction_csv, isfile=True)
         #######################################################################################################
