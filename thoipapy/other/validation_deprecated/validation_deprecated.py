@@ -13,7 +13,8 @@ import joblib
 from sklearn.metrics import roc_curve, auc
 
 import thoipapy
-from thoipapy.validation.validation import drop_cols_not_used_in_ML
+import thoipapy.validation.feature_selection
+from thoipapy.validation.feature_selection import drop_cols_not_used_in_ML
 
 
 def run_LOO_validation_od_non_multiprocessing(s, df_set, logging):
@@ -78,8 +79,8 @@ def run_LOO_validation_od_non_multiprocessing(s, df_set, logging):
     BO_all_df = pd.DataFrame()
     pred_colname = "THOIPA_{}_LOO".format(s["set_number"])
 
-    n_features = thoipapy.validation.validation.drop_cols_not_used_in_ML(logging, df_data, s["excel_file_with_settings"]).shape[1]
-    forest = thoipapy.validation.validation.THOIPA_classifier_with_settings(s, n_features)
+    n_features = thoipapy.validation.feature_selection.drop_cols_not_used_in_ML(logging, df_data, s["excel_file_with_settings"]).shape[1]
+    forest = thoipapy.validation.train_model.THOIPA_classifier_with_settings(s, n_features)
 
     for i in df_set.index:
 
@@ -99,7 +100,7 @@ def run_LOO_validation_od_non_multiprocessing(s, df_set, logging):
             # skip protein
             continue
         df_train = df_data.loc[df_data.acc_db != acc_db]
-        X_train = thoipapy.validation.validation.drop_cols_not_used_in_ML(logging, df_train, s["excel_file_with_settings"], i)
+        X_train = thoipapy.validation.feature_selection.drop_cols_not_used_in_ML(logging, df_train, s["excel_file_with_settings"], i)
         y_train = df_train[s["bind_column"]]
 
         #######################################################################################################
@@ -112,7 +113,7 @@ def run_LOO_validation_od_non_multiprocessing(s, df_set, logging):
         testdata_combined_file = os.path.join(s["thoipapy_data_folder"], "Features", "combined", database, "{}.surr20.gaps5.combined_features.csv".format(acc))
         df_test = pd.read_csv(testdata_combined_file)
 
-        X_test = thoipapy.validation.validation.drop_cols_not_used_in_ML(logging, df_test, s["excel_file_with_settings"])
+        X_test = thoipapy.validation.feature_selection.drop_cols_not_used_in_ML(logging, df_test, s["excel_file_with_settings"])
         y_test = df_test["interface"].fillna(0).astype(int)
 
         #######################################################################################################

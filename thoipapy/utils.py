@@ -978,3 +978,7 @@ def open_csv_as_series(input_csv):
     input_df.columns = ["data"]
     input_ser = input_df["data"]
     return input_ser
+
+
+def intersect(a, b):
+     return list(set(a) & set(b))

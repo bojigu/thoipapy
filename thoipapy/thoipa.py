@@ -34,7 +34,7 @@ import thoipapy
 from thoipapy.homologues.NCBI_download import download_homologues_from_ncbi
 from thoipapy.homologues.NCBI_parser import parse_NCBI_xml_to_csv, extract_filtered_csv_homologues_to_alignments
 from thoipapy.utils import normalise_between_2_values, open_csv_as_series
-from thoipapy.validation.validation import drop_cols_not_used_in_ML
+from thoipapy.validation.feature_selection import drop_cols_not_used_in_ML
 
 # set matplotlib backend to Agg when run on a server
 if os.environ.get('DISPLAY','') == '':

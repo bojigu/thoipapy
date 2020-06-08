@@ -1,6 +1,8 @@
 import warnings
 from pathlib import Path
 
+import thoipapy.validation.feature_selection
+
 warnings.simplefilter(action='ignore', category=FutureWarning)
 import thoipapy
 import pandas as pd
@@ -397,7 +399,7 @@ def save_THOIPA_pred_indiv_prot(s, model_pkl, testdata_combined_file, THOIPA_pre
     #Lips_score = test_df.LIPS_polarity * test_df.LIPS_entropy
 
     #tX=test_df.drop(test_features_del,axis=1)
-    test_X = thoipapy.validation.validation.drop_cols_not_used_in_ML(logging, combined_incl_THOIPA_df, s["excel_file_with_settings"])
+    test_X = thoipapy.validation.feature_selection.drop_cols_not_used_in_ML(logging, combined_incl_THOIPA_df, s["excel_file_with_settings"])
 
     try:
         prob_arr = fit.predict_proba(test_X)[:, 1]

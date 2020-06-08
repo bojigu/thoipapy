@@ -1,3 +1,3 @@
-import thoipapy.validation.validation
+import thoipapy.validation.train_model
 import thoipapy.validation.combine_mult_predictors
 import thoipapy.validation.indiv_validation

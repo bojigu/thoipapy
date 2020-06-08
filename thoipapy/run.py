@@ -17,19 +17,13 @@ Purpose:        Self-interacting single-pass membrane protein interface residues
 import warnings
 
 import thoipapy.experimental_data.add_experimental_data_to_train_set
-import thoipapy.experimental_data.remove_hetero_contacts
 import thoipapy.features.physical_parameters
-import thoipapy.features.combine_features
-import thoipapy.features.entropy
-import thoipapy.features.freecontact
-import thoipapy.features.lipophilicity
-import thoipapy.features.lips
-import thoipapy.features.motifs
-import thoipapy.features.preddimer_tmdock
-import thoipapy.features.pssm
-import thoipapy.features.rate4site
-import thoipapy.features.relative_position
+import thoipapy.validation.feature_importance
+import thoipapy.validation.leave_one_out
+import thoipapy.validation.precision_recall
 import thoipapy.validation.random_interface
+import thoipapy.validation.roc
+import thoipapy.validation.tenfold
 from thoipapy.clustering.pairwise_aln_similarity_matrix import create_identity_matrix_from_protein_set
 
 warnings.filterwarnings("ignore")
@@ -208,24 +202,24 @@ if __name__ == "__main__":
         ###################################################################################################
 
         if s["run_10fold_cross_validation"]:
-            thoipapy.validation.validation.run_10fold_cross_validation(s, logging)
-            thoipapy.validation.validation.create_10fold_cross_validation_fig(s, logging)
+            thoipapy.validation.tenfold.run_10fold_cross_validation(s, logging)
+            thoipapy.validation.tenfold.create_10fold_cross_validation_fig(s, logging)
 
 
         if s["run_LOO_validation"]:
-            thoipapy.validation.validation.run_LOO_validation(s, df_set, logging)
+            thoipapy.validation.leave_one_out.run_LOO_validation(s, df_set, logging)
         if "create_LOO_validation_figs" in s:
             if s["create_LOO_validation_figs"]:
-                thoipapy.validation.validation.create_LOO_validation_fig(s, df_set, logging)
+                thoipapy.validation.leave_one_out.create_LOO_validation_fig(s, df_set, logging)
 
         if s["calc_feature_importances"]:
-            thoipapy.validation.validation.calc_feat_import_from_mean_decrease_impurity(s, logging)
-            thoipapy.validation.validation.fig_feat_import_from_mean_decrease_impurity(s, logging)
-            thoipapy.validation.validation.calc_feat_import_from_mean_decrease_accuracy(s, logging)
-            thoipapy.validation.validation.fig_feat_import_from_mean_decrease_accuracy(s, logging)
+            thoipapy.validation.feature_importance.calc_feat_import_from_mean_decrease_impurity(s, logging)
+            thoipapy.validation.feature_importance.fig_feat_import_from_mean_decrease_impurity(s, logging)
+            thoipapy.validation.feature_importance.calc_feat_import_from_mean_decrease_accuracy(s, logging)
+            thoipapy.validation.feature_importance.fig_feat_import_from_mean_decrease_accuracy(s, logging)
 
         if s["train_machine_learning_model"]:
-            thoipapy.validation.validation.train_machine_learning_model(s, logging)
+            thoipapy.validation.train_model.train_machine_learning_model(s, logging)
 
         if s["run_testset_trainset_validation"] == True:
             thoipapy.figs.create_BOcurve_files.run_testset_trainset_validation(s, logging)
@@ -300,8 +294,8 @@ if __name__ == "__main__":
                 thoipapy.figs.retrospective.plot_coev_vs_res_dist(s, logging)
 
         if s["ROC_PR_val_all_residues_combined"]:
-            thoipapy.validation.validation.create_ROC_all_residues(s, df_set, logging)
-            thoipapy.validation.validation.create_precision_recall_all_residues(s, df_set, logging)
+            thoipapy.validation.roc.create_ROC_all_residues(s, df_set, logging)
+            thoipapy.validation.precision_recall.create_precision_recall_all_residues(s, df_set, logging)
 
         thoipapy.setting.deployment_helper.docker_deployment_had_better_work_now()
         thoipapy.ML_model.deployment_helper2.docker_deployment_had_better_work_now2()
