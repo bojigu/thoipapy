@@ -2,6 +2,7 @@ import os
 import pickle
 import sys
 import time
+from ast import literal_eval
 from multiprocessing import Pool
 from pathlib import Path
 
@@ -97,9 +98,15 @@ def run_LOO_validation(s, df_set, logging):
 
     sim_matrix_xlsx = Path(s["thoipapy_data_folder"]) / "Results" / s["setname"] / f"crossvalidation/clusters/{setname}_sim_matrix.xlsx"
 
+    df_clusters = pd.read_excel(sim_matrix_xlsx, sheet_name="reduced_clusters", index_col=0)
+    df_clusters["reduced_clusters"] = df_clusters["reduced_clusters"].apply(lambda x: literal_eval(x))
+    df_clusters["acc_database_list"] = df_clusters["reduced_clusters"].apply(lambda x: [y[2:] for y in list(x)])
+    cluster = df_clusters.at[1, "acc_database_list"]
+    print(cluster)
+
     val_list = []
     for n, i in enumerate(df_set.index):
-        acc, acc_db, database  = df_set.loc[i, "acc"], df_set.loc[i, "acc_db"], df_set.loc[i, "database"]
+        acc, acc_db, database = df_set.loc[i, "acc"], df_set.loc[i, "acc_db"], df_set.loc[i, "database"]
         THOIPA_prediction_csv = Path(s["thoipapy_data_folder"]) / "Results" / s["setname"] / f"crossvalidation/leave_one_out/protein_data/{acc}.{database}.LOO.prediction.csv"
         testdata_combined_file = os.path.join(s["thoipapy_data_folder"], "Features", "combined", database, "{}.surr20.gaps5.combined_features.csv".format(acc))
         thoipapy.utils.make_sure_path_exists(THOIPA_prediction_csv, isfile=True)
