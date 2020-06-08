@@ -7,6 +7,7 @@ import platform
 import re
 import signal
 import sys
+from pathlib import Path
 from time import strftime
 import numpy as np
 import pandas as pd
@@ -446,20 +447,20 @@ def process_set_protein_seqs(s, setname, df_set, set_path):
     df_set["tm_surr_right"] = df_set.TMD_end_pl_surr - df_set.TMD_end
 
     # save the full sequences in fasta format for CD-HIT, etc.
-    fasta_out = os.path.join(os.path.dirname(set_path), "fasta", "{}_full.fas".format(setname))
-    thoipapy.utils.make_sure_path_exists(fasta_out, isfile=True)
-    with open(fasta_out, "w") as f:
+    protein_set_full_seq_fasta = Path(s["thoipapy_data_folder"]) / "Results" / s["setname"] / f"crossvalidation/set_clusters/{setname}_full_seqs.fas"
+    thoipapy.utils.make_sure_path_exists(protein_set_full_seq_fasta, isfile=True)
+    with open(protein_set_full_seq_fasta, "w") as f:
         for n, acc in enumerate(df_set.index):
             f.write(">{}-{}\n{}\n".format(n, df_set.loc[acc, "acc_db"], df_set.loc[acc, "full_seq"]))
 
-    fasta_out = os.path.join(os.path.dirname(set_path), "fasta", "{}_TMD.fas".format(setname))
-    thoipapy.utils.make_sure_path_exists(fasta_out, isfile=True)
-    with open(fasta_out, "w") as f:
+    protein_set_tmd_seq_fasta = Path(s["thoipapy_data_folder"]) / "Results" / s["setname"] / f"crossvalidation/set_clusters/{setname}_tmd_seqs.fas"
+    thoipapy.utils.make_sure_path_exists(protein_set_tmd_seq_fasta, isfile=True)
+    with open(protein_set_tmd_seq_fasta, "w") as f:
         for n, acc in enumerate(df_set.index):
             f.write(">{}-{}\n{}\n".format(n, df_set.loc[acc, "acc_db"], df_set.loc[acc, "TMD_seq"]))
 
     # open previously saved CD-hit results
-    cdhit_cluster_txt = os.path.join(os.path.dirname(set_path), "fasta", "{}.fas.1.clstr.sorted.txt".format(setname))
+    cdhit_cluster_txt = Path(s["thoipapy_data_folder"]) / "Results" / s["setname"] / f"crossvalidation/set_clusters/{setname}.fas.1.clstr.sorted.txt"
     if os.path.isfile(cdhit_cluster_txt):
         lines_with_ref_seq = []
         with open(cdhit_cluster_txt, "r") as f:
@@ -474,7 +475,7 @@ def process_set_protein_seqs(s, setname, df_set, set_path):
         df_set.loc[cluster_rep_list, "cdhit_cluster_rep"] = True
         df_set["cdhit_cluster_rep"] = df_set["cdhit_cluster_rep"].fillna(False)
     else:
-        logging.warning("No CD-HIT results found. Redundancy check for training and validation not conducted. It is assumed that dataset is already non-redundant.")
+        logging.warning("No CD-HIT results found for automatic redundancy reduction. It is assumed that dataset is non-redundant. Further CD-HIT clustering may be used for predictor validation.")
         df_set["cdhit_cluster_rep"] = "no_cdhit_results"
 
     """  Rearrange the dataframe columns so that the order is as follows.

@@ -12,16 +12,19 @@ from typing import List, Set, Union
 
 
 def create_identity_matrix_from_protein_set(s, logging):
-    set_number = s["set_number"]
-    input_fasta = Path(f"/home/mark/Dropbox/tm_homodimer_dropbox/sets/fasta/set{set_number:02d}_full.fas")
-    output_align = Path(f"/home/mark/Dropbox/tm_homodimer_dropbox/sets/fasta/{set_number:02d}_sim_matrix_alignments.txt")
-    sim_matrix_xlsx = Path(f"/home/mark/Dropbox/tm_homodimer_dropbox/sets/fasta/{set_number:02d}_sim_matrix.xlsx")
+    setname = s["setname"]
+    protein_set_full_seq_fasta = Path(s["thoipapy_data_folder"]) / "Results" / s["setname"] / f"crossvalidation/set_clusters/{setname}_full_seqs.fas"
+    output_align = Path(s["thoipapy_data_folder"]) / "Results" / s["setname"] / f"crossvalidation/clusters/{setname}_sim_matrix_alignments.txt"
+    sim_matrix_xlsx = Path(s["thoipapy_data_folder"]) / "Results" / s["setname"] / f"crossvalidation/clusters/{setname}_sim_matrix.xlsx"
+    if not sim_matrix_xlsx.parent.is_dir():
+        sim_matrix_xlsx.parent.mkdir(parents=True)
     gap_open = -40.0
     gap_extend = -0.5
-    create_identity_matrix_using_pairwise_alignments(input_fasta, output_align, sim_matrix_xlsx, gap_open, gap_extend, logging)
+    aln_cutoff = 15
+    create_identity_matrix_using_pairwise_alignments(protein_set_full_seq_fasta, output_align, sim_matrix_xlsx, gap_open, gap_extend, logging, aln_cutoff=aln_cutoff)
 
 
-def create_identity_matrix_using_pairwise_alignments(input_fasta: Union[Path, str], output_align: Union[Path, str], ident_matrix_xlsx: Union[Path, str], gap_open: float, gap_extend: float, logging, matrix = matlist.blosum62, aln_cutoff: float = 15.0):
+def create_identity_matrix_using_pairwise_alignments(protein_set_full_seq_fasta: Union[Path, str], output_align: Union[Path, str], ident_matrix_xlsx: Union[Path, str], gap_open: float, gap_extend: float, logging, matrix = matlist.blosum62, aln_cutoff: float = 15.0):
     """Create identity matrix using pairwise alignments.
 
     This is a clustering method used to complement cd-hit, which is not designed for clustering at very low levels of identity.
@@ -39,10 +42,10 @@ def create_identity_matrix_using_pairwise_alignments(input_fasta: Union[Path, st
     acc_pairs_above_cutoff = []
     df_ident = pd.DataFrame()
     with open(output_align, "w") as f:
-        for seq_record in SeqIO.parse(input_fasta, "fasta"):
+        for seq_record in SeqIO.parse(protein_set_full_seq_fasta, "fasta"):
             acc = seq_record.id
             query = seq_record.seq
-            for target_record in SeqIO.parse(input_fasta, "fasta"):
+            for target_record in SeqIO.parse(protein_set_full_seq_fasta, "fasta"):
                 target_acc = target_record.id
                 target_seq = target_record.seq
                 if acc == target_acc:
@@ -140,7 +143,7 @@ def create_identity_matrix_using_pairwise_alignments(input_fasta: Union[Path, st
 
     # save the settings used
     df_settings = pd.DataFrame()
-    df_settings.at["input_fasta", "value"] = input_fasta
+    df_settings.at["input_fasta", "value"] = protein_set_full_seq_fasta
     df_settings.at["alignment_file", "value"] = output_align
     df_settings.at["sim_matrix_csv", "value"] = ident_matrix_xlsx
     df_settings.at["matrix", "value"] = "matlist.blosum62"
