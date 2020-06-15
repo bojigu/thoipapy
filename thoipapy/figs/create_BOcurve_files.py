@@ -114,7 +114,7 @@ def validate_THOIPA_for_testset_trainset_combination(s, test_set_list, train_set
 
             testset_path = thoipapy.common.get_path_of_protein_set(testsetname, s["sets_folder"])
 
-            testdataset_df = pd.read_excel(testset_path, sheet_name="proteins")
+            testdataset_df = pd.read_excel(testset_path)
             THOIPA_BO_data_df = pd.DataFrame()
             #LIPS_BO_data_df = pd.DataFrame()
 
@@ -129,10 +129,14 @@ def validate_THOIPA_for_testset_trainset_combination(s, test_set_list, train_set
                 acc_db = acc + "-" + database
                 testdata_combined_file = os.path.join(s["thoipapy_data_folder"], "Features", "combined", database,
                                                       "{}.surr20.gaps5.combined_features.csv".format(acc))
-                THOIPA_pred_csv = os.path.join(os.path.dirname(s["thoipapy_data_folder"]), "Features", "Predictions", "testset_trainset", database,
-                                                      "{}.THOIPA.train{}.csv".format(acc, trainsetname))
-                combined_incl_THOIPA_csv = os.path.join(os.path.dirname(s["thoipapy_data_folder"]), "Features", "Predictions", "testset_trainset", database,
-                                                      "{}.THOIPA_incl_combined.train{}.csv".format(acc, trainsetname))
+                THOIPA_pred_csv = Path(s["thoipapy_data_folder"]) / "Results" / testsetname / f"blindvalidation/data/{database}/{acc}.THOIPA.train{trainsetname}.csv"
+                combined_incl_THOIPA_csv = Path(s["thoipapy_data_folder"]) / "Results" / testsetname / f"blindvalidation/data/{database}/{acc}.THOIPA_incl_combined.train{trainsetname}.csv"
+
+                #THOIPA_pred_csv = os.path.join(os.path.dirname(s["thoipapy_data_folder"]), "Features", "Predictions", "testset_trainset", database,
+                #                                      "{}.THOIPA.train{}.csv".format(acc, trainsetname))
+                #combined_incl_THOIPA_csv = os.path.join(os.path.dirname(s["thoipapy_data_folder"]), "Features", "Predictions", "testset_trainset", database,
+                #                                      "{}.THOIPA_incl_combined.train{}.csv".format(acc, trainsetname))
+
                 thoipapy.utils.make_sure_path_exists(combined_incl_THOIPA_csv, isfile=True)
 
                 combined_incl_THOIPA_df = save_THOIPA_pred_indiv_prot(s, model_pkl, testdata_combined_file, THOIPA_pred_csv, combined_incl_THOIPA_csv, logging)
@@ -236,7 +240,7 @@ def validate_LIPS_for_testset(s, logging, LIPS_name = "LIPS_LE", pred_col="LIPS_
 
         testset_path = thoipapy.common.get_path_of_protein_set(testsetname, s["sets_folder"])
 
-        testdataset_df = pd.read_excel(testset_path, sheet_name="proteins")
+        testdataset_df = pd.read_excel(testset_path)
         LIPS_BO_data_df = pd.DataFrame()
 
         # save all outputs to a cross-validation dictionary, to be saved as a pickle file
