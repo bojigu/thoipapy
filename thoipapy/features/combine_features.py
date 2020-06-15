@@ -239,7 +239,8 @@ def combine_all_train_data_for_machine_learning(s, df_set, logging):
     if "interface_score" in df_all.columns:
         df_all.dropna(subset=["interface_score"], inplace=True)
     else:
-        logging.warning("No experimental data has been added to this dataset. Hope you're not trying to train with it!!!")
+        logging.warning("No experimental data has been added to this dataset!!!")
+        raise KeyError("Dataframe is missing 'interface_score' column containing experimentally determined interface residues.")
 
     # reset the index to be a range (0,...).
     df_all.index = range(df_all.shape[0])
@@ -250,7 +251,7 @@ def combine_all_train_data_for_machine_learning(s, df_set, logging):
 
     # # remove crystal hetero_interface residues and drop "hetero_interface" column
     # hetero_inter_index = []
-    # for i in range(df_all.shape[0]):
+    # for i in range(df_all.shape[0]):0
     #     if df_all.loc[i,"hetero_interface"] == 1:
     #         hetero_inter_index.append(i)
     # df_all = df_all.drop(df_all.index[hetero_inter_index])

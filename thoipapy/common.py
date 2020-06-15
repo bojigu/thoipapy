@@ -407,7 +407,7 @@ def get_path_of_protein_set(setname, sets_folder):
     elif len(matching_xlsx_file_list) == 0:
         raise FileNotFoundError("Excel file with this set not found.\nsetname = {}\nexcel files in folder = {}".format(setname, xlsx_list))
     elif len(matching_xlsx_file_list) > 1:
-        raise ValueError("More than one excel file in set folder contains '{}' in the filename.\nexcel files in folder = {}".format(setname, xlsx_list))
+        raise ValueError(f"More than one excel file in set folder contains '{setname}' in the filename.\nmatching file list = {matching_xlsx_file_list}")
 
     return set_path
 

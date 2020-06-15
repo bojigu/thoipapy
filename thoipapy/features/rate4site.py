@@ -11,6 +11,9 @@ from thoipapy import utils as utils
 def rate4site_calculation(s, df_set, logging):
     """Calculates conservation of positions using rate4site.
 
+    install rate4site for linux: sudo apt-get install rate4site
+    install cd-hit for linux: sudo apt-get install cd-hit
+
     Parameters
     ----------
     s : dict
@@ -50,6 +53,7 @@ def rate4site_calculation(s, df_set, logging):
             cons_cdhit_output_fasta.unlink()
 
         len_cdhit_cluster_reps = 1000
+        max_n_sequences_for_rate4site = 200
 
         cutoff = 1.0
         cutoff_decrease_per_round = 0.01
@@ -59,7 +63,7 @@ def rate4site_calculation(s, df_set, logging):
 
             print(f"decreasing cdhit cutoff for {acc}: ")
 
-            while len_cdhit_cluster_reps > 200:
+            while len_cdhit_cluster_reps > max_n_sequences_for_rate4site:
                 if rerun:
                     temp = str(cons_cdhit_output_fasta)[:-4] + "temp.fas"
                     if Path(temp).is_file():

@@ -1,3 +1,4 @@
+import math
 import os
 import sys
 from math import isclose
@@ -178,9 +179,6 @@ def lipo_from_pssm(acc, pssm_csv_surr5, lipo_csv, tm_surr_left, tm_surr_right, s
         or if an error occurred,
         acc, False, "pssm_csv not found"
     """
-    lipo_excel = lipo_csv[:-4] + ".xlsx"
-    lipo_linechart = lipo_csv[:-4] + "_linechart.png"
-
     if not os.path.isfile(pssm_csv_surr5):
         sys.stdout.write("\n{} skipped for lipo_from_pssm, pssm_csv not found. ".format(acc))
         sys.stdout.write("pssm_csv : {}".format(pssm_csv_surr5))
@@ -248,7 +246,7 @@ def lipo_from_pssm(acc, pssm_csv_surr5, lipo_csv, tm_surr_left, tm_surr_right, s
 
     [3 rows x 26 columns]"""
 
-    # DEPRECATED DUE TO PROBLEMS WITH LOCATING SETTINGS FILE IN DOCKER
+    # FLEXIBLE HYDROBICITY SCALE CURRENTLY NOT WORKING DUE TO PROBLEMS WITH LOCATING SETTINGS FILE IN DOCKER
     # thoipapy_module_path = os.path.dirname(os.path.abspath(thoipapy.__file__))
     # hydrophob_scale_path = os.path.join(thoipapy_module_path, "setting", "hydrophobicity_scales.xlsx")
     # df_hs = pd.read_excel(hydrophob_scale_path, skiprows=2)
@@ -257,11 +255,13 @@ def lipo_from_pssm(acc, pssm_csv_surr5, lipo_csv, tm_surr_left, tm_surr_right, s
     # hs_arr = df_hs[scalename].to_numpy()
 
     # hard-coded Engelman (GES) hydrophobicity scale
-    # if re-implementing flexible scale, use the csv instead
+    # if re-implementing flexible scale, use the csv instead, or hard-code the various array values into python
     # "FAULTS: error: can't copy 'setting\hydrophobicity_scales.xlsx': doesn't exist or not a regular file"
+    assert scalename == "Engelman(GES)"
     hs_arr = np.array([1.6,2.,-9.2,-8.2,3.7,1.,-3.,3.1,-8.8,2.8,3.4,-4.8,-0.2,-4.1,-12.3,0.6,1.2,2.6,1.9,-0.7])
 
-    """The series should look like this for the Hessa scale. For speed, this is typically converted to a numpy array, sorted alphabetically according to the residue.
+    """The series should look like this for the Hessa scale. 
+    For speed, this is typically converted to a numpy array, sorted alphabetically according to the residue.
 
     1aa
     A    0.11
@@ -302,7 +302,7 @@ def lipo_from_pssm(acc, pssm_csv_surr5, lipo_csv, tm_surr_left, tm_surr_right, s
     P3        0.0066 -0.0  0.0000  0.0 -0.0  0.0148  0.0000 -0.000  0.0 -0.000 -0.000  0.0  2.0516  0.0  0.0  0.0000  0.0000 -0.0000  0.0  0.0
     """
 
-    df_lipo = pd.DataFrame()
+    df_lipo: pd.DataFrame = pd.DataFrame()
     # calculate the mean polarity at each position
     df_lipo["polarity".format(scalename)] = dfh.sum(axis=1)
     # add a range index
@@ -317,7 +317,7 @@ def lipo_from_pssm(acc, pssm_csv_surr5, lipo_csv, tm_surr_left, tm_surr_right, s
         pass
     elif scalename in list_scales_polar_low_values :
         # reverse all values so that polar = high
-        df_lipo = - df_lipo
+        df_lipo: pd.DataFrame = - df_lipo
     else:
         raise ValueError("Panic. The scalename is wrong somehow.")
 
@@ -326,25 +326,30 @@ def lipo_from_pssm(acc, pssm_csv_surr5, lipo_csv, tm_surr_left, tm_surr_right, s
     min_value_dict = {"Hessa" : 0.6, "Elazar" : 1.92, "Hopp - Woods" : 3.4, "KyteDoolittle" : 4.5, "Wimley" : 1.85,
                       "Cornette" : 5.7, "Eisenberg" : 1.38, "Rose" : 0.91, "Janin" : 0.9, "Engelman(GES)" : 3.7}
     lowest_polarity_value = min_value_dict[scalename]
-    df_lipo = df_lipo + lowest_polarity_value
 
-    # lowest_polarity_value = 0.6
+    # normalise the data by adding the lowes polarity value, so that all values are at least zero
+    df_lipo: pd.DataFrame = df_lipo + lowest_polarity_value
+
+    # normalise the data by applying a square root (usually to power of 1/4)
+    df_lipo: pd.DataFrame = df_lipo.applymap(lambda x: math.pow(x, 1/4))
+
+# lowest_polarity_value = 0.6
     # columns = ["polarity", "polarity3Nmean", "polarity3Cmean", "polarity1mean"]
     # for col in columns:
     #     df_lipo[col] = df_lipo[col] + lowest_polarity_value
 
     # take mean over a window that includes the 3 N-terminal residues to the original position
     window = [1, 1, 1, "x", 0, 0, 0]
-    polarity_i1_i3_N = calculate_weighted_windows(df_lipo["polarity"], window, statistic="mean", full_output=False)
+    polarity_i1_i3_N: pd.Series = calculate_weighted_windows(df_lipo["polarity"], window, statistic="mean", full_output=False)
     # take mean over a window that includes the 3 N-terminal residues to the original position
     window = [0, 0, 0, "x", 1, 1, 1]
-    polarity_i1_i3_C = calculate_weighted_windows(df_lipo["polarity"], window, statistic="mean", full_output=False)
+    polarity_i1_i3_C: pd.Series = calculate_weighted_windows(df_lipo["polarity"], window, statistic="mean", full_output=False)
     window = [1, 1, 1]
-    polarity1mean = calculate_weighted_windows(df_lipo["polarity"], window, statistic="mean", full_output=False)
+    polarity1mean: pd.Series = calculate_weighted_windows(df_lipo["polarity"], window, statistic="mean", full_output=False)
     # calculate polarity of central position relative to 6 surrounding residues
     window = [1, 1, 1, "x", 1, 1, 1]
-    mean_polarity_surr_6_res = calculate_weighted_windows(df_lipo["polarity"], window, statistic="mean", full_output=False)
-    relative_polarity = df_lipo["polarity"] / mean_polarity_surr_6_res
+    mean_polarity_surr_6_res: pd.Series = calculate_weighted_windows(df_lipo["polarity"], window, statistic="mean", full_output=False)
+    relative_polarity: pd.Series = df_lipo["polarity"] / mean_polarity_surr_6_res
 
     # replace positions with nan that could not be properly calculated
     # this inlcludes the first 3 positions of polarity_i1_i3_N, and last 3 positions of polarity_i1_i3_C
@@ -385,6 +390,8 @@ def lipo_from_pssm(acc, pssm_csv_surr5, lipo_csv, tm_surr_left, tm_surr_right, s
     df_lipo.to_csv(lipo_csv)
 
     # if plot_linechart:
+    #    lipo_excel = lipo_csv[:-4] + ".xlsx"
+    #    lipo_linechart = lipo_csv[:-4] + "_linechart.png"
     #     # plot a linechart with lipo, polarity_i1_i3_N, polarity_i1_i3_C
     #     fig, ax = plt.subplots()
     #     try:
