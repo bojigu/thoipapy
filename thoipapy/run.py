@@ -24,6 +24,7 @@ import thoipapy.validation.precision_recall
 import thoipapy.validation.random_interface
 import thoipapy.validation.roc
 import thoipapy.validation.tenfold
+import thoipapy.validation.testset_trainset
 from thoipapy.clustering.pairwise_aln_similarity_matrix import create_identity_matrix_from_protein_set
 
 warnings.filterwarnings("ignore")
@@ -222,7 +223,7 @@ if __name__ == "__main__":
             thoipapy.validation.train_model.train_machine_learning_model(s, logging)
 
         if s["run_testset_trainset_validation"] == True:
-            thoipapy.figs.create_BOcurve_files.run_testset_trainset_validation(s, logging)
+            thoipapy.validation.testset_trainset.run_testset_trainset_validation(s, logging)
 
         ###################################################################################################
         #                                                                                                 #
