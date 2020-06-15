@@ -123,7 +123,7 @@ def run_THOIPA_prediction(protein_name, md5, TMD_seq, full_seq, out_dir, create_
     heatmap_path = os.path.join(out_dir, "heatmap.png")
 
     logfile = os.path.join(out_dir, "logfile.txt")
-    logging = thoipapy.common.setup_error_logging(logfile, "DEBUG", "DEBUG", print_system_info=False)
+    logging = thoipapy.common.setup_error_logging(logfile, "INFO", "INFO", print_system_info=False)
 
     logging.info("Starting THOIPA standalone prediction for {}.".format(protein_name))
 
