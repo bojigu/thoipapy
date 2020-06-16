@@ -23,7 +23,7 @@ class LooValidationData:
     def __init__(self):
         self.testdata_combined_file = None
         self.THOIPA_prediction_csv = None
-        self.df_data = None
+        self.df_train = None
         self.excel_file_with_settings = None
         self.forest = None
         self.pred_colname = None
@@ -31,7 +31,6 @@ class LooValidationData:
         self.acc_db = None
         self.database = None
         self.bind_column = None
-        self.n = None
         self.logger = None
         self.excel_file_with_settings = None
 
@@ -120,29 +119,33 @@ def run_LOO_validation(s, df_set, logging):
 
     df_clusters = pd.read_excel(sim_matrix_xlsx, sheet_name="reduced_clusters", index_col=0)
     df_clusters["reduced_clusters"] = df_clusters["reduced_clusters"].apply(lambda x: literal_eval(x))
-    df_clusters["acc_database_list"] = df_clusters["reduced_clusters"].apply(lambda x: [y[2:] for y in list(x)])
+    # ignore the cd-hit numbering (1-proteinname, 18-proteinname):
+    df_clusters["acc_database_list"] = df_clusters["reduced_clusters"].apply(lambda x: ["-".join(y.split("-")[1:]) for y in list(x)])
     cluster = df_clusters.at[1, "acc_database_list"]
 
     val_list = []
-    for n, i in enumerate(df_set.index):
+    for i in df_set.index:
         acc = df_set.loc[i, "acc"]
         database = df_set.loc[i, "database"]
+        acc_db = df_set.loc[i, "acc_db"]
+        df_train = df_data.loc[df_data.acc_db != acc_db]
+
         loo_validation_data = LooValidationData()
         loo_validation_data.acc = acc
         loo_validation_data.acc_db = df_set.loc[i, "acc_db"]
         loo_validation_data.bind_column = s["bind_column"]
         loo_validation_data.database = database
-        loo_validation_data.df_data = df_data
+        loo_validation_data.df_train = df_train
         loo_validation_data.excel_file_with_settings = s["excel_file_with_settings"]
         loo_validation_data.forest = forest
         loo_validation_data.i = i
         loo_validation_data.logger = logger
-        loo_validation_data.n = n
         loo_validation_data.pred_colname = pred_colname
         loo_validation_data.testdata_combined_file = os.path.join(s["thoipapy_data_folder"], "Features", "combined", database, "{}.surr20.gaps5.combined_features.csv".format(acc))
         loo_validation_data.THOIPA_prediction_csv = Path(s["thoipapy_data_folder"]) / "Results" / s["setname"] / f"crossvalidation/leave_one_out/protein_data/{acc}.{database}.LOO.prediction.csv"
 
         thoipapy.utils.make_sure_path_exists(loo_validation_data.THOIPA_prediction_csv, isfile=True)
+
         #######################################################################################################
         #                                                                                                     #
         #      Train data is based on large training csv, after dropping the protein of interest              #
@@ -158,11 +161,7 @@ def run_LOO_validation(s, df_set, logging):
         # X_train = thoipapy.features.RF_Train_Test.drop_cols_not_used_in_ML(logging, df_train, s["excel_file_with_settings"])
         # y_train = df_train[s["bind_column"]]
 
-        #######################################################################################################
-        #                                                                                                     #
-        #           Pack all variables into an object compatible with multiprocessing Pool                    #
-        #                                                                                                     #
-        #######################################################################################################
+
 
         if s["use_multiprocessing"]:
             loo_validation_data_list.append(loo_validation_data)
@@ -270,9 +269,8 @@ def LOO_single_prot(d: LooValidationData):
     #                                                                                                     #
     #######################################################################################################
 
-    df_train = d.df_data.loc[d.df_data.acc_db != d.acc_db]
-    X_train = thoipapy.validation.feature_selection.drop_cols_not_used_in_ML(d.logger, df_train, d.excel_file_with_settings, d.i)
-    y_train = df_train[d.bind_column]
+    X_train = thoipapy.validation.feature_selection.drop_cols_not_used_in_ML(d.logger, d.df_train, d.excel_file_with_settings, d.i)
+    y_train = d.df_train[d.bind_column]
 
     #n, logger, excel_file_with_settings = d["n"], d["logger"], d["excel_file_with_settings"]
 
@@ -291,13 +289,8 @@ def LOO_single_prot(d: LooValidationData):
     X_test = thoipapy.validation.feature_selection.drop_cols_not_used_in_ML(logger, df_test, d.excel_file_with_settings, d.i)
     y_test = df_test["interface"].fillna(0).astype(int)
 
-    #######################################################################################################
-    #                                                                                                     #
-    #                  Run prediction and save output individually for each protein                       #
-    #                                                                                                     #
-    #######################################################################################################
-
     fitted = d.forest.fit(X_train, y_train)
+
     if d.bind_column == "interface":
         prediction = fitted.predict_proba(X_test)[:, 1]
     elif d.bind_column == "interface_score_norm":
@@ -324,7 +317,7 @@ def LOO_single_prot(d: LooValidationData):
 
     BO_df = thoipapy.figs.fig_utils.calc_best_overlap(d.acc_db, df_test, experiment_col="interface_score", pred_col=d.pred_colname)
 
-    if d.n == 0:
+    if d.i == 0:
         tree_depths = np.array([estimator.tree_.max_depth for estimator in d.forest.estimators_])
         logger.info("tree depth mean = {} ({})".format(tree_depths.mean(), tree_depths))
     logger.info("{} AUC : {:.2f}".format(d.acc_db, roc_auc))
