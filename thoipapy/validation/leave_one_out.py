@@ -18,6 +18,24 @@ import thoipapy.validation
 from thoipapy.utils import Log_Only_To_Console
 
 
+class LooValidationData:
+
+    def __init__(self):
+        self.testdata_combined_file = None
+        self.THOIPA_prediction_csv = None
+        self.df_data = None
+        self.excel_file_with_settings = None
+        self.forest = None
+        self.pred_colname = None
+        self.i = None
+        self.acc_db = None
+        self.database = None
+        self.bind_column = None
+        self.n = None
+        self.logger = None
+        self.excel_file_with_settings = None
+
+
 def run_LOO_validation(s, df_set, logging):
     """Run Leave-One-Out cross-validation for a particular set of TMDs (e.g. set05).
 
@@ -68,6 +86,10 @@ def run_LOO_validation(s, df_set, logging):
     BO_all_data_csv = os.path.join(s["thoipapy_data_folder"], "Results", s["setname"], "crossvalidation", "data", "{}_LOO_BO_data.csv".format(s["setname"]))
     BO_curve_folder = os.path.join(s["thoipapy_data_folder"], "Results", s["setname"], "crossvalidation")
     BO_data_excel = os.path.join(BO_curve_folder, "data", "{}_BO_curve_data.xlsx".format(s["setname"]))
+    sim_matrix_xlsx = Path(s["thoipapy_data_folder"]) / "Results" / s["setname"] / f"crossvalidation/clusters/{setname}_sim_matrix.xlsx"
+
+    if not sim_matrix_xlsx.is_file():
+        raise FileNotFoundError(f"The similarity matrix with clusters of putative homologues could not be found ({sim_matrix_xlsx})")
 
     thoipapy.utils.make_sure_path_exists(BO_data_excel, isfile=True)
 
@@ -88,7 +110,7 @@ def run_LOO_validation(s, df_set, logging):
     forest = thoipapy.validation.train_model.THOIPA_classifier_with_settings(s, n_features)
 
     #list of all dictionaries for each protein, for multiprocessing
-    d_list = []
+    loo_validation_data_list = []
 
     if s["use_multiprocessing"]:
         # TURN LOGGING OFF BEFORE MULTIPROCESSING
@@ -96,20 +118,31 @@ def run_LOO_validation(s, df_set, logging):
     else:
         logger = logging
 
-    sim_matrix_xlsx = Path(s["thoipapy_data_folder"]) / "Results" / s["setname"] / f"crossvalidation/clusters/{setname}_sim_matrix.xlsx"
-
     df_clusters = pd.read_excel(sim_matrix_xlsx, sheet_name="reduced_clusters", index_col=0)
     df_clusters["reduced_clusters"] = df_clusters["reduced_clusters"].apply(lambda x: literal_eval(x))
     df_clusters["acc_database_list"] = df_clusters["reduced_clusters"].apply(lambda x: [y[2:] for y in list(x)])
     cluster = df_clusters.at[1, "acc_database_list"]
-    print(cluster)
 
     val_list = []
     for n, i in enumerate(df_set.index):
-        acc, acc_db, database = df_set.loc[i, "acc"], df_set.loc[i, "acc_db"], df_set.loc[i, "database"]
-        THOIPA_prediction_csv = Path(s["thoipapy_data_folder"]) / "Results" / s["setname"] / f"crossvalidation/leave_one_out/protein_data/{acc}.{database}.LOO.prediction.csv"
-        testdata_combined_file = os.path.join(s["thoipapy_data_folder"], "Features", "combined", database, "{}.surr20.gaps5.combined_features.csv".format(acc))
-        thoipapy.utils.make_sure_path_exists(THOIPA_prediction_csv, isfile=True)
+        acc = df_set.loc[i, "acc"]
+        database = df_set.loc[i, "database"]
+        loo_validation_data = LooValidationData()
+        loo_validation_data.acc = acc
+        loo_validation_data.acc_db = df_set.loc[i, "acc_db"]
+        loo_validation_data.bind_column = s["bind_column"]
+        loo_validation_data.database = database
+        loo_validation_data.df_data = df_data
+        loo_validation_data.excel_file_with_settings = s["excel_file_with_settings"]
+        loo_validation_data.forest = forest
+        loo_validation_data.i = i
+        loo_validation_data.logger = logger
+        loo_validation_data.n = n
+        loo_validation_data.pred_colname = pred_colname
+        loo_validation_data.testdata_combined_file = os.path.join(s["thoipapy_data_folder"], "Features", "combined", database, "{}.surr20.gaps5.combined_features.csv".format(acc))
+        loo_validation_data.THOIPA_prediction_csv = Path(s["thoipapy_data_folder"]) / "Results" / s["setname"] / f"crossvalidation/leave_one_out/protein_data/{acc}.{database}.LOO.prediction.csv"
+
+        thoipapy.utils.make_sure_path_exists(loo_validation_data.THOIPA_prediction_csv, isfile=True)
         #######################################################################################################
         #                                                                                                     #
         #      Train data is based on large training csv, after dropping the protein of interest              #
@@ -117,8 +150,8 @@ def run_LOO_validation(s, df_set, logging):
         #                                                                                                     #
         #######################################################################################################
 
-        if not acc_db in acc_db_list:
-            logging.warning("{} is in protein set, but not found in training data".format(acc_db))
+        if not loo_validation_data.acc_db in acc_db_list:
+            logging.warning("{} is in protein set, but not found in training data".format(loo_validation_data.acc_db))
             # skip protein
             continue
         # df_train = df_data.loc[df_data.acc_db != acc_db]
@@ -127,29 +160,20 @@ def run_LOO_validation(s, df_set, logging):
 
         #######################################################################################################
         #                                                                                                     #
-        #         Pack all variables into a dictionary compatible with multiprocessing Pool                   #
+        #           Pack all variables into an object compatible with multiprocessing Pool                    #
         #                                                                                                     #
         #######################################################################################################
 
-        d = {}
-        d["testdata_combined_file"], d["THOIPA_prediction_csv"] = testdata_combined_file, THOIPA_prediction_csv
-        #d["X_train"], d["y_train"] = X_train, y_train
-        d["df_data"] = df_data
-        d["excel_file_with_settings"] = s["excel_file_with_settings"]
-        d["forest"], d["pred_colname"] = forest, pred_colname
-        d["i"], d["acc_db"], d["database"], d["bind_column"] = i, acc_db, database, s["bind_column"]
-        d["n"], d["logger"], d["excel_file_with_settings"] = n, logger, s["excel_file_with_settings"]
-
         if s["use_multiprocessing"]:
-            d_list.append(d)
+            loo_validation_data_list.append(loo_validation_data)
         else:
-            auc_dict, BO_df = LOO_single_prot(d)
+            auc_dict, BO_df = LOO_single_prot(loo_validation_data)
             val_tuple = (auc_dict, BO_df)
             val_list.append(val_tuple)
 
     if s["use_multiprocessing"]:
         with Pool(processes=s["multiple_tmp_simultaneous"]) as pool:
-            val_list = pool.map(LOO_single_prot, d_list)
+            val_list = pool.map(LOO_single_prot, loo_validation_data_list)
 
     #######################################################################################################
     #                                                                                                     #
@@ -225,7 +249,7 @@ def run_LOO_validation(s, df_set, logging):
     logging.info('---PR_AUC(mean each protein : {:.2f})---'.format(mean_pr_auc_all_prot))
 
 
-def LOO_single_prot(d):
+def LOO_single_prot(d: LooValidationData):
     """Create Leave-One-Out cross-validation for a single protein in a dataset
 
     see docstring of run_LOO_validation
@@ -236,12 +260,7 @@ def LOO_single_prot(d):
         dictionary with all necessary values for the function
         having a single variable input allows python multiprocessing with Pool
     """
-    testdata_combined_file, THOIPA_prediction_csv = d["testdata_combined_file"], d["THOIPA_prediction_csv"]
-    #X_train, y_train = d["X_train"], d["y_train"]
-    df_data, logger = d["df_data"], d["logger"]
-    excel_file_with_settings = d["excel_file_with_settings"]
-    forest, pred_colname = d["forest"], d["pred_colname"]
-    i, acc_db, database, bind_column = d["i"], d["acc_db"], d["database"], d["bind_column"]
+    logger = d.logger
 
     #######################################################################################################
     #                                                                                                     #
@@ -251,11 +270,11 @@ def LOO_single_prot(d):
     #                                                                                                     #
     #######################################################################################################
 
-    df_train = df_data.loc[df_data.acc_db != acc_db]
-    X_train = thoipapy.validation.feature_selection.drop_cols_not_used_in_ML(logger, df_train, excel_file_with_settings, i)
-    y_train = df_train[bind_column]
+    df_train = d.df_data.loc[d.df_data.acc_db != d.acc_db]
+    X_train = thoipapy.validation.feature_selection.drop_cols_not_used_in_ML(d.logger, df_train, d.excel_file_with_settings, d.i)
+    y_train = df_train[d.bind_column]
 
-    n, logger, excel_file_with_settings = d["n"], d["logger"], d["excel_file_with_settings"]
+    #n, logger, excel_file_with_settings = d["n"], d["logger"], d["excel_file_with_settings"]
 
     #######################################################################################################
     #                                                                                                     #
@@ -265,11 +284,11 @@ def LOO_single_prot(d):
     #                                                                                                     #
     #######################################################################################################
     # df_test = df_data.loc[df_data.acc_db == acc_db]
-    df_test = pd.read_csv(testdata_combined_file, index_col=0)
+    df_test = pd.read_csv(d.testdata_combined_file, index_col=0)
     assert "Unnamed" not in ",".join(df_test.columns.tolist())
     assert df_test.index.tolist() == list(range(df_test.shape[0]))
 
-    X_test = thoipapy.validation.feature_selection.drop_cols_not_used_in_ML(logger, df_test, excel_file_with_settings, i)
+    X_test = thoipapy.validation.feature_selection.drop_cols_not_used_in_ML(logger, df_test, d.excel_file_with_settings, d.i)
     y_test = df_test["interface"].fillna(0).astype(int)
 
     #######################################################################################################
@@ -278,18 +297,18 @@ def LOO_single_prot(d):
     #                                                                                                     #
     #######################################################################################################
 
-    fitted = forest.fit(X_train, y_train)
-    if bind_column == "interface":
+    fitted = d.forest.fit(X_train, y_train)
+    if d.bind_column == "interface":
         prediction = fitted.predict_proba(X_test)[:, 1]
-    elif bind_column == "interface_score_norm":
+    elif d.bind_column == "interface_score_norm":
         prediction = fitted.predict(X_test)#[:, 1]
     else:
-        raise ValueError("bind_column in excel settings file is not recognised ({})".format(bind_column))
+        raise ValueError("bind_column in excel settings file is not recognised ({})".format(d.bind_column))
     # add the prediction to the combined file
-    df_test[pred_colname] = prediction
+    df_test[d.pred_colname] = prediction
     # save just the prediction alone to csv
-    prediction_df = df_test[["residue_num", "residue_name", pred_colname]]
-    prediction_df.to_csv(THOIPA_prediction_csv, index=False)
+    prediction_df = df_test[["residue_num", "residue_name", d.pred_colname]]
+    prediction_df.to_csv(d.THOIPA_prediction_csv, index=False)
 
     fpr, tpr, thresholds = roc_curve(y_test, prediction, drop_intermediate=False)
     roc_auc = auc(fpr, tpr)
@@ -299,16 +318,16 @@ def LOO_single_prot(d):
 
     auc_dict = {"fpr": fpr, "tpr": tpr, "roc_auc": roc_auc, "precision" : precision, "recall" : recall, "pr_auc" : pr_auc}
 
-    if database == "crystal" or database == "NMR":
+    if d.database == "crystal" or d.database == "NMR":
         # low closest distance means high importance at interface
         df_test["interface_score"] = -1 * df_test["interface_score"]
 
-    BO_df = thoipapy.figs.fig_utils.calc_best_overlap(acc_db, df_test, experiment_col="interface_score", pred_col=pred_colname)
+    BO_df = thoipapy.figs.fig_utils.calc_best_overlap(d.acc_db, df_test, experiment_col="interface_score", pred_col=d.pred_colname)
 
-    if n == 0:
-        tree_depths = np.array([estimator.tree_.max_depth for estimator in forest.estimators_])
+    if d.n == 0:
+        tree_depths = np.array([estimator.tree_.max_depth for estimator in d.forest.estimators_])
         logger.info("tree depth mean = {} ({})".format(tree_depths.mean(), tree_depths))
-    logger.info("{} AUC : {:.2f}".format(acc_db, roc_auc))
+    logger.info("{} AUC : {:.2f}".format(d.acc_db, roc_auc))
 
     return auc_dict, BO_df
 
