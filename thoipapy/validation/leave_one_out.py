@@ -5,6 +5,7 @@ import time
 from ast import literal_eval
 from multiprocessing import Pool
 from pathlib import Path
+from typing import List
 
 import numpy as np
 import pandas as pd
@@ -35,21 +36,23 @@ class LooValidationData:
         self.excel_file_with_settings = None
 
 
-def run_LOO_validation(s, df_set, logging):
+def run_LOO_validation(s: dict, df_set: pd.DataFrame, logging):
     """Run Leave-One-Out cross-validation for a particular set of TMDs (e.g. set05).
 
     The SAME SET is used for both training and cross-validation.
     ONLY USE IF YOUR DATASET IS NON-REDUNDANT! OR USE AUTO CD-HIT REDUNDANCY CHECKS!
     Each protein is uniquely identified by the acc and the database (acc_db).
 
-    The training set (df_train) consists of all proteins except the one tested.
+    The training set (df_train) consists of all proteins except the one tested, and any putative homologues
+    discovered via the thoipapy.clustering.pairwise_aln_similarity_matrix.create_identity_matrix_from_protein_set scripts.
+
     The test dataset (df_test) contains only the interface and features of the one test protein
 
     The model is trained on the train data csv (e.g. set38_train_data.csv)
-         - for crystal subset, hetero contacts (folding residues) are removed from this training set!
+         - for proteins in X-ray subset, hetero contacts (folding residues) are removed from this training set
 
-    The model is validated against each combined CSV with features (e.g. "D:\data_thoipapy\Features\combined\ETRA\Q12983.surr20.gaps5.combined_features.csv")
-     - for crystal subset, folding residues (hetero contacts) are INCLUDED here.
+    The model is validated against each combined CSV with features (e.g. "data_thoipapy\Features\combined\ETRA\Q12983.surr20.gaps5.combined_features.csv")
+     - for proteins in X-ray subset, folding residues (hetero contacts) are INCLUDED here.
      - the model created without the folding contacts is therefore validated against the full seq, including folding residues
 
     Parameters
@@ -108,9 +111,6 @@ def run_LOO_validation(s, df_set, logging):
     n_features = thoipapy.validation.feature_selection.drop_cols_not_used_in_ML(logging, df_data, s["excel_file_with_settings"]).shape[1]
     forest = thoipapy.validation.train_model.THOIPA_classifier_with_settings(s, n_features)
 
-    #list of all dictionaries for each protein, for multiprocessing
-    loo_validation_data_list = []
-
     if s["use_multiprocessing"]:
         # TURN LOGGING OFF BEFORE MULTIPROCESSING
         logger = Log_Only_To_Console()
@@ -120,15 +120,30 @@ def run_LOO_validation(s, df_set, logging):
     df_clusters = pd.read_excel(sim_matrix_xlsx, sheet_name="reduced_clusters", index_col=0)
     df_clusters["reduced_clusters"] = df_clusters["reduced_clusters"].apply(lambda x: literal_eval(x))
     # ignore the cd-hit numbering (1-proteinname, 18-proteinname):
-    df_clusters["acc_database_list"] = df_clusters["reduced_clusters"].apply(lambda x: ["-".join(y.split("-")[1:]) for y in list(x)])
-    cluster = df_clusters.at[1, "acc_database_list"]
+    df_clusters["acc_db_putative_homologues"] = df_clusters["reduced_clusters"].apply(lambda x: ["-".join(y.split("-")[1:]) for y in list(x)])
+    putative_homologue_clusters: List[List[str]] = df_clusters["acc_db_putative_homologues"].to_list()
+
+    loo_validation_data_list = []
 
     val_list = []
     for i in df_set.index:
         acc = df_set.loc[i, "acc"]
         database = df_set.loc[i, "database"]
         acc_db = df_set.loc[i, "acc_db"]
-        df_train = df_data.loc[df_data.acc_db != acc_db]
+
+        # find the cluster of putative homologues
+        # each protein should only appear once in a single cluster
+        clusters_containing_acc_db_of_interest = [c for c in putative_homologue_clusters if acc_db in c]
+        if not len(clusters_containing_acc_db_of_interest) == 1:
+            raise ValueError(f"Protein of interest found in 0 or >1 clusters of putative homologues.\nacc_db = '{acc_db}\n'" +
+                             f"clusters_containing_acc_db_of_interest = {clusters_containing_acc_db_of_interest}")
+
+        acc_db_putative_homologues: List[str] = clusters_containing_acc_db_of_interest[0]
+        index_excluding_putative_homologues = df_data.acc_db.apply(lambda x: x not in acc_db_putative_homologues)
+
+        df_train = df_data.loc[index_excluding_putative_homologues]
+
+        assert acc_db not in df_train.acc_db.to_list()
 
         loo_validation_data = LooValidationData()
         loo_validation_data.acc = acc
@@ -157,11 +172,6 @@ def run_LOO_validation(s, df_set, logging):
             logging.warning("{} is in protein set, but not found in training data".format(loo_validation_data.acc_db))
             # skip protein
             continue
-        # df_train = df_data.loc[df_data.acc_db != acc_db]
-        # X_train = thoipapy.features.RF_Train_Test.drop_cols_not_used_in_ML(logging, df_train, s["excel_file_with_settings"])
-        # y_train = df_train[s["bind_column"]]
-
-
 
         if s["use_multiprocessing"]:
             loo_validation_data_list.append(loo_validation_data)
@@ -253,11 +263,6 @@ def LOO_single_prot(d: LooValidationData):
 
     see docstring of run_LOO_validation
 
-    Parameters
-    ----------
-    d : dict
-        dictionary with all necessary values for the function
-        having a single variable input allows python multiprocessing with Pool
     """
     logger = d.logger
 
@@ -272,8 +277,6 @@ def LOO_single_prot(d: LooValidationData):
     X_train = thoipapy.validation.feature_selection.drop_cols_not_used_in_ML(d.logger, d.df_train, d.excel_file_with_settings, d.i)
     y_train = d.df_train[d.bind_column]
 
-    #n, logger, excel_file_with_settings = d["n"], d["logger"], d["excel_file_with_settings"]
-
     #######################################################################################################
     #                                                                                                     #
     #                  Test data is based on the combined features file for that protein and TMD          #
@@ -281,7 +284,6 @@ def LOO_single_prot(d: LooValidationData):
     #                              - positions with "folding/hetero contacts" will be included            #
     #                                                                                                     #
     #######################################################################################################
-    # df_test = df_data.loc[df_data.acc_db == acc_db]
     df_test = pd.read_csv(d.testdata_combined_file, index_col=0)
     assert "Unnamed" not in ",".join(df_test.columns.tolist())
     assert df_test.index.tolist() == list(range(df_test.shape[0]))
