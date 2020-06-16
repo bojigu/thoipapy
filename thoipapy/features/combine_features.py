@@ -2,6 +2,7 @@ import os
 import sys
 from pathlib import Path
 
+import numpy as np
 import pandas as pd
 
 import thoipapy
@@ -116,18 +117,16 @@ def combine_all_features(s, full_seq, acc, database, TMD_seq, TMD_start, feature
         raise IndexError("TMD_seq in original settings file and final merged features dataframe does not match.")
 
     single_prot_aln_result_ser = utils.open_csv_as_series(alignment_summary_csv)
-    n_homologues = single_prot_aln_result_ser["n_uniq_TMD_seqs_for_PSSM_FREECONTACT"]
-    # add the number of homologues (same number for all residues)
+
+    # n_homologues and n_TMDs are TMD-properties, not a residue properties, and are therefore the same for all residues)
+
+    # add the cube root of the number of homologues
+    n_homologues_orig = single_prot_aln_result_ser["n_uniq_TMD_seqs_for_PSSM_FREECONTACT"]
+    n_homologues = np.cbrt(n_homologues_orig)
     df_features_single_protein["n_homologues"] = n_homologues
-    # add if the protein is multipass or singlepass
-    # TEMPORARY! NEEDS TO BE REPLACED WITH A TOPOLOGY PREDICTOR LATER
+
+    # add number of TMDs in protein predicted by phobius
     df_features_single_protein["n_TMDs"] = return_num_tmd(s, acc, full_seq, full_seq_fasta_file, phobius_outfile, logging)
-    # if database == "crystal":
-    #     df_features_single_protein["n_TMDs"] = 2
-    # # elif database == "NMR":
-    # #     df_features_single_protein["n_TMDs"] = 3
-    # else:
-    #     df_features_single_protein["n_TMDs"] = 1
 
     # add the residue number in the full protein sequence
     # this assumes that the index is a range, starting from 0 to x,

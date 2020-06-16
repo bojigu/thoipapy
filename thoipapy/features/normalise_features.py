@@ -1,6 +1,7 @@
 from weighslide import calculate_weighted_windows
 
 from thoipapy.utils import normalise_0_1
+import numpy as np
 
 
 def normalise_features(df_features_single_protein):
@@ -19,14 +20,11 @@ def normalise_features(df_features_single_protein):
         Index : range index
         Columns : "residue_num", "residue_name", "Entropy", etc
     """
-
-    # normalise number of homologues to 1,2 or 3
-    df_features_single_protein["n_homol_norm"] = df_features_single_protein["n_homologues"].apply(normalise_number_of_homologues)
     # convert entropy to conservation by inverting, and adding 3 to give positive values
     # low values are poorly conserved. High values are highly conserved.
     df_features_single_protein["conservation"] = - df_features_single_protein["Entropy"] + 3
-    # calculate LIPS L*E for later BO curve, etc
-    df_features_single_protein["LIPS_L*E"] = df_features_single_protein.LIPS_polarity * df_features_single_protein.LIPS_entropy
+    # calculate LIPS L*E for later validation. LIPS_L*E = LIPS_polarity * log(LIPS_entropy)
+    df_features_single_protein["LIPS_L*E"] = df_features_single_protein.LIPS_polarity * np.log(df_features_single_protein.LIPS_entropy)
     # rank the LIPS score by adding a fraction of the L*E to the predicted interface (0 or 1)
     df_features_single_protein["LIPS_surface_ranked"] = df_features_single_protein["LIPS_surface"] - (df_features_single_protein["LIPS_L*E"] / 20)
     df_features_single_protein["LIPS_surface_ranked_norm"] = normalise_0_1(df_features_single_protein["LIPS_surface_ranked"])[0]
@@ -53,8 +51,9 @@ def normalise_features(df_features_single_protein):
     return df_features_single_protein
 
 
-def normalise_number_of_homologues(x):
-    """Convert non-linear number of homologues to an integer value.
+def normalise_number_of_homologues_to_categorical_variable(x):
+    """ DEPRECATED. Replaced with cubed root of the n_homologues.
+    Convert non-linear number of homologues to an integer value.
 
     Parameters
     ----------

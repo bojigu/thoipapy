@@ -330,7 +330,8 @@ def lipo_from_pssm(acc, pssm_csv_surr5, lipo_csv, tm_surr_left, tm_surr_right, s
     # normalise the data by adding the lowes polarity value, so that all values are at least zero
     df_lipo: pd.DataFrame = df_lipo + lowest_polarity_value
 
-    # normalise the data by applying a square root (usually to power of 1/4)
+    # normalise the data by applying a square root (usually to power of 1/4). Values must be positive.
+    assert df_lipo.min().min() >= 0
     df_lipo: pd.DataFrame = df_lipo.applymap(lambda x: math.pow(x, 1/4))
 
 # lowest_polarity_value = 0.6
