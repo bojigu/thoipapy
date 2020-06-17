@@ -27,7 +27,7 @@ def remove_duplicate_features_with_lower_MDI(s, logging):
     # outputs
     mean_decrease_impurity_all_features_csv = Path(s["thoipapy_data_folder"]) / "Results" / s["setname"] / "feat_imp/mean_decrease_impurity_all_features.csv"
     results_remove_dup_feat_with_low_MDI_csv = Path(s["thoipapy_data_folder"]) / "Results" / s["setname"] / "feat_imp/results_remove_dup_feat_with_low_MDI.csv"
-    train_data_excl_duplicates_csv = os.path.join(s["thoipapy_data_folder"], "Results", s["setname"], "{}_train_data_excl_duplicates.csv".format(s["setname"]))
+    train_data_excl_duplicates_csv = Path(s["thoipapy_data_folder"]) / f"Results/{s['setname']}/train_data_excl_duplicates.csv"
 
     df_MDI = pd.read_csv(mean_decrease_impurity_all_features_csv, index_col=0)
     df_data = pd.read_csv(train_data_csv, index_col=0)
@@ -74,11 +74,14 @@ def remove_duplicate_features_with_lower_MDI(s, logging):
     df_X_excl_duplicates[s["bind_column"]] = df_data[s["bind_column"]]
 
     df_X_excl_duplicates = reorder_dataframe_columns(df_X_excl_duplicates, ["interface"])
+    df_X_excl_duplicates.to_csv(train_data_excl_duplicates_csv)
+
     sys.stdout.write("----- training data filtered to remove duplicate features ----")
-    logging.info(df_X_excl_duplicates.head())
+    sys.stdout.write(str(df_X_excl_duplicates.head()))
     sys.stdout.write("--------------------------------------------------------------")
 
     logging.info(f"num_duplicate_features_with_low_MDI_to_be_removed: {num_duplicate_features_with_low_MDI_to_be_removed}")
     logging.info(f"{df_data.shape[1] - 4} features collected in total, {df_X.shape[1]} included in initial analysis, {df_X_excl_duplicates.shape[1] - 1} remaining after removing duplicates.")
+    logging.info(f"output saved to {train_data_excl_duplicates_csv}")
     logging.info("finished remove_duplicate_features_with_lower_MDI")
 

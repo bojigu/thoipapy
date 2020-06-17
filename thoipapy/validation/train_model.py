@@ -5,22 +5,14 @@ from thoipapy.validation.feature_selection import drop_cols_not_used_in_ML
 warnings.simplefilter(action='ignore', category=FutureWarning)
 import pandas as pd
 import numpy as np
-from sklearn.ensemble import ExtraTreesClassifier, ExtraTreesRegressor
+from sklearn.ensemble import ExtraTreesClassifier, ExtraTreesRegressor, RandomForestClassifier
 import os
 import joblib
 import pickle
 
 
 def THOIPA_classifier_with_settings(s, n_features, totally_randomized_trees=False):
-    """ For tuning the RF parameters, they are always in one place, and determined by the settings file.
-
-    Parameters
-    ----------
-    s
-
-    Returns
-    -------
-
+    """ Classifier or Regressor settings are specified in the settings file.
     """
     # convert max_features to python None if "None"
     max_features = None if s["max_features"] == "None" else s["max_features"]
