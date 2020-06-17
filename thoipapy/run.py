@@ -211,6 +211,7 @@ if __name__ == "__main__":
         if s["calc_feature_importances"]:
             thoipapy.feature_importance.mean_decrease_impurity.calc_feat_import_from_mean_decrease_impurity(s, logging)
             thoipapy.feature_importance.mean_decrease_impurity.fig_feat_import_from_mean_decrease_impurity(s, logging)
+            thoipapy.feature_importance.remove_duplicates.remove_duplicate_features_with_lower_MDI(s, logging)
             thoipapy.feature_importance.mean_decrease_accuracy.calc_feat_import_from_mean_decrease_accuracy(s, logging)
             thoipapy.feature_importance.mean_decrease_accuracy.fig_feat_import_from_mean_decrease_accuracy(s, logging)
 

@@ -1,11 +1,12 @@
 import os
 import sys
+from pathlib import Path
 
 import numpy as np
 import pandas as pd
 from matplotlib import pyplot as plt
 
-import thoipapy.utils
+from thoipapy.utils import create_colour_lists, make_sure_path_exists
 from thoipapy.feature_importance.plots import create_var_imp_plot
 from thoipapy.validation.feature_selection import drop_cols_not_used_in_ML
 from thoipapy.validation.train_model import THOIPA_classifier_with_settings
@@ -23,15 +24,15 @@ def calc_feat_import_from_mean_decrease_impurity(s, logging):
 
     Saved Files
     -----------
-    variable_importance_csv : csv
+    mean_decrease_impurity_all_features_csv : csv
         List of variables, sorted by their importance to the algorithm.
         Also includes the standard deviation supplied by the machine learning algorithm
     """
     #logging.info('RF_variable_importance_calculate is running\n')
     train_data_csv = os.path.join(s["thoipapy_data_folder"], "Results", s["setname"], "{}_train_data.csv".format(s["setname"]))
 
-    variable_importance_csv = os.path.join(s["thoipapy_data_folder"], "Results", s["setname"], "crossvalidation", "data", "variable_importance.csv".format(s["setname"]))
-    thoipapy.utils.make_sure_path_exists(variable_importance_csv, isfile=True)
+    mean_decrease_impurity_all_features_csv = Path(s["thoipapy_data_folder"]) / "Results" / s["setname"] / "feat_imp/mean_decrease_impurity_all_features.csv"
+    make_sure_path_exists(mean_decrease_impurity_all_features_csv, isfile=True)
 
     df_data = pd.read_csv(train_data_csv, index_col=0)
     df_data = df_data.dropna()
@@ -62,8 +63,6 @@ def calc_feat_import_from_mean_decrease_impurity(s, logging):
 
         #order_list = [importances_arr[indices_arr[f]] for f in range(X.shape[1])]
 
-
-
         nested_dict = {}
 
         for f in range(X.shape[1]):
@@ -85,7 +84,7 @@ def calc_feat_import_from_mean_decrease_impurity(s, logging):
     df_imp2["original_order"] = df_imp2.index
     df_imp2.set_index("feature", inplace=True)
 
-    df_imp2.to_csv(variable_importance_csv)
+    df_imp2.to_csv(mean_decrease_impurity_all_features_csv)
 
 
 def fig_feat_import_from_mean_decrease_impurity(s, logging):
@@ -104,16 +103,14 @@ def fig_feat_import_from_mean_decrease_impurity(s, logging):
     plt.style.use('seaborn-whitegrid')
     plt.rcParams['errorbar.capsize'] = 1
     plt.rcParams.update({'font.size':4})
-    #from thoipapy.utils import create_colour_lists
-    from thoipapy.utils import create_colour_lists
     colour_dict = create_colour_lists()
 
-    variable_importance_csv = os.path.join(s["thoipapy_data_folder"], "Results", s["setname"], "crossvalidation", "data", "variable_importance.csv".format(s["setname"]))
+    mean_decrease_impurity_all_features_csv = Path(s["thoipapy_data_folder"]) / "Results" / s["setname"] / "feat_imp/mean_decrease_impurity_all_features.csv"
     variable_importance_all_png = os.path.join(s["thoipapy_data_folder"], "Results", s["setname"], "crossvalidation", "all_var_import.png".format(s["setname"]))
     variable_importance_top_png = os.path.join(s["thoipapy_data_folder"], "Results", s["setname"], "crossvalidation", "top_var_import.png".format(s["setname"]))
-    thoipapy.utils.make_sure_path_exists(variable_importance_csv, isfile=True)
+    make_sure_path_exists(mean_decrease_impurity_all_features_csv, isfile=True)
 
-    df_imp = pd.read_csv(variable_importance_csv, index_col = 0)
+    df_imp = pd.read_csv(mean_decrease_impurity_all_features_csv, index_col = 0)
 
     create_var_imp_plot(df_imp, colour_dict, variable_importance_all_png, df_imp.shape[0])
     #create_var_imp_plot(df_imp, colour_dict, variable_importance_top_png, 30)

@@ -1,3 +1,5 @@
 import thoipapy.feature_importance.mean_decrease_accuracy
 import thoipapy.feature_importance.mean_decrease_accuracy
 import thoipapy.feature_importance.plots
+import thoipapy.feature_importance.remove_duplicates
+import thoipapy.feature_importance.selectkbest
