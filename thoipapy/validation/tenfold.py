@@ -43,15 +43,14 @@ def run_10fold_cross_validation(s, logging):
         Also contains the mean ROC curve, and the mean AUC.
     """
     logging.info('10-fold cross validation is running')
-    train_data_csv = os.path.join(s["thoipapy_data_folder"], "Results", s["setname"], "{}_train_data.csv".format(s["setname"]))
-    #crossvalidation_csv = os.path.join(s["thoipapy_data_folder"], "Results", s["setname"], "crossvalidation", "data", "{}_10F_data.csv".format(s["setname"]))
+    train_data_filtered = Path(s["thoipapy_data_folder"]) / f"Results/{s['setname']}/train_data/train_data_filtered.csv"
     crossvalidation_pkl = os.path.join(s["thoipapy_data_folder"], "Results", s["setname"], "crossvalidation", "data", "{}_10F_data.pkl".format(s["setname"]))
     features_csv = Path(s["thoipapy_data_folder"]) / f"Results/{s['setname']}/feat_imp/test_features.csv"
 
     thoipapy.utils.make_sure_path_exists(crossvalidation_pkl, isfile=True)
     thoipapy.utils.make_sure_path_exists(features_csv, isfile=True)
 
-    df_data = pd.read_csv(train_data_csv, index_col=0)
+    df_data = pd.read_csv(train_data_filtered, index_col=0)
     df_data = df_data.dropna()
 
     # drop training data (full protein) that don't have enough homologues

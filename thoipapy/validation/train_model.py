@@ -1,4 +1,5 @@
 import warnings
+from pathlib import Path
 
 from thoipapy.validation.feature_selection import drop_cols_not_used_in_ML
 
@@ -59,6 +60,7 @@ def THOIPA_classifier_with_settings(s, n_features, totally_randomized_trees=Fals
 
     return cls
 
+
 def train_machine_learning_model(s, logging):
     """Train the machine learning model for a particular set.
 
@@ -77,11 +79,11 @@ def train_machine_learning_model(s, logging):
     """
     logging.info('starting train_machine_learning_model')
 
-    train_data_csv = os.path.join(s["thoipapy_data_folder"], "Results", s["setname"], "{}_train_data.csv".format(s["setname"]))
-    train_data_used_for_model_csv = os.path.join(s["thoipapy_data_folder"], "Results", s["setname"], "{}_train_data_used_for_model.csv".format(s["setname"]))
+    train_data_filtered = Path(s["thoipapy_data_folder"]) / f"Results/{s['setname']}/train_data/train_data_filtered.csv"
+
     model_pkl = os.path.join(s["thoipapy_data_folder"], "Results", s["setname"], "{}_ML_model.lpkl".format(s["setname"]))
 
-    df_data = pd.read_csv(train_data_csv, index_col=0)
+    df_data = pd.read_csv(train_data_filtered, index_col=0)
 
     df_data = df_data.loc[df_data.n_homologues >= s["min_n_homol_training"]]
     df_data = df_data.dropna()
@@ -89,15 +91,11 @@ def train_machine_learning_model(s, logging):
     y = df_data["interface"]
     X = drop_cols_not_used_in_ML(logging, df_data, s["excel_file_with_settings"])
 
-    X.to_csv(train_data_used_for_model_csv)
-
     if 1 not in y.tolist():
         raise ValueError("None of the residues are marked 1 for an interface residue!")
 
     n_features = X.shape[1]
     forest = THOIPA_classifier_with_settings(s, n_features)
-    # save machine learning model into local driver
-    # pkl_file = r'D:\thoipapy\RandomForest\ML_model.lpkl'
     fit = forest.fit(X, y)
     joblib.dump(fit, model_pkl)
 

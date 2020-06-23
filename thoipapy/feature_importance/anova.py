@@ -12,7 +12,7 @@ def select_best_features_with_anova(s, logging):
     """
     logging.info('starting select_best_features_with_ANOVA')
     # inputs
-    train_data_excl_duplicates_csv = Path(s["thoipapy_data_folder"]) / f"Results/{s['setname']}/train_data_excl_duplicates.csv"
+    train_data_excl_duplicates_csv = Path(s["thoipapy_data_folder"]) / f"Results/{s['setname']}/train_data/train_data_excl_duplicates.csv"
     # outputs
     top_features_anova_csv = Path(s["thoipapy_data_folder"]) / f"Results/{s['setname']}/feat_imp/top_features_anova.csv"
 

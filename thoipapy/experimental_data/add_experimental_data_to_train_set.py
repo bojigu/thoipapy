@@ -106,6 +106,9 @@ def add_experimental_data_to_combined_features(acc, database, TMD_seq, feature_c
             ###normalize ETRA experimental disruption value to the range of 0 to 1 without invert, the min and max values were set as -0.4 and 0.4
             df_combined_plus_exp_data["interface_score_norm"] = normalise_between_2_values(df_combined_plus_exp_data["interface_score"], -0.4, 0.4)
 
+        new_index: pd.Series = acc + "-" + database + "_" + df_combined_plus_exp_data["residue_num"].apply(lambda x: f"{x:02d}") + df_combined_plus_exp_data["residue_name"]
+        df_combined_plus_exp_data.index = new_index
+
         # overwrite existing combined features file
         df_combined_plus_exp_data.to_csv(feature_combined_file)
         logging.info("{} add_experimental_data_to_combined_features_mult_prot finished ({})".format(acc, experimental_data_file))

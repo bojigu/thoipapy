@@ -27,9 +27,9 @@ def merge_predictions(s, df_set, logging):
 
     """
     # add the THOIPA prediction name to the list of columns to keep
-    pred_colname = "THOIPA_{}_LOO".format(s["set_number"])
+    THOIPA_pred_colname = "THOIPA_{}_LOO".format(s["set_number"])
     # for simplicity, keep only the predictions. Since the index is unique, it can be added later to the combined file.
-    columns_kept_in_combined_file = ['residue_num', 'residue_name', pred_colname, 'TMDOCK', 'PREDDIMER','interface','interface_score',"LIPS_surface","LIPS_surface_ranked", 'LIPS_L*E',"relative_polarity","conservation","DI4mean"]
+    columns_kept_in_combined_file = ['residue_num', 'residue_name', THOIPA_pred_colname, 'TMDOCK', 'PREDDIMER','interface','interface_score',"LIPS_surface","LIPS_surface_ranked", 'LIPS_L*E',"relative_polarity","conservation","DI4mean"]
 
     #set_list = thoipapy.figs.fig_utils.get_set_lists(s)
     other_predictors_dir = Path(s["thoipapy_data_folder"]) / "Predictions/other_predictors"
@@ -52,24 +52,26 @@ def merge_predictions(s, df_set, logging):
         #merge_4_files_alignment_method_deprecated(acc, full_seq, train_data_file, THOIPA_prediction_file, PREDDIMER_prediction_file, TMDOCK_prediction_file, merged_data_xlsx_path, columns_kept_in_combined_file)
 
         # load the full feature file as the start of dfm
-        dfm = pd.read_csv(train_data_file)
+        dfm = pd.read_csv(train_data_file, index_col=0)
+        dfm["acc_db_resnum_resname"] = dfm.index
         # set the unique index, based on the residue number in the full sequence
         dfm.set_index("res_num_full_seq", inplace=True)
         #dfm["conservation"] = -1 * dfm["Entropy"]
         file_list = [THOIPA_prediction_csv, PREDDIMER_prediction_file, TMDOCK_prediction_file]
-        prediction_name_list = [pred_colname, "PREDDIMER", "TMDOCK"]
+        prediction_name_list = [THOIPA_pred_colname, "PREDDIMER", "TMDOCK"]
         n_files_merged = 0
         for n, file in enumerate(file_list):
-            prediction_name = [prediction_name_list[n]]
+            prediction_name = prediction_name_list[n]
             if os.path.isfile(file):
-                df = pd.read_csv(file, index_col=0)
+                df = pd.read_csv(file, index_col=None)
+                assert prediction_name in df.columns.to_list() or "closedist" in df.columns.to_list()
                 TMD_seq = df["residue_name"].str.cat()
                 if TMD_seq not in full_seq:
                     logging.warning(prediction_name)
                     logging.warning("Sequence in residue_name column of dataframe is not found in the original df_set sequence."
                                      "\nacc : {}\nfile number : {}\nTMD_seq : {}\nfull_seq in df_set : {}\n"
                                     "THOIPA_prediction_csv:{}\ncsv file:{}".format(acc, n, TMD_seq, full_seq, THOIPA_prediction_csv, file))
-                    if prediction_name == [pred_colname]:
+                    if prediction_name == THOIPA_pred_colname:
                         df = thoipapy.utils.add_mutation_missed_residues_with_na(s, acc, database, df)
                         TMD_seq = df["residue_name"].str.cat()
                     # skip protein
@@ -78,17 +80,16 @@ def merge_predictions(s, df_set, logging):
                 # add the residue number in the full sequence
                 df = thoipapy.utils.add_res_num_full_seq_to_df(acc, df, TMD_seq, full_seq, prediction_name, file)
 
-                if n == 0:
-                    #logging.info(df.columns)
-                    # the thoipa prediction file has the residue_num as the index, similar to the features
-                    df.drop(["residue_name"], axis=1, inplace=True)
-                else:
-                    # the preddimer and TMDOCK files have a range as the index
-                    df.drop(["residue_num", "residue_name"], axis=1, inplace=True)
-                    df.columns = pd.Series(df.columns).replace({"closedist" : prediction_name})
-
                 # set the unique index, based on the residue number in the full sequence
                 df.set_index("res_num_full_seq", inplace=True)
+
+                # for structural predictors, rename "closedist" column to the predictor name
+                df.columns = pd.Series(df.columns).replace({"closedist": prediction_name})
+
+                # drop all columns but the prediction
+                df = df.reindex(index=df.index, columns=[prediction_name])
+
+                assert not df[prediction_name].isnull().values.any()
 
                 # merge the growing dfm file. All rows are included
                 dfm = pd.concat([dfm, df], axis=1, join="outer")

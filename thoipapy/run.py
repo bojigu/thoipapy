@@ -196,11 +196,17 @@ if __name__ == "__main__":
         #                                    model validation                                             #
         #                                                                                                 #
         ###################################################################################################
+        if s["run_feature_selection"]:
+            thoipapy.feature_importance.mean_decrease_impurity.calc_feat_import_from_mean_decrease_impurity(s, logging)
+            thoipapy.feature_importance.mean_decrease_impurity.fig_feat_import_from_mean_decrease_impurity(s, logging)
+            thoipapy.feature_importance.remove_duplicates.remove_duplicate_features_with_lower_MDI(s, logging)
+            thoipapy.feature_importance.anova.select_best_features_with_anova(s, logging)
+            thoipapy.feature_importance.ensemble_rfe.select_best_features_with_ensemble_rfe(s, logging)
+            thoipapy.feature_importance.merge.merge_top_features_anova_ensemble(s, logging)
 
         if s["run_10fold_cross_validation"]:
             thoipapy.validation.tenfold.run_10fold_cross_validation(s, logging)
             thoipapy.validation.tenfold.create_10fold_cross_validation_fig(s, logging)
-
 
         if s["run_LOO_validation"]:
             thoipapy.validation.leave_one_out.run_LOO_validation(s, df_set, logging)
@@ -209,12 +215,6 @@ if __name__ == "__main__":
                 thoipapy.validation.leave_one_out.create_LOO_validation_fig(s, df_set, logging)
 
         if s["calc_feature_importances"]:
-            thoipapy.feature_importance.mean_decrease_impurity.calc_feat_import_from_mean_decrease_impurity(s, logging)
-            thoipapy.feature_importance.mean_decrease_impurity.fig_feat_import_from_mean_decrease_impurity(s, logging)
-            thoipapy.feature_importance.remove_duplicates.remove_duplicate_features_with_lower_MDI(s, logging)
-            thoipapy.feature_importance.anova.select_best_features_with_ANOVA(s, logging)
-            thoipapy.feature_importance.ensemble_rfe.select_best_features_with_ensemble_rfe(s, logging)
-            thoipapy.feature_importance.merge.merge_top_features_anova_ensemble(s, logging)
             thoipapy.feature_importance.mean_decrease_accuracy.calc_feat_import_from_mean_decrease_accuracy(s, logging)
             thoipapy.feature_importance.mean_decrease_accuracy.fig_feat_import_from_mean_decrease_accuracy(s, logging)
 

@@ -56,7 +56,7 @@ def run_LOO_validation_od_non_multiprocessing(s, df_set, logging):
     # drop redundant proteins according to CD-HIT
     df_set = thoipapy.utils.drop_redundant_proteins_from_list(df_set, logging)
 
-    train_data_csv = os.path.join(s["thoipapy_data_folder"], "Results", s["setname"], "{}_train_data.csv".format(s["setname"]))
+    train_data_csv = Path(s["thoipapy_data_folder"]) / f"Results/{s['setname']}/train_data/train_data_orig.csv"
     crossvalidation_folder = os.path.join(s["thoipapy_data_folder"], "Results", s["setname"], "crossvalidation")
     LOO_crossvalidation_pkl = os.path.join(s["thoipapy_data_folder"], "Results", s["setname"], "crossvalidation", "data", "{}_LOO_crossvalidation.pkl".format(s["setname"]))
     BO_all_data_csv = os.path.join(s["thoipapy_data_folder"], "Results", s["setname"], "crossvalidation", "data", "{}_LOO_BO_data.csv".format(s["setname"]))

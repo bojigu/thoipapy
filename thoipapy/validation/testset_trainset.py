@@ -358,6 +358,7 @@ def create_ROC_fig_for_testset_trainset_combination(THOIPA_ROC_pkl):
 def save_THOIPA_pred_indiv_prot(s, model_pkl, testdata_combined_file, THOIPA_pred_csv, test_combined_incl_pred, trainsetname, logging):
 
     combined_incl_THOIPA_df = pd.read_csv(testdata_combined_file, sep=',', engine='python', index_col=0)
+    train_data_filtered = Path(s["thoipapy_data_folder"]) / f"Results/{s['setname']}/train_data/train_data_filtered.csv"
     #combined_incl_THOIPA_df = combined_incl_THOIPA_df.dropna()
 
     #drop_cols_not_used_in_ML
@@ -383,8 +384,8 @@ def save_THOIPA_pred_indiv_prot(s, model_pkl, testdata_combined_file, THOIPA_pre
     try:
         prob_arr = fit.predict_proba(test_X)[:, 1]
     except ValueError:
-        train_data_used_for_model_csv = model_pkl[:-11] + "train_data_used_for_model.csv"
-        df_train_data_used_for_model_csv = pd.read_csv(train_data_used_for_model_csv)
+        df_train_data_used_for_model_csv = pd.read_csv(train_data_filtered)
+        del df_train_data_used_for_model_csv[s["bind_column"]]
         train_cols = set(df_train_data_used_for_model_csv.columns)
         test_cols = set(test_X.columns)
         cols_not_in_train = test_cols - train_cols
