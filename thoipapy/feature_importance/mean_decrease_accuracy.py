@@ -46,9 +46,9 @@ def calc_feat_import_from_mean_decrease_accuracy(s, logging):
         Comma separated values, showing decrease in AUC for each feature or group of features.
     """
     logging.info('calc_feat_import_from_mean_decrease_accuracy is running')
-    train_data_csv = Path(s["thoipapy_data_folder"]) / f"Results/{s['setname']}/train_data/train_data_orig.csv"
+    train_data_csv = Path(s["thoipapy_data_folder"]) / f"Results/{s['setname']}/train_data/train_data_filtered.csv"
     # crossvalidation_csv = os.path.join(s["thoipapy_data_folder"], "Results", s["setname"], "crossvalidation", "data", "{}_10F_data.csv".format(s["setname"]))
-    feat_imp_MDA_csv = os.path.join(s["thoipapy_data_folder"], "Results", s["setname"], "feat_imp", "data", "feat_imp_MDA.csv".format(s["setname"]))
+    feat_imp_MDA_csv = os.path.join(s["thoipapy_data_folder"], "Results", s["setname"], "feat_imp", "mean_decrease_accuracy_filtered_features.csv")
 
     thoipapy.utils.make_sure_path_exists(feat_imp_MDA_csv, isfile=True)
 
@@ -148,12 +148,13 @@ def calc_feat_import_from_mean_decrease_accuracy(s, logging):
     duration = time.clock() - start
 
     logging.info('{} calc_feat_import_from_mean_decrease_accuracy. PR_AUC({:.3f}). Time taken = {:.2f}.\nFeatures: {}'.format(s["setname"], pr_auc_orig, duration, X.columns.tolist()))
+    logging.info(f'output: ({feat_imp_MDA_csv})')
 
 
 def fig_feat_import_from_mean_decrease_accuracy(s, logging):
 
-    feat_imp_MDA_csv = os.path.join(s["thoipapy_data_folder"], "Results", s["setname"], "feat_imp", "data", "feat_imp_MDA.csv".format(s["setname"]))
-    feat_imp_MDA_png = os.path.join(s["thoipapy_data_folder"], "Results", s["setname"], "feat_imp", "feat_imp_MDA.png".format(s["setname"]))
+    feat_imp_MDA_csv = os.path.join(s["thoipapy_data_folder"], "Results", s["setname"], "feat_imp", "mean_decrease_accuracy_filtered_features.csv")
+    feat_imp_MDA_png = os.path.join(s["thoipapy_data_folder"], "Results", s["setname"], "feat_imp", "mean_decrease_accuracy_filtered_features.png")
 
     df_fi = pd.read_csv(feat_imp_MDA_csv, index_col=0)
 
