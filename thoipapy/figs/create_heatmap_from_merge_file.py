@@ -63,7 +63,7 @@ def create_merged_heatmap(s, df_set, logging):
             fig_label = "{shortname} [{subset} dataset, {acc}, {ref}]".format(shortname=shortname,
                                                                             subset=database, acc=acc, ref=ref)
         elif database == "NMR":
-            ref = "".join(df_names.loc[acc_db, "source":"date"].dropna().astype(str).tolist())
+            ref = "".join(df_names.loc[acc_db, "source":"date"].dropna().astype(str).to_list())
             savename = "{}_{}".format(acc, shortname)
             fig_label = "{shortname} [{subset} dataset, {acc}, PDB:{pdb}, {ref}]".format(shortname=shortname,
                         subset=database, acc=acc, pdb=df_names.loc[acc_db, "PDB acc"],ref=ref)

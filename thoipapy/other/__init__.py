@@ -1,0 +1,1 @@
+from thoipapy.other import validation_deprecated

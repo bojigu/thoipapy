@@ -1,6 +1,7 @@
 import os
 import pickle
 import sys
+from pathlib import Path
 
 import matplotlib.pyplot as plt
 import numpy as np
@@ -135,12 +136,14 @@ def compare_predictors(s):
         Settings dictionary for figures.
 
     """
+    if s["set_number"] != s["test_datasets"]:
+        raise Exception("set_number and test_datasets are not identical in settings file. This is recommended for test/train validation.")
 
     #plt.rcParams.update({'font.size': 7})
-    mult_pred_dir = os.path.join(s["thoipapy_data_folder"], "Results", "compare_predictors")
-    BO_curve_png = os.path.join(mult_pred_dir, "BO_curve_mult_pred.png")
-    AUBOC10_bar_png = os.path.join(mult_pred_dir, "AUBOC10_barchart_mult_pred.png")
-    ROC_png = os.path.join(mult_pred_dir, "ROC.png")
+    mult_pred_dir = os.path.join(s["thoipapy_data_folder"], "Results", s["setname"], "blindvalidation")
+    BO_curve_png = os.path.join(mult_pred_dir, "compare_predictors_BO_curve.png")
+    AUBOC10_bar_png = os.path.join(mult_pred_dir, "compare_predictors_AUBOC10_barchart.png")
+    ROC_png = os.path.join(mult_pred_dir, "compare_predictors_ROC.png")
 
     thoipapy.utils.make_sure_path_exists(mult_pred_dir)
 
@@ -161,7 +164,9 @@ def compare_predictors(s):
     df = pd.DataFrame()
 
     for predictor_name in predictor_list:
-        BO_data_excel = os.path.join(s["thoipapy_data_folder"], "Results", "compare_testset_trainset", "data", "{}".format(predictor_name), "data", "BO_curve_data.xlsx")
+        #BO_data_excel = os.path.join(s["thoipapy_data_folder"], "Results", "compare_testset_trainset", "data", "{}".format(predictor_name), "data", "BO_curve_data.xlsx")
+        crossvalidation_dir = os.path.join(s["thoipapy_data_folder"], "Results", s["setname"], "crossvalidation")
+        BO_data_excel = os.path.join(crossvalidation_dir, "data", "{}_BO_curve_data.xlsx".format(s["setname"]))
 
         if not os.path.isfile(BO_data_excel):
             raise FileNotFoundError("BO_data_excel does not exist ({}). Try running run_testset_trainset_validation".format(BO_data_excel))
@@ -205,14 +210,16 @@ def compare_predictors(s):
 
     for predictor_name in predictor_list:
         #"D:\data_thoipapy\Results\compare_testset_trainset\data\Testset03_Trainset04.THOIPA\Testset03_Trainset04.THOIPA.ROC_data.pkl"
-        ROC_pkl = os.path.join(s["thoipapy_data_folder"], "Results", "compare_testset_trainset", "data", predictor_name, "data", "{}.ROC_data.pkl".format(predictor_name))
+        #ROC_pkl = os.path.join(s["thoipapy_data_folder"], "Results", "compare_testset_trainset", "data", predictor_name, "data", "{}.ROC_data.pkl".format(predictor_name))
+        testsetname = "set{:02d}".format(int(s['test_datasets']))
+        ROC_pkl = Path(s["thoipapy_data_folder"]) / "Results" / testsetname / f"blindvalidation/{predictor_name}/ROC_data.pkl"
 
         if os.path.isfile(ROC_pkl):
             with open(ROC_pkl, "rb") as f:
                 ROC_out_dict = pickle.load(f)
                 ax.plot(ROC_out_dict["false_positive_rate_mean"], ROC_out_dict["true_positive_rate_mean"], label='{} ({:0.2f})'.format(predictor_name, ROC_out_dict["mean_roc_auc"]), lw=1.5)
         else:
-            sys.stdout.write("PICKLE WITH ROC DATA NOT FOUND : {}".format(ROC_pkl))
+            sys.stdout.write("\nPICKLE WITH ROC DATA NOT FOUND : {}".format(ROC_pkl))
 
     ax.plot([0, 1], [0, 1], '--', color=(0.6, 0.6, 0.6), label='random')
     ax.set_xlim([-0.05, 1.05])
@@ -225,7 +232,7 @@ def compare_predictors(s):
     #fig.savefig(ROC_png[:-4] + ".pdf")
     fig.savefig(thoipapy.utils.pdf_subpath(ROC_png))
 
-    sys.stdout.write("\ncompare_predictors finished ({})".format(BO_curve_png))
+    sys.stdout.write("\ncompare_predictors finished ({})\n".format(BO_curve_png))
 
 def combine_BOcurve_files_hardlinked(s):
 
