@@ -16,22 +16,21 @@ def create_AUBOC10_4predictors_3databases_figs(s,df_set,logging):
 
     logging.info("start create_AUBOC10_43databases_figs")
     predictor_name_list = ["THOIPA_{}_LOO".format(s["set_number"]),"PREDDIMER", "TMDOCK", "LIPS_surface_ranked"] #"LIPS_L*E",
-    databases = ["crystal", "NMR", "ETRA"]
-    for database in databases:
+    subsets = ["crystal", "NMR", "ETRA"]
+    for subset in subsets:
         df_o_minus_r_mean_df = pd.DataFrame()
         AUBOC10_list = []
-        mean_AUBOC_file = Path(s["thoipapy_data_folder"]) / f"Results/{s['setname']}/crossvalidation/compare_predictors/{s['setname']}.{database}.4predictors_mean_AUBOC10.csv"
-        mean_AUBOC_barplot_png = Path(s["thoipapy_data_folder"]) / f"Results/{s['setname']}/crossvalidation/compare_predictors/{s['setname']}.{database}.4predictors_mean_AUBOC10.png"
-        BOCURVE_linechart_csv = Path(s["thoipapy_data_folder"]) / f"Results/{s['setname']}/crossvalidation/compare_predictors/{s['setname']}.{database}.4predictors_BOCURVE_linechart.csv"
-        BOCURVE_linechart_png = Path(s["thoipapy_data_folder"]) / f"Results/{s['setname']}/crossvalidation/compare_predictors/{s['setname']}.{database}.4predictors_BOCURVE_linechart.png"
+        mean_AUBOC_file = Path(s["thoipapy_data_folder"]) / f"Results/{s['setname']}/crossvalidation/compare_predictors/{s['setname']}.{subset}.4predictors_mean_AUBOC10.csv"
+        mean_AUBOC_barplot_png = Path(s["thoipapy_data_folder"]) / f"Results/{s['setname']}/crossvalidation/compare_predictors/{s['setname']}.{subset}.4predictors_mean_AUBOC10.png"
+        BOCURVE_linechart_csv = Path(s["thoipapy_data_folder"]) / f"Results/{s['setname']}/crossvalidation/compare_predictors/{s['setname']}.{subset}.4predictors_BOCURVE_linechart.csv"
+        BOCURVE_linechart_png = Path(s["thoipapy_data_folder"]) / f"Results/{s['setname']}/crossvalidation/compare_predictors/{s['setname']}.{subset}.4predictors_BOCURVE_linechart.png"
 
         make_sure_path_exists(mean_AUBOC_file, isfile=True)
 
         for predictor_name in predictor_name_list:
-            crossvalidation_dir = os.path.join(s["thoipapy_data_folder"], "Results", s["setname"], "crossvalidation")
-            BO_data_excel = os.path.join(crossvalidation_dir, "data", "{}_BO_curve_data.xlsx".format(s["setname"]))
-            df_o_minus_r = pd.read_excel(BO_data_excel,sheet_name="df_o_minus_r",index_col=0)
-            df_o_minus_r = df_o_minus_r.filter(regex=database, axis=1)
+            BO_data_excel = Path(s["thoipapy_data_folder"]) / f"Results/{s['setname']}/crossvalidation/indiv_validation/{predictor_name}/BO_curve_data.xlsx"
+            df_o_minus_r = pd.read_excel(BO_data_excel, sheet_name="df_o_minus_r", index_col=0)
+            df_o_minus_r = df_o_minus_r.filter(regex=subset, axis=1)
             df_o_minus_r_mean = df_o_minus_r.T.mean()
             AUBOC10 = np.trapz(y=df_o_minus_r_mean, x=df_o_minus_r_mean.index)
             AUBOC10_list.append(AUBOC10)
@@ -80,15 +79,15 @@ def create_AUC_4predictors_3databases_figs(s,df_set,logging):
 
     logging.info("start create_AUC_4predictors_3databases_figs")
     predictor_name_list = ["THOIPA_{}_LOO".format(s["set_number"]),"PREDDIMER", "TMDOCK", "LIPS_surface_ranked"] #"LIPS_L*E",
-    databases = ["crystal", "NMR", "ETRA"]
-    for database in databases:
+    subsets = ["crystal", "NMR", "ETRA"]
+    for subset in subsets:
         mean_roc_auc_list = []
         mean_tpr_list= []
 
-        mean_AUC_file = Path(s["thoipapy_data_folder"]) / f"Results/{s['setname']}/crossvalidation/compare_predictors/{s['setname']}.{database}.4predictors_mean_AUC.csv"
-        mean_AUC_barplot_png = Path(s["thoipapy_data_folder"]) / f"Results/{s['setname']}/crossvalidation/compare_predictors/{s['setname']}.{database}.4predictors_mean_AUC.png"
-        ROC_curve_csv = Path(s["thoipapy_data_folder"]) / f"Results/{s['setname']}/crossvalidation/compare_predictors/{s['setname']}.{database}.4predictors_AUC_ROC.csv"
-        AUC_ROC_png = Path(s["thoipapy_data_folder"]) / f"Results/{s['setname']}/crossvalidation/compare_predictors/{s['setname']}.{database}.4predictors_AUC_ROC.png"
+        mean_AUC_file = Path(s["thoipapy_data_folder"]) / f"Results/{s['setname']}/crossvalidation/compare_predictors/{s['setname']}.{subset}.4predictors_mean_AUC.csv"
+        mean_AUC_barplot_png = Path(s["thoipapy_data_folder"]) / f"Results/{s['setname']}/crossvalidation/compare_predictors/{s['setname']}.{subset}.4predictors_mean_AUC.png"
+        ROC_curve_csv = Path(s["thoipapy_data_folder"]) / f"Results/{s['setname']}/crossvalidation/compare_predictors/{s['setname']}.{subset}.4predictors_AUC_ROC.csv"
+        AUC_ROC_png = Path(s["thoipapy_data_folder"]) / f"Results/{s['setname']}/crossvalidation/compare_predictors/{s['setname']}.{subset}.4predictors_AUC_ROC.png"
 
         make_sure_path_exists(mean_AUC_file, isfile=True)
 
@@ -106,7 +105,7 @@ def create_AUC_4predictors_3databases_figs(s,df_set,logging):
             with open(AUC_data_pkl, "rb") as f:
                 xv_dict = pickle.load(f)
                 for k,v in xv_dict.items():
-                    if re.search(database,k):
+                    if re.search(subset,k):
                         mean_roc_auc.append(v['roc_auc'])
                         #mean_roc_auc.append(v['auc'])
                         fpr = v['fpr']

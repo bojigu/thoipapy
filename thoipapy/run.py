@@ -89,9 +89,9 @@ if __name__ == "__main__":
         dfset = thoipapy.common.process_set_protein_seqs(s, setname, df_set, set_path)
 
         # create a database label. Either crystal, NMR, ETRA or "mixed"
-        unique_database_labels = df_set["database"].unique()
-        if len(unique_database_labels.shape) == 1:
-            database_for_full_set = unique_database_labels[0]
+        subsets = df_set["database"].unique()
+        if len(subsets.shape) == 1:
+            database_for_full_set = subsets[0]
         else:
             database_for_full_set = "mixed"
 
@@ -271,8 +271,8 @@ if __name__ == "__main__":
             namedict = thoipapy.utils.create_namedict(os.path.join(s["dropbox_dir"], "protein_names.xlsx"))
             THOIPA_predictor_name = "THOIPA_{}_LOO".format(s["set_number"])
             predictor_name_list = [THOIPA_predictor_name, "PREDDIMER", "TMDOCK", "LIPS_surface_ranked", "random"]
-            thoipapy.validation.indiv_validation.collect_indiv_validation_data(s, df_set, logging, namedict, predictor_name_list, THOIPA_predictor_name, unique_database_labels)
-            thoipapy.validation.indiv_validation.create_indiv_validation_figs(s, logging, namedict, predictor_name_list, THOIPA_predictor_name, unique_database_labels)
+            thoipapy.validation.indiv_validation.collect_indiv_validation_data(s, df_set, logging, namedict, predictor_name_list, THOIPA_predictor_name, subsets)
+            thoipapy.validation.indiv_validation.create_indiv_validation_figs(s, logging, namedict, predictor_name_list, THOIPA_predictor_name, subsets)
 
         if s["create_merged_heatmap"] == True:
             thoipapy.figs.create_heatmap_from_merge_file.create_merged_heatmap(s, df_set, logging)
@@ -296,6 +296,7 @@ if __name__ == "__main__":
         if s["ROC_PR_val_all_residues_combined"]:
             thoipapy.validation.roc.create_ROC_all_residues(s, df_set, logging)
             thoipapy.validation.precision_recall.create_precision_recall_all_residues(s, df_set, logging)
+            thoipapy.validation.precision_recall.gather_validation_data_for_figs(s, df_set, logging)
 
         thoipapy.setting.deployment_helper.docker_deployment_had_better_work_now()
         thoipapy.ML_model.deployment_helper2.docker_deployment_had_better_work_now2()

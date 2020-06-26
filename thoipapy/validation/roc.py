@@ -83,10 +83,11 @@ def create_ROC_all_residues(s, df_set, logging):
     subsets = ["ETRA", "NMR", "crystal"]
     for subset in subsets:
         df_subset = df_all.loc[df_all.subset == subset]
-        if not df_subset.empty:
-            ROC_png = str(all_res_ROC_png)[:-4] + "_{}_subset.png".format(subset)
-            ROC_data_csv = str(all_res_ROC_data_csv)[:-4] + "_{}_subset.csv".format(subset)
-            save_fig_ROC_all_residues(s, df_subset, ROC_png, ROC_data_csv, logging)
+        if df_subset.empty:
+            continue
+        ROC_png: Union[Path, str] = Path(s["thoipapy_data_folder"]) / f"Results/{s['setname']}/crossvalidation/ROC/{s['setname']}_all_res_ROC_data_{subset}_subset.png"
+        ROC_data_csv: Union[Path, str] = Path(s["thoipapy_data_folder"]) / f"Results/{s['setname']}/crossvalidation/ROC/{s['setname']}_all_res_ROC_data_{subset}_subset.csv"
+        save_fig_ROC_all_residues(s, df_subset, ROC_png, ROC_data_csv, logging)
 
     # with open(all_res_ROC_data_pkl, "wb") as f:
     #     pickle.dump(output_dict, f, protocol=pickle.HIGHEST_PROTOCOL)

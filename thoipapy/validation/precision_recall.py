@@ -86,10 +86,11 @@ def create_precision_recall_all_residues(s, df_set, logging):
     subsets = ["ETRA", "NMR", "crystal"]
     for subset in subsets:
         df_subset = df_all.loc[df_all.subset == subset]
-        if not df_subset.empty:
-            precision_recall_png = str(all_res_precision_recall_png)[:-4] + "_{}_subset.png".format(subset)
-            precision_recall_data_csv = str(all_res_precision_recall_data_csv)[:-4] + "_{}_subset.csv".format(subset)
-            save_fig_precision_recall_all_residues(s, df_subset, precision_recall_png, precision_recall_data_csv, logging)
+        if df_subset.empty:
+            continue
+        precision_recall_png: Union[Path, str] = Path(s["thoipapy_data_folder"]) / f"Results/{s['setname']}/crossvalidation/precision_recall/{s['setname']}_all_res_precision_recall_data_{subset}_subset.png"
+        precision_recall_data_csv: Union[Path, str] = Path(s["thoipapy_data_folder"]) / f"Results/{s['setname']}/crossvalidation/precision_recall/{s['setname']}_all_res_precision_recall_data_{subset}_subset.csv"
+        save_fig_precision_recall_all_residues(s, df_subset, precision_recall_png, precision_recall_data_csv, logging)
 
     # with open(all_res_precision_recall_data_pkl, "wb") as f:
     #     pickle.dump(output_dict, f, protocol=pickle.HIGHEST_PROTOCOL)
