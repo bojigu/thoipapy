@@ -137,8 +137,8 @@ def compare_predictors(s):
         Settings dictionary for figures.
 
     """
-    if s["set_number"] != s["test_datasets"]:
-        raise Exception("set_number and test_datasets are not identical in settings file. This is recommended for test/train validation.")
+    #if s["set_number"] != s["test_datasets"]:
+    #    raise Exception("set_number and test_datasets are not identical in settings file. This is recommended for test/train validation.")
 
     #plt.rcParams.update({'font.size': 7})
     BO_curve_png: Union[Path, str] = Path(s["thoipapy_data_folder"]) / f"Results/{s['setname']}/blindvalidation/compare_predictors_BO_curve.png"

@@ -833,7 +833,7 @@ def create_linechart_perc_interf_vs_PR_cutoff(s, predictor_name_list, perc_inter
 
         result_dict = {}
 
-        auc_pkl = Path(s["thoipapy_data_folder"]) / f"Results/{s['setname']}/crossvalidation/indiv_validation/bocurve/roc_auc/{predictor}/ROC_AUC_data.pkl"
+        auc_pkl = Path(s["thoipapy_data_folder"]) / f"Results/{s['setname']}/crossvalidation/indiv_validation/roc_auc/{predictor}/ROC_AUC_data.pkl"
 
         with open(auc_pkl, "rb") as f:
             xv_dict = pickle.load(f)
