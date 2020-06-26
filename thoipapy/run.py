@@ -258,10 +258,6 @@ if __name__ == "__main__":
         if s["compare_predictors"] == True:
             thoipapy.figs.combine_BOcurve_files.compare_predictors(s)
 
-        # DEPRECATED
-        #if s["run_BOcurve_comp_hardlinked"] == True:
-        #    thoipapy.figs.BOcurve_THOIPAbest_comp_LIPS_and_NMR.run_BOcurve_comp_hardlinked(Fontsize, Width, Size, s, Linewidth)
-
         if s["calc_PREDDIMER_TMDOCK_closedist"] == True:
             thoipapy.figs.calc_PREDDIMER_TMDOCK_closedist.calc_closedist_from_PREDDIMER_TMDOCK_best_model(s, df_set, logging)
 
