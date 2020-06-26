@@ -116,7 +116,8 @@ def create_AUC_4predictors_3databases_figs(s,df_set,logging):
                 xv_dict = pickle.load(f)
                 for k,v in xv_dict.items():
                     if re.search(database,k):
-                        mean_roc_auc.append(v['auc'])
+                        mean_roc_auc.append(v['roc_auc'])
+                        #mean_roc_auc.append(v['auc'])
                         fpr = v['fpr']
                         tpr = v['tpr']
                         mean_tpr += interp(mean_fpr, fpr, tpr)

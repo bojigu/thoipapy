@@ -107,7 +107,7 @@ def calc_coev_vs_res_dist(s, df_set, logging):
             # will also be used to buffer the dataframe
             buffer = 20
             # extend axes by adding buffer
-            rng = range(TMD_start - buffer, TMD_end + buffer)
+            rng = range(TMD_start - buffer, TMD_end + buffer + 1)
             dfp = dfp.reindex(index=rng, columns=rng)
 
             coev_dist_dict = {}
@@ -121,14 +121,16 @@ def calc_coev_vs_res_dist(s, df_set, logging):
                 ###############################################
                 single_dist_list = []
                 for i in range(TMD_start, TMD_end + 1):
-                    seln = dfp.loc[i, [i - b, i + b]]
+                    df_seln = dfp.loc[i, [i - b, i + b]]
                     """ The selection contains the two values, whose mean is taken.
                     Often, as b increases, one of the values is a nan.
                     [0.582511, nan]
                     [nan, 0.612737]
                     [nan, 0.5906779999999999]
                     """
-                    mean_ = seln.mean()
+                    mean_ = df_seln.mean()
+                    assert isinstance(mean_, float)
+
                     if not np.isnan(mean_):
                        single_dist_list.append(mean_)
                     #single_dist_list.append(mean_)

@@ -174,8 +174,6 @@ def rate4site_calculation(s, df_set, logging):
         df_rate4site.to_csv(rate4site_csv)
 
         logging.info(f"{rate4site_csv} saved")
-        logging.info(f"{TMD_seq} (orig TMD)")
-        logging.info("".join(df_rate4site["residue_name"].to_list()))
 
     logging.info("rate4site_calculation finished")
 
