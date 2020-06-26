@@ -12,6 +12,8 @@ from thoipapy.features.normalise_features import normalise_features
 
 import matplotlib as mpl
 # set matplotlib backend to Agg when run on a server
+from thoipapy.utils import make_sure_path_exists
+
 if os.environ.get('DISPLAY','') == '':
     print('no display found. Using non-interactive Agg backend')
     mpl.use('Agg')
@@ -204,7 +206,8 @@ def combine_all_train_data_for_machine_learning(s, df_set, logging):
     """
     logging.info('creating train or test data for machine learning')
 
-    train_data_csv = os.path.join(s["thoipapy_data_folder"], "Results", s["setname"], "{}_train_data.csv".format(s["setname"]))
+    train_data_csv = Path(s["thoipapy_data_folder"]) / f"Results/{s['setname']}/train_data/train_data_orig.csv"
+    make_sure_path_exists(train_data_csv, isfile=True)
 
     df_set_nonred = thoipapy.utils.drop_redundant_proteins_from_list(df_set, logging)
 
@@ -247,7 +250,8 @@ def combine_all_train_data_for_machine_learning(s, df_set, logging):
     # reorder the columns
     column_list = ['acc_db', 'interface', 'interface_score', 'residue_num', 'residue_name', 'n_homologues']
     df_all = thoipapy.utils.reorder_dataframe_columns(df_all, column_list)
-
+    new_index: pd.Series = df_all["acc_db"] + "_" + df_all["residue_num"].apply(lambda x: f"{x:02d}") + df_all["residue_name"]
+    df_all.index = new_index
     # # remove crystal hetero_interface residues and drop "hetero_interface" column
     # hetero_inter_index = []
     # for i in range(df_all.shape[0]):0

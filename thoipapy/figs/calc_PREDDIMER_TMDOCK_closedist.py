@@ -2,6 +2,8 @@ import math
 import os
 import re
 import sys
+from pathlib import Path
+
 import pandas as pd
 import thoipapy
 
@@ -26,11 +28,11 @@ def calc_closedist_from_PREDDIMER_TMDOCK_best_model(s, df_set, logging):
         sys.stdout.write("{}, ".format(acc)), sys.stdout.flush()
         database = df_set.loc[i, "database"]
         protein = acc
-        PREDDIMER_TMDOCK_folder = os.path.join(s["base_dir"], "figs", "FigBZ18-PreddimerTmdockComparison")
-        pdb_file_preddimer = os.path.join(PREDDIMER_TMDOCK_folder,database,"{}.preddimer.pdb".format(protein))
-        pdb_file_tmdock = os.path.join(PREDDIMER_TMDOCK_folder, database, "{}.tmdock.pdb".format(protein))
-        preddimer_closedist_file = os.path.join(PREDDIMER_TMDOCK_folder, database,"{}.preddimer.closedist.csv".format(protein))
-        tmdock_closedist_file = os.path.join(PREDDIMER_TMDOCK_folder, database,"{}.tmdock.closedist.csv".format(protein))
+        other_predictors_dir = Path(s["thoipapy_data_folder"]) / "Predictions/other_predictors"
+        pdb_file_preddimer = os.path.join(other_predictors_dir,database,"{}.preddimer.pdb".format(protein))
+        pdb_file_tmdock = os.path.join(other_predictors_dir, database, "{}.tmdock.pdb".format(protein))
+        preddimer_closedist_file = os.path.join(other_predictors_dir, database,"{}.preddimer.closedist.csv".format(protein))
+        tmdock_closedist_file = os.path.join(other_predictors_dir, database,"{}.tmdock.closedist.csv".format(protein))
 
         #closedist_calculate_from_dimer(s,pdb_file_preddimer,preddimer_closedist_file)
         if os.path.isfile(pdb_file_tmdock):

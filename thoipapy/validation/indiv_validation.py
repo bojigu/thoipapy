@@ -1,6 +1,7 @@
 import os
 import pickle
 import sys
+from pathlib import Path
 
 import matplotlib.pyplot as plt
 import numpy as np
@@ -739,10 +740,8 @@ def create_ROC_comp_4predictors(s, df_set, logging):
     logging.info("start create_ROC_Curve_figs_THOIPA_PREDDIMER_TMDOCK_LIPS")
     pred_colname = "THOIPA_{}_LOO".format(s["set_number"])
     prediction_name_list = [pred_colname, "PREDDIMER", "TMDOCK", "LIPS_surface_ranked"]
-    ROC_4predictor_csv = os.path.join(s["thoipapy_data_folder"], "Results", "compare_predictors",
-                                      "{}_ROC_4predictors.csv".format(s['setname']))
-    ROC_4predictor_png = os.path.join(s["thoipapy_data_folder"], "Results", "compare_predictors",
-                                               "{}_ROC_4predictors.png".format(s['setname']))
+    ROC_4predictor_csv = Path(s["thoipapy_data_folder"]) / f"Results/{s['setname']}/crossvalidation/{s['setname']}_ROC_4predictors.csv"
+    ROC_4predictor_png = Path(s["thoipapy_data_folder"]) / f"Results/{s['setname']}/crossvalidation/{s['setname']}_ROC_4predictors.png"
     figsize = np.array([3.42, 3.42]) * 2  # DOUBLE the real size, due to problems on Bo computer with fontsizes
     fig, ax = plt.subplots(figsize=figsize)
     mean_tpr_list=[]
@@ -781,6 +780,7 @@ def create_ROC_comp_4predictors(s, df_set, logging):
     df_tpr = pd.DataFrame.from_records(list(map(list, zip(*mean_tpr_list))),
                                        columns=prediction_name_list)
     df_tpr.to_csv(ROC_4predictor_csv)
+    logging.info(f"fig saved: {ROC_4predictor_png}")
 
 def create_linechart_perc_interf_vs_PR_cutoff(s, predictor_name_list, perc_interf_vs_PR_cutoff_linechart_png, database="all"):
     """ Create linechart (and barchart) showing percentage of interface residues correctly predicted, according

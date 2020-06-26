@@ -17,14 +17,9 @@ Purpose:        Self-interacting single-pass membrane protein interface residues
 import warnings
 
 import thoipapy.experimental_data.add_experimental_data_to_train_set
+import thoipapy.feature_importance.mean_decrease_accuracy
+import thoipapy.feature_importance.mean_decrease_impurity
 import thoipapy.features.physical_parameters
-import thoipapy.validation.feature_importance
-import thoipapy.validation.leave_one_out
-import thoipapy.validation.precision_recall
-import thoipapy.validation.random_interface
-import thoipapy.validation.roc
-import thoipapy.validation.tenfold
-import thoipapy.validation.testset_trainset
 from thoipapy.clustering.pairwise_aln_similarity_matrix import create_identity_matrix_from_protein_set
 
 warnings.filterwarnings("ignore")
@@ -201,11 +196,17 @@ if __name__ == "__main__":
         #                                    model validation                                             #
         #                                                                                                 #
         ###################################################################################################
+        if s["run_feature_selection"]:
+            thoipapy.feature_importance.mean_decrease_impurity.calc_feat_import_from_mean_decrease_impurity(s, logging)
+            thoipapy.feature_importance.mean_decrease_impurity.fig_feat_import_from_mean_decrease_impurity(s, logging)
+            thoipapy.feature_importance.remove_duplicates.remove_duplicate_features_with_lower_MDI(s, logging)
+            thoipapy.feature_importance.anova.select_best_features_with_anova(s, logging)
+            thoipapy.feature_importance.ensemble_rfe.select_best_features_with_ensemble_rfe(s, logging)
+            thoipapy.feature_importance.merge.merge_top_features_anova_ensemble(s, logging)
 
         if s["run_10fold_cross_validation"]:
             thoipapy.validation.tenfold.run_10fold_cross_validation(s, logging)
             thoipapy.validation.tenfold.create_10fold_cross_validation_fig(s, logging)
-
 
         if s["run_LOO_validation"]:
             thoipapy.validation.leave_one_out.run_LOO_validation(s, df_set, logging)
@@ -214,10 +215,8 @@ if __name__ == "__main__":
                 thoipapy.validation.leave_one_out.create_LOO_validation_fig(s, df_set, logging)
 
         if s["calc_feature_importances"]:
-            thoipapy.validation.feature_importance.calc_feat_import_from_mean_decrease_impurity(s, logging)
-            thoipapy.validation.feature_importance.fig_feat_import_from_mean_decrease_impurity(s, logging)
-            thoipapy.validation.feature_importance.calc_feat_import_from_mean_decrease_accuracy(s, logging)
-            thoipapy.validation.feature_importance.fig_feat_import_from_mean_decrease_accuracy(s, logging)
+            thoipapy.feature_importance.mean_decrease_accuracy.calc_feat_import_from_mean_decrease_accuracy(s, logging)
+            thoipapy.feature_importance.mean_decrease_accuracy.fig_feat_import_from_mean_decrease_accuracy(s, logging)
 
         if s["train_machine_learning_model"]:
             thoipapy.validation.train_model.train_machine_learning_model(s, logging)

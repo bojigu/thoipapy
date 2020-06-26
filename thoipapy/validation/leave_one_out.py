@@ -83,7 +83,7 @@ def run_LOO_validation(s: dict, df_set: pd.DataFrame, logging):
     # drop redundant proteins according to CD-HIT
     df_set = thoipapy.utils.drop_redundant_proteins_from_list(df_set, logging)
 
-    train_data_csv = os.path.join(s["thoipapy_data_folder"], "Results", s["setname"], "{}_train_data.csv".format(s["setname"]))
+    train_data_filtered = Path(s["thoipapy_data_folder"]) / f"Results/{s['setname']}/train_data/train_data_filtered.csv"
     LOO_crossvalidation_pkl = os.path.join(s["thoipapy_data_folder"], "Results", s["setname"], "crossvalidation", "data", "{}_LOO_crossvalidation.pkl".format(s["setname"]))
     BO_all_data_csv = os.path.join(s["thoipapy_data_folder"], "Results", s["setname"], "crossvalidation", "data", "{}_LOO_BO_data.csv".format(s["setname"]))
     BO_curve_folder = os.path.join(s["thoipapy_data_folder"], "Results", s["setname"], "crossvalidation")
@@ -95,7 +95,7 @@ def run_LOO_validation(s: dict, df_set: pd.DataFrame, logging):
 
     thoipapy.utils.make_sure_path_exists(BO_data_excel, isfile=True)
 
-    df_data = pd.read_csv(train_data_csv, index_col=0)
+    df_data = pd.read_csv(train_data_filtered, index_col=0)
     assert "Unnamed" not in ", ".join(df_data.columns.tolist())
 
     #df_data = df_data.dropna()
@@ -103,8 +103,11 @@ def run_LOO_validation(s: dict, df_set: pd.DataFrame, logging):
     # drop training data (full protein) that don't have enough homologues
     df_data = df_data.loc[df_data.n_homologues >= s["min_n_homol_training"]]
 
-    acc_db_list = df_data.acc_db.unique()
-    logging.info(f"Dataset has {len(acc_db_list)} unique proteins for training.")
+    acc_db_ser = pd.Series(df_data.index).apply(lambda x: x.split("_")[0])
+    acc_db_list = acc_db_ser.to_list()
+    #df_data["acc_db"] = acc_db_ser
+    acc_db_unique_list = acc_db_ser.unique()
+    logging.info(f"Dataset has {len(acc_db_unique_list)} unique proteins for training.")
     start = time.clock()
     pred_colname = "THOIPA_{}_LOO".format(s["set_number"])
 
@@ -139,11 +142,13 @@ def run_LOO_validation(s: dict, df_set: pd.DataFrame, logging):
                              f"clusters_containing_acc_db_of_interest = {clusters_containing_acc_db_of_interest}")
 
         acc_db_putative_homologues: List[str] = clusters_containing_acc_db_of_interest[0]
-        index_excluding_putative_homologues = df_data.acc_db.apply(lambda x: x not in acc_db_putative_homologues)
+        row_filter_excluding_putative_homologues = [acc_db not in acc_db_putative_homologues for acc_db in acc_db_list]
+        #index_excluding_putative_homologues = df_data.acc_db.apply(lambda x: x not in acc_db_putative_homologues)
 
-        df_train = df_data.loc[index_excluding_putative_homologues]
+        df_train = df_data.loc[row_filter_excluding_putative_homologues]
 
-        assert acc_db not in df_train.acc_db.to_list()
+        filtered_index_acc_db = pd.Series(df_train.index).apply(lambda x: x.split("_")[0]).to_list()
+        assert acc_db not in filtered_index_acc_db
 
         loo_validation_data = LooValidationData()
         loo_validation_data.acc = acc
@@ -168,7 +173,7 @@ def run_LOO_validation(s: dict, df_set: pd.DataFrame, logging):
         #                                                                                                     #
         #######################################################################################################
 
-        if not loo_validation_data.acc_db in acc_db_list:
+        if not loo_validation_data.acc_db in acc_db_unique_list:
             logging.warning("{} is in protein set, but not found in training data".format(loo_validation_data.acc_db))
             # skip protein
             continue
@@ -200,11 +205,11 @@ def run_LOO_validation(s: dict, df_set: pd.DataFrame, logging):
     all_roc_auc = []
     all_pr_auc = []
     xv_dict = {}
-    acc_db_list = df_set.acc_db.tolist()
+    acc_db_unique_list = df_set.acc_db.tolist()
 
     #iterate through the output tuple (auc_dict, BO_df)
     for nn, val_tuple in enumerate(val_list):
-        acc_db = acc_db_list[nn]
+        acc_db = acc_db_unique_list[nn]
         auc_dict = val_tuple[0]
         all_roc_auc.append(auc_dict["roc_auc"])
         all_pr_auc.append(auc_dict["pr_auc"])
@@ -274,7 +279,8 @@ def LOO_single_prot(d: LooValidationData):
     #                                                                                                     #
     #######################################################################################################
 
-    X_train = thoipapy.validation.feature_selection.drop_cols_not_used_in_ML(d.logger, d.df_train, d.excel_file_with_settings, d.i)
+    #X_train = thoipapy.validation.feature_selection.drop_cols_not_used_in_ML(d.logger, d.df_train, d.excel_file_with_settings, d.i)
+    X_train = d.df_train.drop(d.bind_column, axis=1)
     y_train = d.df_train[d.bind_column]
 
     #######################################################################################################
@@ -284,12 +290,16 @@ def LOO_single_prot(d: LooValidationData):
     #                              - positions with "folding/hetero contacts" will be included            #
     #                                                                                                     #
     #######################################################################################################
-    df_test = pd.read_csv(d.testdata_combined_file, index_col=0)
-    assert "Unnamed" not in ",".join(df_test.columns.tolist())
-    assert df_test.index.tolist() == list(range(df_test.shape[0]))
+    df_testdata_combined = pd.read_csv(d.testdata_combined_file, index_col=0)
+    assert "Unnamed" not in ",".join(df_testdata_combined.columns.tolist())
+    assert d.bind_column in df_testdata_combined.columns
+    df_test = df_testdata_combined.reindex(columns=d.df_train.columns, index=df_testdata_combined.index)
 
-    X_test = thoipapy.validation.feature_selection.drop_cols_not_used_in_ML(logger, df_test, d.excel_file_with_settings, d.i)
-    y_test = df_test["interface"].fillna(0).astype(int)
+    #X_test = thoipapy.validation.feature_selection.drop_cols_not_used_in_ML(logger, df_test, d.excel_file_with_settings, d.i)
+    #y_test = df_test["interface"].fillna(0).astype(int)
+
+    X_test = df_test.drop(d.bind_column, axis=1)
+    y_test = df_test[d.bind_column]
 
     fitted = d.forest.fit(X_train, y_train)
 
@@ -302,6 +312,10 @@ def LOO_single_prot(d: LooValidationData):
     # add the prediction to the combined file
     df_test[d.pred_colname] = prediction
     # save just the prediction alone to csv
+    residue_num: pd.Series = pd.Series(df_test.index).apply(lambda x: x.split("_")[1][0:2])
+    residue_name: pd.Series = pd.Series(df_test.index).apply(lambda x: x.split("_")[1][2])
+    df_test["residue_num"] = residue_num.to_list()
+    df_test["residue_name"] = residue_name.to_list()
     prediction_df = df_test[["residue_num", "residue_name", d.pred_colname]]
     prediction_df.to_csv(d.THOIPA_prediction_csv, index=False)
 
@@ -312,6 +326,10 @@ def LOO_single_prot(d: LooValidationData):
     pr_auc = auc(recall, precision)
 
     auc_dict = {"fpr": fpr, "tpr": tpr, "roc_auc": roc_auc, "precision" : precision, "recall" : recall, "pr_auc" : pr_auc}
+
+    # BO curve requires the interface score. Add it from the original csv.
+    assert df_testdata_combined.shape[0] == df_test.shape[0]
+    df_test["interface_score"] = df_testdata_combined["interface_score"]
 
     if d.database == "crystal" or d.database == "NMR":
         # low closest distance means high importance at interface

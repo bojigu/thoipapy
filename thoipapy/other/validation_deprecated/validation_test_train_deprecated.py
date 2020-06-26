@@ -1,6 +1,7 @@
 import os
 import pickle
 import re
+from pathlib import Path
 
 import numpy as np
 import pandas as pd
@@ -21,6 +22,7 @@ def create_AUBOC10_4predictors_3databases_figs(s,df_set,logging):
         mean_AUBOC_file = os.path.join(s["thoipapy_data_folder"], "Results", "compare_predictors",
                                                         "{}.{}.4predictors_mean_AUBOC10.csv".format(s["setname"],
                                                                                                          database))
+
         mean_AUBOC_barplot_png = os.path.join(s["thoipapy_data_folder"], "Results", "compare_predictors",
                                        "{}.{}.4predictors_mean_AUBOC10.png".format(s["setname"],
                                                                                    database))
@@ -30,8 +32,8 @@ def create_AUBOC10_4predictors_3databases_figs(s,df_set,logging):
         BOCURVE_linechart_png = os.path.join(s["thoipapy_data_folder"], "Results", "compare_predictors",
                                                         "{}.{}.4predictors_BOCURVE_linechart.png".format(s["setname"],database))
         for predictor_name in predictor_name_list:
-            BO_data_excel = os.path.join(s["thoipapy_data_folder"], "Results", "compare_predictors",
-                                         "{}.{}_BO_curve_data.xlsx".format(s['setname'], predictor_name.replace('*', "")))
+            crossvalidation_dir = os.path.join(s["thoipapy_data_folder"], "Results", s["setname"], "crossvalidation")
+            BO_data_excel = os.path.join(crossvalidation_dir, "data", "{}_BO_curve_data.xlsx".format(s["setname"]))
             df_o_minus_r = pd.read_excel(BO_data_excel,sheet_name="df_o_minus_r",index_col=0)
             df_o_minus_r = df_o_minus_r.filter(regex=database, axis=1)
             df_o_minus_r_mean = df_o_minus_r.T.mean()
@@ -106,14 +108,16 @@ def create_AUC_4predictors_3databases_figs(s,df_set,logging):
             big_list_of_tprs = []
             mean_fpr = np.linspace(0, 1, 100)
             n=0
-            AUC_data_pkl = os.path.join(s["thoipapy_data_folder"], "Results", "compare_predictors",
-                                         "{}.{}_AUC_data.pkl".format(s["setname"],predictor_name.replace('*',"")))
+            #AUC_data_pkl = os.path.join(s["thoipapy_data_folder"], "Results", "compare_predictors",
+            #                             "{}.{}_AUC_data.pkl".format(s["setname"],predictor_name.replace('*',"")))
+            AUC_data_pkl = Path(s["thoipapy_data_folder"]) / f"Results/{s['setname']}/indiv_validation/{predictor_name}/ROC_AUC_data.pkl"
             # open pickle file
             with open(AUC_data_pkl, "rb") as f:
                 xv_dict = pickle.load(f)
                 for k,v in xv_dict.items():
                     if re.search(database,k):
-                        mean_roc_auc.append(v['auc'])
+                        mean_roc_auc.append(v['roc_auc'])
+                        #mean_roc_auc.append(v['auc'])
                         fpr = v['fpr']
                         tpr = v['tpr']
                         mean_tpr += interp(mean_fpr, fpr, tpr)

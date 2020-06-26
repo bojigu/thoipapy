@@ -72,9 +72,9 @@ def validate_THOIPA_for_testset_trainset_combination(s, test_set_list, train_set
             #BO_curve_folder = os.path.join(s["thoipapy_data_folder"], "Results", "compare_testset_trainset", "data", "Test{}_Train{}.THOIPA".format(testsetname, trainsetname))
             BO_curve_folder = Path(s["thoipapy_data_folder"]) / "Results" / testsetname / f"blindvalidation/THOIPA.train{trainsetname}"
             #THOIPA_BO_curve_data_csv = os.path.join(s["thoipapy_data_folder"], "Results", "compare_testset_trainset", "data", "Test{}_Train{}.THOIPA".format(testsetname, trainsetname), "data", "Test{}_Train{}.THOIPA.best_overlap_data.csv".format(testsetname, trainsetname))
-            THOIPA_BO_curve_data_csv = Path(s["thoipapy_data_folder"]) / "Results" / testsetname / f"blindvalidation/THOIPA.train{trainsetname}/THOIPA.best_overlap_data.csv.csv"
+            THOIPA_BO_curve_data_csv = Path(s["thoipapy_data_folder"]) / "Results" / testsetname / f"blindvalidation/THOIPA.train{trainsetname}/THOIPA.best_overlap_data.csv"
             #THOIPA_ROC_pkl = os.path.join(s["thoipapy_data_folder"], "Results", "compare_testset_trainset", "data", "Test{}_Train{}.THOIPA".format(testsetname, trainsetname), "data", "Test{}_Train{}.THOIPA.ROC_data.pkl".format(testsetname, trainsetname))
-            THOIPA_ROC_pkl = Path(s["thoipapy_data_folder"]) / "Results" / testsetname / f"blindvalidation/THOIPA.train{trainsetname}/THOIPA.ROC_data.pkl"
+            THOIPA_ROC_pkl = Path(s["thoipapy_data_folder"]) / "Results" / testsetname / f"blindvalidation/THOIPA.train{trainsetname}/ROC_data.pkl"
 
 
             BO_data_excel = os.path.join(BO_curve_folder, "data", "BO_curve_data.xlsx")
@@ -204,7 +204,7 @@ def validate_LIPS_for_testset(s, logging, LIPS_name="LIPS_LE", pred_col="LIPS_L*
         #LIPS_BO_curve_data_csv = os.path.join(s["thoipapy_data_folder"], "Results", "compare_testset_trainset", "data", "Test{}.{}".format(testsetname, LIPS_name), "Test{}.{}.best_overlap_data.csv".format(testsetname, LIPS_name))
         #BO_curve_folder = os.path.join(s["thoipapy_data_folder"], "Results", "compare_testset_trainset", "data", "Test{}.{}".format(testsetname, LIPS_name))
         BO_curve_folder = Path(s["thoipapy_data_folder"]) / "Results" / testsetname / f"blindvalidation/{LIPS_name}"
-        LIPS_ROC_pkl = Path(s["thoipapy_data_folder"]) / "Results" / testsetname / f"blindvalidation/{LIPS_name}/{LIPS_name}.ROC_data.pkl"
+        LIPS_ROC_pkl = Path(s["thoipapy_data_folder"]) / "Results" / testsetname / f"blindvalidation/{LIPS_name}/ROC_data.pkl"
         #LIPS_ROC_pkl = os.path.join(s["thoipapy_data_folder"], "Results", "compare_testset_trainset", "data", "Test{}.{}".format(testsetname, LIPS_name), "data", "Test{}.{}.ROC_data.pkl".format(testsetname, LIPS_name))
         thoipapy.utils.make_sure_path_exists(LIPS_BO_curve_data_csv, isfile=True)
         BO_data_excel = os.path.join(BO_curve_folder, "data", "BO_curve_data.xlsx")
@@ -358,6 +358,7 @@ def create_ROC_fig_for_testset_trainset_combination(THOIPA_ROC_pkl):
 def save_THOIPA_pred_indiv_prot(s, model_pkl, testdata_combined_file, THOIPA_pred_csv, test_combined_incl_pred, trainsetname, logging):
 
     combined_incl_THOIPA_df = pd.read_csv(testdata_combined_file, sep=',', engine='python', index_col=0)
+    train_data_filtered = Path(s["thoipapy_data_folder"]) / f"Results/{s['setname']}/train_data/train_data_filtered.csv"
     #combined_incl_THOIPA_df = combined_incl_THOIPA_df.dropna()
 
     #drop_cols_not_used_in_ML
@@ -383,8 +384,8 @@ def save_THOIPA_pred_indiv_prot(s, model_pkl, testdata_combined_file, THOIPA_pre
     try:
         prob_arr = fit.predict_proba(test_X)[:, 1]
     except ValueError:
-        train_data_used_for_model_csv = model_pkl[:-11] + "train_data_used_for_model.csv"
-        df_train_data_used_for_model_csv = pd.read_csv(train_data_used_for_model_csv)
+        df_train_data_used_for_model_csv = pd.read_csv(train_data_filtered)
+        del df_train_data_used_for_model_csv[s["bind_column"]]
         train_cols = set(df_train_data_used_for_model_csv.columns)
         test_cols = set(test_X.columns)
         cols_not_in_train = test_cols - train_cols

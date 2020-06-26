@@ -3,7 +3,6 @@ import thoipapy.validation.leave_one_out
 import thoipapy.validation.random_interface
 import thoipapy.validation.testset_trainset
 import thoipapy.validation.auc
-import thoipapy.validation.feature_importance
 import thoipapy.validation.feature_selection
 import thoipapy.validation.figs
 import thoipapy.validation.indiv_validation
