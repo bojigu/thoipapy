@@ -83,7 +83,7 @@ def run_LOO_validation(s: dict, df_set: pd.DataFrame, logging):
     # drop redundant proteins according to CD-HIT
     df_set = thoipapy.utils.drop_redundant_proteins_from_list(df_set, logging)
 
-    train_data_filtered = Path(s["thoipapy_data_folder"]) / f"Results/{s['setname']}/train_data/train_data_filtered.csv"
+    train_data_filtered = Path(s["thoipapy_data_folder"]) / f"Results/{s['setname']}/train_data/03_train_data_after_first_feature_seln.csv"
     LOO_crossvalidation_pkl = os.path.join(s["thoipapy_data_folder"], "Results", s["setname"], "crossvalidation", "data", "{}_LOO_crossvalidation.pkl".format(s["setname"]))
     BO_all_data_csv = os.path.join(s["thoipapy_data_folder"], "Results", s["setname"], "crossvalidation", "data", "{}_LOO_BO_data.csv".format(s["setname"]))
     BO_data_excel: Union[Path, str] = Path(s["thoipapy_data_folder"]) / f"Results/{s['setname']}/crossvalidation/data/{s['setname']}_BO_curve_data.xlsx"
@@ -162,7 +162,7 @@ def run_LOO_validation(s: dict, df_set: pd.DataFrame, logging):
         loo_validation_data.logger = logger
         loo_validation_data.pred_colname = pred_colname
         loo_validation_data.testdata_combined_file = os.path.join(s["thoipapy_data_folder"], "Features", "combined", database, "{}.surr20.gaps5.combined_features.csv".format(acc))
-        loo_validation_data.THOIPA_prediction_csv = Path(s["thoipapy_data_folder"]) / "Results" / s["setname"] / f"crossvalidation/leave_one_out/protein_data/{acc}.{database}.LOO.prediction.csv"
+        loo_validation_data.THOIPA_prediction_csv = Path(s["thoipapy_data_folder"]) / f"Results/{s['setname']}/predictions/THOIPA_LOO/{database}.{acc}.LOO.prediction.csv"
 
         thoipapy.utils.make_sure_path_exists(loo_validation_data.THOIPA_prediction_csv, isfile=True)
 

@@ -237,24 +237,6 @@ if __name__ == "__main__":
         Size= s["Size"]
         Linewidth= s["Linewidth"]
 
-        # DEPRECATED
-        #if s["FigZB_07_hardlinked"] == True:
-        #    # barcharts of coevolution values for interface and non-interface
-        #    thoipapy.figs.other.other_figs.average_fraction_DI.FigZB_07_hardlinked(Fontsize, Width, Size, s)
-
-        #DEPRECATED
-        #if s["FigZB_18"] == True:
-        #    # heatmap of prediction from THOIPA, PREDDIMER, TMDOCK
-        #    thoipapy.other.other_figs.create_PREDDIMER_TMDOCK_heatmap.FigZB_18(s, Fontsize, Width, Size)
-
-        # DEPRECATED
-        #if s["combine_BOcurve_files_hardlinked"] == True:
-        #    thoipapy.figs.Combine_Bo_Curve_files.combine_BOcurve_files_hardlinked(s)
-
-        # DEPRECATED. USE COMPARE PREDICTORS
-        # if s["fig_plot_BOcurve_mult_train_datasets"] == True:
-        #     thoipapy.figs.Combine_Bo_Curve_files.fig_plot_BOcurve_mult_train_datasets(s)
-
         if s["compare_predictors"] == True:
             thoipapy.figs.combine_BOcurve_files.compare_predictors(s)
 

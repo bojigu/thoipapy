@@ -43,7 +43,7 @@ def merge_predictions(s, df_set, logging):
         combined_data_file = os.path.join(s["dropbox_dir"], "THOIPA_data","Features","combined",database,
                                        "{}.surr20.gaps5.combined_features.csv".format(acc))
         thoipapy.utils.make_sure_path_exists(combined_data_file, isfile=True)
-        THOIPA_prediction_csv = Path(s["thoipapy_data_folder"]) / "Results" / s["setname"] / f"crossvalidation/leave_one_out/protein_data/{acc}.{database}.LOO.prediction.csv"
+        THOIPA_prediction_csv = Path(s["thoipapy_data_folder"]) / f"Results/{s['setname']}/predictions/THOIPA_LOO/{database}.{acc}.LOO.prediction.csv"
         PREDDIMER_prediction_file = os.path.join(other_predictors_dir, database, "{}.preddimer.closedist.csv".format(acc))
         TMDOCK_prediction_file = os.path.join(other_predictors_dir, database, "{}.tmdock.closedist.csv".format(acc))
         merged_data_csv_path: Union[Path, str] = Path(s["thoipapy_data_folder"]) / f"Results/{s['setname']}/predictions/merged/{database}.{acc}.merged.csv"

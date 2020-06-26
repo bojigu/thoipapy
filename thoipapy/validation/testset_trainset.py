@@ -18,8 +18,6 @@ from thoipapy.figs.create_BOcurve_files import parse_BO_data_csv_to_excel, save_
 
 
 def run_testset_trainset_validation(s, logging):
-    if not os.path.exists(os.path.join(s["thoipapy_data_folder"], "Results", "Bo_curve")):
-        os.makedirs(os.path.join(s["thoipapy_data_folder"], "Results", "Bo_curve"))
 
     # create list of test and train datasets
     # if only one is given, make a list with only one dataset
@@ -240,7 +238,8 @@ def validate_LIPS_for_testset(s, logging, LIPS_name="LIPS_LE", pred_col="LIPS_L*
             #######################################################################################################
             # SAVE LIPS PREDICTION DATA
             # this is somewhat inefficient, as it is conducted for every test dataset
-            LIPS_pred_csv = os.path.join(os.path.dirname(s["thoipapy_data_folder"]), "Features", "Predictions", "testset_trainset", database, "{}.LIPS_pred.csv".format(acc, testsetname))
+            #LIPS_pred_csv = os.path.join(os.path.dirname(s["thoipapy_data_folder"]), "Features", "Predictions", "testset_trainset", database, "{}.LIPS_pred.csv".format(acc, testsetname))
+            LIPS_pred_csv = Path(s["thoipapy_data_folder"]) / f"Results/{testsetname}/predictions/{LIPS_name}/{database}.{acc}.{LIPS_name}.csv"
             LIPS_pred_df = combined_df[["residue_name", "residue_num", "LIPS_polarity", "LIPS_entropy", "LIPS_L*E", "LIPS_surface", "LIPS_surface_ranked"]]
             thoipapy.utils.make_sure_path_exists(LIPS_pred_csv, isfile=True)
             LIPS_pred_df.to_csv(LIPS_pred_csv)
@@ -359,7 +358,7 @@ def create_ROC_fig_for_testset_trainset_combination(THOIPA_ROC_pkl):
 def save_THOIPA_pred_indiv_prot(s, model_pkl, testdata_combined_file, THOIPA_pred_csv, test_combined_incl_pred, trainsetname, logging):
 
     combined_incl_THOIPA_df = pd.read_csv(testdata_combined_file, sep=',', engine='python', index_col=0)
-    train_data_filtered = Path(s["thoipapy_data_folder"]) / f"Results/{s['setname']}/train_data/train_data_filtered.csv"
+    train_data_filtered = Path(s["thoipapy_data_folder"]) / f"Results/{s['setname']}/train_data/03_train_data_after_first_feature_seln.csv"
     #combined_incl_THOIPA_df = combined_incl_THOIPA_df.dropna()
 
     #drop_cols_not_used_in_ML

@@ -29,7 +29,7 @@ def calc_feat_import_from_mean_decrease_impurity(s, logging):
         Also includes the standard deviation supplied by the machine learning algorithm
     """
     #logging.info('RF_variable_importance_calculate is running\n')
-    train_data_csv = Path(s["thoipapy_data_folder"]) / f"Results/{s['setname']}/train_data/train_data_orig.csv"
+    train_data_csv = Path(s["thoipapy_data_folder"]) / f"Results/{s['setname']}/train_data/01_train_data_orig.csv"
 
     mean_decrease_impurity_all_features_csv = Path(s["thoipapy_data_folder"]) / "Results" / s["setname"] / "feat_imp/mean_decrease_impurity_all_features.csv"
     make_sure_path_exists(mean_decrease_impurity_all_features_csv, isfile=True)

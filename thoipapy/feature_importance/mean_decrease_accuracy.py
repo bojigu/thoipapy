@@ -46,7 +46,7 @@ def calc_feat_import_from_mean_decrease_accuracy(s, logging):
         Comma separated values, showing decrease in AUC for each feature or group of features.
     """
     logging.info('calc_feat_import_from_mean_decrease_accuracy is running')
-    train_data_csv = Path(s["thoipapy_data_folder"]) / f"Results/{s['setname']}/train_data/train_data_filtered.csv"
+    train_data_csv = Path(s["thoipapy_data_folder"]) / f"Results/{s['setname']}/train_data/03_train_data_after_first_feature_seln.csv"
     # crossvalidation_csv = os.path.join(s["thoipapy_data_folder"], "Results", s["setname"], "crossvalidation", "data", "{}_10F_data.csv".format(s["setname"]))
     feat_imp_MDA_csv = os.path.join(s["thoipapy_data_folder"], "Results", s["setname"], "feat_imp", "mean_decrease_accuracy_filtered_features.csv")
 

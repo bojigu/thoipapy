@@ -1,4 +1,3 @@
-import os
 from pathlib import Path
 from random import shuffle
 from typing import Union
@@ -8,6 +7,7 @@ from matplotlib import pyplot as plt
 from sklearn.metrics import precision_recall_curve, auc
 
 import thoipapy.utils
+from thoipapy.validation.gather import create_df_with_all_predictions_for_all_residues_in_set
 
 
 def create_precision_recall_all_residues(s, df_set, logging):
@@ -47,37 +47,7 @@ def create_precision_recall_all_residues(s, df_set, logging):
 
     df_set_nonred = thoipapy.utils.drop_redundant_proteins_from_list(df_set, logging)
 
-    # set up a dataframe to hold the features for all proteins
-    df_all = pd.DataFrame()
-    for i in df_set_nonred.index:
-        acc = df_set_nonred.loc[i, "acc"]
-        database = df_set_nonred.loc[i, "database"]
-        merged_data_csv_path: Union[Path, str] = Path(s["thoipapy_data_folder"]) / f"Results/{s['setname']}/predictions/merged/{database}.{acc}.merged.csv"
-
-        df_merged_new_protein = pd.read_csv(merged_data_csv_path, index_col=0)
-        df_merged_new_protein["acc_db"] = "{}-{}".format(acc, database)
-#
-        # for the first protein, replace the empty dataframe
-        if df_all.empty:
-            df_all = df_merged_new_protein
-        else:
-            # concatenate the growing dataframe of combined proteins and new dataframe
-            df_all = pd.concat([df_all, df_merged_new_protein])
-
-    # drop any positions where there is no interface_score (e.g. no mutations, or hetero contacts?)
-    if "interface_score" in df_all.columns:
-        df_all.dropna(subset=["interface_score"], inplace=True)
-    else:
-        logging.warning("No experimental data has been added to this dataset. Hope you're not trying to train with it!!!")
-
-    # reset the index to be a range (0,...).
-    df_all.index = range(df_all.shape[0])
-
-    # reorder the columns
-    column_list = ['acc_db', 'interface', 'interface_score', 'residue_num', 'residue_name']
-    df_all = thoipapy.utils.reorder_dataframe_columns(df_all, column_list)
-
-    df_all.to_csv(pred_all_res_csv)
+    df_all = create_df_with_all_predictions_for_all_residues_in_set(s, df_set_nonred, pred_all_res_csv, logging)
 
     save_fig_precision_recall_all_residues(s, df_all, all_res_precision_recall_png, all_res_precision_recall_data_csv, logging)
 

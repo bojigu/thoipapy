@@ -79,7 +79,7 @@ def train_machine_learning_model(s, logging):
     """
     logging.info('starting train_machine_learning_model')
 
-    train_data_filtered = Path(s["thoipapy_data_folder"]) / f"Results/{s['setname']}/train_data/train_data_filtered.csv"
+    train_data_filtered = Path(s["thoipapy_data_folder"]) / f"Results/{s['setname']}/train_data/03_train_data_after_first_feature_seln.csv"
 
     model_pkl = os.path.join(s["thoipapy_data_folder"], "Results", s["setname"], "{}_ML_model.lpkl".format(s["setname"]))
 

@@ -43,7 +43,7 @@ def run_10fold_cross_validation(s, logging):
         Also contains the mean ROC curve, and the mean AUC.
     """
     logging.info('10-fold cross validation is running')
-    train_data_filtered = Path(s["thoipapy_data_folder"]) / f"Results/{s['setname']}/train_data/train_data_filtered.csv"
+    train_data_filtered = Path(s["thoipapy_data_folder"]) / f"Results/{s['setname']}/train_data/03_train_data_after_first_feature_seln.csv"
     crossvalidation_pkl = os.path.join(s["thoipapy_data_folder"], "Results", s["setname"], "crossvalidation", "data", "{}_10F_data.pkl".format(s["setname"]))
     features_csv = Path(s["thoipapy_data_folder"]) / f"Results/{s['setname']}/feat_imp/test_features.csv"
 
