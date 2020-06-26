@@ -12,7 +12,7 @@ import thoipapy
 from thoipapy.utils import make_sure_path_exists
 
 
-def create_AUBOC10_4predictors_3databases_figs(s,df_set,logging):
+def validate_multiple_predictors_and_subsets_auboc10(s, df_set, logging):
 
     logging.info("start create_AUBOC10_43databases_figs")
     predictor_name_list = ["THOIPA_{}_LOO".format(s["set_number"]),"PREDDIMER", "TMDOCK", "LIPS_surface_ranked"] #"LIPS_L*E",
@@ -75,7 +75,7 @@ def create_AUBOC10_4predictors_3databases_figs(s,df_set,logging):
         fig.savefig(mean_AUBOC_barplot_png, dpi=240)
 
 
-def create_AUC_4predictors_3databases_figs(s,df_set,logging):
+def validate_multiple_predictors_and_subsets_auc(s, df_set, logging):
 
     logging.info("start create_AUC_4predictors_3databases_figs")
     predictor_name_list = ["THOIPA_{}_LOO".format(s["set_number"]),"PREDDIMER", "TMDOCK", "LIPS_surface_ranked"] #"LIPS_L*E",

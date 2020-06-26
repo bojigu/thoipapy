@@ -140,3 +140,5 @@ def save_fig_precision_recall_all_residues(s, df, all_res_precision_recall_png, 
     df_precision_recall_data.to_csv(all_res_precision_recall_data_csv)
 
     logging.info("save_fig_precision_recall_all_residues finished ({})".format(all_res_precision_recall_data_csv))
+
+

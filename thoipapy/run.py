@@ -20,6 +20,7 @@ import thoipapy.experimental_data.add_experimental_data_to_train_set
 import thoipapy.feature_importance.mean_decrease_accuracy
 import thoipapy.feature_importance.mean_decrease_impurity
 import thoipapy.features.physical_parameters
+import thoipapy.validation.gather
 from thoipapy.clustering.pairwise_aln_similarity_matrix import create_identity_matrix_from_protein_set
 
 warnings.filterwarnings("ignore")
@@ -273,16 +274,14 @@ if __name__ == "__main__":
             predictor_name_list = [THOIPA_predictor_name, "PREDDIMER", "TMDOCK", "LIPS_surface_ranked", "random"]
             thoipapy.validation.indiv_validation.collect_indiv_validation_data(s, df_set, logging, namedict, predictor_name_list, THOIPA_predictor_name, subsets)
             thoipapy.validation.indiv_validation.create_indiv_validation_figs(s, logging, namedict, predictor_name_list, THOIPA_predictor_name, subsets)
+            thoipapy.validation.multiple_predictors.validate_multiple_predictors_and_subsets_auboc10(s, df_set, logging)
+            thoipapy.validation.multiple_predictors.validate_multiple_predictors_and_subsets_auc(s, df_set, logging)
 
         if s["create_merged_heatmap"] == True:
             thoipapy.figs.create_heatmap_from_merge_file.create_merged_heatmap(s, df_set, logging)
 
         if s["create_ROC_4predictors"] == True:
             thoipapy.validation.indiv_validation.create_ROC_comp_4predictors(s, df_set, logging)
-
-        if s["create_AUC_AUBOC_separate_database"] == True:
-            thoipapy.other.validation_deprecated.validation_test_train_deprecated.create_AUBOC10_4predictors_3databases_figs(s, df_set, logging)
-            thoipapy.other.validation_deprecated.validation_test_train_deprecated.create_AUC_4predictors_3databases_figs(s, df_set, logging)
 
         if "download_10_homologues_from_ncbi" in s:
             if s["download_10_homologues_from_ncbi"] == True:
@@ -296,7 +295,7 @@ if __name__ == "__main__":
         if s["ROC_PR_val_all_residues_combined"]:
             thoipapy.validation.roc.create_ROC_all_residues(s, df_set, logging)
             thoipapy.validation.precision_recall.create_precision_recall_all_residues(s, df_set, logging)
-            thoipapy.validation.precision_recall.gather_validation_data_for_figs(s, df_set, logging)
+            thoipapy.validation.gather.gather_validation_data_for_figs(s, df_set, logging)
 
         thoipapy.setting.deployment_helper.docker_deployment_had_better_work_now()
         thoipapy.ML_model.deployment_helper2.docker_deployment_had_better_work_now2()
