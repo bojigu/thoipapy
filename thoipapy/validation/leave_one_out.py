@@ -101,7 +101,8 @@ def run_LOO_validation(s: dict, df_set: pd.DataFrame, logging):
     #df_data = df_data.dropna()
 
     # drop training data (full protein) that don't have enough homologues
-    df_data = df_data.loc[df_data.n_homologues >= s["min_n_homol_training"]]
+    if s["min_n_homol_training"] != 0:
+        df_data = df_data.loc[df_data.n_homologues >= s["min_n_homol_training"]]
 
     acc_db_ser = pd.Series(df_data.index).apply(lambda x: x.split("_")[0])
     acc_db_list = acc_db_ser.to_list()

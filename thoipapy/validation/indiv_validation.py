@@ -2,6 +2,7 @@ import os
 import pickle
 import sys
 from pathlib import Path
+from typing import Union
 
 import matplotlib.pyplot as plt
 import numpy as np
@@ -218,14 +219,14 @@ def create_indiv_validation_figs(s, logging, namedict, predictor_name_list, THOI
     indiv_validation_figs_dir: Path = Path(s["thoipapy_data_folder"]) / f"Results/{s['setname']}/crossvalidation/indiv_validation/bocurve/figs"
     make_sure_path_exists(indiv_validation_figs_dir)
 
-    indiv_ROC_AUC_barchart_png = os.path.join(indiv_validation_figs_dir, "indiv_ROC_AUC_barchart.png")
-    indiv_PR_AUC_barchart_png = os.path.join(indiv_validation_figs_dir, "indiv_PR_AUC_barchart.png")
-    AUBOC10_barchart_png = os.path.join(indiv_validation_figs_dir, "indiv_AUBOC10_barchart.png")
-    BOCURVE_linechart_png = os.path.join(indiv_validation_figs_dir, "BOcurve_linechart.png")
-    mean_ROC_AUC_barchart_png = os.path.join(indiv_validation_figs_dir, "mean_ROC_AUC_barchart.png")
-    mean_PR_AUC_barchart_png = os.path.join(indiv_validation_figs_dir, "mean_PR_AUC_barchart.png")
-    ROC_AUC_vs_PR_AUC_scatter_png = os.path.join(indiv_validation_figs_dir, "ROC_AUC_vs_PR_AUC_scatter.png")
-    perc_interf_vs_PR_cutoff_linechart_png = os.path.join(indiv_validation_figs_dir, "perc_interf_vs_PR_cutoff_linechart.png")
+    indiv_ROC_AUC_barchart_png: Union[Path, str] = indiv_validation_figs_dir / "indiv_ROC_AUC_barchart.png"
+    indiv_PR_AUC_barchart_png: Union[Path, str] = indiv_validation_figs_dir / "indiv_PR_AUC_barchart.png"
+    AUBOC10_barchart_png: Union[Path, str] = indiv_validation_figs_dir / "indiv_AUBOC10_barchart.png"
+    BOCURVE_linechart_png: Union[Path, str] = indiv_validation_figs_dir / "BOcurve_linechart.png"
+    mean_ROC_AUC_barchart_png: Union[Path, str] = indiv_validation_figs_dir / "mean_ROC_AUC_barchart.png"
+    mean_PR_AUC_barchart_png: Union[Path, str] = indiv_validation_figs_dir / "mean_PR_AUC_barchart.png"
+    ROC_AUC_vs_PR_AUC_scatter_png: Union[Path, str] = indiv_validation_figs_dir / "ROC_AUC_vs_PR_AUC_scatter.png"
+    perc_interf_vs_PR_cutoff_linechart_png: Union[Path, str] = indiv_validation_figs_dir / "perc_interf_vs_PR_cutoff_linechart.png"
 
     ROC_AUC_df = pd.read_excel(indiv_validation_data_xlsx, sheet_name="ROC_AUC_indiv", index_col=0)
     PR_AUC_df = pd.read_excel(indiv_validation_data_xlsx, sheet_name="PR_AUC_indiv", index_col=0)
@@ -246,12 +247,12 @@ def create_indiv_validation_figs(s, logging, namedict, predictor_name_list, THOI
     # for the complete list of proteins
     create_linechart_perc_interf_vs_PR_cutoff(s, predictor_name_list, perc_interf_vs_PR_cutoff_linechart_png, perc_interf_vs_PR_cutoff_linechart_data_csv)
 
-    # for each dataset(e.g. ETRA) separately. Saved in "each_dataset" subfolder
-    for database in subsets:
-        perc_interf_vs_PR_cutoff_linechart_single_database_png = os.path.join(indiv_validation_figs_dir, "each_dataset", "{}_perc_interf_vs_PR_cutoff_linechart.png".format(database))
-        perc_interf_vs_PR_cutoff_linechart_single_database_data_csv = os.path.join(indiv_validation_figs_dir, "each_dataset", "{}_perc_interf_vs_PR_cutoff_linechart_data.csv".format(database))
+    # for each subset(e.g. ETRA) separately. Saved in "by_subset" subfolder
+    for subset in subsets:
+        perc_interf_vs_PR_cutoff_linechart_single_database_png: Union[Path, str] = indiv_validation_figs_dir / f"by_subset/{subset}_perc_interf_vs_PR_cutoff_linechart.png"
+        perc_interf_vs_PR_cutoff_linechart_single_database_data_csv: Union[Path, str] = Path(s["thoipapy_data_folder"]) / f"Results/{s['setname']}/crossvalidation/indiv_validation/bocurve/{subset}_perc_interf_vs_PR_cutoff_linechart_data.csv"
 
-        create_linechart_perc_interf_vs_PR_cutoff(s, predictor_name_list, perc_interf_vs_PR_cutoff_linechart_single_database_png, perc_interf_vs_PR_cutoff_linechart_single_database_data_csv, database=database)
+        create_linechart_perc_interf_vs_PR_cutoff(s, predictor_name_list, perc_interf_vs_PR_cutoff_linechart_single_database_png, perc_interf_vs_PR_cutoff_linechart_single_database_data_csv, subset=subset)
 
     logging.info("finished run_indiv_validation_THOIPA_PREDDIMER_TMDOCK")
 
@@ -491,7 +492,7 @@ def create_PR_AUC_barchart(PR_AUC_df, indiv_PR_AUC_barchart_png, namedict, THOIP
     plt.xlim(-0.5, 54)
 
     plt.savefig(indiv_PR_AUC_barchart_png, bbox_extra_artists=(lgd,), bbox_inches='tight', dpi=300)
-    plt.savefig(indiv_PR_AUC_barchart_png[:-4] + ".pdf", bbox_extra_artists=(lgd,), bbox_inches='tight', dpi=300)
+    plt.savefig(str(indiv_PR_AUC_barchart_png)[:-4] + ".pdf", bbox_extra_artists=(lgd,), bbox_inches='tight', dpi=300)
     plt.close()
 
 
@@ -786,7 +787,7 @@ def create_ROC_comp_4predictors(s, df_set, logging):
     df_tpr.to_csv(ROC_4predictor_csv)
     logging.info(f"fig saved: {ROC_4predictor_png}")
 
-def create_linechart_perc_interf_vs_PR_cutoff(s, predictor_name_list, perc_interf_vs_PR_cutoff_linechart_png, perc_interf_vs_PR_cutoff_linechart_data_csv, database="all"):
+def create_linechart_perc_interf_vs_PR_cutoff(s, predictor_name_list, perc_interf_vs_PR_cutoff_linechart_png, perc_interf_vs_PR_cutoff_linechart_data_csv, subset="all"):
     """ Create linechart (and barchart) showing percentage of interface residues correctly predicted, according
     to precision-recall cutoffs.
 
@@ -798,7 +799,7 @@ def create_linechart_perc_interf_vs_PR_cutoff(s, predictor_name_list, perc_inter
         List of predictors to include in plot
     perc_interf_vs_PR_cutoff_linechart_png : str
         Linechart path
-    database : str
+    subset : str
         Database for which figures are processed (e.g. ETRA). Default is all.
 
     Returns
@@ -831,8 +832,8 @@ def create_linechart_perc_interf_vs_PR_cutoff(s, predictor_name_list, perc_inter
             xv_dict = pickle.load(f)
 
         for acc_db in xv_dict:
-            if database is not "all":
-                if database not in acc_db:
+            if subset is not "all":
+                if subset not in acc_db:
                     # skip the TMDs that are not in the right database
                     continue
 
@@ -902,7 +903,7 @@ def create_linechart_perc_interf_vs_PR_cutoff(s, predictor_name_list, perc_inter
 
     fig.tight_layout()
     fig.savefig(perc_interf_vs_PR_cutoff_linechart_png, dpi=300)
-    fig.savefig(perc_interf_vs_PR_cutoff_linechart_png[:-4] + ".pdf")
+    fig.savefig(str(perc_interf_vs_PR_cutoff_linechart_png)[:-4] + ".pdf")
 
     df_PR_cutoff_all.to_csv(perc_interf_vs_PR_cutoff_linechart_data_csv)
 
@@ -948,8 +949,8 @@ def create_linechart_perc_interf_vs_PR_cutoff(s, predictor_name_list, perc_inter
         ax.annotate(txt, (x[i],0.005), size=fontsize, color=colour_list_anno[i], ha='center',rotation=90,va="bottom")
 
     fig.tight_layout()
-    bar_png = os.path.join(perc_interf_vs_PR_cutoff_linechart_png[:-13] + "barchart.png")
+    bar_png = os.path.join(str(perc_interf_vs_PR_cutoff_linechart_png)[:-13] + "barchart.png")
     fig.savefig(bar_png, dpi=300)
-    fig.savefig(bar_png[:-4] + ".pdf")
+    fig.savefig(str(bar_png)[:-4] + ".pdf")
 
 

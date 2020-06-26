@@ -15,7 +15,7 @@ def create_var_imp_plot(df_imp, colour_dict, variable_importance_png, n_features
     for model_type in model_types:
 
         # add suffix for the totally randomised trees
-        variable_importance_png = variable_importance_png[:-4] + model_type + ".png"
+        variable_importance_png = str(variable_importance_png)[:-4] + model_type + ".png"
 
         df_sel.sort_values("mean_decrease_impurity{}".format(model_type), ascending=True, inplace=True)
         #min_ = df_sel.mean_decrease_impurity.min()

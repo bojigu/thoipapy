@@ -69,7 +69,8 @@ def run_LOO_validation_od_non_multiprocessing(s, df_set, logging):
     df_data = df_data.dropna()
 
     # drop training data (full protein) that don't have enough homologues
-    df_data = df_data.loc[df_data.n_homologues >= s["min_n_homol_training"]]
+    if s["min_n_homol_training"] != 0:
+        df_data = df_data.loc[df_data.n_homologues >= s["min_n_homol_training"]]
 
     acc_db_list = df_data.acc_db.unique()
     xv_dict = {}

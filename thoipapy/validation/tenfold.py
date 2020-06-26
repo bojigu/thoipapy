@@ -54,7 +54,8 @@ def run_10fold_cross_validation(s, logging):
     df_data = df_data.dropna()
 
     # drop training data (full protein) that don't have enough homologues
-    df_data = df_data.loc[df_data.n_homologues >= s["min_n_homol_training"]]
+    if s["min_n_homol_training"] != 0:
+        df_data = df_data.loc[df_data.n_homologues >= s["min_n_homol_training"]]
 
     X = drop_cols_not_used_in_ML(logging, df_data, s["excel_file_with_settings"])
     y = df_data["interface"]

@@ -85,7 +85,9 @@ def train_machine_learning_model(s, logging):
 
     df_data = pd.read_csv(train_data_filtered, index_col=0)
 
-    df_data = df_data.loc[df_data.n_homologues >= s["min_n_homol_training"]]
+    if s["min_n_homol_training"] != 0:
+        df_data = df_data.loc[df_data.n_homologues >= s["min_n_homol_training"]]
+
     df_data = df_data.dropna()
 
     y = df_data["interface"]
