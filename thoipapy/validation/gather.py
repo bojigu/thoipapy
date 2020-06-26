@@ -3,8 +3,7 @@ from pathlib import Path
 from typing import Union
 
 import pandas as pd
-
-import thoipapy.utils
+import thoipapy.utils as utils
 
 
 def gather_validation_data_for_figs(s, df_set, logging):
@@ -41,14 +40,14 @@ def gather_validation_data_for_figs(s, df_set, logging):
     ##########################################  Gather the cross-validation data for the full training dataset ##########################################
 
     # inputs
-    indiv_validation_dir: Union[Path, str] = Path(s["thoipapy_data_folder"]) / f"Results/{s['setname']}/crossvalidation/indiv_validation"
-    indiv_validation_data_xlsx = indiv_validation_dir / "indiv_validation_data.xlsx"
+    indiv_validation_data_xlsx = Path(s["thoipapy_data_folder"]) / f"Results/{s['setname']}/crossvalidation/indiv_validation/bocurve/indiv_validation_data.xlsx"
     all_res_precision_recall_data_csv: Path = Path(s["thoipapy_data_folder"]) / f"Results/{s['setname']}/crossvalidation/precision_recall/{s['setname']}_all_res_precision_recall_data.csv"
     all_res_ROC_data_csv: Union[Path, str] = Path(s["thoipapy_data_folder"]) / f"Results/{s['setname']}/crossvalidation/ROC/{s['setname']}_all_res_ROC_data.csv"
     perc_interf_vs_PR_cutoff_linechart_data_csv = Path(s["thoipapy_data_folder"]) / f"Results/{s['setname']}/crossvalidation/indiv_validation/bocurve/perc_interf_vs_PR_cutoff_linechart_data.csv"
     # outputs
     crossvalidation_summary_xlsx: Union[Path, str] = Path(s["thoipapy_data_folder"]) / f"Results/{s['setname']}/cross_blind_validation_summary/crossvalidation_summary.xlsx"
     blindvalidation_summary_xlsx: Union[Path, str] = Path(s["thoipapy_data_folder"]) / f"Results/{s['setname']}/cross_blind_validation_summary/blindvalidation_summary.xlsx"
+    utils.make_sure_path_exists(crossvalidation_summary_xlsx, isfile=True)
 
     df_bocurve = pd.read_excel(indiv_validation_data_xlsx, index_col=0, sheet_name = "BO_o_minus_r")
     df_pr = pd.read_csv(all_res_precision_recall_data_csv, index_col=0)
@@ -117,6 +116,6 @@ def create_df_with_all_predictions_for_all_residues_in_set(s, df_set_nonred, pre
     df_all.index = range(df_all.shape[0])
     # reorder the columns
     column_list = ['acc_db', 'interface', 'interface_score', 'residue_num', 'residue_name']
-    df_all = thoipapy.utils.reorder_dataframe_columns(df_all, column_list)
+    df_all = utils.reorder_dataframe_columns(df_all, column_list)
     df_all.to_csv(pred_all_res_csv)
     return df_all

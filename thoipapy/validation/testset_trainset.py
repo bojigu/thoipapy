@@ -68,17 +68,16 @@ def validate_THOIPA_for_testset_trainset_combination(s, test_set_list, train_set
         for test_set in test_set_list:
             testsetname = "set{:02d}".format(int(test_set))
 
-            #BO_curve_folder = os.path.join(s["thoipapy_data_folder"], "Results", "compare_testset_trainset", "data", "Test{}_Train{}.THOIPA".format(testsetname, trainsetname))
-            BO_curve_folder = Path(s["thoipapy_data_folder"]) / "Results" / testsetname / f"blindvalidation/THOIPA.train{trainsetname}"
+            #BO_curve_folder = Path(s["thoipapy_data_folder"]) / f"Results{testsetname}/blindvalidation/THOIPA.train{trainsetname}"
             #THOIPA_BO_curve_data_csv = os.path.join(s["thoipapy_data_folder"], "Results", "compare_testset_trainset", "data", "Test{}_Train{}.THOIPA".format(testsetname, trainsetname), "data", "Test{}_Train{}.THOIPA.best_overlap_data.csv".format(testsetname, trainsetname))
-            THOIPA_BO_curve_data_csv = Path(s["thoipapy_data_folder"]) / "Results" / testsetname / f"blindvalidation/THOIPA.train{trainsetname}/THOIPA.best_overlap_data.csv"
+            THOIPA_BO_curve_data_csv = Path(s["thoipapy_data_folder"]) / f"Results/{testsetname}/blindvalidation/THOIPA.train{trainsetname}/THOIPA.best_overlap_data.csv"
             #THOIPA_ROC_pkl = os.path.join(s["thoipapy_data_folder"], "Results", "compare_testset_trainset", "data", "Test{}_Train{}.THOIPA".format(testsetname, trainsetname), "data", "Test{}_Train{}.THOIPA.ROC_data.pkl".format(testsetname, trainsetname))
-            THOIPA_ROC_pkl = Path(s["thoipapy_data_folder"]) / "Results" / testsetname / f"blindvalidation/THOIPA.train{trainsetname}/ROC_data.pkl"
+            THOIPA_ROC_pkl = Path(s["thoipapy_data_folder"]) / f"Results/{testsetname}/blindvalidation/THOIPA.train{trainsetname}/ROC_data.pkl"
 
 
-            BO_data_excel = os.path.join(BO_curve_folder, "data", "BO_curve_data.xlsx")
-            BO_linechart_png = os.path.join(BO_curve_folder, "BO_linechart.png")
-            BO_barchart_png = os.path.join(BO_curve_folder, "AUBOC10_barchart.png")
+            BO_data_excel = Path(s["thoipapy_data_folder"]) / f"Results/{testsetname}/blindvalidation/THOIPA.train{trainsetname}/BO_curve_data.xlsx"
+            BO_linechart_png = Path(s["thoipapy_data_folder"]) / f"Results/{testsetname}/blindvalidation/THOIPA.train{trainsetname}/BO_linechart.png"
+            BO_barchart_png = Path(s["thoipapy_data_folder"]) / f"Results/{testsetname}/blindvalidation/THOIPA.train{trainsetname}/AUBOC10_barchart.png"
 
             thoipapy.utils.make_sure_path_exists(BO_data_excel, isfile=True)
 
@@ -99,12 +98,8 @@ def validate_THOIPA_for_testset_trainset_combination(s, test_set_list, train_set
                 acc_db = acc + "-" + database
                 testdata_combined_file = os.path.join(s["thoipapy_data_folder"], "Features", "combined", database,
                                                       "{}.surr20.gaps5.combined_features.csv".format(acc))
-                #THOIPA_pred_csv = os.path.join(os.path.dirname(s["thoipapy_data_folder"]), "Features", "Predictions", "testset_trainset", database,
-                #                                      "{}.THOIPA.train{}.csv".format(acc, trainsetname))
-                THOIPA_pred_csv = Path(s["thoipapy_data_folder"]) / "Results" / testsetname / f"blindvalidation/data/{database}/{acc}.THOIPA.train{trainsetname}.csv"
-                #combined_incl_THOIPA_csv = os.path.join(os.path.dirname(s["thoipapy_data_folder"]), "Features", "Predictions", "testset_trainset", database,
-                #                                      "{}.THOIPA_incl_combined.train{}.csv".format(acc, trainsetname))
-                combined_incl_THOIPA_csv = Path(s["thoipapy_data_folder"]) / "Results" / testsetname / f"blindvalidation/data/{database}/{acc}.THOIPA_incl_combined.train{trainsetname}.csv"
+                THOIPA_pred_csv = Path(s["thoipapy_data_folder"]) / f"Results/{testsetname}/predictions/thoipa.train{trainsetname}/{database}.{acc}.THOIPA.train{trainsetname}.csv"
+                combined_incl_THOIPA_csv = Path(s["thoipapy_data_folder"]) / f"Results/{testsetname}/predictions/thoipa.train{trainsetname}/{database}.{acc}.THOIPA.train{trainsetname}_incl_combined.csv"
 
 
                 thoipapy.utils.make_sure_path_exists(combined_incl_THOIPA_csv, isfile=True)

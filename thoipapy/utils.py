@@ -92,7 +92,7 @@ def make_sure_path_exists(input_path: Union[Path, str], isfile: bool=False):
     else:
         directory = input_path
 
-    if directory.is_dir():
+    if directory.exists():
         return
     else:
         directory.mkdir(parents=True)

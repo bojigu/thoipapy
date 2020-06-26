@@ -27,8 +27,8 @@ def validate_multiple_predictors_and_subsets_auboc10(s, df_set, logging):
 
         make_sure_path_exists(mean_AUBOC_file, isfile=True)
 
-        for predictor_name in predictor_name_list:
-            BO_data_excel = Path(s["thoipapy_data_folder"]) / f"Results/{s['setname']}/crossvalidation/indiv_validation/{predictor_name}/BO_curve_data.xlsx"
+        for predictor in predictor_name_list:
+            BO_data_excel = Path(s["thoipapy_data_folder"]) / f"Results/{s['setname']}/crossvalidation/indiv_validation/bocurve/data/{predictor}/BO_curve_data.xlsx"
             df_o_minus_r = pd.read_excel(BO_data_excel, sheet_name="df_o_minus_r", index_col=0)
             df_o_minus_r = df_o_minus_r.filter(regex=subset, axis=1)
             df_o_minus_r_mean = df_o_minus_r.T.mean()
@@ -100,9 +100,9 @@ def validate_multiple_predictors_and_subsets_auc(s, df_set, logging):
             big_list_of_tprs = []
             mean_fpr = np.linspace(0, 1, 100)
             n=0
-            AUC_data_pkl = Path(s["thoipapy_data_folder"]) / f"Results/{s['setname']}/crossvalidation/indiv_validation/{predictor_name}/ROC_AUC_data.pkl"
+            auc_pkl = Path(s["thoipapy_data_folder"]) / f"Results/{s['setname']}/crossvalidation/indiv_validation/roc_auc/{predictor_name}/ROC_AUC_data.pkl"
             # open pickle file
-            with open(AUC_data_pkl, "rb") as f:
+            with open(auc_pkl, "rb") as f:
                 xv_dict = pickle.load(f)
                 for k,v in xv_dict.items():
                     if re.search(subset,k):
