@@ -2,6 +2,7 @@ import os
 import pickle
 import sys
 from pathlib import Path
+from typing import Union
 
 import matplotlib.pyplot as plt
 import numpy as np
@@ -119,7 +120,7 @@ def plot_BOcurve(s, train_set_list, test_set_list, mult_THOIPA_dir, mult_testnam
 def compare_predictors(s):
     """Plot the BO-curve for multiple prediction methods
 
-    Takes the datasets listed in settings under fig_plot_BO_curve_mult_predictors_list
+    Takes the datasets listed in settings under the "predictors" tab
     (e.g. ["Testset03_Trainset04.THOIPA","Testset03.LIPS"])
     and plots the BO-curves in a single figure.
 
@@ -140,18 +141,14 @@ def compare_predictors(s):
         raise Exception("set_number and test_datasets are not identical in settings file. This is recommended for test/train validation.")
 
     #plt.rcParams.update({'font.size': 7})
-    mult_pred_dir = os.path.join(s["thoipapy_data_folder"], "Results", s["setname"], "blindvalidation")
-    BO_curve_png = os.path.join(mult_pred_dir, "compare_predictors_BO_curve.png")
-    AUBOC10_bar_png = os.path.join(mult_pred_dir, "compare_predictors_AUBOC10_barchart.png")
-    ROC_png = os.path.join(mult_pred_dir, "compare_predictors_ROC.png")
+    BO_curve_png: Union[Path, str] = Path(s["thoipapy_data_folder"]) / f"Results/{s['setname']}/blindvalidation/compare_predictors_BO_curve.png"
+    AUBOC10_bar_png: Union[Path, str] = Path(s["thoipapy_data_folder"]) / f"Results/{s['setname']}/blindvalidation/compare_predictors_AUBOC10_barchart.png"
+    ROC_png: Union[Path, str] = Path(s["thoipapy_data_folder"]) / f"Results/{s['setname']}/blindvalidation/compare_predictors_ROC.png"
 
-    thoipapy.utils.make_sure_path_exists(mult_pred_dir)
+    thoipapy.utils.make_sure_path_exists(BO_curve_png, isfile=True)
 
     figsize = np.array([3.42, 3.42]) * 2 # DOUBLE the real size, due to problems on Bo computer with fontsizes
     fig, ax = plt.subplots(figsize=figsize)
-
-    # list of predictors to compare, e.g. ["Testset03_Trainset04.THOIPA", "Testset03.LIPS"]
-    #predictor_list = ast.literal_eval(s["fig_plot_BO_curve_mult_predictors_list"])
 
     predictors_df = pd.read_excel(s["excel_file_with_settings"], sheet_name="predictors")
     predictors_df["include"] = predictors_df["include"].apply(convert_truelike_to_bool, convert_nontrue=False)
@@ -164,9 +161,7 @@ def compare_predictors(s):
     df = pd.DataFrame()
 
     for predictor_name in predictor_list:
-        #BO_data_excel = os.path.join(s["thoipapy_data_folder"], "Results", "compare_testset_trainset", "data", "{}".format(predictor_name), "data", "BO_curve_data.xlsx")
-        crossvalidation_dir = os.path.join(s["thoipapy_data_folder"], "Results", s["setname"], "crossvalidation")
-        BO_data_excel = os.path.join(crossvalidation_dir, "data", "{}_BO_curve_data.xlsx".format(s["setname"]))
+        BO_data_excel: Union[Path, str] = Path(s["thoipapy_data_folder"]) / f"Results/{s['setname']}/crossvalidation/data/{s['setname']}_BO_curve_data.xlsx"
 
         if not os.path.isfile(BO_data_excel):
             raise FileNotFoundError("BO_data_excel does not exist ({}). Try running run_testset_trainset_validation".format(BO_data_excel))

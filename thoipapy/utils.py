@@ -15,6 +15,9 @@ import subprocess
 import sys
 import tarfile
 import threading
+from pathlib import Path
+from typing import Union
+
 import numpy as np
 import pandas as pd
 from shutil import copyfile
@@ -67,7 +70,6 @@ def run_command(command):
     return iter(p.stdout.readline, b'')
 
 
-
 def aaa(df_or_series):
     """ Function for use in debugging.
     Saves pandas Series or Dataframes to a user-defined csv file.
@@ -78,23 +80,22 @@ def aaa(df_or_series):
     csv_out = r"D:\data\000_aaa_temp_df_out.csv"
     df_or_series.to_csv(csv_out, sep=",", quoting=csv.QUOTE_NONNUMERIC)
 
-def make_sure_path_exists(path, isfile=False):
-    """ If path to directory or folder doesn't exist, creates the necessary folders.
 
-    Parameters
-    ----------
-    path : str
-        Path to desired directory or file.
-    isfile :
-        If True, the path is to a file, and the subfolder will be created if necessary
+def make_sure_path_exists(input_path: Union[Path, str], isfile: bool=False):
+    """ If path to directory or folder doesn't exist, creates the necessary directory.
+    Set isfile=True to indicate a filepath, where the parent directory needs to be created.
     """
+    input_path = Path(input_path)
+
     if isfile:
-        path = os.path.dirname(path)
-    try:
-        os.makedirs(path)
-    except OSError as exception:
-        if exception.errno != errno.EEXIST:
-            raise
+        directory = input_path.parent
+    else:
+        directory = input_path
+
+    if directory.is_dir():
+        return
+    else:
+        directory.mkdir(parents=True)
 
 def reorder_dataframe_columns(dataframe, cols, front=True):
     '''Takes a dataframe and a subsequence of its columns,

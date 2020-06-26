@@ -1,5 +1,6 @@
 import os
 from pathlib import Path
+from typing import Union
 
 import pandas as pd
 import numpy as np
@@ -31,7 +32,6 @@ def merge_predictions(s, df_set, logging):
     # for simplicity, keep only the predictions. Since the index is unique, it can be added later to the combined file.
     columns_kept_in_combined_file = ['residue_num', 'residue_name', THOIPA_pred_colname, 'TMDOCK', 'PREDDIMER','interface','interface_score',"LIPS_surface","LIPS_surface_ranked", 'LIPS_L*E',"relative_polarity","conservation","DI4mean"]
 
-    #set_list = thoipapy.figs.fig_utils.get_set_lists(s)
     other_predictors_dir = Path(s["thoipapy_data_folder"]) / "Predictions/other_predictors"
 
     for i in df_set.index:
@@ -46,10 +46,8 @@ def merge_predictions(s, df_set, logging):
         THOIPA_prediction_csv = Path(s["thoipapy_data_folder"]) / "Results" / s["setname"] / f"crossvalidation/leave_one_out/protein_data/{acc}.{database}.LOO.prediction.csv"
         PREDDIMER_prediction_file = os.path.join(other_predictors_dir, database, "{}.preddimer.closedist.csv".format(acc))
         TMDOCK_prediction_file = os.path.join(other_predictors_dir, database, "{}.tmdock.closedist.csv".format(acc))
-        merged_data_csv_path = os.path.join(s["thoipapy_data_folder"], "Results", s["setname"], "predictions", database, "{}.merged.csv".format(acc))
-        #merged_data_xlsx_path = os.path.join(s["thoipapy_data_folder"], "Results", s["setname"], "predictions", database, "{}.merged.xlsx".format(acc))
+        merged_data_csv_path: Union[Path, str] = Path(s["thoipapy_data_folder"]) / f"Results/{s['setname']}/predictions/merged/{database}.{acc}.merged.csv"
         thoipapy.utils.make_sure_path_exists(merged_data_csv_path, isfile=True)
-        #merge_4_files_alignment_method_deprecated(acc, full_seq, train_data_file, THOIPA_prediction_file, PREDDIMER_prediction_file, TMDOCK_prediction_file, merged_data_xlsx_path, columns_kept_in_combined_file)
 
         # load the full feature file as the start of dfm
         dfm = pd.read_csv(train_data_file, index_col=0)

@@ -1,5 +1,6 @@
 import warnings
 from pathlib import Path
+from typing import Union
 
 warnings.simplefilter(action='ignore', category=FutureWarning)
 import pandas as pd
@@ -9,7 +10,8 @@ import matplotlib.pyplot as plt
 import warnings
 from scipy.stats import linregress
 #from eccpy.tools import normalise_0_1
-from thoipapy.utils import normalise_0_1
+from thoipapy.utils import normalise_0_1, make_sure_path_exists
+
 warnings.filterwarnings("ignore")
 
 
@@ -347,16 +349,14 @@ def save_BO_linegraph_and_barchart(s, BO_data_excel, BO_linechart_png, BO_barcha
     for col in df_valid_indiv.columns:
         df_valid_indiv[col] = normalise_0_1(df_valid_indiv[col])[0] + 0.01
 
-    BO_curve_folder = Path(s["thoipapy_data_folder"]) / "Results" / s["setname"] / "crossvalidation"
-    crossvalidation_data_dir = BO_curve_folder / "data"
-    if not crossvalidation_data_dir.is_dir():
-        crossvalidation_data_dir.mkdir(parents=True)
-    BO_data_excel = os.path.join(BO_curve_folder, "data", "{}_BO_curve_data.xlsx".format(s["setname"]))
+    BO_data_excel: Union[Path, str] = Path(s["thoipapy_data_folder"]) / f"Results/{s['setname']}/crossvalidation/data/{s['setname']}_BO_curve_data.xlsx"
+    BO_data_valid_indiv_csv: Union[Path, str] = Path(s["thoipapy_data_folder"]) / f"Results/{s['setname']}/crossvalidation/data/{s['setname']}_BO_curve_data_valid_indiv.csv"
+    make_sure_path_exists(BO_data_excel, isfile=True)
 
     df_valid_indiv = df_valid_indiv.reindex(columns=["AUBOC10", 5, 10, "ROC AUC"])
     df_valid_indiv.columns = ["AUBOC10", "sample size 5", "sample size 10", "ROC AUC"]
 
-    df_valid_indiv.to_csv(BO_data_excel[:-5] + "_valid_indiv.csv")
+    df_valid_indiv.to_csv(BO_data_valid_indiv_csv)
 
     """ df_valid_indiv is now normalised within each column, and sorted by AUBOC10
                           AUBOC10  sample size 5  sample size 10   ROC AUC

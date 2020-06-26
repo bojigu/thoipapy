@@ -76,15 +76,18 @@ def collect_indiv_validation_data(s, df_set, logging, namedict, predictor_name_l
 
             database = df_set.loc[i, "database"]
             acc_db = acc + "-" + database
-            merged_data_csv_path = os.path.join(s["thoipapy_data_folder"], "Results", s["setname"], "predictions", database, "{}.merged.csv".format(acc))
+            merged_data_csv_path: Union[Path, str] = Path(s["thoipapy_data_folder"]) / f"Results/{s['setname']}/predictions/merged/{database}.{acc}.merged.csv"
             merged_data_df = pd.read_csv(merged_data_csv_path,engine="python")
+
+            # invert some predictors so that a high number always indicates a predicted interface residue
             merged_data_df["LIPS_L*E"] = -1 * merged_data_df["LIPS_L*E"]
             merged_data_df["PREDDIMER"] = -1 * merged_data_df["PREDDIMER"]
             merged_data_df["TMDOCK"] = -1 * merged_data_df["TMDOCK"]
 
             if database == "crystal" or database == "NMR":
-                # (it is closest distance and low value means high propensity of interfacial)
+                # invert the interface score of structural data so that a high number indicates an interface residue
                 merged_data_df["interface_score"] = -1 * merged_data_df["interface_score"]
+            # toggle whether to use boolean (interface) or continuous data (interface_score). Here we want continuous data
             experiment_col = "interface_score"
             BO_single_prot_df = thoipapy.figs.fig_utils.calc_best_overlap(acc_db, merged_data_df, experiment_col, predictor)
             if BO_data_df.empty:
@@ -92,7 +95,8 @@ def collect_indiv_validation_data(s, df_set, logging, namedict, predictor_name_l
             else:
                 BO_data_df = pd.concat([BO_data_df, BO_single_prot_df], axis=1, join="outer")
 
-            df_for_roc = merged_data_df.dropna(subset=["interface", predictor])
+            df_for_roc = merged_data_df.dropna(subset=[experiment_col, predictor])
+
             fpr, tpr, thresholds = roc_curve(df_for_roc.interface, df_for_roc[predictor], drop_intermediate=False)
 
             precision, recall, thresholds_PRC = precision_recall_curve(df_for_roc.interface, df_for_roc[predictor])
@@ -111,6 +115,7 @@ def collect_indiv_validation_data(s, df_set, logging, namedict, predictor_name_l
         # save dict as pickle
         with open(auc_pkl, "wb") as f:
             pickle.dump(xv_dict, f, protocol=pickle.HIGHEST_PROTOCOL)
+
         BO_data_df.to_csv(BO_curve_data_csv)
         # parse BO data csv
         # print out mean values
@@ -756,7 +761,7 @@ def create_ROC_comp_4predictors(s, df_set, logging):
         for i in df_set.index:
             acc = df_set.loc[i, "acc"]
             database = df_set.loc[i, "database"]
-            merged_data_csv_path = os.path.join(s["thoipapy_data_folder"], "Results", s["setname"], "predictions", database, "{}.merged.csv".format(acc))
+            merged_data_csv_path: Union[Path, str] = Path(s["thoipapy_data_folder"]) / f"Results/{s['setname']}/predictions/merged/{database}.{acc}.merged.csv"
             dfm = pd.read_csv(merged_data_csv_path, engine="python", index_col=0)
             dfm.dropna(inplace=True)
             interface = dfm["interface"].values

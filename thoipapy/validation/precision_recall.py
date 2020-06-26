@@ -52,7 +52,7 @@ def create_precision_recall_all_residues(s, df_set, logging):
     for i in df_set_nonred.index:
         acc = df_set_nonred.loc[i, "acc"]
         database = df_set_nonred.loc[i, "database"]
-        merged_data_csv_path = os.path.join(s["thoipapy_data_folder"], "Results", s["setname"], "predictions", database, "{}.merged.csv".format(acc))
+        merged_data_csv_path: Union[Path, str] = Path(s["thoipapy_data_folder"]) / f"Results/{s['setname']}/predictions/merged/{database}.{acc}.merged.csv"
 
         df_merged_new_protein = pd.read_csv(merged_data_csv_path, index_col=0)
         df_merged_new_protein["acc_db"] = "{}-{}".format(acc, database)

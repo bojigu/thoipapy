@@ -1,6 +1,7 @@
 import os
 import pickle
 from pathlib import Path
+from typing import Union
 
 import joblib
 import numpy as np
@@ -162,7 +163,7 @@ def validate_THOIPA_for_testset_trainset_combination(s, test_set_list, train_set
             AUBOC10 = save_BO_linegraph_and_barchart(s, BO_data_excel, BO_linechart_png, BO_barchart_png, namedict, logging, AUC_ser)
 
             if "you_want_more_details" == "TRUE":
-                other_figs_path = os.path.join(BO_curve_folder, "other_figs")
+                other_figs_path: Union[Path, str] = Path(s["thoipapy_data_folder"]) / f"Results/{s['setname']}/crossvalidation/other_figs"
                 save_extra_BO_figs(BO_data_excel, other_figs_path)
 
             #######################################################################################################
@@ -290,7 +291,7 @@ def validate_LIPS_for_testset(s, logging, LIPS_name="LIPS_LE", pred_col="LIPS_L*
         AUBOC10 = save_BO_linegraph_and_barchart(s, BO_data_excel, BO_linechart_png, BO_barchart_png, namedict, logging, AUC_ser)
 
         if "you_want_more_details" == "TRUE":
-            other_figs_path = os.path.join(BO_curve_folder, "other_figs")
+            other_figs_path: Union[Path, str] = Path(s["thoipapy_data_folder"]) / f"Results/{s['setname']}/crossvalidation/other_figs"
             save_extra_BO_figs(BO_data_excel, other_figs_path)
 
         #######################################################################################################
