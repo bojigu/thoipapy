@@ -19,18 +19,11 @@ def create_AUBOC10_4predictors_3databases_figs(s,df_set,logging):
     for database in databases:
         df_o_minus_r_mean_df = pd.DataFrame()
         AUBOC10_list = []
-        mean_AUBOC_file = os.path.join(s["thoipapy_data_folder"], "Results", "compare_predictors",
-                                                        "{}.{}.4predictors_mean_AUBOC10.csv".format(s["setname"],
-                                                                                                         database))
+        mean_AUBOC_file = Path(s["thoipapy_data_folder"]) / f"Results/{s['setname']}/crossvalidation/compare_predictors/{s['setname']}.{database}.4predictors_mean_AUBOC10.csv"
+        mean_AUBOC_barplot_png = Path(s["thoipapy_data_folder"]) / f"Results/{s['setname']}/crossvalidation/compare_predictors/{s['setname']}.{database}.4predictors_mean_AUBOC10.png"
+        BOCURVE_linechart_csv = Path(s["thoipapy_data_folder"]) / f"Results/{s['setname']}/crossvalidation/compare_predictors/{s['setname']}.{database}.4predictors_BOCURVE_linechart.csv"
+        BOCURVE_linechart_png = Path(s["thoipapy_data_folder"]) / f"Results/{s['setname']}/crossvalidation/compare_predictors/{s['setname']}.{database}.4predictors_BOCURVE_linechart.png"
 
-        mean_AUBOC_barplot_png = os.path.join(s["thoipapy_data_folder"], "Results", "compare_predictors",
-                                       "{}.{}.4predictors_mean_AUBOC10.png".format(s["setname"],
-                                                                                   database))
-        BOCURVE_linechart_csv = os.path.join(s["thoipapy_data_folder"], "Results", "compare_predictors",
-                                                        "{}.{}.4predictors_BOCURVE_linechart.csv".format(s["setname"],
-                                                                                                         database))
-        BOCURVE_linechart_png = os.path.join(s["thoipapy_data_folder"], "Results", "compare_predictors",
-                                                        "{}.{}.4predictors_BOCURVE_linechart.png".format(s["setname"],database))
         for predictor_name in predictor_name_list:
             crossvalidation_dir = os.path.join(s["thoipapy_data_folder"], "Results", s["setname"], "crossvalidation")
             BO_data_excel = os.path.join(crossvalidation_dir, "data", "{}_BO_curve_data.xlsx".format(s["setname"]))
@@ -88,17 +81,12 @@ def create_AUC_4predictors_3databases_figs(s,df_set,logging):
     for database in databases:
         mean_roc_auc_list = []
         mean_tpr_list= []
-        mean_AUC_file = os.path.join(s["thoipapy_data_folder"], "Results", "compare_predictors",
-                                                        "{}.{}.4predictors_mean_AUC.csv".format(s["setname"],
-                                                                                                         database))
-        mean_AUC_barplot_png = os.path.join(s["thoipapy_data_folder"], "Results", "compare_predictors",
-                                       "{}.{}.4predictors_mean_AUC.png".format(s["setname"],
-                                                                                   database))
-        ROC_curve_csv = os.path.join(s["thoipapy_data_folder"], "Results", "compare_predictors",
-                                                        "{}.{}.4predictors_AUC_ROC.csv".format(s["setname"],
-                                                                                                         database))
-        AUC_ROC_png = os.path.join(s["thoipapy_data_folder"], "Results", "compare_predictors",
-                                                        "{}.{}.4predictors_AUC_ROC.png".format(s["setname"],database))
+
+        mean_AUC_file = Path(s["thoipapy_data_folder"]) / f"Results/{s['setname']}/crossvalidation/compare_predictors/{s['setname']}.{database}.4predictors_mean_AUC.csv"
+        mean_AUC_barplot_png = Path(s["thoipapy_data_folder"]) / f"Results/{s['setname']}/crossvalidation/compare_predictors/{s['setname']}.{database}.4predictors_mean_AUC.png"
+        ROC_curve_csv = Path(s["thoipapy_data_folder"]) / f"Results/{s['setname']}/crossvalidation/compare_predictors/{s['setname']}.{database}.4predictors_AUC_ROC.csv"
+        AUC_ROC_png = Path(s["thoipapy_data_folder"]) / f"Results/{s['setname']}/crossvalidation/compare_predictors/{s['setname']}.{database}.4predictors_AUC_ROC.png"
+
         plt.close("all")
         figsize = np.array([3.42, 3.42]) * 2  # DOUBLE the real size, due to problems on Bo computer with fontsizes
         fig, ax = plt.subplots(figsize=figsize)
