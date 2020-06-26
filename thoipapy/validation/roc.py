@@ -1,4 +1,6 @@
 import os
+from pathlib import Path
+from typing import Union
 
 import pandas as pd
 from matplotlib import pyplot as plt
@@ -33,10 +35,10 @@ def create_ROC_all_residues(s, df_set, logging):
     logging.info('Starting combine_all_residue_predictions.')
 
     # output file with all predictions
-    pred_all_res_csv = os.path.join(s["thoipapy_data_folder"], "Results", s["setname"], "ROC", "{}_pred_all_res.csv".format(s["setname"]))
-    #all_res_ROC_data_dict_pkl = os.path.join(s["thoipapy_data_folder"], "Results", s["setname"], "ROC", "{}_all_res_ROC_data_dict.pickle".format(s["setname"]))
-    all_res_ROC_data_csv = os.path.join(s["thoipapy_data_folder"], "Results", s["setname"], "ROC", "{}_all_res_ROC_data.csv".format(s["setname"]))
-    all_res_ROC_png = os.path.join(s["thoipapy_data_folder"], "Results", s["setname"], "ROC", "{}_all_res_ROC.png".format(s["setname"]))
+    pred_all_res_csv: Union[Path, str] = Path(s["thoipapy_data_folder"]) / f"Results/{s['setname']}/crossvalidation/ROC/{s['setname']}_pred_all_res.csv"
+    #all_res_ROC_data_dict_pkl: Union[Path, str] = Path(s["thoipapy_data_folder"]) / f"Results/{s['setname']}/crossvalidation/ROC/{s['setname']}_all_res_ROC_data_dict.pickle"
+    all_res_ROC_data_csv: Union[Path, str] = Path(s["thoipapy_data_folder"]) / f"Results/{s['setname']}/crossvalidation/ROC/{s['setname']}_all_res_ROC_data.csv"
+    all_res_ROC_png: Union[Path, str] = Path(s["thoipapy_data_folder"]) / f"Results/{s['setname']}/crossvalidation/ROC/{s['setname']}_all_res_ROC.png"
 
     thoipapy.utils.make_sure_path_exists(pred_all_res_csv, isfile=True)
 
@@ -82,8 +84,8 @@ def create_ROC_all_residues(s, df_set, logging):
     for subset in subsets:
         df_subset = df_all.loc[df_all.subset == subset]
         if not df_subset.empty:
-            ROC_png = all_res_ROC_png[:-4] + "_{}_subset.png".format(subset)
-            ROC_data_csv = all_res_ROC_data_csv[:-4] + "_{}_subset.csv".format(subset)
+            ROC_png = str(all_res_ROC_png)[:-4] + "_{}_subset.png".format(subset)
+            ROC_data_csv = str(all_res_ROC_data_csv)[:-4] + "_{}_subset.csv".format(subset)
             save_fig_ROC_all_residues(s, df_subset, ROC_png, ROC_data_csv, logging)
 
     # with open(all_res_ROC_data_pkl, "wb") as f:
@@ -121,7 +123,7 @@ def save_fig_ROC_all_residues(s, df, all_res_ROC_png, all_res_ROC_data_csv, logg
     ax.legend(fontsize=fontsize)
     fig.tight_layout()
     fig.savefig(all_res_ROC_png, dpi=240)
-    fig.savefig(all_res_ROC_png[:-4] + ".pdf")
+    fig.savefig(str(all_res_ROC_png)[:-4] + ".pdf")
 
     df_ROC_data = pd.DataFrame(output_dict).T
     df_ROC_data.to_csv(all_res_ROC_data_csv)

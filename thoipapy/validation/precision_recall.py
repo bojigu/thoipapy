@@ -87,8 +87,8 @@ def create_precision_recall_all_residues(s, df_set, logging):
     for subset in subsets:
         df_subset = df_all.loc[df_all.subset == subset]
         if not df_subset.empty:
-            precision_recall_png = all_res_precision_recall_png[:-4] + "_{}_subset.png".format(subset)
-            precision_recall_data_csv = all_res_precision_recall_data_csv[:-4] + "_{}_subset.csv".format(subset)
+            precision_recall_png = str(all_res_precision_recall_png)[:-4] + "_{}_subset.png".format(subset)
+            precision_recall_data_csv = str(all_res_precision_recall_data_csv)[:-4] + "_{}_subset.csv".format(subset)
             save_fig_precision_recall_all_residues(s, df_subset, precision_recall_png, precision_recall_data_csv, logging)
 
     # with open(all_res_precision_recall_data_pkl, "wb") as f:
@@ -133,7 +133,7 @@ def save_fig_precision_recall_all_residues(s, df, all_res_precision_recall_png, 
     ax.legend(fontsize=fontsize)
     fig.tight_layout()
     fig.savefig(all_res_precision_recall_png, dpi=240)
-    fig.savefig(all_res_precision_recall_png[:-4] + ".pdf")
+    fig.savefig(str(all_res_precision_recall_png)[:-4] + ".pdf")
 
     df_precision_recall_data = pd.DataFrame(output_dict).T
     df_precision_recall_data.to_csv(all_res_precision_recall_data_csv)
