@@ -9,6 +9,7 @@ from matplotlib import pyplot as plt
 from numpy import interp
 
 import thoipapy
+from thoipapy.utils import make_sure_path_exists
 
 
 def create_AUBOC10_4predictors_3databases_figs(s,df_set,logging):
@@ -23,6 +24,8 @@ def create_AUBOC10_4predictors_3databases_figs(s,df_set,logging):
         mean_AUBOC_barplot_png = Path(s["thoipapy_data_folder"]) / f"Results/{s['setname']}/crossvalidation/compare_predictors/{s['setname']}.{database}.4predictors_mean_AUBOC10.png"
         BOCURVE_linechart_csv = Path(s["thoipapy_data_folder"]) / f"Results/{s['setname']}/crossvalidation/compare_predictors/{s['setname']}.{database}.4predictors_BOCURVE_linechart.csv"
         BOCURVE_linechart_png = Path(s["thoipapy_data_folder"]) / f"Results/{s['setname']}/crossvalidation/compare_predictors/{s['setname']}.{database}.4predictors_BOCURVE_linechart.png"
+
+        make_sure_path_exists(mean_AUBOC_file, isfile=True)
 
         for predictor_name in predictor_name_list:
             crossvalidation_dir = os.path.join(s["thoipapy_data_folder"], "Results", s["setname"], "crossvalidation")
@@ -87,6 +90,8 @@ def create_AUC_4predictors_3databases_figs(s,df_set,logging):
         ROC_curve_csv = Path(s["thoipapy_data_folder"]) / f"Results/{s['setname']}/crossvalidation/compare_predictors/{s['setname']}.{database}.4predictors_AUC_ROC.csv"
         AUC_ROC_png = Path(s["thoipapy_data_folder"]) / f"Results/{s['setname']}/crossvalidation/compare_predictors/{s['setname']}.{database}.4predictors_AUC_ROC.png"
 
+        make_sure_path_exists(mean_AUC_file, isfile=True)
+
         plt.close("all")
         figsize = np.array([3.42, 3.42]) * 2  # DOUBLE the real size, due to problems on Bo computer with fontsizes
         fig, ax = plt.subplots(figsize=figsize)
@@ -96,9 +101,7 @@ def create_AUC_4predictors_3databases_figs(s,df_set,logging):
             big_list_of_tprs = []
             mean_fpr = np.linspace(0, 1, 100)
             n=0
-            #AUC_data_pkl = os.path.join(s["thoipapy_data_folder"], "Results", "compare_predictors",
-            #                             "{}.{}_AUC_data.pkl".format(s["setname"],predictor_name.replace('*',"")))
-            AUC_data_pkl = Path(s["thoipapy_data_folder"]) / f"Results/{s['setname']}/indiv_validation/{predictor_name}/ROC_AUC_data.pkl"
+            AUC_data_pkl = Path(s["thoipapy_data_folder"]) / f"Results/{s['setname']}/crossvalidation/indiv_validation/{predictor_name}/ROC_AUC_data.pkl"
             # open pickle file
             with open(AUC_data_pkl, "rb") as f:
                 xv_dict = pickle.load(f)

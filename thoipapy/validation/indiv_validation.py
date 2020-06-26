@@ -43,8 +43,8 @@ def collect_indiv_validation_data(s, df_set, logging, namedict, predictor_name_l
     roc_auc_mean_list=[]
     roc_auc_std_list = []
     
-    indiv_validation_dir = os.path.join(s["thoipapy_data_folder"], "Results", s["setname"], "indiv_validation")
-    indiv_validation_data_xlsx = os.path.join(indiv_validation_dir, "indiv_validation_data.xlsx")
+    indiv_validation_dir: Path = Path(s["thoipapy_data_folder"]) / f"Results/{s['setname']}/crossvalidation/indiv_validation"
+    indiv_validation_data_xlsx = indiv_validation_dir / "indiv_validation_data.xlsx"
 
     thoipapy.utils.make_sure_path_exists(indiv_validation_dir)
     #if not os.path.isdir(os.path.dirname(BOAUC10_barchart_pdf)):
@@ -212,7 +212,7 @@ def collect_indiv_validation_data(s, df_set, logging, namedict, predictor_name_l
 
 
 def create_indiv_validation_figs(s, logging, namedict, predictor_name_list, THOIPA_predictor_name, unique_database_labels):
-    indiv_validation_dir = os.path.join(s["thoipapy_data_folder"], "Results", s["setname"], "indiv_validation")
+    indiv_validation_dir: Path = Path(s["thoipapy_data_folder"]) / f"Results/{s['setname']}/crossvalidation/indiv_validation"
     indiv_validation_data_xlsx = os.path.join(indiv_validation_dir, "indiv_validation_data.xlsx")
     indiv_ROC_AUC_barchart_png = os.path.join(indiv_validation_dir, "indiv_ROC_AUC_barchart.png")
     indiv_PR_AUC_barchart_png = os.path.join(indiv_validation_dir, "indiv_PR_AUC_barchart.png")
@@ -294,7 +294,7 @@ def create_scatter_ROC_AUC_vs_PR_AUC(s, predictor_name_list, ROC_AUC_vs_PR_AUC_s
 
     fig, ax = plt.subplots(figsize=(8, 8))
     for predictor_name in predictor_name_list:
-        auc_pkl = os.path.join(s["thoipapy_data_folder"], "Results", s["setname"], "indiv_validation", predictor_name, "ROC_AUC_data.pkl")
+        auc_pkl = Path(s["thoipapy_data_folder"]) / f"Results/{s['setname']}/crossvalidation/indiv_validation/{predictor_name}/ROC_AUC_data.pkl"
         with open(auc_pkl, "rb") as f:
             xv_dict = pickle.load(f)
         roc_auc_list = []
@@ -433,8 +433,6 @@ def create_PR_AUC_barchart(PR_AUC_df, indiv_PR_AUC_barchart_png, namedict, THOIP
 
     Width = 0.2
     Fontsize = 14
-    #file_location = r"I:\THOIPA_data\Results\set05\indiv_validation\indiv_validation_data.xlsx"
-    #PR_AUC_df = pd.read_excel(file_location, sheet_name="PR_AUC_indiv")
 
     for i in PR_AUC_df.index:
         if "X-ray" in i:
@@ -822,7 +820,7 @@ def create_linechart_perc_interf_vs_PR_cutoff(s, predictor_name_list, perc_inter
 
         result_dict = {}
 
-        auc_pkl = os.path.join(s["thoipapy_data_folder"], "Results", s["setname"], "indiv_validation", predictor_name, "ROC_AUC_data.pkl")
+        auc_pkl = Path(s["thoipapy_data_folder"]) / f"Results/{s['setname']}/crossvalidation/indiv_validation/{predictor_name}/ROC_AUC_data.pkl"
         with open(auc_pkl, "rb") as f:
             xv_dict = pickle.load(f)
 
