@@ -13,6 +13,7 @@ from scipy.stats import linregress
 from sklearn.metrics import roc_curve, auc, precision_recall_curve
 
 import thoipapy
+from thoipapy.figs.fig_utils import get_test_and_train_set_lists
 from thoipapy.utils import make_sure_path_exists
 
 
@@ -751,6 +752,16 @@ def create_ROC_comp_4predictors(s, df_set, logging):
     logging.info("start create_ROC_Curve_figs_THOIPA_PREDDIMER_TMDOCK_LIPS")
     pred_colname = "THOIPA_{}_LOO".format(s["set_number"])
     prediction_name_list = [pred_colname, "PREDDIMER", "TMDOCK", "LIPS_surface_ranked"]
+
+    test_set_list, train_set_list = get_test_and_train_set_lists(s)
+    assert len(test_set_list) == 1
+    assert len(train_set_list) == 1
+    testsetname = "set{:02d}".format(int(test_set_list[0]))
+    trainsetname = "set{:02d}".format(int(train_set_list[0]))
+
+    if s["setname"] == testsetname:
+        prediction_name_list.append(f"thoipa.train{trainsetname}")
+
     ROC_4predictor_csv = Path(s["thoipapy_data_folder"]) / f"Results/{s['setname']}/crossvalidation/{s['setname']}_ROC_4predictors.csv"
     ROC_4predictor_png = Path(s["thoipapy_data_folder"]) / f"Results/{s['setname']}/crossvalidation/{s['setname']}_ROC_4predictors.png"
     figsize = np.array([3.42, 3.42]) * 2  # DOUBLE the real size, due to problems on Bo computer with fontsizes

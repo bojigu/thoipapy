@@ -31,8 +31,6 @@ def merge_predictions(s, df_set, logging):
     """
     # add the THOIPA prediction name to the list of columns to keep
     THOIPA_pred_colname = "THOIPA_{}_LOO".format(s["set_number"])
-    # for simplicity, keep only the predictions. Since the index is unique, it can be added later to the combined file.
-    columns_kept_in_combined_file = ['residue_num', 'residue_name', THOIPA_pred_colname, 'TMDOCK', 'PREDDIMER','interface','interface_score',"LIPS_surface","LIPS_surface_ranked", 'LIPS_L*E',"relative_polarity","conservation","DI4mean"]
 
     other_predictors_dir = Path(s["thoipapy_data_folder"]) / "Predictions/other_predictors"
 
@@ -43,15 +41,16 @@ def merge_predictions(s, df_set, logging):
     trainsetname = "set{:02d}".format(int(train_set_list[0]))
     thoipa_trainsetname = f"thoipa.train{trainsetname}"
 
+    # for simplicity, keep only the predictions. Since the index is unique, it can be added later to the combined file.
+    columns_kept_in_combined_file = ['residue_num', 'residue_name', THOIPA_pred_colname, thoipa_trainsetname, 'TMDOCK', 'PREDDIMER','interface','interface_score',"LIPS_surface","LIPS_surface_ranked", 'LIPS_L*E',"relative_polarity","conservation","DI4mean"]
+
+
     for i in df_set.index:
         acc = df_set.loc[i, "acc"]
-        #if acc =="2axtM1":
         full_seq = df_set.loc[i, "full_seq"]
         database = df_set.loc[i, "database"]
         # inputs
         train_data_file = os.path.join(s["thoipapy_data_folder"], "Features", "combined", database,"{}.surr20.gaps5.combined_features.csv".format(acc))
-        #combined_data_file = os.path.join(s["dropbox_dir"], "THOIPA_data","Features","combined",database, "{}.surr20.gaps5.combined_features.csv".format(acc))
-        #thoipapy.utils.make_sure_path_exists(combined_data_file, isfile=True)
         THOIPA_LOO_prediction_csv = Path(s["thoipapy_data_folder"]) / f"Results/{s['setname']}/predictions/THOIPA_LOO/{database}.{acc}.LOO.prediction.csv"
         THOIPA_testset_trainset_csv = Path(s["thoipapy_data_folder"]) / f"Results/{s['setname']}/predictions/thoipa.train{trainsetname}/{database}.{acc}.thoipa.train{trainsetname}.csv"
         PREDDIMER_prediction_file = os.path.join(other_predictors_dir, database, "{}.preddimer.closedist.csv".format(acc))
@@ -70,9 +69,13 @@ def merge_predictions(s, df_set, logging):
         prediction_name_list = [THOIPA_pred_colname, thoipa_trainsetname, "PREDDIMER", "TMDOCK"]
         n_files_merged = 0
         for n, file in enumerate(file_list):
+            print(file)
+            print(Path(file).is_file())
             prediction_name = prediction_name_list[n]
             if os.path.isfile(file):
                 df = pd.read_csv(file, index_col=None)
+                if "train" in prediction_name:
+                    aa = 3
                 assert prediction_name in df.columns.to_list() or "closedist" in df.columns.to_list()
                 TMD_seq = df["residue_name"].str.cat()
                 if TMD_seq not in full_seq:
