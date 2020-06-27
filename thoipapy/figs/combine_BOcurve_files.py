@@ -212,6 +212,7 @@ def compare_predictors(s):
                 ax.plot(ROC_out_dict["false_positive_rate_mean"], ROC_out_dict["true_positive_rate_mean"], label='{} ({:0.2f})'.format(predictor_name, ROC_out_dict["mean_roc_auc"]), lw=1.5)
         else:
             sys.stdout.write("\nPICKLE WITH ROC DATA NOT FOUND : {}".format(ROC_pkl))
+            continue
 
     ax.plot([0, 1], [0, 1], '--', color=(0.6, 0.6, 0.6), label='random')
     ax.set_xlim([-0.05, 1.05])

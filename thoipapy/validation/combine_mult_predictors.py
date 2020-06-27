@@ -5,6 +5,8 @@ from typing import Union
 import pandas as pd
 import numpy as np
 import thoipapy
+from thoipapy.figs.fig_utils import get_test_and_train_set_lists
+
 
 def merge_predictions(s, df_set, logging):
     """Combines all available predictions for a particular testset.
@@ -34,18 +36,27 @@ def merge_predictions(s, df_set, logging):
 
     other_predictors_dir = Path(s["thoipapy_data_folder"]) / "Predictions/other_predictors"
 
+    test_set_list, train_set_list = get_test_and_train_set_lists(s)
+    assert len(test_set_list) == 1
+    assert len(train_set_list) == 1
+    testsetname = "set{:02d}".format(int(test_set_list[0]))
+    trainsetname = "set{:02d}".format(int(train_set_list[0]))
+    thoipa_trainsetname = f"thoipa.train{trainsetname}"
+
     for i in df_set.index:
         acc = df_set.loc[i, "acc"]
         #if acc =="2axtM1":
         full_seq = df_set.loc[i, "full_seq"]
         database = df_set.loc[i, "database"]
+        # inputs
         train_data_file = os.path.join(s["thoipapy_data_folder"], "Features", "combined", database,"{}.surr20.gaps5.combined_features.csv".format(acc))
-        combined_data_file = os.path.join(s["dropbox_dir"], "THOIPA_data","Features","combined",database,
-                                       "{}.surr20.gaps5.combined_features.csv".format(acc))
-        thoipapy.utils.make_sure_path_exists(combined_data_file, isfile=True)
-        THOIPA_prediction_csv = Path(s["thoipapy_data_folder"]) / f"Results/{s['setname']}/predictions/THOIPA_LOO/{database}.{acc}.LOO.prediction.csv"
+        #combined_data_file = os.path.join(s["dropbox_dir"], "THOIPA_data","Features","combined",database, "{}.surr20.gaps5.combined_features.csv".format(acc))
+        #thoipapy.utils.make_sure_path_exists(combined_data_file, isfile=True)
+        THOIPA_LOO_prediction_csv = Path(s["thoipapy_data_folder"]) / f"Results/{s['setname']}/predictions/THOIPA_LOO/{database}.{acc}.LOO.prediction.csv"
+        THOIPA_testset_trainset_csv = Path(s["thoipapy_data_folder"]) / f"Results/{s['setname']}/predictions/thoipa.train{trainsetname}/{database}.{acc}.thoipa.train{trainsetname}.csv"
         PREDDIMER_prediction_file = os.path.join(other_predictors_dir, database, "{}.preddimer.closedist.csv".format(acc))
         TMDOCK_prediction_file = os.path.join(other_predictors_dir, database, "{}.tmdock.closedist.csv".format(acc))
+        # output
         merged_data_csv_path: Union[Path, str] = Path(s["thoipapy_data_folder"]) / f"Results/{s['setname']}/predictions/merged/{database}.{acc}.merged.csv"
         thoipapy.utils.make_sure_path_exists(merged_data_csv_path, isfile=True)
 
@@ -55,8 +66,8 @@ def merge_predictions(s, df_set, logging):
         # set the unique index, based on the residue number in the full sequence
         dfm.set_index("res_num_full_seq", inplace=True)
         #dfm["conservation"] = -1 * dfm["Entropy"]
-        file_list = [THOIPA_prediction_csv, PREDDIMER_prediction_file, TMDOCK_prediction_file]
-        prediction_name_list = [THOIPA_pred_colname, "PREDDIMER", "TMDOCK"]
+        file_list = [THOIPA_LOO_prediction_csv, THOIPA_testset_trainset_csv, PREDDIMER_prediction_file, TMDOCK_prediction_file]
+        prediction_name_list = [THOIPA_pred_colname, thoipa_trainsetname, "PREDDIMER", "TMDOCK"]
         n_files_merged = 0
         for n, file in enumerate(file_list):
             prediction_name = prediction_name_list[n]
@@ -67,9 +78,9 @@ def merge_predictions(s, df_set, logging):
                 if TMD_seq not in full_seq:
                     logging.warning(prediction_name)
                     logging.warning("Sequence in residue_name column of dataframe is not found in the original df_set sequence."
-                                     "\nacc : {}\nfile number : {}\nTMD_seq : {}\nfull_seq in df_set : {}\n"
-                                    "THOIPA_prediction_csv:{}\ncsv file:{}".format(acc, n, TMD_seq, full_seq, THOIPA_prediction_csv, file))
-                    if prediction_name == THOIPA_pred_colname:
+                                     f"\nacc : {acc}\nfile number : {n}\nTMD_seq : {TMD_seq}\nfull_seq in df_set : {full_seq}\n"
+                                    f"THOIPA_LOO_prediction_csv:{THOIPA_LOO_prediction_csv}\ncsv file:{file}")
+                    if prediction_name in [THOIPA_pred_colname, thoipa_trainsetname]:
                         df = thoipapy.utils.add_mutation_missed_residues_with_na(s, acc, database, df)
                         TMD_seq = df["residue_name"].str.cat()
                     # skip protein

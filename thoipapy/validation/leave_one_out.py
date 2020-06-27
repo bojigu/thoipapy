@@ -23,7 +23,7 @@ class LooValidationData:
 
     def __init__(self):
         self.testdata_combined_file = None
-        self.THOIPA_prediction_csv = None
+        self.THOIPA_LOO_prediction_csv = None
         self.df_train = None
         self.excel_file_with_settings = None
         self.forest = None
@@ -162,9 +162,9 @@ def run_LOO_validation(s: dict, df_set: pd.DataFrame, logging):
         loo_validation_data.logger = logger
         loo_validation_data.pred_colname = pred_colname
         loo_validation_data.testdata_combined_file = os.path.join(s["thoipapy_data_folder"], "Features", "combined", database, "{}.surr20.gaps5.combined_features.csv".format(acc))
-        loo_validation_data.THOIPA_prediction_csv = Path(s["thoipapy_data_folder"]) / f"Results/{s['setname']}/predictions/THOIPA_LOO/{database}.{acc}.LOO.prediction.csv"
+        loo_validation_data.THOIPA_LOO_prediction_csv = Path(s["thoipapy_data_folder"]) / f"Results/{s['setname']}/predictions/THOIPA_LOO/{database}.{acc}.LOO.prediction.csv"
 
-        thoipapy.utils.make_sure_path_exists(loo_validation_data.THOIPA_prediction_csv, isfile=True)
+        thoipapy.utils.make_sure_path_exists(loo_validation_data.THOIPA_LOO_prediction_csv, isfile=True)
 
         #######################################################################################################
         #                                                                                                     #
@@ -317,7 +317,7 @@ def LOO_single_prot(d: LooValidationData):
     df_test["residue_num"] = residue_num.to_list()
     df_test["residue_name"] = residue_name.to_list()
     prediction_df = df_test[["residue_num", "residue_name", d.pred_colname]]
-    prediction_df.to_csv(d.THOIPA_prediction_csv, index=False)
+    prediction_df.to_csv(d.THOIPA_LOO_prediction_csv, index=False)
 
     fpr, tpr, thresholds = roc_curve(y_test, prediction, drop_intermediate=False)
     roc_auc = auc(fpr, tpr)

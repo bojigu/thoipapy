@@ -15,6 +15,7 @@ import thoipapy.figs
 import thoipapy.utils
 import thoipapy.validation
 from thoipapy.figs.create_BOcurve_files import parse_BO_data_csv_to_excel, save_BO_linegraph_and_barchart, save_extra_BO_figs
+from thoipapy.figs.fig_utils import get_test_and_train_set_lists
 
 
 def run_testset_trainset_validation(s, logging):
@@ -68,16 +69,16 @@ def validate_THOIPA_for_testset_trainset_combination(s, test_set_list, train_set
         for test_set in test_set_list:
             testsetname = "set{:02d}".format(int(test_set))
 
-            #BO_curve_folder = Path(s["thoipapy_data_folder"]) / f"Results{testsetname}/blindvalidation/THOIPA.train{trainsetname}"
+            #BO_curve_folder = Path(s["thoipapy_data_folder"]) / f"Results{testsetname}/blindvalidation/thoipa.train{trainsetname}"
             #THOIPA_BO_curve_data_csv = os.path.join(s["thoipapy_data_folder"], "Results", "compare_testset_trainset", "data", "Test{}_Train{}.THOIPA".format(testsetname, trainsetname), "data", "Test{}_Train{}.THOIPA.best_overlap_data.csv".format(testsetname, trainsetname))
-            THOIPA_BO_curve_data_csv = Path(s["thoipapy_data_folder"]) / f"Results/{testsetname}/blindvalidation/THOIPA.train{trainsetname}/THOIPA.best_overlap_data.csv"
+            THOIPA_BO_curve_data_csv = Path(s["thoipapy_data_folder"]) / f"Results/{testsetname}/blindvalidation/thoipa.train{trainsetname}/THOIPA.best_overlap_data.csv"
             #THOIPA_ROC_pkl = os.path.join(s["thoipapy_data_folder"], "Results", "compare_testset_trainset", "data", "Test{}_Train{}.THOIPA".format(testsetname, trainsetname), "data", "Test{}_Train{}.THOIPA.ROC_data.pkl".format(testsetname, trainsetname))
-            THOIPA_ROC_pkl = Path(s["thoipapy_data_folder"]) / f"Results/{testsetname}/blindvalidation/THOIPA.train{trainsetname}/ROC_data.pkl"
+            THOIPA_ROC_pkl = Path(s["thoipapy_data_folder"]) / f"Results/{testsetname}/blindvalidation/thoipa.train{trainsetname}/ROC_data.pkl"
 
 
-            BO_data_excel = Path(s["thoipapy_data_folder"]) / f"Results/{testsetname}/blindvalidation/THOIPA.train{trainsetname}/BO_curve_data.xlsx"
-            BO_linechart_png = Path(s["thoipapy_data_folder"]) / f"Results/{testsetname}/blindvalidation/THOIPA.train{trainsetname}/BO_linechart.png"
-            BO_barchart_png = Path(s["thoipapy_data_folder"]) / f"Results/{testsetname}/blindvalidation/THOIPA.train{trainsetname}/AUBOC10_barchart.png"
+            BO_data_excel = Path(s["thoipapy_data_folder"]) / f"Results/{testsetname}/blindvalidation/thoipa.train{trainsetname}/BO_curve_data.xlsx"
+            BO_linechart_png = Path(s["thoipapy_data_folder"]) / f"Results/{testsetname}/blindvalidation/thoipa.train{trainsetname}/BO_linechart.png"
+            BO_barchart_png = Path(s["thoipapy_data_folder"]) / f"Results/{testsetname}/blindvalidation/thoipa.train{trainsetname}/AUBOC10_barchart.png"
 
             thoipapy.utils.make_sure_path_exists(BO_data_excel, isfile=True)
 
@@ -98,8 +99,8 @@ def validate_THOIPA_for_testset_trainset_combination(s, test_set_list, train_set
                 acc_db = acc + "-" + database
                 testdata_combined_file = os.path.join(s["thoipapy_data_folder"], "Features", "combined", database,
                                                       "{}.surr20.gaps5.combined_features.csv".format(acc))
-                THOIPA_pred_csv = Path(s["thoipapy_data_folder"]) / f"Results/{testsetname}/predictions/thoipa.train{trainsetname}/{database}.{acc}.THOIPA.train{trainsetname}.csv"
-                combined_incl_THOIPA_csv = Path(s["thoipapy_data_folder"]) / f"Results/{testsetname}/predictions/thoipa.train{trainsetname}/{database}.{acc}.THOIPA.train{trainsetname}_incl_combined.csv"
+                THOIPA_pred_csv = Path(s["thoipapy_data_folder"]) / f"Results/{testsetname}/predictions/thoipa.train{trainsetname}/{database}.{acc}.thoipa.train{trainsetname}.csv"
+                combined_incl_THOIPA_csv = Path(s["thoipapy_data_folder"]) / f"Results/{testsetname}/predictions/thoipa.train{trainsetname}/{database}.{acc}.thoipa.train{trainsetname}_incl_combined.csv"
 
 
                 thoipapy.utils.make_sure_path_exists(combined_incl_THOIPA_csv, isfile=True)
@@ -118,7 +119,7 @@ def validate_THOIPA_for_testset_trainset_combination(s, test_set_list, train_set
                     # (it is closest distance and low value means high propencity of interfacial)
                     combined_incl_THOIPA_df["interface_score"] = -1 * combined_incl_THOIPA_df["interface_score"]
 
-                THOIPA_BO_single_prot_df = thoipapy.figs.fig_utils.calc_best_overlap(acc_db, combined_incl_THOIPA_df, pred_col=f"THOIPA_train{trainsetname}")
+                THOIPA_BO_single_prot_df = thoipapy.figs.fig_utils.calc_best_overlap(acc_db, combined_incl_THOIPA_df, pred_col=f"thoipa.train{trainsetname}")
 
                 if THOIPA_BO_data_df.empty:
                     THOIPA_BO_data_df = THOIPA_BO_single_prot_df
@@ -133,7 +134,7 @@ def validate_THOIPA_for_testset_trainset_combination(s, test_set_list, train_set
 
                 df_for_roc = combined_incl_THOIPA_df.dropna(subset=["interface_score"])
 
-                predictor_name = f"THOIPA_train{trainsetname}"
+                predictor_name = f"thoipa.train{trainsetname}"
 
                 fpr, tpr, thresholds = roc_curve(df_for_roc.interface, df_for_roc[predictor_name], drop_intermediate=False)
                 roc_auc = auc(fpr, tpr)
@@ -352,12 +353,16 @@ def create_ROC_fig_for_testset_trainset_combination(THOIPA_ROC_pkl):
 def save_THOIPA_pred_indiv_prot(s, model_pkl, testdata_combined_file, THOIPA_pred_csv, test_combined_incl_pred, trainsetname, logging):
 
     combined_incl_THOIPA_df = pd.read_csv(testdata_combined_file, sep=',', engine='python', index_col=0)
-    train_data_filtered = Path(s["thoipapy_data_folder"]) / f"Results/{s['setname']}/train_data/03_train_data_after_first_feature_seln.csv"
+
+    test_set_list, train_set_list = get_test_and_train_set_lists(s)
+    trainsetname = "set{:02d}".format(int(train_set_list[0]))
+
+    trainset_data_filtered = Path(s["thoipapy_data_folder"]) / f"Results/{trainsetname}/train_data/03_train_data_after_first_feature_seln.csv"
 
     fit = joblib.load(model_pkl)
 
     test_X_orig = combined_incl_THOIPA_df
-    df_train = pd.read_csv(train_data_filtered, index_col=0)
+    df_train = pd.read_csv(trainset_data_filtered, index_col=0)
     assert "interface" in df_train.columns
     assert "Unnamed" not in ",".join(df_train.columns.to_list())
     del df_train["interface"]
@@ -375,11 +380,11 @@ def save_THOIPA_pred_indiv_prot(s, model_pkl, testdata_combined_file, THOIPA_pre
     #     prob_arr = fit.decision_function(tX)
     #     prob_arr = (prob_arr - prob_arr.min())/(prob_arr.max() - prob_arr.min())
 
-    combined_incl_THOIPA_df[f"THOIPA_train{trainsetname}"] = prob_arr
+    combined_incl_THOIPA_df[f"thoipa.train{trainsetname}"] = prob_arr
     # save full combined file with THOIPA prediction
     combined_incl_THOIPA_df.to_csv(test_combined_incl_pred)
     # save only THOIPA prediction
-    THOIPA_pred_df = combined_incl_THOIPA_df[["residue_num", "residue_name", f"THOIPA_train{trainsetname}"]]
+    THOIPA_pred_df = combined_incl_THOIPA_df[["residue_num", "residue_name", f"thoipa.train{trainsetname}"]]
     THOIPA_pred_df.to_csv(THOIPA_pred_csv)
 
     return combined_incl_THOIPA_df

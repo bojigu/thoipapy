@@ -4,6 +4,7 @@ from typing import Union
 
 import pandas as pd
 import thoipapy.utils as utils
+from thoipapy.figs.fig_utils import get_test_and_train_set_lists
 
 
 def gather_validation_data_for_figs(s, df_set, logging):
@@ -88,6 +89,20 @@ def gather_validation_data_for_figs(s, df_set, logging):
         df_roc_subset.to_excel(writer, sheet_name="roc")
         df_perc_interf_vs_p_subset.to_excel(writer, sheet_name="perc_interf_vs_pr")
         writer.save()
+
+
+    ##########################################  Gather the blind-validation data for the full training dataset ##########################################
+
+    test_set_list, train_set_list = get_test_and_train_set_lists(s)
+    assert len(test_set_list) == 1
+    assert len(train_set_list) == 1
+    testsetname = "set{:02d}".format(int(test_set_list[0]))
+    trainsetname = "set{:02d}".format(int(train_set_list[0]))
+    BO_data_excel = Path(s["thoipapy_data_folder"]) / f"Results/{testsetname}/blindvalidation/thoipa.train{trainsetname}/BO_curve_data.xlsx"
+
+
+
+
 
 
 def create_df_with_all_predictions_for_all_residues_in_set(s, df_set_nonred, pred_all_res_csv, logging):

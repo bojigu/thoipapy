@@ -86,8 +86,8 @@ def run_LOO_validation_od_non_multiprocessing(s, df_set, logging):
     for i in df_set.index:
 
         acc, acc_db, database  = df_set.loc[i, "acc"], df_set.loc[i, "acc_db"], df_set.loc[i, "database"]
-        THOIPA_prediction_csv = Path(s["thoipapy_data_folder"]) / f"Results/{s['setname']}/predictions/THOIPA_LOO/{database}.{acc}.LOO.prediction.csv"
-        thoipapy.utils.make_sure_path_exists(THOIPA_prediction_csv, isfile=True)
+        THOIPA_LOO_prediction_csv = Path(s["thoipapy_data_folder"]) / f"Results/{s['setname']}/predictions/THOIPA_LOO/{database}.{acc}.LOO.prediction.csv"
+        thoipapy.utils.make_sure_path_exists(THOIPA_LOO_prediction_csv, isfile=True)
 
         #######################################################################################################
         #                                                                                                     #
@@ -128,7 +128,7 @@ def run_LOO_validation_od_non_multiprocessing(s, df_set, logging):
         df_test[pred_colname] = prediction
         # save just the prediction alone to csv
         prediction_df = df_test[["residue_num", "residue_name", pred_colname]]
-        prediction_df.to_csv(THOIPA_prediction_csv, index=False)
+        prediction_df.to_csv(THOIPA_LOO_prediction_csv, index=False)
 
         fpr, tpr, thresholds = roc_curve(y_test, prediction, drop_intermediate=False)
         roc_auc = auc(fpr, tpr)
