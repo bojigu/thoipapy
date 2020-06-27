@@ -56,24 +56,14 @@ def calc_feat_import_from_mean_decrease_accuracy(s, logging):
     df_data = df_data.dropna()
 
     # drop training data (full protein) that don't have enough homologues
-    df_data = df_data.loc[df_data.n_homologues >= s["min_n_homol_training"]]
+    if s["min_n_homol_training"] != 0:
+        df_data = df_data.loc[df_data.n_homologues >= s["min_n_homol_training"]]
 
-    X = drop_cols_not_used_in_ML(logging, df_data, s["excel_file_with_settings"])
+    cols_excluding_y = [c for c in df_data.columns if c != s['bind_column']]
+    X = df_data[cols_excluding_y]
     y = df_data["interface"]
 
     n_features = X.shape[1]
-    feat_list = X.columns.tolist()
-    # coev_features = feat_list[0:16]
-    # cons_features = feat_list[16:18]
-    # polarity_features = feat_list[18:24]
-    # motif_features = feat_list[24:26]
-    # pssm_features = feat_list[26:51]
-    # physical_features = feat_list[51:53]
-    # TMD_features = feat_list[53:]
-
-    # DEPRECATED in favour of combined polarity_and_pssm_features
-    #features_nested_list = [coev_features, cons_features, polarity_features, motif_features, pssm_features, physical_features, TMD_features]
-    #features_nested_namelist = ["coev_features", "cons_features", "polarity_features", "motif_features", "pssm_features", "physical_features", "TMD_features"]
 
     polarity_features = ["test_dropping_of_features_not_included", "polarity", "relative_polarity", "polarity4mean", "polarity3Nmean", "polarity3Cmean", "polarity1mean"]
     pssm_features = ["A", "C", "D", "E", "F", "G", "H", "I", "K", "L", "M", "N", "P", "Q", "R", "S", "T", "V", "W", "Y", "CS", "DE", "KR", "QN", "LIV"]

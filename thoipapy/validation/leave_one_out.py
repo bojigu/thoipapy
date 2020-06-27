@@ -86,7 +86,7 @@ def run_LOO_validation(s: dict, df_set: pd.DataFrame, logging):
     train_data_filtered = Path(s["thoipapy_data_folder"]) / f"Results/{s['setname']}/train_data/03_train_data_after_first_feature_seln.csv"
     LOO_crossvalidation_pkl = os.path.join(s["thoipapy_data_folder"], "Results", s["setname"], "crossvalidation", "data", "{}_LOO_crossvalidation.pkl".format(s["setname"]))
     BO_all_data_csv = os.path.join(s["thoipapy_data_folder"], "Results", s["setname"], "crossvalidation", "data", "{}_LOO_BO_data.csv".format(s["setname"]))
-    BO_data_excel: Union[Path, str] = Path(s["thoipapy_data_folder"]) / f"Results/{s['setname']}/crossvalidation/data/{s['setname']}_BO_curve_data.xlsx"
+    BO_data_excel: Union[Path, str] = Path(s["thoipapy_data_folder"]) / f"Results/{s['setname']}/crossvalidation/data/{s['setname']}_thoipa_loo_bo_curve_data.xlsx"
     sim_matrix_xlsx = Path(s["thoipapy_data_folder"]) / "Results" / s["setname"] / f"crossvalidation/clusters/{setname}_sim_matrix.xlsx"
 
     if not sim_matrix_xlsx.is_file():
@@ -379,7 +379,7 @@ def create_LOO_validation_fig(s, df_set, logging):
     LOO_crossvalidation_AUC_bar_png = os.path.join(s["thoipapy_data_folder"], "Results", s["setname"], "crossvalidation", "{}_LOO_crossvalidation_AUC_bar.png".format(s["setname"]))
     AUC_csv = os.path.join(s["thoipapy_data_folder"], "Results", s["setname"], "crossvalidation", "data", "{}_LOO_AUC.csv".format(s["setname"]))
     BO_all_data_csv = os.path.join(s["thoipapy_data_folder"], "Results", s["setname"], "crossvalidation", "data", "{}_LOO_BO_data.csv".format(s["setname"]))
-    BO_data_excel: Union[Path, str] = Path(s["thoipapy_data_folder"]) / f"Results/{s['setname']}/crossvalidation/data/{s['setname']}_BO_curve_data.xlsx"
+    BO_data_excel: Union[Path, str] = Path(s["thoipapy_data_folder"]) / f"Results/{s['setname']}/crossvalidation/data/{s['setname']}_thoipa_loo_bo_curve_data.xlsx"
     BO_linechart_png: Union[Path, str] = Path(s["thoipapy_data_folder"]) / f"Results/{s['setname']}/crossvalidation/data/{s['setname']}_BO_linechart.png"
     BO_barchart_png: Union[Path, str] = Path(s["thoipapy_data_folder"]) / f"Results/{s['setname']}/crossvalidation/data/{s['setname']}_LOO_AUBOC10_barchart.png"
     other_figs_path: Union[Path, str] = Path(s["thoipapy_data_folder"]) / f"Results/{s['setname']}/crossvalidation/other_figs"
@@ -415,8 +415,7 @@ def create_LOO_validation_fig(s, df_set, logging):
     ax.legend(loc="lower right")
     fig.tight_layout()
     fig.savefig(LOO_crossvalidation_ROC_png, dpi=240)
-    #fig.savefig(LOO_crossvalidation_ROC_png[:-4] + ".pdf")
-    fig.savefig(thoipapy.utils.pdf_subpath(LOO_crossvalidation_ROC_png))
+    #fig.savefig(thoipapy.utils.pdf_subpath(LOO_crossvalidation_ROC_png))
 
     AUC_ser = pd.Series(auc_dict)
     AUC_ser.to_csv(AUC_csv)
@@ -427,11 +426,11 @@ def create_LOO_validation_fig(s, df_set, logging):
     ax.set_ylabel("performance (AUBOC10)")
     fig.tight_layout()
     fig.savefig(LOO_crossvalidation_AUC_bar_png, dpi=240)
-    fig.savefig(thoipapy.utils.pdf_subpath(LOO_crossvalidation_AUC_bar_png))
+    #fig.savefig(thoipapy.utils.pdf_subpath(LOO_crossvalidation_AUC_bar_png))
 
     AUBOC10 = thoipapy.figs.create_BOcurve_files.save_BO_linegraph_and_barchart(s, BO_data_excel, BO_linechart_png, BO_barchart_png, namedict, logging, AUC_ser)
 
-    create_other_figs = True
+    create_other_figs = False
     if create_other_figs:
         thoipapy.utils.make_sure_path_exists(other_figs_path)
         thoipapy.figs.create_BOcurve_files.save_extra_BO_figs(BO_data_excel, other_figs_path)

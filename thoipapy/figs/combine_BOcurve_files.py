@@ -112,8 +112,7 @@ def plot_BOcurve(s, train_set_list, test_set_list, mult_THOIPA_dir, mult_testnam
     ax.legend()
     fig.tight_layout()
     fig.savefig(BO_curve_png, dpi=240)
-    #fig.savefig(BO_curve_png[:-4] + ".pdf")
-    fig.savefig(thoipapy.utils.pdf_subpath(BO_curve_png))
+    #fig.savefig(thoipapy.utils.pdf_subpath(BO_curve_png))
     sys.stdout.write("\nfig_plot_BO_curve_mult_train_datasets finished ({})".format(BO_curve_png))
 
 
@@ -161,7 +160,7 @@ def compare_predictors(s):
     df = pd.DataFrame()
 
     for predictor_name in predictor_list:
-        BO_data_excel: Union[Path, str] = Path(s["thoipapy_data_folder"]) / f"Results/{s['setname']}/crossvalidation/data/{s['setname']}_BO_curve_data.xlsx"
+        BO_data_excel: Union[Path, str] = Path(s["thoipapy_data_folder"]) / f"Results/{s['setname']}/crossvalidation/data/{s['setname']}_thoipa_loo_bo_curve_data.xlsx"
 
         if not os.path.isfile(BO_data_excel):
             raise FileNotFoundError("BO_data_excel does not exist ({}). Try running run_testset_trainset_validation".format(BO_data_excel))
@@ -184,8 +183,7 @@ def compare_predictors(s):
     ax.legend()
     fig.tight_layout()
     fig.savefig(BO_curve_png, dpi=240)
-    #fig.savefig(BO_curve_png[:-4] + ".pdf")
-    fig.savefig(thoipapy.utils.pdf_subpath(BO_curve_png))
+    #fig.savefig(thoipapy.utils.pdf_subpath(BO_curve_png))
 
     plt.close("all")
     AUBOC10_ser = pd.Series(area_under_curve_dict).sort_index()
@@ -195,8 +193,7 @@ def compare_predictors(s):
     ax.set_ylabel("performance (AUBOC10)")
     fig.tight_layout()
     fig.savefig(AUBOC10_bar_png, dpi=240)
-    #fig.savefig(AUBOC10_bar_png[:-4] + ".pdf")
-    fig.savefig(thoipapy.utils.pdf_subpath(AUBOC10_bar_png))
+    #fig.savefig(thoipapy.utils.pdf_subpath(AUBOC10_bar_png))
 
     plt.close("all")
 
@@ -224,8 +221,7 @@ def compare_predictors(s):
     ax.legend(loc="lower right")
     fig.tight_layout()
     fig.savefig(ROC_png, dpi=240)
-    #fig.savefig(ROC_png[:-4] + ".pdf")
-    fig.savefig(thoipapy.utils.pdf_subpath(ROC_png))
+    #fig.savefig(thoipapy.utils.pdf_subpath(ROC_png))
 
     sys.stdout.write("\ncompare_predictors finished ({})\n".format(BO_curve_png))
 

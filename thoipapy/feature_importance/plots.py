@@ -37,7 +37,6 @@ def create_var_imp_plot(df_imp, colour_dict, variable_importance_png, n_features
         ax.grid(False)
         fig.tight_layout()
         fig.savefig(variable_importance_png, dpi=240)
-        #fig.savefig(variable_importance_png[:-4] + ".pdf")
-        fig.savefig(thoipapy.utils.pdf_subpath(variable_importance_png))
+        #fig.savefig(thoipapy.utils.pdf_subpath(variable_importance_png))
 
 

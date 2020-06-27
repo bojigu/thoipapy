@@ -145,5 +145,4 @@ def create_10fold_cross_validation_fig(s, logging):
     ax.legend(loc="lower right")
     fig.tight_layout()
     fig.savefig(crossvalidation_png, dpi=240)
-    #fig.savefig(crossvalidation_png[:-4] + ".pdf")
-    fig.savefig(thoipapy.utils.pdf_subpath(crossvalidation_png))
+    #fig.savefig(thoipapy.utils.pdf_subpath(crossvalidation_png))

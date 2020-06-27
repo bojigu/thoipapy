@@ -786,8 +786,7 @@ def create_ROC_comp_4predictors(s, df_set, logging):
     ax.legend(loc="lower right")
     fig.tight_layout()
     fig.savefig(ROC_4predictor_png, dpi=240)
-    # fig.savefig(crossvalidation_png[:-4] + ".pdf")
-    fig.savefig(thoipapy.utils.pdf_subpath(ROC_4predictor_png))
+    #fig.savefig(thoipapy.utils.pdf_subpath(ROC_4predictor_png))
     df_tpr = pd.DataFrame.from_records(list(map(list, zip(*mean_tpr_list))),
                                        columns=prediction_name_list)
     df_tpr.to_csv(ROC_4predictor_csv)

@@ -346,47 +346,28 @@ def create_ROC_fig_for_testset_trainset_combination(THOIPA_ROC_pkl):
     ax.legend(loc="lower right")
     fig.tight_layout()
     fig.savefig(ROC_png, dpi=240)
-    fig.savefig(thoipapy.utils.pdf_subpath(ROC_png))
-    #fig.savefig(ROC_png[:-4] + ".pdf")
+    #fig.savefig(thoipapy.utils.pdf_subpath(ROC_png))
 
 
 def save_THOIPA_pred_indiv_prot(s, model_pkl, testdata_combined_file, THOIPA_pred_csv, test_combined_incl_pred, trainsetname, logging):
 
     combined_incl_THOIPA_df = pd.read_csv(testdata_combined_file, sep=',', engine='python', index_col=0)
     train_data_filtered = Path(s["thoipapy_data_folder"]) / f"Results/{s['setname']}/train_data/03_train_data_after_first_feature_seln.csv"
-    #combined_incl_THOIPA_df = combined_incl_THOIPA_df.dropna()
-
-    #drop_cols_not_used_in_ML
-    #X=train_df.drop(train_features_del,axis=1)
-    # X = thoipapy.features.RF_Train_Test.drop_cols_not_used_in_ML(logging, train_df, s["excel_file_with_settings"])
-    # y = train_df["interface"]
-    # clf = RandomForestClassifier(max_depth=5, n_estimators=10, max_features=1)
-    # fit = clf.fit(X,y)
 
     fit = joblib.load(model_pkl)
 
-    # if database == "ETRA":
-    #     dirupt_path = os.path.join(s["toxr_disruption_folder"], "{}_mul_scan_average_data.xlsx".format(acc))
-    #     ddf = pd.read_excel(dirupt_path, index_col=0)
-    #     interface_score = ddf.Disruption
-    #     interface_score = interface_score      #(it is closest experimental disruption and high value means high propencity of interfacial)
+    test_X_orig = combined_incl_THOIPA_df
+    df_train = pd.read_csv(train_data_filtered, index_col=0)
+    assert "interface" in df_train.columns
+    assert "Unnamed" not in ",".join(df_train.columns.to_list())
+    del df_train["interface"]
+    train_features = df_train.columns.to_list()
+    train_features_in_test_X = set(df_train.columns).intersection(set(train_features))
+    assert set(train_features) == train_features_in_test_X
 
-    #Lips_score = test_df.LIPS_polarity * test_df.LIPS_entropy
+    test_X = test_X_orig.reindex(index=test_X_orig.index, columns=train_features)
 
-    #tX=test_df.drop(test_features_del,axis=1)
-    test_X = thoipapy.validation.feature_selection.drop_cols_not_used_in_ML(logging, combined_incl_THOIPA_df, s["excel_file_with_settings"])
-
-    try:
-        prob_arr = fit.predict_proba(test_X)[:, 1]
-    except ValueError:
-        df_train_data_used_for_model_csv = pd.read_csv(train_data_filtered)
-        del df_train_data_used_for_model_csv[s["bind_column"]]
-        train_cols = set(df_train_data_used_for_model_csv.columns)
-        test_cols = set(test_X.columns)
-        cols_not_in_train = test_cols - train_cols
-        cols_not_in_test = train_cols - test_cols
-        logging.warning("cols_not_in_train : {}\ncols_not_in_test : {}".format(cols_not_in_train, cols_not_in_test))
-        prob_arr = fit.predict_proba(test_X)[:, 1]
+    prob_arr = fit.predict_proba(test_X)[:, 1]
 
     # if hasattr(clf,'predict_proba'):
     #     prob_arr = fit.predict_proba(tX)[:,1]
@@ -400,4 +381,5 @@ def save_THOIPA_pred_indiv_prot(s, model_pkl, testdata_combined_file, THOIPA_pre
     # save only THOIPA prediction
     THOIPA_pred_df = combined_incl_THOIPA_df[["residue_num", "residue_name", f"THOIPA_train{trainsetname}"]]
     THOIPA_pred_df.to_csv(THOIPA_pred_csv)
+
     return combined_incl_THOIPA_df
