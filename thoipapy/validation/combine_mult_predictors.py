@@ -5,7 +5,7 @@ from typing import Union
 import pandas as pd
 import numpy as np
 import thoipapy
-from thoipapy.figs.fig_utils import get_test_and_train_set_lists
+from thoipapy.utils import get_testsetname_trainsetname_from_run_settings
 
 
 def merge_predictions(s, df_set, logging):
@@ -34,11 +34,7 @@ def merge_predictions(s, df_set, logging):
 
     other_predictors_dir = Path(s["thoipapy_data_folder"]) / "Predictions/other_predictors"
 
-    test_set_list, train_set_list = get_test_and_train_set_lists(s)
-    assert len(test_set_list) == 1
-    assert len(train_set_list) == 1
-    testsetname = "set{:02d}".format(int(test_set_list[0]))
-    trainsetname = "set{:02d}".format(int(train_set_list[0]))
+    testsetname, trainsetname = get_testsetname_trainsetname_from_run_settings(s)
     thoipa_trainsetname = f"thoipa.train{trainsetname}"
 
     # for simplicity, keep only the predictions. Since the index is unique, it can be added later to the combined file.

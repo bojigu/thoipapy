@@ -13,8 +13,7 @@ from scipy.stats import linregress
 from sklearn.metrics import roc_curve, auc, precision_recall_curve
 
 import thoipapy
-from thoipapy.figs.fig_utils import get_test_and_train_set_lists
-from thoipapy.utils import make_sure_path_exists
+from thoipapy.utils import make_sure_path_exists, get_testsetname_trainsetname_from_run_settings
 
 
 def collect_indiv_validation_data(s, df_set, logging, namedict, predictor_name_list, THOIPA_predictor_name, subsets):
@@ -753,11 +752,7 @@ def create_ROC_comp_4predictors(s, df_set, logging):
     pred_colname = "THOIPA_{}_LOO".format(s["set_number"])
     prediction_name_list = [pred_colname, "PREDDIMER", "TMDOCK", "LIPS_surface_ranked"]
 
-    test_set_list, train_set_list = get_test_and_train_set_lists(s)
-    assert len(test_set_list) == 1
-    assert len(train_set_list) == 1
-    testsetname = "set{:02d}".format(int(test_set_list[0]))
-    trainsetname = "set{:02d}".format(int(train_set_list[0]))
+    testsetname, trainsetname = get_testsetname_trainsetname_from_run_settings(s)
 
     if s["setname"] == testsetname:
         prediction_name_list.append(f"thoipa.train{trainsetname}")
@@ -802,6 +797,7 @@ def create_ROC_comp_4predictors(s, df_set, logging):
                                        columns=prediction_name_list)
     df_tpr.to_csv(ROC_4predictor_csv)
     logging.info(f"fig saved: {ROC_4predictor_png}")
+
 
 def create_linechart_perc_interf_vs_PR_cutoff(s, predictor_name_list, perc_interf_vs_PR_cutoff_linechart_png, perc_interf_vs_PR_cutoff_linechart_data_csv, subset="all"):
     """ Create linechart (and barchart) showing percentage of interface residues correctly predicted, according

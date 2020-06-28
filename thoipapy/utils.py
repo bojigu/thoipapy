@@ -27,6 +27,8 @@ import matplotlib.colors as colors
 import ctypes
 from scipy.special import comb
 
+from thoipapy.figs.fig_utils import get_test_and_train_set_lists
+
 
 class Command(object):
     '''
@@ -983,3 +985,12 @@ def open_csv_as_series(input_csv):
 
 def intersect(a, b):
      return list(set(a) & set(b))
+
+
+def get_testsetname_trainsetname_from_run_settings(s):
+    test_set_list, train_set_list = get_test_and_train_set_lists(s)
+    assert len(test_set_list) == 1
+    assert len(train_set_list) == 1
+    testsetname = "set{:02d}".format(int(test_set_list[0]))
+    trainsetname = "set{:02d}".format(int(train_set_list[0]))
+    return testsetname, trainsetname

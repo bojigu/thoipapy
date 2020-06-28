@@ -6,8 +6,7 @@ import pandas as pd
 from matplotlib import pyplot as plt
 from sklearn.metrics import precision_recall_curve, auc
 
-import thoipapy.utils
-from thoipapy.figs.fig_utils import get_test_and_train_set_lists
+from thoipapy import utils
 from thoipapy.validation.gather import create_df_with_all_predictions_for_all_residues_in_set
 
 
@@ -44,9 +43,9 @@ def create_precision_recall_all_residues(s, df_set, logging):
     all_res_precision_recall_data_csv: Path = Path(s["thoipapy_data_folder"]) / f"Results/{s['setname']}/crossvalidation/precision_recall/{s['setname']}_all_res_precision_recall_data.csv"
     all_res_precision_recall_png: Path = Path(s["thoipapy_data_folder"]) / f"Results/{s['setname']}/crossvalidation/precision_recall/{s['setname']}_all_res_precision_recall.png"
 
-    thoipapy.utils.make_sure_path_exists(pred_all_res_csv, isfile=True)
+    utils.make_sure_path_exists(pred_all_res_csv, isfile=True)
 
-    df_set_nonred = thoipapy.utils.drop_redundant_proteins_from_list(df_set, logging)
+    df_set_nonred = utils.drop_redundant_proteins_from_list(df_set, logging)
 
     df_all = create_df_with_all_predictions_for_all_residues_in_set(s, df_set_nonred, pred_all_res_csv, logging)
 
@@ -79,11 +78,7 @@ def save_fig_precision_recall_all_residues(s, df, all_res_precision_recall_png, 
     THOIPA_predictor = "THOIPA_{}_LOO".format(s["set_number"])
     predictors = [THOIPA_predictor, "TMDOCK", "LIPS_surface_ranked", "PREDDIMER", "random"]
 
-    test_set_list, train_set_list = get_test_and_train_set_lists(s)
-    assert len(test_set_list) == 1
-    assert len(train_set_list) == 1
-    testsetname = "set{:02d}".format(int(test_set_list[0]))
-    trainsetname = "set{:02d}".format(int(train_set_list[0]))
+    testsetname, trainsetname = utils.get_testsetname_trainsetname_from_run_settings(s)
 
     if s["setname"] == testsetname:
         predictors.append(f"thoipa.train{trainsetname}")
