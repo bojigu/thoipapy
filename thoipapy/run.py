@@ -264,9 +264,6 @@ if __name__ == "__main__":
         if s["create_merged_heatmap"] == True:
             thoipapy.figs.create_heatmap_from_merge_file.create_merged_heatmap(s, df_set, logging)
 
-        if s["create_ROC_4predictors"] == True:
-            thoipapy.other.validation_deprecated.validation_deprecated.calc_roc_each_tmd_separately_deprecated(s, df_set, logging)
-
         if "download_10_homologues_from_ncbi" in s:
             if s["download_10_homologues_from_ncbi"] == True:
                 thoipapy.homologues.NCBI_download.download_10_homologues_from_ncbi(s, df_set, logging)

@@ -447,20 +447,20 @@ def process_set_protein_seqs(s, setname, df_set, set_path):
     df_set["tm_surr_right"] = df_set.TMD_end_pl_surr - df_set.TMD_end
 
     # save the full sequences in fasta format for CD-HIT, etc.
-    protein_set_full_seq_fasta = Path(s["thoipapy_data_folder"]) / "Results" / s["setname"] / f"crossvalidation/set_clusters/{setname}_full_seqs.fas"
+    protein_set_full_seq_fasta = Path(s["thoipapy_data_folder"]) / f"Results/{s['setname']}/clusters/{setname}_full_seqs.fas"
     thoipapy.utils.make_sure_path_exists(protein_set_full_seq_fasta, isfile=True)
     with open(protein_set_full_seq_fasta, "w") as f:
         for n, acc in enumerate(df_set.index):
             f.write(">{}-{}\n{}\n".format(n, df_set.loc[acc, "acc_db"], df_set.loc[acc, "full_seq"]))
 
-    protein_set_tmd_seq_fasta = Path(s["thoipapy_data_folder"]) / "Results" / s["setname"] / f"crossvalidation/set_clusters/{setname}_tmd_seqs.fas"
+    protein_set_tmd_seq_fasta = Path(s["thoipapy_data_folder"]) / f"Results/{s['setname']}/clusters/{setname}_tmd_seqs.fas"
     thoipapy.utils.make_sure_path_exists(protein_set_tmd_seq_fasta, isfile=True)
     with open(protein_set_tmd_seq_fasta, "w") as f:
         for n, acc in enumerate(df_set.index):
             f.write(">{}-{}\n{}\n".format(n, df_set.loc[acc, "acc_db"], df_set.loc[acc, "TMD_seq"]))
 
     # open previously saved CD-hit results
-    cdhit_cluster_txt = Path(s["thoipapy_data_folder"]) / "Results" / s["setname"] / f"crossvalidation/set_clusters/{setname}.fas.1.clstr.sorted.txt"
+    cdhit_cluster_txt = Path(s["thoipapy_data_folder"]) / f"Results/{s['setname']}/clusters/{setname}.fas.1.clstr.sorted.txt"
     if os.path.isfile(cdhit_cluster_txt):
         lines_with_ref_seq = []
         with open(cdhit_cluster_txt, "r") as f:

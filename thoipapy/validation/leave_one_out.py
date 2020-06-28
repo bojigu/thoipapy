@@ -87,7 +87,7 @@ def run_LOO_validation(s: dict, df_set: pd.DataFrame, logging):
     LOO_crossvalidation_pkl = os.path.join(s["thoipapy_data_folder"], "Results", s["setname"], "crossvalidation", "data", "{}_LOO_crossvalidation.pkl".format(s["setname"]))
     BO_all_data_csv = os.path.join(s["thoipapy_data_folder"], "Results", s["setname"], "crossvalidation", "data", "{}_LOO_BO_data.csv".format(s["setname"]))
     BO_data_excel: Union[Path, str] = Path(s["thoipapy_data_folder"]) / f"Results/{s['setname']}/crossvalidation/data/{s['setname']}_thoipa_loo_bo_curve_data.xlsx"
-    sim_matrix_xlsx = Path(s["thoipapy_data_folder"]) / "Results" / s["setname"] / f"crossvalidation/clusters/{setname}_sim_matrix.xlsx"
+    sim_matrix_xlsx = Path(s["thoipapy_data_folder"]) / f"Results/{s['setname']}/clusters/{setname}_sim_matrix.xlsx"
 
     if not sim_matrix_xlsx.is_file():
         raise FileNotFoundError(f"The similarity matrix with clusters of putative homologues could not be found ({sim_matrix_xlsx})")

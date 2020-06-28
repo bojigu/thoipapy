@@ -13,9 +13,9 @@ from typing import List, Set, Union
 
 def create_identity_matrix_from_protein_set(s, logging):
     setname = s["setname"]
-    protein_set_full_seq_fasta = Path(s["thoipapy_data_folder"]) / "Results" / s["setname"] / f"crossvalidation/set_clusters/{setname}_full_seqs.fas"
-    output_align = Path(s["thoipapy_data_folder"]) / "Results" / s["setname"] / f"crossvalidation/clusters/{setname}_sim_matrix_alignments.txt"
-    sim_matrix_xlsx = Path(s["thoipapy_data_folder"]) / "Results" / s["setname"] / f"crossvalidation/clusters/{setname}_sim_matrix.xlsx"
+    protein_set_full_seq_fasta = Path(s["thoipapy_data_folder"]) / f"Results/{s['setname']}/clusters/{setname}_full_seqs.fas"
+    output_align = Path(s["thoipapy_data_folder"]) / f"Results/{s['setname']}/clusters/{setname}_sim_matrix_alignments.txt"
+    sim_matrix_xlsx = Path(s["thoipapy_data_folder"]) / f"Results/{s['setname']}/clusters/{setname}_sim_matrix.xlsx"
     if not sim_matrix_xlsx.parent.is_dir():
         sim_matrix_xlsx.parent.mkdir(parents=True)
     gap_open = -40.0
