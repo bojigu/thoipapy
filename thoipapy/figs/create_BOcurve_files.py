@@ -9,7 +9,6 @@ import numpy as np
 import matplotlib.pyplot as plt
 import warnings
 from scipy.stats import linregress
-#from eccpy.tools import normalise_0_1
 from thoipapy.utils import normalise_0_1, make_sure_path_exists
 
 warnings.filterwarnings("ignore")

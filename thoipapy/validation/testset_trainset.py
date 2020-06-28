@@ -15,14 +15,14 @@ import thoipapy.figs
 import thoipapy.utils
 import thoipapy.validation
 from thoipapy.figs.create_BOcurve_files import parse_BO_data_csv_to_excel, save_BO_linegraph_and_barchart, save_extra_BO_figs
-from thoipapy.figs.fig_utils import get_test_and_train_set_lists
+from thoipapy.utils import get_test_and_train_set_lists
 
 
 def run_testset_trainset_validation(s, logging):
 
     # create list of test and train datasets
     # if only one is given, make a list with only one dataset
-    test_set_list, train_set_list = thoipapy.figs.fig_utils.get_test_and_train_set_lists(s)
+    test_set_list, train_set_list = thoipapy.utils.get_test_and_train_set_lists(s)
 
     validate_LIPS_for_testset(s, logging)
     validate_LIPS_for_testset(s, logging, LIPS_name="LIPS_surface_ranked", pred_col="LIPS_surface_ranked")
@@ -191,7 +191,7 @@ def validate_LIPS_for_testset(s, logging, LIPS_name="LIPS_LE", pred_col="LIPS_L*
 
     # create list of test and train datasets
     # if only one is given, make a list with only one dataset
-    test_set_list, train_set_list = thoipapy.figs.fig_utils.get_test_and_train_set_lists(s)
+    test_set_list, train_set_list = thoipapy.utils.get_test_and_train_set_lists(s)
 
     for test_set in test_set_list:
         testsetname = "set{:02d}".format(int(test_set))

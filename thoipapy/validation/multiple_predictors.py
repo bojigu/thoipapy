@@ -15,7 +15,7 @@ from thoipapy.utils import make_sure_path_exists
 def validate_multiple_predictors_and_subsets_auboc10(s, df_set, logging):
 
     logging.info("start create_AUBOC10_43databases_figs")
-    predictor_name_list = ["THOIPA_{}_LOO".format(s["set_number"]),"PREDDIMER", "TMDOCK", "LIPS_surface_ranked"] #"LIPS_L*E",
+    predictors = ["THOIPA_{}_LOO".format(s["set_number"]),"PREDDIMER", "TMDOCK", "LIPS_surface_ranked"] #"LIPS_L*E",
     subsets = ["crystal", "NMR", "ETRA"]
     for subset in subsets:
         df_o_minus_r_mean_df = pd.DataFrame()
@@ -24,10 +24,11 @@ def validate_multiple_predictors_and_subsets_auboc10(s, df_set, logging):
         mean_AUBOC_barplot_png = Path(s["thoipapy_data_folder"]) / f"Results/{s['setname']}/crossvalidation/compare_predictors/figs/{s['setname']}.{subset}.4predictors_mean_AUBOC10.png"
         BOCURVE_linechart_csv = Path(s["thoipapy_data_folder"]) / f"Results/{s['setname']}/crossvalidation/compare_predictors/data/{s['setname']}.{subset}.4predictors_BOCURVE_linechart.csv"
         BOCURVE_linechart_png = Path(s["thoipapy_data_folder"]) / f"Results/{s['setname']}/crossvalidation/compare_predictors/figs/{s['setname']}.{subset}.4predictors_BOCURVE_linechart.png"
+        make_sure_path_exists(BOCURVE_linechart_png, isfile=True)
 
         make_sure_path_exists(mean_AUBOC_file, isfile=True)
 
-        for predictor in predictor_name_list:
+        for predictor in predictors:
             BO_data_excel = Path(s["thoipapy_data_folder"]) / f"Results/{s['setname']}/crossvalidation/indiv_validation/bocurve/data/{predictor}/BO_curve_data.xlsx"
             df_o_minus_r = pd.read_excel(BO_data_excel, sheet_name="df_o_minus_r", index_col=0)
             df_o_minus_r = df_o_minus_r.filter(regex=subset, axis=1)
@@ -36,9 +37,9 @@ def validate_multiple_predictors_and_subsets_auboc10(s, df_set, logging):
             AUBOC10_list.append(AUBOC10)
             df_o_minus_r_mean_df = pd.concat([df_o_minus_r_mean_df, df_o_minus_r_mean], axis=1, join="outer")
 
-        auboc_mean_df = pd.DataFrame.from_records([AUBOC10_list], columns=predictor_name_list)
+        auboc_mean_df = pd.DataFrame.from_records([AUBOC10_list], columns=predictors)
         auboc_mean_df.to_csv(mean_AUBOC_file)
-        df_o_minus_r_mean_df.columns = predictor_name_list
+        df_o_minus_r_mean_df.columns = predictors
         df_o_minus_r_mean_df.to_csv(BOCURVE_linechart_csv)
         plt.close("all")
         figsize = np.array([3.42, 3.42]) * 2  # DOUBLE the real size, due to problems on Bo computer with fontsizes
@@ -46,7 +47,7 @@ def validate_multiple_predictors_and_subsets_auboc10(s, df_set, logging):
         fig, ax = plt.subplots(figsize=figsize)
         for i,column in enumerate(df_o_minus_r_mean_df.columns):
             # df_o_minus_r_mean_df.plot(ax=ax, color="#0f7d9b", linestyle="-", label="prediction (AUBOC10 : {:0.2f}".format(AUBOC10))
-            label_name = "{}(AUBOC:{:.2f})".format(predictor_name_list[i] ,AUBOC10_list[i])
+            label_name = "{}(AUBOC:{:.2f})".format(predictors[i] ,AUBOC10_list[i])
             df_o_minus_r_mean_df[column].plot(ax=ax,  linestyle="-",label=label_name, color = color_list[i])
         ax.plot([1, 10], [0, 0], color="#0f7d9b", linestyle="--", label="random", alpha=0.5)
         ax.grid(False)
@@ -78,7 +79,7 @@ def validate_multiple_predictors_and_subsets_auboc10(s, df_set, logging):
 def validate_multiple_predictors_and_subsets_auc(s, df_set, logging):
 
     logging.info("start create_AUC_4predictors_3databases_figs")
-    predictor_name_list = ["THOIPA_{}_LOO".format(s["set_number"]),"PREDDIMER", "TMDOCK", "LIPS_surface_ranked"] #"LIPS_L*E",
+    predictors = ["THOIPA_{}_LOO".format(s["set_number"]),"PREDDIMER", "TMDOCK", "LIPS_surface_ranked"] #"LIPS_L*E",
     subsets = ["crystal", "NMR", "ETRA"]
     for subset in subsets:
         mean_roc_auc_list = []
@@ -94,7 +95,7 @@ def validate_multiple_predictors_and_subsets_auc(s, df_set, logging):
         plt.close("all")
         figsize = np.array([3.42, 3.42]) * 2  # DOUBLE the real size, due to problems on Bo computer with fontsizes
         fig, ax = plt.subplots(figsize=figsize)
-        for predictor_name in predictor_name_list:
+        for predictor_name in predictors:
             mean_roc_auc = []
             mean_tpr = 0.0
             big_list_of_tprs = []
@@ -136,10 +137,10 @@ def validate_multiple_predictors_and_subsets_auc(s, df_set, logging):
         # fig.savefig(thoipapy.utils.pdf_subpath(AUC_ROC_png))
 
         df_tpr = pd.DataFrame.from_records(list(map(list, zip(*mean_tpr_list))),
-                                                    columns=predictor_name_list)
+                                                    columns=predictors)
         df_tpr.to_csv(ROC_curve_csv)
 
-        auc_mean_df = pd.DataFrame.from_records([mean_roc_auc_list], columns=predictor_name_list)
+        auc_mean_df = pd.DataFrame.from_records([mean_roc_auc_list], columns=predictors)
         auc_mean_df.to_csv(mean_AUC_file)
 
         plt.close("all")

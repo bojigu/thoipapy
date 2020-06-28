@@ -7,7 +7,6 @@ from typing import Union
 import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
-#from korbinian.utils import convert_truelike_to_bool, convert_falselike_to_bool
 from thoipapy.utils import convert_truelike_to_bool, convert_falselike_to_bool
 import thoipapy
 
@@ -39,7 +38,7 @@ def fig_plot_BOcurve_mult_train_datasets(s):
 
     #plt.rcParams.update({'font.size': 7})
 
-    test_set_list, train_set_list = thoipapy.figs.fig_utils.get_test_and_train_set_lists(s)
+    test_set_list, train_set_list = thoipapy.utils.get_test_and_train_set_lists(s)
 
     test_dataset_str = "-".join([str(n) for n in test_set_list])
     train_dataset_str = "-".join([str(n) for n in train_set_list])
@@ -51,10 +50,10 @@ def fig_plot_BOcurve_mult_train_datasets(s):
 
     plot_BOcurve(s, train_set_list, test_set_list, mult_THOIPA_dir, mult_testname)
 
-    plot_BOcurve(s, train_set_list, test_set_list, mult_THOIPA_dir, mult_testname, sheetname="df_o_over_r", suffix="_BO_curve_old_method")
+    plot_BOcurve(s, train_set_list, test_set_list, mult_THOIPA_dir, mult_testname, sheet_name="df_o_over_r", suffix="_BO_curve_old_method")
 
 
-def plot_BOcurve(s, train_set_list, test_set_list, mult_THOIPA_dir, mult_testname, sheetname="df_o_minus_r", suffix="_BO_curve"):
+def plot_BOcurve(s, train_set_list, test_set_list, mult_THOIPA_dir, mult_testname, sheet_name="df_o_minus_r", suffix="_BO_curve"):
     """ Separate function allowing a toggle of the OLD or NEW performance methods
 
     Parameters

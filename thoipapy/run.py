@@ -22,6 +22,7 @@ import thoipapy.feature_importance.mean_decrease_impurity
 import thoipapy.features.physical_parameters
 import thoipapy.validation.gather
 from thoipapy.clustering.pairwise_aln_similarity_matrix import create_identity_matrix_from_protein_set
+from thoipapy.utils import get_testsetname_trainsetname_from_run_settings
 
 warnings.filterwarnings("ignore")
 
@@ -249,9 +250,13 @@ if __name__ == "__main__":
         if s["run_indiv_validation_each_TMD"] == True:
             namedict = thoipapy.utils.create_namedict(os.path.join(s["dropbox_dir"], "protein_names.xlsx"))
             THOIPA_predictor_name = "THOIPA_{}_LOO".format(s["set_number"])
-            predictor_name_list = [THOIPA_predictor_name, "PREDDIMER", "TMDOCK", "LIPS_surface_ranked", "random"]
-            thoipapy.validation.indiv_validation.collect_indiv_validation_data(s, df_set, logging, namedict, predictor_name_list, THOIPA_predictor_name, subsets)
-            thoipapy.validation.indiv_validation.create_indiv_validation_figs(s, logging, namedict, predictor_name_list, THOIPA_predictor_name, subsets)
+            predictors = [THOIPA_predictor_name, "PREDDIMER", "TMDOCK", "LIPS_surface_ranked", "random"]
+            testsetname, trainsetname = get_testsetname_trainsetname_from_run_settings(s)
+            thoipa_trainsetname = f"thoipa.train{trainsetname}"
+            if s["setname"] == testsetname:
+                predictors.append(f"thoipa.train{trainsetname}")
+            thoipapy.validation.indiv_validation.collect_indiv_validation_data(s, df_set, logging, namedict, predictors, THOIPA_predictor_name, subsets)
+            thoipapy.validation.indiv_validation.create_indiv_validation_figs(s, logging, namedict, predictors, THOIPA_predictor_name, subsets)
             thoipapy.validation.multiple_predictors.validate_multiple_predictors_and_subsets_auboc10(s, df_set, logging)
             thoipapy.validation.multiple_predictors.validate_multiple_predictors_and_subsets_auc(s, df_set, logging)
 

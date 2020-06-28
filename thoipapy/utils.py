@@ -6,7 +6,6 @@ More recent functions are at the top.
 Many of these are taken from he korbinian python package by Mark Teese. This is allowed under the permissive MIT license.
 """
 import csv
-import errno
 import glob
 import logging
 import os
@@ -26,8 +25,6 @@ import platform
 import matplotlib.colors as colors
 import ctypes
 from scipy.special import comb
-
-from thoipapy.figs.fig_utils import get_test_and_train_set_lists
 
 
 class Command(object):
@@ -994,3 +991,30 @@ def get_testsetname_trainsetname_from_run_settings(s):
     testsetname = "set{:02d}".format(int(test_set_list[0]))
     trainsetname = "set{:02d}".format(int(train_set_list[0]))
     return testsetname, trainsetname
+
+
+def get_test_and_train_set_lists(s):
+
+    if s["test_datasets"] == True:
+        test_set_list = ["1"]
+    elif s["test_datasets"] == False:
+        test_set_list = ["0"]
+    elif isinstance(s["test_datasets"], int):
+        test_set_list = [str(s["test_datasets"])]
+    elif isinstance(s["test_datasets"], str):
+        test_set_list = s["test_datasets"].split(",")
+    else:
+        raise ValueError("test_datasets type is not correct {} ({})".format(s["test_datasets"], type(s["test_datasets"])))
+
+    if s["train_datasets"] == True:
+        train_set_list = ["1"]
+    elif s["train_datasets"] == False:
+        train_set_list = ["0"]
+    elif isinstance(s["train_datasets"], int):
+        train_set_list = [str(s["train_datasets"])]
+    elif isinstance(s["train_datasets"], str):
+        train_set_list = s["train_datasets"].split(",")
+    else:
+        raise ValueError("train_datasets type is not correct {} ({})".format(s["train_datasets"], type(s["train_datasets"])))
+
+    return test_set_list, train_set_list

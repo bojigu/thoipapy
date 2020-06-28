@@ -16,7 +16,7 @@ import thoipapy
 from thoipapy.utils import make_sure_path_exists, get_testsetname_trainsetname_from_run_settings
 
 
-def collect_indiv_validation_data(s, df_set, logging, namedict, predictor_name_list, THOIPA_predictor_name, subsets):
+def collect_indiv_validation_data(s, df_set, logging, namedict, predictors, THOIPA_predictor_name, subsets):
     """
 
     Parameters
@@ -25,7 +25,7 @@ def collect_indiv_validation_data(s, df_set, logging, namedict, predictor_name_l
     df_set
     logging
     namedict
-    predictor_name_list
+    predictors
     THOIPA_predictor_name
 
     Returns
@@ -52,7 +52,7 @@ def collect_indiv_validation_data(s, df_set, logging, namedict, predictor_name_l
     #if not os.path.isdir(os.path.dirname(BOAUC10_barchart_pdf)):
     #    os.makedirs(os.path.dirname(BOAUC10_barchart_pdf))
 
-    for predictor in predictor_name_list:
+    for predictor in predictors:
         BO_data_df = pd.DataFrame()
         
         xv_dict = {}
@@ -218,7 +218,7 @@ def collect_indiv_validation_data(s, df_set, logging, namedict, predictor_name_l
         # AUC_4pred_mean_all_indiv_prot_df.to_excel(writer, sheet_name="ROC_AUC_mean_indiv")
 
 
-def create_indiv_validation_figs(s, logging, namedict, predictor_name_list, THOIPA_predictor_name, subsets):
+def create_indiv_validation_figs(s, logging, namedict, predictors, THOIPA_predictor_name, subsets):
     perc_interf_vs_PR_cutoff_linechart_data_csv = Path(s["thoipapy_data_folder"]) / f"Results/{s['setname']}/crossvalidation/indiv_validation/bocurve/perc_interf_vs_PR_cutoff_linechart_data.csv"
     indiv_validation_data_xlsx= Path(s["thoipapy_data_folder"]) / f"Results/{s['setname']}/crossvalidation/indiv_validation/bocurve/indiv_validation_data.xlsx"
 
@@ -248,17 +248,17 @@ def create_indiv_validation_figs(s, logging, namedict, predictor_name_list, THOI
     create_mean_ROC_AUC_barchart(ROC_AUC_df, mean_ROC_AUC_barchart_png)
     create_mean_PR_AUC_barchart(PR_AUC_df, mean_PR_AUC_barchart_png)
 
-    create_scatter_ROC_AUC_vs_PR_AUC(s, predictor_name_list, ROC_AUC_vs_PR_AUC_scatter_png)
+    create_scatter_ROC_AUC_vs_PR_AUC(s, predictors, ROC_AUC_vs_PR_AUC_scatter_png)
 
     # for the complete list of proteins
-    create_linechart_perc_interf_vs_PR_cutoff(s, predictor_name_list, perc_interf_vs_PR_cutoff_linechart_png, perc_interf_vs_PR_cutoff_linechart_data_csv)
+    create_linechart_perc_interf_vs_PR_cutoff(s, predictors, perc_interf_vs_PR_cutoff_linechart_png, perc_interf_vs_PR_cutoff_linechart_data_csv)
 
     # for each subset(e.g. ETRA) separately. Saved in "by_subset" subfolder
     for subset in subsets:
         perc_interf_vs_PR_cutoff_linechart_single_database_png: Union[Path, str] = indiv_validation_figs_dir / f"by_subset/{subset}_perc_interf_vs_PR_cutoff_linechart.png"
         perc_interf_vs_PR_cutoff_linechart_single_database_data_csv: Union[Path, str] = Path(s["thoipapy_data_folder"]) / f"Results/{s['setname']}/crossvalidation/indiv_validation/bocurve/{subset}_perc_interf_vs_PR_cutoff_linechart_data.csv"
 
-        create_linechart_perc_interf_vs_PR_cutoff(s, predictor_name_list, perc_interf_vs_PR_cutoff_linechart_single_database_png, perc_interf_vs_PR_cutoff_linechart_single_database_data_csv, subset=subset)
+        create_linechart_perc_interf_vs_PR_cutoff(s, predictors, perc_interf_vs_PR_cutoff_linechart_single_database_png, perc_interf_vs_PR_cutoff_linechart_single_database_data_csv, subset=subset)
 
     logging.info("finished run_indiv_validation_THOIPA_PREDDIMER_TMDOCK")
 
@@ -303,10 +303,10 @@ def precision_recall_curve_rises_above_threshold(precision, recall, threshold=0.
     return PR_rises_above_threshold
 
 
-def create_scatter_ROC_AUC_vs_PR_AUC(s, predictor_name_list, ROC_AUC_vs_PR_AUC_scatter_png):
+def create_scatter_ROC_AUC_vs_PR_AUC(s, predictors, ROC_AUC_vs_PR_AUC_scatter_png):
 
     fig, ax = plt.subplots(figsize=(8, 8))
-    for predictor in predictor_name_list:
+    for predictor in predictors:
         auc_pkl = Path(s["thoipapy_data_folder"]) / f"Results/{s['setname']}/crossvalidation/indiv_validation/roc_auc/{predictor}/ROC_AUC_data.pkl"
         with open(auc_pkl, "rb") as f:
             xv_dict = pickle.load(f)
@@ -750,15 +750,15 @@ def create_ROC_comp_4predictors(s, df_set, logging):
 
     logging.info("start create_ROC_Curve_figs_THOIPA_PREDDIMER_TMDOCK_LIPS")
     pred_colname = "THOIPA_{}_LOO".format(s["set_number"])
+
     prediction_name_list = [pred_colname, "PREDDIMER", "TMDOCK", "LIPS_surface_ranked"]
-
     testsetname, trainsetname = get_testsetname_trainsetname_from_run_settings(s)
-
     if s["setname"] == testsetname:
         prediction_name_list.append(f"thoipa.train{trainsetname}")
 
     ROC_4predictor_csv = Path(s["thoipapy_data_folder"]) / f"Results/{s['setname']}/crossvalidation/{s['setname']}_ROC_4predictors.csv"
     ROC_4predictor_png = Path(s["thoipapy_data_folder"]) / f"Results/{s['setname']}/crossvalidation/{s['setname']}_ROC_4predictors.png"
+
     figsize = np.array([3.42, 3.42]) * 2  # DOUBLE the real size, due to problems on Bo computer with fontsizes
     fig, ax = plt.subplots(figsize=figsize)
     mean_tpr_list=[]
@@ -799,7 +799,7 @@ def create_ROC_comp_4predictors(s, df_set, logging):
     logging.info(f"fig saved: {ROC_4predictor_png}")
 
 
-def create_linechart_perc_interf_vs_PR_cutoff(s, predictor_name_list, perc_interf_vs_PR_cutoff_linechart_png, perc_interf_vs_PR_cutoff_linechart_data_csv, subset="all"):
+def create_linechart_perc_interf_vs_PR_cutoff(s, predictors, perc_interf_vs_PR_cutoff_linechart_png, perc_interf_vs_PR_cutoff_linechart_data_csv, subset="all"):
     """ Create linechart (and barchart) showing percentage of interface residues correctly predicted, according
     to precision-recall cutoffs.
 
@@ -807,7 +807,7 @@ def create_linechart_perc_interf_vs_PR_cutoff(s, predictor_name_list, perc_inter
     ----------
     s : dict
         Settings dictionary
-    predictor_name_list : list
+    predictors : list
         List of predictors to include in plot
     perc_interf_vs_PR_cutoff_linechart_png : str
         Linechart path
@@ -835,7 +835,7 @@ def create_linechart_perc_interf_vs_PR_cutoff(s, predictor_name_list, perc_inter
     cutoff_list = np.arange(0.1, 0.95, 0.05)
 
     fig, ax = plt.subplots(figsize=(3.42, 3.42))
-    for predictor in predictor_name_list:
+    for predictor in predictors:
 
         result_dict = {}
 
@@ -863,7 +863,7 @@ def create_linechart_perc_interf_vs_PR_cutoff(s, predictor_name_list, perc_inter
         df_PR_cutoff_all[predictor] = df_cutoffs.sum(axis=1) / df_cutoffs.shape[1]
 
 
-    THOIPA_name = [x for x in predictor_name_list if "THOIPA" in x][0]
+    THOIPA_name = [x for x in predictors if "THOIPA" in x][0]
     df_PR_cutoff_all.columns = pd.Series(df_PR_cutoff_all.columns).replace(THOIPA_name, "THOIPA")
 
     # round index so values at index 0.5 can be identified
