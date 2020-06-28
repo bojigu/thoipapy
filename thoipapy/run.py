@@ -235,14 +235,7 @@ if __name__ == "__main__":
         if s["calc_PREDDIMER_TMDOCK_closedist"] == True:
             thoipapy.figs.calc_PREDDIMER_TMDOCK_closedist.calc_closedist_from_PREDDIMER_TMDOCK_best_model(s, df_set, logging)
 
-        if s["merge_predictions"] == True:
-            thoipapy.validation.combine_mult_predictors.merge_predictions(s, df_set, logging)
-
         if s["run_validation"] == True:
-            thoipapy.validation.tenfold.run_10fold_cross_validation(s, logging)
-            thoipapy.validation.tenfold.create_10fold_cross_validation_fig(s, logging)
-            thoipapy.validation.leave_one_out.run_LOO_validation(s, df_set, logging)
-            thoipapy.validation.leave_one_out.create_LOO_validation_fig(s, df_set, logging)
             namedict = thoipapy.utils.create_namedict(os.path.join(s["dropbox_dir"], "protein_names.xlsx"))
             THOIPA_predictor_name = "THOIPA_{}_LOO".format(s["set_number"])
             predictors = [THOIPA_predictor_name, "PREDDIMER", "TMDOCK", "LIPS_surface_ranked", "random"]
@@ -250,12 +243,24 @@ if __name__ == "__main__":
             thoipa_trainsetname = f"thoipa.train{trainsetname}"
             if s["setname"] == testsetname:
                 predictors.append(f"thoipa.train{trainsetname}")
+
+            thoipapy.validation.tenfold.run_10fold_cross_validation(s, logging)
+            thoipapy.validation.tenfold.create_10fold_cross_validation_fig(s, logging)
+
+            thoipapy.validation.leave_one_out.run_LOO_validation(s, df_set, logging)
+            thoipapy.validation.leave_one_out.create_LOO_validation_fig(s, df_set, logging)
+
+            thoipapy.validation.combine_mult_predictors.merge_predictions(s, df_set, logging)
+
             thoipapy.validation.indiv_validation.collect_indiv_validation_data(s, df_set, logging, namedict, predictors, THOIPA_predictor_name, subsets)
             thoipapy.validation.indiv_validation.create_indiv_validation_figs(s, logging, namedict, predictors, THOIPA_predictor_name, subsets)
+
             thoipapy.validation.multiple_predictors.validate_multiple_predictors_and_subsets_auboc10(s, df_set, logging)
             thoipapy.validation.multiple_predictors.validate_multiple_predictors_and_subsets_auc(s, df_set, logging)
+
             thoipapy.validation.roc.create_ROC_all_residues(s, df_set, logging)
             thoipapy.validation.precision_recall.create_precision_recall_all_residues(s, df_set, logging)
+
             thoipapy.validation.gather.gather_validation_data_for_figs(s, df_set, logging)
 
 
