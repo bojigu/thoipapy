@@ -20,6 +20,7 @@ import thoipapy.experimental_data.add_experimental_data_to_train_set
 import thoipapy.feature_importance.mean_decrease_accuracy
 import thoipapy.feature_importance.mean_decrease_impurity
 import thoipapy.features.physical_parameters
+import thoipapy.other.validation_deprecated.validation_deprecated
 import thoipapy.validation.gather
 from thoipapy.clustering.pairwise_aln_similarity_matrix import create_identity_matrix_from_protein_set
 from thoipapy.utils import get_testsetname_trainsetname_from_run_settings
@@ -264,7 +265,7 @@ if __name__ == "__main__":
             thoipapy.figs.create_heatmap_from_merge_file.create_merged_heatmap(s, df_set, logging)
 
         if s["create_ROC_4predictors"] == True:
-            thoipapy.validation.indiv_validation.create_ROC_comp_4predictors(s, df_set, logging)
+            thoipapy.other.validation_deprecated.validation_deprecated.calc_roc_each_tmd_separately_deprecated(s, df_set, logging)
 
         if "download_10_homologues_from_ncbi" in s:
             if s["download_10_homologues_from_ncbi"] == True:

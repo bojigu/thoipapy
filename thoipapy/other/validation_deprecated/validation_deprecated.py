@@ -9,12 +9,14 @@ from typing import Union
 
 import numpy as np
 import pandas as pd
+from matplotlib import pyplot as plt
 from numpy import interp
 import joblib
 from sklearn.metrics import roc_curve, auc
 
 import thoipapy
 import thoipapy.validation.feature_selection
+from thoipapy.utils import get_testsetname_trainsetname_from_run_settings
 from thoipapy.validation.feature_selection import drop_cols_not_used_in_ML
 
 
@@ -318,3 +320,56 @@ def create_one_out_train_data(acc_db,set_path,s):
                 # reset the index to be a range (0,...).
     df_train.index = range(df_train.shape[0])
     return df_train
+
+
+def calc_roc_each_tmd_separately_deprecated(s, df_set, logging):
+
+    logging.info("start create_ROC_Curve_figs_THOIPA_PREDDIMER_TMDOCK_LIPS")
+    pred_colname = "THOIPA_{}_LOO".format(s["set_number"])
+
+    prediction_name_list = [pred_colname, "PREDDIMER", "TMDOCK", "LIPS_surface_ranked"]
+    testsetname, trainsetname = get_testsetname_trainsetname_from_run_settings(s)
+    if s["setname"] == testsetname:
+        prediction_name_list.append(f"thoipa.train{trainsetname}")
+
+    roc_each_tmd_separate_deprecated_csv = Path(s["thoipapy_data_folder"]) / f"Results/{s['setname']}/crossvalidation/{s['setname']}_roc_each_tmd_separate_deprecated.csv"
+    roc_each_tmd_separate_deprecated_png = Path(s["thoipapy_data_folder"]) / f"Results/{s['setname']}/crossvalidation/{s['setname']}_roc_each_tmd_separate_deprecated.png"
+
+    figsize = np.array([3.42, 3.42]) * 2  # DOUBLE the real size, due to problems on Bo computer with fontsizes
+    fig, ax = plt.subplots(figsize=figsize)
+    mean_tpr_list=[]
+    for n, predictor in enumerate(prediction_name_list):
+        mean_tpr = 0.0
+        mean_fpr = np.linspace(0, 1, 100)
+        for i in df_set.index:
+            acc = df_set.loc[i, "acc"]
+            database = df_set.loc[i, "database"]
+            merged_data_csv_path: Union[Path, str] = Path(s["thoipapy_data_folder"]) / f"Results/{s['setname']}/predictions/merged/{database}.{acc}.merged.csv"
+            dfm = pd.read_csv(merged_data_csv_path, engine="python", index_col=0)
+            dfm.dropna(inplace=True)
+            interface = dfm["interface"].values
+            if n ==0 or n == 3:
+                predict = dfm[predictor].values
+            else:
+                predict = -1 * dfm[predictor].values
+            fpr, tpr, thresholds = roc_curve(interface, predict, drop_intermediate=False)
+            mean_tpr += interp(mean_fpr, fpr, tpr)
+            mean_tpr[0] = 0.0
+        mean_tpr /= len(df_set.index)
+        mean_tpr[-1] = 1.0
+        mean_roc_auc = auc(mean_fpr, mean_tpr)
+        mean_tpr_list.append(mean_tpr)
+        ax.plot(mean_fpr, mean_tpr, lw=1,label="{} (area = {:.2f})".format(predictor, mean_roc_auc), alpha=0.8)
+    ax.plot([0, 1], [0, 1], '--', color=(0.6, 0.6, 0.6), label='random')
+    ax.set_xlim([-0.05, 1.05])
+    ax.set_ylim([-0.05, 1.05])
+    ax.set_xlabel("False positive rate")
+    ax.set_ylabel("True positive rate")
+    ax.legend(loc="lower right")
+    fig.tight_layout()
+    fig.savefig(roc_each_tmd_separate_deprecated_png, dpi=240)
+    #fig.savefig(thoipapy.utils.pdf_subpath(ROC_4predictor_png))
+    df_tpr = pd.DataFrame.from_records(list(map(list, zip(*mean_tpr_list))),
+                                       columns=prediction_name_list)
+    df_tpr.to_csv(roc_each_tmd_separate_deprecated_csv)
+    logging.info(f"fig saved: {roc_each_tmd_separate_deprecated_png}")
