@@ -1,5 +1,6 @@
 import warnings
 from pathlib import Path
+from typing import Union
 
 warnings.simplefilter(action='ignore', category=FutureWarning)
 import pandas as pd
@@ -8,219 +9,12 @@ import numpy as np
 import matplotlib.pyplot as plt
 import warnings
 from scipy.stats import linregress
-#from eccpy.tools import normalise_0_1
-from thoipapy.utils import normalise_0_1
+from thoipapy.utils import normalise_0_1, make_sure_path_exists
+
 warnings.filterwarnings("ignore")
-#
-# def Test_Etra_deprecated(s):
-#     testsetname = "set03"
-#     train_set_list = s["train_datasets"].split(",")
-#     for train_set in train_set_list:
-#         trainsetname = "set{:02d}".format(int(train_set))
-#         traindata_set = os.path.join(s["Results_folder"], trainsetname, "{}_train_data.csv".format(trainsetname))
-#         train_df =  pd.read_csv(traindata_set, sep=',', engine='python', index_col=0)
-#
-#         BO_curve_csv = os.path.join(s["thoipapy_data_folder"], "Results", "compare_testset_trainset", "data", "Train{}_Test{}.bocurve.csv".format(trainsetname, testsetname))
-#
-#         testset_path = thoipapy.common.get_path_of_protein_set(testsetname, s["sets_folder"])
-#
-#         testdataset_df = pd.read_excel(testset_path,sheet_name="proteins")
-#         acc_list = testdataset_df.acc.tolist()
-#         database = testdataset_df.database[0]
-#         dfc = pd.DataFrame()
-#         for i in testdataset_df.index:
-#             acc = testdataset_df.loc[i, "acc"]
-#             database = testdataset_df.loc[i, "database"]
-#             testdata_combined_file = os.path.join(s["thoipapy_data_folder"], "Features", "combined", database, "{}.surr20.gaps5.combined_features.csv".format(acc))
-#             test_df = pd.read_csv(testdata_combined_file, sep=',', engine='python', index_col=0)
-#
-#             #odf = save_THOIPA_pred_indiv_prot(acc, train_df, test_df)
-#             odf = save_THOIPA_pred_indiv_prot(s, model_pkl, testdata_combined_file, THOIPA_pred_csv, combined_incl_THOIPA_csv, logging)
-#             if dfc.empty:
-#                 dfc = odf
-#             else:
-#                 dfc = pd.concat([dfc, odf], axis=1, join="outer")
-#
-#         dfc.to_csv(BO_curve_csv)
 
 
-#
-# def save_THOIPA_pred_indiv_prot(acc, train_df, test_df, database):
-#     #drop_cols_not_used_in_ML
-#     #X=train_df.drop(train_features_del,axis=1)
-#     X = thoipapy.features.RF_Train_Test.drop_cols_not_used_in_ML(logging, train_df, s["excel_file_with_settings"])
-#     y = train_df["interface"]
-#     clf = RandomForestClassifier(max_depth=5, n_estimators=10, max_features=1)
-#     fit = clf.fit(X,y)
-#
-#     interface_score = test_df.interface_score
-#
-#     if database == "crystal" or database == "NMR":
-#         interface_score = test_df.interface_score
-#         interface_score = -1 * interface_score  #(it is closest distance and low value means high propencity of interfacial)
-#     # if database == "ETRA":
-#     #     dirupt_path = os.path.join(s["toxr_disruption_folder"], "{}_mul_scan_average_data.xlsx".format(acc))
-#     #     ddf = pd.read_excel(dirupt_path, index_col=0)
-#     #     interface_score = ddf.Disruption
-#     #     interface_score = interface_score      #(it is closest experimental disruption and high value means high propencity of interfacial)
-#     test_df.index = test_df.index.astype(int) + 1
-#     Lips_score = test_df.LIPS_polarity * test_df.LIPS_entropy
-#
-#     #tX=test_df.drop(test_features_del,axis=1)
-#     tX = thoipapy.features.RF_Train_Test.drop_cols_not_used_in_ML(logging, test_df, s["excel_file_with_settings"])
-#
-#     if hasattr(clf,'predict_proba'):
-#         prob_pos = fit.predict_proba(tX)[:,1]
-#     else:
-#         prob_pos = fit.decision_function(tX)
-#         prob_pos = (prob_pos - prob_pos.min())/(prob_pos.max() - prob_pos.min())
-#
-#     if database == "crystal" or database == "NMR":
-#         interface_score = -1 * interface_score  # (it is closest distance and low value means high propencity of interfacial)
-#     elif database == "ETRA":
-#         pass  # (it is closest experimental disruption and high value means high propencity of interfacial)
-#     else:
-#         raise ValueError()
-#
-#     THOIPA_BO_single_prot_df = thoipapy.figs.fig_utils.calc_best_overlap(acc, prob_pos, interface_score, database)
-#
-#     return THOIPA_BO_single_prot_df
-
-
-
-# def create_extra_BO_curve_figs(bo_data_csv, out_folder, names_excel_path):
-#     """Analyse the Bo-curve underlying data.
-#
-#     Parses data into more easily manipulated dataframes.
-#     Creates figures if desired.
-#     All figures are saved in a subfolder with the same name as the original file.
-#
-#     Parameters
-#     ----------
-#     bo_data_csv : str
-#         Path to the csv created by bo, with the underlying data.
-#         Index : Top1, Top2, Ono, Pno, Rno etc
-#     names_excel_path : str
-#         Path to the excel file with the protein short names and reference.
-#
-#     Usage
-#     -----
-#     import datoxr
-#     bo_data_csv = r"D:\drive\TMD_homodimer\figs\SuppDataX02-best_overlap_data\SuppDataX02.csv"
-#     names_excel_path = os.path.join(s["dropbox_dir"], "protein_names.xlsx")
-#     datoxr.figs.bo_curve_analysis.analyse_bo_curve_underlying_data(bo_data_csv, names_excel_path)
-#     """
-#
-#     # change to empty list if you don't want to create figures. Or [7] if you only want to process figure 7, for example.
-#     list_figs_to_create = range(1, 11)
-#     #list_figs_to_create = [7]
-#
-#     other_figs_path = os.path.join(out_folder, "other_figs")
-#     if not os.path.exists(other_figs_path):
-#         os.makedirs(other_figs_path)
-#
-#     BO_data_excel = os.path.join(out_folder, "BO_curve_data.xlsx")
-#     # linechart_mean_obs_and_rand = os.path.join(other_figs_path, "1_linechart_mean_obs_and_rand.png")
-#     # linechart_obs_indiv = os.path.join(other_figs_path, "2_linechart_obs_indiv.png")
-#     # linechart_p_indiv = os.path.join(other_figs_path, "3_linechart_p_indiv.png")
-#     # linechart_o_minus_r = os.path.join(other_figs_path, "4_linechart_o_minus_r.png")
-#     # linechart_o_over_r = os.path.join(other_figs_path, "5_linechart_o_over_r.png")
-#     BO_linechart_png = os.path.join(out_folder, "BO_curve_single_dataset.png")
-#     BO_barchart_png = os.path.join(out_folder, "performance_individual_proteins.png")
-#
-#     analyse_bo_curve_underlying_data(bo_data_csv, BO_data_excel)
-
-    # dfb = pd.read_csv(bo_data_csv, index_col=0)
-    #
-    # """ORIGINAL BO DATA CSV LOOKS LIKE THIS
-    # Top1 = sample size 1
-    # Ono = overlap in data
-    # Rno = random overlap based on that sequence length and sample size
-    # Pono = p-value for finding that overlap
-    #
-    #      Unnamed: 1  O75460  P02724  P05106  P06583  P08514  P0A6S5  P23470  P35590  Q08345  Q12983  Q16827  Q16832  Q6ZRP7  Q7L4S7  Q8NI60  Q92729  Q9Y286  Ratio (Average(Ono)/Average(Rno))
-    # NaN         Ono    0.00    0.00    0.00    0.00    0.00    0.00    0.00    0.00    1.00    0.00    0.00    1.00    1.00    1.00    0.00    0.00    0.00                                NaN
-    # Top1        Rno    0.05    0.04    0.05    0.04    0.05    0.06    0.04    0.04    0.05    0.04    0.04    0.05    0.06    0.05    0.06    0.04    0.05                               5.01
-    # NaN        Pono    0.95    0.96    0.95    0.96    0.95    0.94    0.96    0.96    0.05    0.96    0.96    0.05    0.06    0.05    0.94    0.96    0.95                                NaN
-    # NaN         Ono    1.00    1.00    0.00    1.00    0.00    0.00    1.00    0.00    1.00    1.00    0.00    1.00    2.00    2.00    0.00    0.00    1.00                                NaN
-    # Top2        Rno    0.19    0.17    0.21    0.15    0.19    0.24    0.17    0.17    0.19    0.17    0.16    0.19    0.25    0.20    0.24    0.17    0.20                               3.68
-    # """
-    #
-    # # create an index based on sample size [1 1 1 2 2 2  etc..
-    # ind = []
-    # for i in range(1, int((len(dfb) / 3)) + 1):
-    #     ind += list(np.array([1, 1, 1]) * i)
-    # dfb.index = ind
-    # dfb.index.name = "sample size"
-    #
-    # """NOW INDICES ARE BASED ON SAMPLE SIZE
-    #
-    #             Unnamed: 1  O75460  P02724  P05106  P06583  P08514  P0A6S5  P23470  P35590  Q08345  Q12983  Q16827  Q16832  Q6ZRP7  Q7L4S7  Q8NI60  Q92729  Q9Y286  Ratio (Average(Ono)/Average(Rno))
-    # sample size
-    # 1                  Ono    0.00    0.00    0.00    0.00    0.00    0.00    0.00    0.00    1.00    0.00    0.00    1.00    1.00    1.00    0.00    0.00    0.00                                NaN
-    # 1                  Rno    0.05    0.04    0.05    0.04    0.05    0.06    0.04    0.04    0.05    0.04    0.04    0.05    0.06    0.05    0.06    0.04    0.05                               5.01
-    # 1                 Pono    0.95    0.96    0.95    0.96    0.95    0.94    0.96    0.96    0.05    0.96    0.96    0.05    0.06    0.05    0.94    0.96    0.95                                NaN
-    # 2                  Ono    1.00    1.00    0.00    1.00    0.00    0.00    1.00    0.00    1.00    1.00    0.00    1.00    2.00    2.00    0.00    0.00    1.00                                NaN
-    # 2                  Rno    0.19    0.17    0.21    0.15    0.19    0.24    0.17    0.17    0.19    0.17    0.16    0.19    0.25    0.20    0.24    0.17    0.20
-    # """
-    #
-    # # split into separate dataframes
-    # # dataframe of observed overlaps
-    # dfobs = dfb.iloc[::3, 1:-1].astype(int)
-    # # dataframe of random calculated overlaps
-    # dfrand = dfb.iloc[1::3, 1:-1]
-    # # dataframe of p-values
-    # dfp = dfb.iloc[2::3, 1:-1]
-    #
-    # """FOR EXAMPLE df_obs NOW LOOKS LIKE THIS, WITH A ROW FOR EACH SAMPLE SIZE:
-    #
-    #              O75460  P02724  P05106  P06583  P08514  P0A6S5  P23470  P35590  Q08345  Q12983  Q16827  Q16832  Q6ZRP7  Q7L4S7  Q8NI60  Q92729  Q9Y286
-    # sample size
-    # 1                 0       0       0       0       0       0       0       0       1       0       0       1       1       1       0       0       0
-    # 2                 1       1       0       1       0       0       1       0       1       1       0       1       2       2       0       0       1
-    # 3                 1       1       1       2       1       0       1       0       2       2       0       2       2       2       0       0       2
-    # 4                 2       2       1       2       1       0       2       1       3       2       1       3       2       2       0       1       2
-    # 5                 3       3       2       3       2       1       2       2       4       4       2       4       3       2       1       2       3"""
-    #
-    # df_o_minus_r = dfobs - dfrand
-    # df_o_over_r = dfobs / dfrand
-    #
-    # """df_o_minus_r is negative where the result is lower than random
-    #
-    #              O75460  P02724  P05106  P06583  P08514  P0A6S5  P23470  P35590  Q08345  Q12983  Q16827  Q16832  Q6ZRP7  Q7L4S7  Q8NI60  Q92729  Q9Y286
-    # sample size
-    # 1             -0.05   -0.04   -0.05   -0.04   -0.05   -0.06   -0.04   -0.04    0.95   -0.04   -0.04    0.95    0.94    0.95   -0.06   -0.04   -0.05
-    # 2              0.81    0.83   -0.21    0.85   -0.19   -0.24    0.83   -0.17    0.81    0.83   -0.16    0.81    1.75    1.80   -0.24   -0.17    0.80
-    # 3              0.57    0.61    0.53    1.65    0.57   -0.53    0.61   -0.37    1.57    1.63   -0.36    1.57    1.44    1.55   -0.53   -0.37    1.55
-    # 4              1.24    1.30    0.16    1.38    0.24   -0.94    1.30    0.33    2.24    1.33    0.36    2.24    1.00    1.20   -0.94    0.33    1.20
-    # 5              1.81    1.91    0.68    2.04    0.81   -0.47    0.91    0.96    2.81    2.96    1.00    2.81    1.44    0.75   -0.47    0.96    1.75
-    #
-    #
-    # df_o_over_r is where the result is lower than random.
-    # This is not quite a fair comparison, as the zeros are caused by 0 overlap / signigicant random overlap
-    #
-    #                O75460    P02724    P05106    P06583    P08514    P0A6S5    P23470    P35590     Q08345    Q12983  Q16827     Q16832     Q6ZRP7     Q7L4S7    Q8NI60    Q92729    Q9Y286
-    # sample size
-    # 1            0.000000  0.000000  0.000000  0.000000  0.000000  0.000000  0.000000  0.000000  20.000000  0.000000  0.0000  20.000000  16.666667  20.000000  0.000000  0.000000  0.000000
-    # 2            5.263158  5.882353  0.000000  6.666667  0.000000  0.000000  5.882353  0.000000   5.263158  5.882353  0.0000   5.263158   8.000000  10.000000  0.000000  0.000000  5.000000
-    # 3            2.325581  2.564103  2.127660  5.714286  2.325581  0.000000  2.564103  0.000000   4.651163  5.405405  0.0000   4.651163   3.571429   4.444444  0.000000  0.000000  4.444444
-    # 4            2.631579  2.857143  1.190476  3.225806  1.315789  0.000000  2.857143  1.492537   3.947368  2.985075  1.5625   3.947368   2.000000   2.500000  0.000000  1.492537  2.500000
-    # 5            2.521008  2.752294  1.515152  3.125000  1.680672  0.680272  1.834862  1.923077   3.361345  3.846154  2.0000   3.361345   1.923077   1.600000  0.680272  1.923077  2.400000
-    # """
-    #
-    # #################################################################
-    # #           SAVE PARSED DATAFRAMES TO AN EXCEL FILE             #
-    # #################################################################
-    #
-    # with pd.ExcelWriter(BO_data_excel) as writer:
-    #     dfobs.to_excel(writer, sheet_name="dfobs")
-    #     dfrand.to_excel(writer, sheet_name="dfrand")
-    #     dfp.to_excel(writer, sheet_name="dfp")
-    #     df_o_minus_r.to_excel(writer, sheet_name="df_o_minus_r")
-    #     df_o_over_r.to_excel(writer, sheet_name="df_o_over_r")
-
-
-def parse_BO_data_csv_to_excel(bo_data_csv, BO_data_excel, logging, predictor_name=""):
+def parse_BO_data_csv_to_excel(bo_data_csv, bocurve_data_xlsx, logging, predictor_name=""):
     """
 
     Run using s["create_AUC_AUBOC_separate_database"]
@@ -228,7 +22,7 @@ def parse_BO_data_csv_to_excel(bo_data_csv, BO_data_excel, logging, predictor_na
     Parameters
     ----------
     bo_data_csv
-    BO_data_excel
+    bocurve_data_xlsx
     logging
     predictor_name
 
@@ -372,7 +166,7 @@ def parse_BO_data_csv_to_excel(bo_data_csv, BO_data_excel, logging, predictor_na
     #           SAVE PARSED DATAFRAMES TO AN EXCEL FILE             #
     #################################################################
 
-    with pd.ExcelWriter(BO_data_excel) as writer:
+    with pd.ExcelWriter(bocurve_data_xlsx) as writer:
         dfobs.to_excel(writer, sheet_name="dfobs")
         dfrand.to_excel(writer, sheet_name="dfrand")
         dfp.to_excel(writer, sheet_name="dfp")
@@ -384,7 +178,7 @@ def parse_BO_data_csv_to_excel(bo_data_csv, BO_data_excel, logging, predictor_na
         AUBOC10_df.to_excel(writer, sheet_name="AUBOC10")
 
 
-def parse_BO_data_csv_to_excel_DEPRECATED_NONFRACTION_VERSION(bo_data_csv, BO_data_excel, logging, predictor_name=""):
+def parse_BO_data_csv_to_excel_DEPRECATED_NONFRACTION_VERSION(bo_data_csv, bocurve_data_xlsx, logging, predictor_name=""):
     """
     """
     dfb = pd.read_csv(bo_data_csv, index_col=0)
@@ -481,7 +275,7 @@ def parse_BO_data_csv_to_excel_DEPRECATED_NONFRACTION_VERSION(bo_data_csv, BO_da
     #           SAVE PARSED DATAFRAMES TO AN EXCEL FILE             #
     #################################################################
 
-    with pd.ExcelWriter(BO_data_excel) as writer:
+    with pd.ExcelWriter(bocurve_data_xlsx) as writer:
         dfobs.to_excel(writer, sheet_name="dfobs")
         dfrand.to_excel(writer, sheet_name="dfrand")
         dfp.to_excel(writer, sheet_name="dfp")
@@ -491,9 +285,10 @@ def parse_BO_data_csv_to_excel_DEPRECATED_NONFRACTION_VERSION(bo_data_csv, BO_da
 
 
 
-def save_BO_linegraph_and_barchart(s, BO_data_excel, BO_linechart_png, BO_barchart_png, namedict, logging, AUC_ser, plot_o_over_r=False):
+def save_BO_linegraph_and_barchart(s, bocurve_data_xlsx, BO_linechart_png, BO_barchart_png, namedict, logging, AUC_ser, plot_o_over_r=False):
 
-    df_o_minus_r = pd.read_excel(BO_data_excel, sheet_name="df_o_minus_r", index_col=0)
+    df_o_minus_r = pd.read_excel(bocurve_data_xlsx, sheet_name="df_o_minus_r", index_col=0)
+    BO_scatter_png = str(BO_barchart_png)[:-12] + "scatter.png"
 
     #######################################################################################################
     #                                                                                                     #
@@ -501,7 +296,7 @@ def save_BO_linegraph_and_barchart(s, BO_data_excel, BO_linechart_png, BO_barcha
     #                                                                                                     #
     #######################################################################################################
     # load AUBOC10 values as a series
-    AUBOC10_ser = pd.read_excel(BO_data_excel, sheet_name="AUBOC10", index_col=0)["AUBOC10"].copy()
+    AUBOC10_ser = pd.read_excel(bocurve_data_xlsx, sheet_name="AUBOC10", index_col=0)["AUBOC10"].copy()
     # select sample sizes 5 and 10
     df_valid_indiv = df_o_minus_r.loc[[5, 10], :].T.copy()
     df_valid_indiv["AUBOC10"] = AUBOC10_ser
@@ -547,22 +342,20 @@ def save_BO_linegraph_and_barchart(s, BO_data_excel, BO_linechart_png, BO_barcha
     ax.grid(False)
     #BO_barchart_png = os.path.join(BO_curve_folder, "AUBOC10_barchart.png")
 
-    fig.savefig(BO_barchart_png[:-12] + "scatter.png", dpi=240)
+    fig.savefig(BO_scatter_png, dpi=240)
 
     # simply normalise all between 0 and 1
     for col in df_valid_indiv.columns:
         df_valid_indiv[col] = normalise_0_1(df_valid_indiv[col])[0] + 0.01
 
-    BO_curve_folder = Path(s["thoipapy_data_folder"]) / "Results" / s["setname"] / "crossvalidation"
-    crossvalidation_data_dir = BO_curve_folder / "data"
-    if not crossvalidation_data_dir.is_dir():
-        crossvalidation_data_dir.mkdir(parents=True)
-    BO_data_excel = os.path.join(BO_curve_folder, "data", "{}_BO_curve_data.xlsx".format(s["setname"]))
+    bocurve_data_xlsx: Union[Path, str] = Path(s["thoipapy_data_folder"]) / f"Results/{s['setname']}/crossvalidation/data/{s['setname']}_thoipa_loo_bo_curve_data.xlsx"
+    BO_data_valid_indiv_csv: Union[Path, str] = Path(s["thoipapy_data_folder"]) / f"Results/{s['setname']}/crossvalidation/data/{s['setname']}_BO_curve_data_valid_indiv.csv"
+    make_sure_path_exists(bocurve_data_xlsx, isfile=True)
 
     df_valid_indiv = df_valid_indiv.reindex(columns=["AUBOC10", 5, 10, "ROC AUC"])
     df_valid_indiv.columns = ["AUBOC10", "sample size 5", "sample size 10", "ROC AUC"]
 
-    df_valid_indiv.to_csv(BO_data_excel[:-5] + "_valid_indiv.csv")
+    df_valid_indiv.to_csv(BO_data_valid_indiv_csv)
 
     """ df_valid_indiv is now normalised within each column, and sorted by AUBOC10
                           AUBOC10  sample size 5  sample size 10   ROC AUC
@@ -601,7 +394,7 @@ def save_BO_linegraph_and_barchart(s, BO_data_excel, BO_linechart_png, BO_barcha
     #                                                                                                     #
     #######################################################################################################
     if plot_o_over_r:
-        df_o_over_r = pd.read_excel(BO_data_excel, sheet_name="df_o_over_r", index_col=0)
+        df_o_over_r = pd.read_excel(bocurve_data_xlsx, sheet_name="df_o_over_r", index_col=0)
         df_o_over_r_mean = df_o_over_r.T.mean()
     df_o_minus_r.columns = pd.Series(df_o_minus_r.columns).replace(namedict)
     df_o_minus_r_mean = df_o_minus_r.T.mean()
@@ -642,16 +435,16 @@ def save_BO_linegraph_and_barchart(s, BO_data_excel, BO_linechart_png, BO_barcha
     return AUBOC10
 
 
-def save_extra_BO_figs(BO_data_excel, other_figs_path):
+def save_extra_BO_figs(bocurve_data_xlsx, other_figs_path):
     linechart_mean_obs_and_rand = os.path.join(other_figs_path, "1_linechart_mean_obs_and_rand.png")
     linechart_obs_indiv = os.path.join(other_figs_path, "2_linechart_obs_indiv.png")
     linechart_p_indiv = os.path.join(other_figs_path, "3_linechart_p_indiv.png")
     linechart_o_minus_r = os.path.join(other_figs_path, "4_linechart_o_minus_r.png")
     linechart_o_over_r = os.path.join(other_figs_path, "5_linechart_o_over_r.png")
 
-    dfrand = pd.read_excel(BO_data_excel, sheet_name="dfrand", index_col=0)
-    dfobs = pd.read_excel(BO_data_excel, sheet_name="dfobs", index_col=0)
-    df_o_minus_r = pd.read_excel(BO_data_excel, sheet_name="df_o_minus_r", index_col=0)
+    dfrand = pd.read_excel(bocurve_data_xlsx, sheet_name="dfrand", index_col=0)
+    dfobs = pd.read_excel(bocurve_data_xlsx, sheet_name="dfobs", index_col=0)
+    df_o_minus_r = pd.read_excel(bocurve_data_xlsx, sheet_name="df_o_minus_r", index_col=0)
     # linechart_mean_obs_and_rand
 
     fig, ax = plt.subplots()
@@ -672,7 +465,7 @@ def save_extra_BO_figs(BO_data_excel, other_figs_path):
     ax.set_ylabel("overlap")
     fig.savefig(linechart_obs_indiv, dpi=140)
 
-    dfp = pd.read_excel(BO_data_excel, sheet_name="dfp", index_col=0)
+    dfp = pd.read_excel(bocurve_data_xlsx, sheet_name="dfp", index_col=0)
     # linechart_p_indiv
     plt.close("all")
     fig, ax = plt.subplots()

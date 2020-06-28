@@ -43,7 +43,7 @@ def run_10fold_cross_validation(s, logging):
         Also contains the mean ROC curve, and the mean AUC.
     """
     logging.info('10-fold cross validation is running')
-    train_data_filtered = Path(s["thoipapy_data_folder"]) / f"Results/{s['setname']}/train_data/train_data_filtered.csv"
+    train_data_filtered = Path(s["thoipapy_data_folder"]) / f"Results/{s['setname']}/train_data/03_train_data_after_first_feature_seln.csv"
     crossvalidation_pkl = os.path.join(s["thoipapy_data_folder"], "Results", s["setname"], "crossvalidation", "data", "{}_10F_data.pkl".format(s["setname"]))
     features_csv = Path(s["thoipapy_data_folder"]) / f"Results/{s['setname']}/feat_imp/test_features.csv"
 
@@ -54,7 +54,8 @@ def run_10fold_cross_validation(s, logging):
     df_data = df_data.dropna()
 
     # drop training data (full protein) that don't have enough homologues
-    df_data = df_data.loc[df_data.n_homologues >= s["min_n_homol_training"]]
+    if s["min_n_homol_training"] != 0:
+        df_data = df_data.loc[df_data.n_homologues >= s["min_n_homol_training"]]
 
     X = drop_cols_not_used_in_ML(logging, df_data, s["excel_file_with_settings"])
     y = df_data["interface"]
@@ -144,5 +145,4 @@ def create_10fold_cross_validation_fig(s, logging):
     ax.legend(loc="lower right")
     fig.tight_layout()
     fig.savefig(crossvalidation_png, dpi=240)
-    #fig.savefig(crossvalidation_png[:-4] + ".pdf")
-    fig.savefig(thoipapy.utils.pdf_subpath(crossvalidation_png))
+    #fig.savefig(thoipapy.utils.pdf_subpath(crossvalidation_png))

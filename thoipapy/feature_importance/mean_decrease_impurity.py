@@ -29,7 +29,7 @@ def calc_feat_import_from_mean_decrease_impurity(s, logging):
         Also includes the standard deviation supplied by the machine learning algorithm
     """
     #logging.info('RF_variable_importance_calculate is running\n')
-    train_data_csv = Path(s["thoipapy_data_folder"]) / f"Results/{s['setname']}/train_data/train_data_orig.csv"
+    train_data_csv = Path(s["thoipapy_data_folder"]) / f"Results/{s['setname']}/train_data/01_train_data_orig.csv"
 
     mean_decrease_impurity_all_features_csv = Path(s["thoipapy_data_folder"]) / "Results" / s["setname"] / "feat_imp/mean_decrease_impurity_all_features.csv"
     make_sure_path_exists(mean_decrease_impurity_all_features_csv, isfile=True)
@@ -106,9 +106,8 @@ def fig_feat_import_from_mean_decrease_impurity(s, logging):
     colour_dict = create_colour_lists()
 
     mean_decrease_impurity_all_features_csv = Path(s["thoipapy_data_folder"]) / "Results" / s["setname"] / "feat_imp/mean_decrease_impurity_all_features.csv"
-    variable_importance_all_png = os.path.join(s["thoipapy_data_folder"], "Results", s["setname"], "crossvalidation", "all_var_import.png".format(s["setname"]))
-    variable_importance_top_png = os.path.join(s["thoipapy_data_folder"], "Results", s["setname"], "crossvalidation", "top_var_import.png".format(s["setname"]))
-    make_sure_path_exists(mean_decrease_impurity_all_features_csv, isfile=True)
+    variable_importance_all_png = Path(s["thoipapy_data_folder"]) / "Results" / s["setname"] / "feat_imp/all_var_import.png"
+    variable_importance_top_png = Path(s["thoipapy_data_folder"]) / "Results" / s["setname"] / "feat_imp/top_var_import.png"
 
     df_imp = pd.read_csv(mean_decrease_impurity_all_features_csv, index_col = 0)
 

@@ -206,7 +206,7 @@ def combine_all_train_data_for_machine_learning(s, df_set, logging):
     """
     logging.info('creating train or test data for machine learning')
 
-    train_data_csv = Path(s["thoipapy_data_folder"]) / f"Results/{s['setname']}/train_data/train_data_orig.csv"
+    train_data_csv = Path(s["thoipapy_data_folder"]) / f"Results/{s['setname']}/train_data/01_train_data_orig.csv"
     make_sure_path_exists(train_data_csv, isfile=True)
 
     df_set_nonred = thoipapy.utils.drop_redundant_proteins_from_list(df_set, logging)

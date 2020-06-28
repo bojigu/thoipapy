@@ -1,16 +1,22 @@
 import os
+from pathlib import Path
+from typing import Union
 
 import pandas as pd
 from matplotlib import pyplot as plt
 from sklearn.metrics import roc_curve, auc
 
-import thoipapy.utils
+from thoipapy.utils import get_testsetname_trainsetname_from_run_settings, make_sure_path_exists, drop_redundant_proteins_from_list
+from thoipapy.validation.gather import create_df_with_all_predictions_for_all_residues_in_set
 
 
 def create_ROC_all_residues(s, df_set, logging):
     """Combine all residue predictions, so AUC can be calculated from a single array.
 
     Effectively stacks the CSVs on top of each other.
+
+    This is the current recommended ROC validation method.
+    This contrasts with older scripts that calculate a ROC using data for each protein separately, which yielded a non-normal distribution and was therefore deprecated.
 
     Parameters
     ----------
@@ -33,46 +39,16 @@ def create_ROC_all_residues(s, df_set, logging):
     logging.info('Starting combine_all_residue_predictions.')
 
     # output file with all predictions
-    pred_all_res_csv = os.path.join(s["thoipapy_data_folder"], "Results", s["setname"], "ROC", "{}_pred_all_res.csv".format(s["setname"]))
-    #all_res_ROC_data_dict_pkl = os.path.join(s["thoipapy_data_folder"], "Results", s["setname"], "ROC", "{}_all_res_ROC_data_dict.pickle".format(s["setname"]))
-    all_res_ROC_data_csv = os.path.join(s["thoipapy_data_folder"], "Results", s["setname"], "ROC", "{}_all_res_ROC_data.csv".format(s["setname"]))
-    all_res_ROC_png = os.path.join(s["thoipapy_data_folder"], "Results", s["setname"], "ROC", "{}_all_res_ROC.png".format(s["setname"]))
+    pred_all_res_csv: Union[Path, str] = Path(s["thoipapy_data_folder"]) / f"Results/{s['setname']}/crossvalidation/ROC/{s['setname']}_pred_all_res.csv"
+    #all_res_ROC_data_dict_pkl: Union[Path, str] = Path(s["thoipapy_data_folder"]) / f"Results/{s['setname']}/crossvalidation/ROC/{s['setname']}_all_res_ROC_data_dict.pickle"
+    all_res_ROC_data_csv: Union[Path, str] = Path(s["thoipapy_data_folder"]) / f"Results/{s['setname']}/crossvalidation/ROC/{s['setname']}_all_res_ROC_data.csv"
+    all_res_ROC_png: Union[Path, str] = Path(s["thoipapy_data_folder"]) / f"Results/{s['setname']}/crossvalidation/ROC/{s['setname']}_all_res_ROC.png"
 
-    thoipapy.utils.make_sure_path_exists(pred_all_res_csv, isfile=True)
+    make_sure_path_exists(pred_all_res_csv, isfile=True)
 
-    df_set_nonred = thoipapy.utils.drop_redundant_proteins_from_list(df_set, logging)
+    df_set_nonred = drop_redundant_proteins_from_list(df_set, logging)
 
-    # set up a dataframe to hold the features for all proteins
-    df_all = pd.DataFrame()
-    for i in df_set_nonred.index:
-        acc = df_set_nonred.loc[i, "acc"]
-        database = df_set_nonred.loc[i, "database"]
-        merged_data_csv_path = os.path.join(s["thoipapy_data_folder"], "Results", s["setname"], "predictions", database, "{}.merged.csv".format(acc))
-
-        df_merged_new_protein = pd.read_csv(merged_data_csv_path, index_col=0)
-        df_merged_new_protein["acc_db"] = "{}-{}".format(acc, database)
-#
-        # for the first protein, replace the empty dataframe
-        if df_all.empty:
-            df_all = df_merged_new_protein
-        else:
-            # concatenate the growing dataframe of combined proteins and new dataframe
-            df_all = pd.concat([df_all, df_merged_new_protein])
-
-    # drop any positions where there is no interface_score (e.g. no mutations, or hetero contacts?)
-    if "interface_score" in df_all.columns:
-        df_all.dropna(subset=["interface_score"], inplace=True)
-    else:
-        logging.warning("No experimental data has been added to this dataset. Hope you're not trying to train with it!!!")
-
-    # reset the index to be a range (0,...).
-    df_all.index = range(df_all.shape[0])
-
-    # reorder the columns
-    column_list = ['acc_db', 'interface', 'interface_score', 'residue_num', 'residue_name']
-    df_all = thoipapy.utils.reorder_dataframe_columns(df_all, column_list)
-
-    df_all.to_csv(pred_all_res_csv)
+    df_all = create_df_with_all_predictions_for_all_residues_in_set(s, df_set_nonred, pred_all_res_csv, logging)
 
     save_fig_ROC_all_residues(s, df_all, all_res_ROC_png, all_res_ROC_data_csv, logging)
 
@@ -81,10 +57,11 @@ def create_ROC_all_residues(s, df_set, logging):
     subsets = ["ETRA", "NMR", "crystal"]
     for subset in subsets:
         df_subset = df_all.loc[df_all.subset == subset]
-        if not df_subset.empty:
-            ROC_png = all_res_ROC_png[:-4] + "_{}_subset.png".format(subset)
-            ROC_data_csv = all_res_ROC_data_csv[:-4] + "_{}_subset.csv".format(subset)
-            save_fig_ROC_all_residues(s, df_subset, ROC_png, ROC_data_csv, logging)
+        if df_subset.empty:
+            continue
+        ROC_png: Union[Path, str] = Path(s["thoipapy_data_folder"]) / f"Results/{s['setname']}/crossvalidation/ROC/{s['setname']}_all_res_ROC_data_{subset}_subset.png"
+        ROC_data_csv: Union[Path, str] = Path(s["thoipapy_data_folder"]) / f"Results/{s['setname']}/crossvalidation/ROC/{s['setname']}_all_res_ROC_data_{subset}_subset.csv"
+        save_fig_ROC_all_residues(s, df_subset, ROC_png, ROC_data_csv, logging)
 
     # with open(all_res_ROC_data_pkl, "wb") as f:
     #     pickle.dump(output_dict, f, protocol=pickle.HIGHEST_PROTOCOL)
@@ -97,6 +74,11 @@ def save_fig_ROC_all_residues(s, df, all_res_ROC_png, all_res_ROC_data_csv, logg
     ax.plot([0, 1], [0, 1], color="0.5", linestyle="--", label="random", linewidth=1)
     THOIPA_predictor = "THOIPA_{}_LOO".format(s["set_number"])
     predictors = [THOIPA_predictor, "TMDOCK", "LIPS_surface_ranked", "PREDDIMER"]
+    testsetname, trainsetname = get_testsetname_trainsetname_from_run_settings(s)
+
+    if s["setname"] == testsetname:
+        predictors.append(f"thoipa.train{trainsetname}")
+
     output_dict = {}
     for predictor in predictors:
         df_sel = df[["interface", predictor]].dropna()
@@ -121,7 +103,7 @@ def save_fig_ROC_all_residues(s, df, all_res_ROC_png, all_res_ROC_data_csv, logg
     ax.legend(fontsize=fontsize)
     fig.tight_layout()
     fig.savefig(all_res_ROC_png, dpi=240)
-    fig.savefig(all_res_ROC_png[:-4] + ".pdf")
+    fig.savefig(str(all_res_ROC_png)[:-4] + ".pdf")
 
     df_ROC_data = pd.DataFrame(output_dict).T
     df_ROC_data.to_csv(all_res_ROC_data_csv)

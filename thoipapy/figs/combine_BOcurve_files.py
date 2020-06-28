@@ -2,11 +2,11 @@ import os
 import pickle
 import sys
 from pathlib import Path
+from typing import Union
 
 import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
-#from korbinian.utils import convert_truelike_to_bool, convert_falselike_to_bool
 from thoipapy.utils import convert_truelike_to_bool, convert_falselike_to_bool
 import thoipapy
 
@@ -38,7 +38,7 @@ def fig_plot_BOcurve_mult_train_datasets(s):
 
     #plt.rcParams.update({'font.size': 7})
 
-    test_set_list, train_set_list = thoipapy.figs.fig_utils.get_test_and_train_set_lists(s)
+    test_set_list, train_set_list = thoipapy.utils.get_test_and_train_set_lists(s)
 
     test_dataset_str = "-".join([str(n) for n in test_set_list])
     train_dataset_str = "-".join([str(n) for n in train_set_list])
@@ -50,10 +50,10 @@ def fig_plot_BOcurve_mult_train_datasets(s):
 
     plot_BOcurve(s, train_set_list, test_set_list, mult_THOIPA_dir, mult_testname)
 
-    plot_BOcurve(s, train_set_list, test_set_list, mult_THOIPA_dir, mult_testname, sheetname="df_o_over_r", suffix="_BO_curve_old_method")
+    plot_BOcurve(s, train_set_list, test_set_list, mult_THOIPA_dir, mult_testname, sheet_name="df_o_over_r", suffix="_BO_curve_old_method")
 
 
-def plot_BOcurve(s, train_set_list, test_set_list, mult_THOIPA_dir, mult_testname, sheetname="df_o_minus_r", suffix="_BO_curve"):
+def plot_BOcurve(s, train_set_list, test_set_list, mult_THOIPA_dir, mult_testname, sheet_name="df_o_minus_r", suffix="_BO_curve"):
     """ Separate function allowing a toggle of the OLD or NEW performance methods
 
     Parameters
@@ -91,10 +91,10 @@ def plot_BOcurve(s, train_set_list, test_set_list, mult_THOIPA_dir, mult_testnam
 
         for test_set in test_set_list:
             testsetname = "set{:02d}".format(int(test_set))
-            #/media/mark/sindy/m_data/THOIPA_data/Results/Bo_Curve/Testset03_Trainset01.THOIPA.validation/BO_curve_data.xlsx
-            BO_data_excel = os.path.join(s["thoipapy_data_folder"], "Results", "compare_testset_trainset", "data", "Test{}_Train{}.THOIPA".format(testsetname, trainsetname), "data", "BO_curve_data.xlsx")
+            #/media/mark/sindy/m_data/THOIPA_data/Results/Bo_Curve/Testset03_Trainset01.THOIPA.validation/bocurve_data.xlsx
+            bocurve_data_xlsx = os.path.join(s["thoipapy_data_folder"], "Results", "compare_testset_trainset", "data", "Test{}_Train{}.THOIPA".format(testsetname, trainsetname), "data", "bocurve_data.xlsx")
 
-            df = pd.read_excel(BO_data_excel, sheet_name=sheet_name, index_col=0)
+            df = pd.read_excel(bocurve_data_xlsx, sheet_name=sheet_name, index_col=0)
 
             df["mean_"] = df.mean(axis=1)
 
@@ -111,15 +111,14 @@ def plot_BOcurve(s, train_set_list, test_set_list, mult_THOIPA_dir, mult_testnam
     ax.legend()
     fig.tight_layout()
     fig.savefig(BO_curve_png, dpi=240)
-    #fig.savefig(BO_curve_png[:-4] + ".pdf")
-    fig.savefig(thoipapy.utils.pdf_subpath(BO_curve_png))
+    #fig.savefig(thoipapy.utils.pdf_subpath(BO_curve_png))
     sys.stdout.write("\nfig_plot_BO_curve_mult_train_datasets finished ({})".format(BO_curve_png))
 
 
-def compare_predictors(s):
+def compare_selected_predictors(s):
     """Plot the BO-curve for multiple prediction methods
 
-    Takes the datasets listed in settings under fig_plot_BO_curve_mult_predictors_list
+    Takes the datasets listed in settings under the "selected_predictors" tab
     (e.g. ["Testset03_Trainset04.THOIPA","Testset03.LIPS"])
     and plots the BO-curves in a single figure.
 
@@ -136,24 +135,20 @@ def compare_predictors(s):
         Settings dictionary for figures.
 
     """
-    if s["set_number"] != s["test_datasets"]:
-        raise Exception("set_number and test_datasets are not identical in settings file. This is recommended for test/train validation.")
+    #if s["set_number"] != s["test_datasets"]:
+    #    raise Exception("set_number and test_datasets are not identical in settings file. This is recommended for test/train validation.")
 
     #plt.rcParams.update({'font.size': 7})
-    mult_pred_dir = os.path.join(s["thoipapy_data_folder"], "Results", s["setname"], "blindvalidation")
-    BO_curve_png = os.path.join(mult_pred_dir, "compare_predictors_BO_curve.png")
-    AUBOC10_bar_png = os.path.join(mult_pred_dir, "compare_predictors_AUBOC10_barchart.png")
-    ROC_png = os.path.join(mult_pred_dir, "compare_predictors_ROC.png")
+    BO_curve_png: Union[Path, str] = Path(s["thoipapy_data_folder"]) / f"Results/{s['setname']}/blindvalidation/compare_selected_predictors_BO_curve.png"
+    AUBOC10_bar_png: Union[Path, str] = Path(s["thoipapy_data_folder"]) / f"Results/{s['setname']}/blindvalidation/compare_selected_predictors_AUBOC10_barchart.png"
+    ROC_png: Union[Path, str] = Path(s["thoipapy_data_folder"]) / f"Results/{s['setname']}/blindvalidation/compare_selected_predictors_ROC.png"
 
-    thoipapy.utils.make_sure_path_exists(mult_pred_dir)
+    thoipapy.utils.make_sure_path_exists(BO_curve_png, isfile=True)
 
     figsize = np.array([3.42, 3.42]) * 2 # DOUBLE the real size, due to problems on Bo computer with fontsizes
     fig, ax = plt.subplots(figsize=figsize)
 
-    # list of predictors to compare, e.g. ["Testset03_Trainset04.THOIPA", "Testset03.LIPS"]
-    #predictor_list = ast.literal_eval(s["fig_plot_BO_curve_mult_predictors_list"])
-
-    predictors_df = pd.read_excel(s["excel_file_with_settings"], sheet_name="predictors")
+    predictors_df = pd.read_excel(s["excel_file_with_settings"], sheet_name="selected_predictors")
     predictors_df["include"] = predictors_df["include"].apply(convert_truelike_to_bool, convert_nontrue=False)
     predictors_df["include"] = predictors_df["include"].apply(convert_falselike_to_bool)
     predictors_df = predictors_df.loc[predictors_df.include == True]
@@ -164,14 +159,12 @@ def compare_predictors(s):
     df = pd.DataFrame()
 
     for predictor_name in predictor_list:
-        #BO_data_excel = os.path.join(s["thoipapy_data_folder"], "Results", "compare_testset_trainset", "data", "{}".format(predictor_name), "data", "BO_curve_data.xlsx")
-        crossvalidation_dir = os.path.join(s["thoipapy_data_folder"], "Results", s["setname"], "crossvalidation")
-        BO_data_excel = os.path.join(crossvalidation_dir, "data", "{}_BO_curve_data.xlsx".format(s["setname"]))
+        bocurve_data_xlsx: Union[Path, str] = Path(s["thoipapy_data_folder"]) / f"Results/{s['setname']}/crossvalidation/data/{s['setname']}_thoipa_loo_bo_curve_data.xlsx"
 
-        if not os.path.isfile(BO_data_excel):
-            raise FileNotFoundError("BO_data_excel does not exist ({}). Try running run_testset_trainset_validation".format(BO_data_excel))
+        if not os.path.isfile(bocurve_data_xlsx):
+            raise FileNotFoundError("bocurve_data_xlsx does not exist ({}). Try running run_testset_trainset_validation".format(bocurve_data_xlsx))
 
-        df = pd.read_excel(BO_data_excel, sheet_name="df_o_minus_r", index_col=0)
+        df = pd.read_excel(bocurve_data_xlsx, sheet_name="df_o_minus_r", index_col=0)
 
         df["mean_"] = df.mean(axis=1)
 
@@ -189,8 +182,7 @@ def compare_predictors(s):
     ax.legend()
     fig.tight_layout()
     fig.savefig(BO_curve_png, dpi=240)
-    #fig.savefig(BO_curve_png[:-4] + ".pdf")
-    fig.savefig(thoipapy.utils.pdf_subpath(BO_curve_png))
+    #fig.savefig(thoipapy.utils.pdf_subpath(BO_curve_png))
 
     plt.close("all")
     AUBOC10_ser = pd.Series(area_under_curve_dict).sort_index()
@@ -200,8 +192,7 @@ def compare_predictors(s):
     ax.set_ylabel("performance (AUBOC10)")
     fig.tight_layout()
     fig.savefig(AUBOC10_bar_png, dpi=240)
-    #fig.savefig(AUBOC10_bar_png[:-4] + ".pdf")
-    fig.savefig(thoipapy.utils.pdf_subpath(AUBOC10_bar_png))
+    #fig.savefig(thoipapy.utils.pdf_subpath(AUBOC10_bar_png))
 
     plt.close("all")
 
@@ -220,6 +211,7 @@ def compare_predictors(s):
                 ax.plot(ROC_out_dict["false_positive_rate_mean"], ROC_out_dict["true_positive_rate_mean"], label='{} ({:0.2f})'.format(predictor_name, ROC_out_dict["mean_roc_auc"]), lw=1.5)
         else:
             sys.stdout.write("\nPICKLE WITH ROC DATA NOT FOUND : {}".format(ROC_pkl))
+            continue
 
     ax.plot([0, 1], [0, 1], '--', color=(0.6, 0.6, 0.6), label='random')
     ax.set_xlim([-0.05, 1.05])
@@ -229,10 +221,9 @@ def compare_predictors(s):
     ax.legend(loc="lower right")
     fig.tight_layout()
     fig.savefig(ROC_png, dpi=240)
-    #fig.savefig(ROC_png[:-4] + ".pdf")
-    fig.savefig(thoipapy.utils.pdf_subpath(ROC_png))
+    #fig.savefig(thoipapy.utils.pdf_subpath(ROC_png))
 
-    sys.stdout.write("\ncompare_predictors finished ({})\n".format(BO_curve_png))
+    sys.stdout.write("\ncompare_selected_predictors finished ({})\n".format(BO_curve_png))
 
 def combine_BOcurve_files_hardlinked(s):
 

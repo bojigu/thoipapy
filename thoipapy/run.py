@@ -20,7 +20,10 @@ import thoipapy.experimental_data.add_experimental_data_to_train_set
 import thoipapy.feature_importance.mean_decrease_accuracy
 import thoipapy.feature_importance.mean_decrease_impurity
 import thoipapy.features.physical_parameters
+import thoipapy.other.validation_deprecated.validation_deprecated
+import thoipapy.validation.gather
 from thoipapy.clustering.pairwise_aln_similarity_matrix import create_identity_matrix_from_protein_set
+from thoipapy.utils import get_testsetname_trainsetname_from_run_settings
 
 warnings.filterwarnings("ignore")
 
@@ -89,9 +92,9 @@ if __name__ == "__main__":
         dfset = thoipapy.common.process_set_protein_seqs(s, setname, df_set, set_path)
 
         # create a database label. Either crystal, NMR, ETRA or "mixed"
-        unique_database_labels = df_set["database"].unique()
-        if len(unique_database_labels.shape) == 1:
-            database_for_full_set = unique_database_labels[0]
+        subsets = df_set["database"].unique()
+        if len(subsets.shape) == 1:
+            database_for_full_set = subsets[0]
         else:
             database_for_full_set = "mixed"
 
@@ -204,16 +207,6 @@ if __name__ == "__main__":
             thoipapy.feature_importance.ensemble_rfe.select_best_features_with_ensemble_rfe(s, logging)
             thoipapy.feature_importance.merge.merge_top_features_anova_ensemble(s, logging)
 
-        if s["run_10fold_cross_validation"]:
-            thoipapy.validation.tenfold.run_10fold_cross_validation(s, logging)
-            thoipapy.validation.tenfold.create_10fold_cross_validation_fig(s, logging)
-
-        if s["run_LOO_validation"]:
-            thoipapy.validation.leave_one_out.run_LOO_validation(s, df_set, logging)
-        if "create_LOO_validation_figs" in s:
-            if s["create_LOO_validation_figs"]:
-                thoipapy.validation.leave_one_out.create_LOO_validation_fig(s, df_set, logging)
-
         if s["calc_feature_importances"]:
             thoipapy.feature_importance.mean_decrease_accuracy.calc_feat_import_from_mean_decrease_accuracy(s, logging)
             thoipapy.feature_importance.mean_decrease_accuracy.fig_feat_import_from_mean_decrease_accuracy(s, logging)
@@ -236,53 +229,43 @@ if __name__ == "__main__":
         Size= s["Size"]
         Linewidth= s["Linewidth"]
 
-        # DEPRECATED
-        #if s["FigZB_07_hardlinked"] == True:
-        #    # barcharts of coevolution values for interface and non-interface
-        #    thoipapy.figs.other.other_figs.average_fraction_DI.FigZB_07_hardlinked(Fontsize, Width, Size, s)
-
-        #DEPRECATED
-        #if s["FigZB_18"] == True:
-        #    # heatmap of prediction from THOIPA, PREDDIMER, TMDOCK
-        #    thoipapy.other.other_figs.create_PREDDIMER_TMDOCK_heatmap.FigZB_18(s, Fontsize, Width, Size)
-
-        # DEPRECATED
-        #if s["combine_BOcurve_files_hardlinked"] == True:
-        #    thoipapy.figs.Combine_Bo_Curve_files.combine_BOcurve_files_hardlinked(s)
-
-        # DEPRECATED. USE COMPARE PREDICTORS
-        # if s["fig_plot_BOcurve_mult_train_datasets"] == True:
-        #     thoipapy.figs.Combine_Bo_Curve_files.fig_plot_BOcurve_mult_train_datasets(s)
-
-        if s["compare_predictors"] == True:
-            thoipapy.figs.combine_BOcurve_files.compare_predictors(s)
-
-        # DEPRECATED
-        #if s["run_BOcurve_comp_hardlinked"] == True:
-        #    thoipapy.figs.BOcurve_THOIPAbest_comp_LIPS_and_NMR.run_BOcurve_comp_hardlinked(Fontsize, Width, Size, s, Linewidth)
+        if s["compare_selected_predictors"] == True:
+            thoipapy.figs.combine_BOcurve_files.compare_selected_predictors(s)
 
         if s["calc_PREDDIMER_TMDOCK_closedist"] == True:
             thoipapy.figs.calc_PREDDIMER_TMDOCK_closedist.calc_closedist_from_PREDDIMER_TMDOCK_best_model(s, df_set, logging)
 
-        if s["merge_predictions"] == True:
-            thoipapy.validation.combine_mult_predictors.merge_predictions(s, df_set, logging)
-
-        if s["run_indiv_validation_each_TMD"] == True:
+        if s["run_validation"] == True:
             namedict = thoipapy.utils.create_namedict(os.path.join(s["dropbox_dir"], "protein_names.xlsx"))
             THOIPA_predictor_name = "THOIPA_{}_LOO".format(s["set_number"])
-            predictor_name_list = [THOIPA_predictor_name, "PREDDIMER", "TMDOCK", "LIPS_surface_ranked", "random"]
-            thoipapy.validation.indiv_validation.collect_indiv_validation_data(s, df_set, logging, namedict, predictor_name_list, THOIPA_predictor_name, unique_database_labels)
-            thoipapy.validation.indiv_validation.create_indiv_validation_figs(s, logging, namedict, predictor_name_list, THOIPA_predictor_name, unique_database_labels)
+            predictors = [THOIPA_predictor_name, "PREDDIMER", "TMDOCK", "LIPS_surface_ranked", "random"]
+            testsetname, trainsetname = get_testsetname_trainsetname_from_run_settings(s)
+            thoipa_trainsetname = f"thoipa.train{trainsetname}"
+            if s["setname"] == testsetname:
+                predictors.append(f"thoipa.train{trainsetname}")
+
+            thoipapy.validation.tenfold.run_10fold_cross_validation(s, logging)
+            thoipapy.validation.tenfold.create_10fold_cross_validation_fig(s, logging)
+
+            thoipapy.validation.leave_one_out.run_LOO_validation(s, df_set, logging)
+            thoipapy.validation.leave_one_out.create_LOO_validation_fig(s, df_set, logging)
+
+            thoipapy.validation.combine_mult_predictors.merge_predictions(s, df_set, logging)
+
+            thoipapy.validation.indiv_validation.collect_indiv_validation_data(s, df_set, logging, namedict, predictors, THOIPA_predictor_name, subsets)
+            thoipapy.validation.indiv_validation.create_indiv_validation_figs(s, logging, namedict, predictors, THOIPA_predictor_name, subsets)
+
+            thoipapy.validation.multiple_predictors.validate_multiple_predictors_and_subsets_auboc10(s, df_set, logging)
+            thoipapy.validation.multiple_predictors.validate_multiple_predictors_and_subsets_auc(s, df_set, logging)
+
+            thoipapy.validation.roc.create_ROC_all_residues(s, df_set, logging)
+            thoipapy.validation.precision_recall.create_precision_recall_all_residues(s, df_set, logging)
+
+            thoipapy.validation.gather.gather_validation_data_for_figs(s, df_set, logging)
+
 
         if s["create_merged_heatmap"] == True:
             thoipapy.figs.create_heatmap_from_merge_file.create_merged_heatmap(s, df_set, logging)
-
-        if s["create_ROC_4predictors"] == True:
-            thoipapy.validation.indiv_validation.create_ROC_comp_4predictors(s, df_set, logging)
-
-        if s["create_AUC_AUBOC_separate_database"] == True:
-            thoipapy.other.validation_deprecated.validation_test_train_deprecated.create_AUBOC10_4predictors_3databases_figs(s, df_set, logging)
-            thoipapy.other.validation_deprecated.validation_test_train_deprecated.create_AUC_4predictors_3databases_figs(s, df_set, logging)
 
         if "download_10_homologues_from_ncbi" in s:
             if s["download_10_homologues_from_ncbi"] == True:
@@ -292,10 +275,6 @@ if __name__ == "__main__":
             if s["plot_coev_vs_res_dist"] == True:
                 thoipapy.figs.retrospective.calc_coev_vs_res_dist(s, dfset, logging)
                 thoipapy.figs.retrospective.plot_coev_vs_res_dist(s, logging)
-
-        if s["ROC_PR_val_all_residues_combined"]:
-            thoipapy.validation.roc.create_ROC_all_residues(s, df_set, logging)
-            thoipapy.validation.precision_recall.create_precision_recall_all_residues(s, df_set, logging)
 
         thoipapy.setting.deployment_helper.docker_deployment_had_better_work_now()
         thoipapy.ML_model.deployment_helper2.docker_deployment_had_better_work_now2()

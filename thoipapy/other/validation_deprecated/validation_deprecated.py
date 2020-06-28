@@ -5,15 +5,18 @@ import sys
 import threading
 import time
 from pathlib import Path
+from typing import Union
 
 import numpy as np
 import pandas as pd
+from matplotlib import pyplot as plt
 from numpy import interp
 import joblib
 from sklearn.metrics import roc_curve, auc
 
 import thoipapy
 import thoipapy.validation.feature_selection
+from thoipapy.utils import get_testsetname_trainsetname_from_run_settings
 from thoipapy.validation.feature_selection import drop_cols_not_used_in_ML
 
 
@@ -56,20 +59,20 @@ def run_LOO_validation_od_non_multiprocessing(s, df_set, logging):
     # drop redundant proteins according to CD-HIT
     df_set = thoipapy.utils.drop_redundant_proteins_from_list(df_set, logging)
 
-    train_data_csv = Path(s["thoipapy_data_folder"]) / f"Results/{s['setname']}/train_data/train_data_orig.csv"
+    train_data_csv = Path(s["thoipapy_data_folder"]) / f"Results/{s['setname']}/train_data/01_train_data_orig.csv"
     crossvalidation_folder = os.path.join(s["thoipapy_data_folder"], "Results", s["setname"], "crossvalidation")
     LOO_crossvalidation_pkl = os.path.join(s["thoipapy_data_folder"], "Results", s["setname"], "crossvalidation", "data", "{}_LOO_crossvalidation.pkl".format(s["setname"]))
-    BO_all_data_csv = os.path.join(s["thoipapy_data_folder"], "Results", s["setname"], "crossvalidation", "data", "{}_LOO_BO_data.csv".format(s["setname"]))
-    BO_curve_folder = os.path.join(s["thoipapy_data_folder"], "Results", s["setname"], "crossvalidation")
-    BO_data_excel = os.path.join(BO_curve_folder, "data", "{}_BO_curve_data.xlsx".format(s["setname"]))
+    bocurve_data_raw_csv = os.path.join(s["thoipapy_data_folder"], "Results", s["setname"], "crossvalidation", "data", "{}_loo_bocurve_data_raw.csv".format(s["setname"]))
+    bocurve_data_xlsx: Union[Path, str] = Path(s["thoipapy_data_folder"]) / f"Results/{s['setname']}/crossvalidation/data/{s['setname']}_thoipa_loo_bo_curve_data.xlsx"
 
-    thoipapy.utils.make_sure_path_exists(BO_data_excel, isfile=True)
+    thoipapy.utils.make_sure_path_exists(bocurve_data_xlsx, isfile=True)
 
     df_data = pd.read_csv(train_data_csv, index_col=0)
     df_data = df_data.dropna()
 
     # drop training data (full protein) that don't have enough homologues
-    df_data = df_data.loc[df_data.n_homologues >= s["min_n_homol_training"]]
+    if s["min_n_homol_training"] != 0:
+        df_data = df_data.loc[df_data.n_homologues >= s["min_n_homol_training"]]
 
     acc_db_list = df_data.acc_db.unique()
     xv_dict = {}
@@ -85,8 +88,8 @@ def run_LOO_validation_od_non_multiprocessing(s, df_set, logging):
     for i in df_set.index:
 
         acc, acc_db, database  = df_set.loc[i, "acc"], df_set.loc[i, "acc_db"], df_set.loc[i, "database"]
-        THOIPA_prediction_csv = Path(s["thoipapy_data_folder"]) / "Results" / s["setname"] / f"crossvalidation/leave_one_out/protein_data/{acc}.{database}.LOO.prediction.csv"
-        thoipapy.utils.make_sure_path_exists(THOIPA_prediction_csv, isfile=True)
+        THOIPA_LOO_prediction_csv = Path(s["thoipapy_data_folder"]) / f"Results/{s['setname']}/predictions/THOIPA_LOO/{database}.{acc}.LOO.prediction.csv"
+        thoipapy.utils.make_sure_path_exists(THOIPA_LOO_prediction_csv, isfile=True)
 
         #######################################################################################################
         #                                                                                                     #
@@ -127,7 +130,7 @@ def run_LOO_validation_od_non_multiprocessing(s, df_set, logging):
         df_test[pred_colname] = prediction
         # save just the prediction alone to csv
         prediction_df = df_test[["residue_num", "residue_name", pred_colname]]
-        prediction_df.to_csv(THOIPA_prediction_csv, index=False)
+        prediction_df.to_csv(THOIPA_LOO_prediction_csv, index=False)
 
         fpr, tpr, thresholds = roc_curve(y_test, prediction, drop_intermediate=False)
         roc_auc = auc(fpr, tpr)
@@ -178,11 +181,11 @@ def run_LOO_validation_od_non_multiprocessing(s, df_set, logging):
     #                                                                                                     #
     #######################################################################################################
 
-    BO_all_df.to_csv(BO_all_data_csv)
+    BO_all_df.to_csv(bocurve_data_raw_csv)
     names_excel_path = os.path.join(s["dropbox_dir"], "protein_names.xlsx")
 
-    #linechart_mean_obs_and_rand = thoipapy.figs.Create_Bo_Curve_files.analyse_bo_curve_underlying_data(BO_all_data_csv, crossvalidation_folder, names_excel_path)
-    thoipapy.figs.create_BOcurve_files.parse_BO_data_csv_to_excel(BO_all_data_csv, BO_data_excel, logging)
+    #linechart_mean_obs_and_rand = thoipapy.figs.Create_Bo_Curve_files.analyse_bo_curve_underlying_data(bocurve_data_raw_csv, crossvalidation_folder, names_excel_path)
+    thoipapy.figs.create_BOcurve_files.parse_BO_data_csv_to_excel(bocurve_data_raw_csv, bocurve_data_xlsx, logging)
 
     logging.info('{} LOO crossvalidation. Time taken = {:.2f}.'.format(s["setname"], duration))
     logging.info('---AUC({:.2f})---'.format(mean_roc_auc))
@@ -317,3 +320,56 @@ def create_one_out_train_data(acc_db,set_path,s):
                 # reset the index to be a range (0,...).
     df_train.index = range(df_train.shape[0])
     return df_train
+
+
+def calc_roc_each_tmd_separately_deprecated(s, df_set, logging):
+
+    logging.info("start create_ROC_Curve_figs_THOIPA_PREDDIMER_TMDOCK_LIPS")
+    pred_colname = "THOIPA_{}_LOO".format(s["set_number"])
+
+    prediction_name_list = [pred_colname, "PREDDIMER", "TMDOCK", "LIPS_surface_ranked"]
+    testsetname, trainsetname = get_testsetname_trainsetname_from_run_settings(s)
+    if s["setname"] == testsetname:
+        prediction_name_list.append(f"thoipa.train{trainsetname}")
+
+    roc_each_tmd_separate_deprecated_csv = Path(s["thoipapy_data_folder"]) / f"Results/{s['setname']}/crossvalidation/{s['setname']}_roc_each_tmd_separate_deprecated.csv"
+    roc_each_tmd_separate_deprecated_png = Path(s["thoipapy_data_folder"]) / f"Results/{s['setname']}/crossvalidation/{s['setname']}_roc_each_tmd_separate_deprecated.png"
+
+    figsize = np.array([3.42, 3.42]) * 2  # DOUBLE the real size, due to problems on Bo computer with fontsizes
+    fig, ax = plt.subplots(figsize=figsize)
+    mean_tpr_list=[]
+    for n, predictor in enumerate(prediction_name_list):
+        mean_tpr = 0.0
+        mean_fpr = np.linspace(0, 1, 100)
+        for i in df_set.index:
+            acc = df_set.loc[i, "acc"]
+            database = df_set.loc[i, "database"]
+            merged_data_csv_path: Union[Path, str] = Path(s["thoipapy_data_folder"]) / f"Results/{s['setname']}/predictions/merged/{database}.{acc}.merged.csv"
+            dfm = pd.read_csv(merged_data_csv_path, engine="python", index_col=0)
+            dfm.dropna(inplace=True)
+            interface = dfm["interface"].values
+            if n ==0 or n == 3:
+                predict = dfm[predictor].values
+            else:
+                predict = -1 * dfm[predictor].values
+            fpr, tpr, thresholds = roc_curve(interface, predict, drop_intermediate=False)
+            mean_tpr += interp(mean_fpr, fpr, tpr)
+            mean_tpr[0] = 0.0
+        mean_tpr /= len(df_set.index)
+        mean_tpr[-1] = 1.0
+        mean_roc_auc = auc(mean_fpr, mean_tpr)
+        mean_tpr_list.append(mean_tpr)
+        ax.plot(mean_fpr, mean_tpr, lw=1,label="{} (area = {:.2f})".format(predictor, mean_roc_auc), alpha=0.8)
+    ax.plot([0, 1], [0, 1], '--', color=(0.6, 0.6, 0.6), label='random')
+    ax.set_xlim([-0.05, 1.05])
+    ax.set_ylim([-0.05, 1.05])
+    ax.set_xlabel("False positive rate")
+    ax.set_ylabel("True positive rate")
+    ax.legend(loc="lower right")
+    fig.tight_layout()
+    fig.savefig(roc_each_tmd_separate_deprecated_png, dpi=240)
+    #fig.savefig(thoipapy.utils.pdf_subpath(ROC_4predictor_png))
+    df_tpr = pd.DataFrame.from_records(list(map(list, zip(*mean_tpr_list))),
+                                       columns=prediction_name_list)
+    df_tpr.to_csv(roc_each_tmd_separate_deprecated_csv)
+    logging.info(f"fig saved: {roc_each_tmd_separate_deprecated_png}")
