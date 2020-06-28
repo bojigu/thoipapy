@@ -42,7 +42,7 @@ def gather_validation_data_for_figs(s, df_set, logging):
     # for each dataset(e.g. ETRA) separately. Saved in "by_subset" subfolder
     for subset in subsets:
 
-        BOCURVE_linechart_csv = Path(s["thoipapy_data_folder"]) / f"Results/{s['setname']}/crossvalidation/compare_predictors/data/{s['setname']}.{subset}.4predictors_BOCURVE_linechart.csv"
+        BOCURVE_linechart_csv = Path(s["thoipapy_data_folder"]) / f"Results/{s['setname']}/crossvalidation/compare_selected_predictors/data/{s['setname']}.{subset}.4predictors_BOCURVE_linechart.csv"
         precision_recall_data_csv: Union[Path, str] = Path(s["thoipapy_data_folder"]) / f"Results/{s['setname']}/crossvalidation/precision_recall/{s['setname']}_all_res_precision_recall_data_{subset}_subset.csv"
         ROC_data_csv: Union[Path, str] = Path(s["thoipapy_data_folder"]) / f"Results/{s['setname']}/crossvalidation/ROC/{s['setname']}_all_res_ROC_data_{subset}_subset.csv"
         #perc_interf_vs_PR_cutoff_linechart_single_database_data_csv = indiv_validation_dir / f"by_subset/{subset}_perc_interf_vs_PR_cutoff_linechart_data.csv"

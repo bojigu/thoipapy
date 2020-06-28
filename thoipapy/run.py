@@ -207,16 +207,6 @@ if __name__ == "__main__":
             thoipapy.feature_importance.ensemble_rfe.select_best_features_with_ensemble_rfe(s, logging)
             thoipapy.feature_importance.merge.merge_top_features_anova_ensemble(s, logging)
 
-        if s["run_10fold_cross_validation"]:
-            thoipapy.validation.tenfold.run_10fold_cross_validation(s, logging)
-            thoipapy.validation.tenfold.create_10fold_cross_validation_fig(s, logging)
-
-        if s["run_LOO_validation"]:
-            thoipapy.validation.leave_one_out.run_LOO_validation(s, df_set, logging)
-        if "create_LOO_validation_figs" in s:
-            if s["create_LOO_validation_figs"]:
-                thoipapy.validation.leave_one_out.create_LOO_validation_fig(s, df_set, logging)
-
         if s["calc_feature_importances"]:
             thoipapy.feature_importance.mean_decrease_accuracy.calc_feat_import_from_mean_decrease_accuracy(s, logging)
             thoipapy.feature_importance.mean_decrease_accuracy.fig_feat_import_from_mean_decrease_accuracy(s, logging)
@@ -239,8 +229,8 @@ if __name__ == "__main__":
         Size= s["Size"]
         Linewidth= s["Linewidth"]
 
-        if s["compare_predictors"] == True:
-            thoipapy.figs.combine_BOcurve_files.compare_predictors(s)
+        if s["compare_selected_predictors"] == True:
+            thoipapy.figs.combine_BOcurve_files.compare_selected_predictors(s)
 
         if s["calc_PREDDIMER_TMDOCK_closedist"] == True:
             thoipapy.figs.calc_PREDDIMER_TMDOCK_closedist.calc_closedist_from_PREDDIMER_TMDOCK_best_model(s, df_set, logging)
@@ -249,6 +239,10 @@ if __name__ == "__main__":
             thoipapy.validation.combine_mult_predictors.merge_predictions(s, df_set, logging)
 
         if s["run_validation"] == True:
+            thoipapy.validation.tenfold.run_10fold_cross_validation(s, logging)
+            thoipapy.validation.tenfold.create_10fold_cross_validation_fig(s, logging)
+            thoipapy.validation.leave_one_out.run_LOO_validation(s, df_set, logging)
+            thoipapy.validation.leave_one_out.create_LOO_validation_fig(s, df_set, logging)
             namedict = thoipapy.utils.create_namedict(os.path.join(s["dropbox_dir"], "protein_names.xlsx"))
             THOIPA_predictor_name = "THOIPA_{}_LOO".format(s["set_number"])
             predictors = [THOIPA_predictor_name, "PREDDIMER", "TMDOCK", "LIPS_surface_ranked", "random"]

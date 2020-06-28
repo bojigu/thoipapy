@@ -115,10 +115,10 @@ def plot_BOcurve(s, train_set_list, test_set_list, mult_THOIPA_dir, mult_testnam
     sys.stdout.write("\nfig_plot_BO_curve_mult_train_datasets finished ({})".format(BO_curve_png))
 
 
-def compare_predictors(s):
+def compare_selected_predictors(s):
     """Plot the BO-curve for multiple prediction methods
 
-    Takes the datasets listed in settings under the "predictors" tab
+    Takes the datasets listed in settings under the "selected_predictors" tab
     (e.g. ["Testset03_Trainset04.THOIPA","Testset03.LIPS"])
     and plots the BO-curves in a single figure.
 
@@ -139,16 +139,16 @@ def compare_predictors(s):
     #    raise Exception("set_number and test_datasets are not identical in settings file. This is recommended for test/train validation.")
 
     #plt.rcParams.update({'font.size': 7})
-    BO_curve_png: Union[Path, str] = Path(s["thoipapy_data_folder"]) / f"Results/{s['setname']}/blindvalidation/compare_predictors_BO_curve.png"
-    AUBOC10_bar_png: Union[Path, str] = Path(s["thoipapy_data_folder"]) / f"Results/{s['setname']}/blindvalidation/compare_predictors_AUBOC10_barchart.png"
-    ROC_png: Union[Path, str] = Path(s["thoipapy_data_folder"]) / f"Results/{s['setname']}/blindvalidation/compare_predictors_ROC.png"
+    BO_curve_png: Union[Path, str] = Path(s["thoipapy_data_folder"]) / f"Results/{s['setname']}/blindvalidation/compare_selected_predictors_BO_curve.png"
+    AUBOC10_bar_png: Union[Path, str] = Path(s["thoipapy_data_folder"]) / f"Results/{s['setname']}/blindvalidation/compare_selected_predictors_AUBOC10_barchart.png"
+    ROC_png: Union[Path, str] = Path(s["thoipapy_data_folder"]) / f"Results/{s['setname']}/blindvalidation/compare_selected_predictors_ROC.png"
 
     thoipapy.utils.make_sure_path_exists(BO_curve_png, isfile=True)
 
     figsize = np.array([3.42, 3.42]) * 2 # DOUBLE the real size, due to problems on Bo computer with fontsizes
     fig, ax = plt.subplots(figsize=figsize)
 
-    predictors_df = pd.read_excel(s["excel_file_with_settings"], sheet_name="predictors")
+    predictors_df = pd.read_excel(s["excel_file_with_settings"], sheet_name="selected_predictors")
     predictors_df["include"] = predictors_df["include"].apply(convert_truelike_to_bool, convert_nontrue=False)
     predictors_df["include"] = predictors_df["include"].apply(convert_falselike_to_bool)
     predictors_df = predictors_df.loc[predictors_df.include == True]
@@ -223,7 +223,7 @@ def compare_predictors(s):
     fig.savefig(ROC_png, dpi=240)
     #fig.savefig(thoipapy.utils.pdf_subpath(ROC_png))
 
-    sys.stdout.write("\ncompare_predictors finished ({})\n".format(BO_curve_png))
+    sys.stdout.write("\ncompare_selected_predictors finished ({})\n".format(BO_curve_png))
 
 def combine_BOcurve_files_hardlinked(s):
 
