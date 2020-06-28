@@ -65,13 +65,9 @@ def merge_predictions(s, df_set, logging):
         prediction_name_list = [THOIPA_pred_colname, thoipa_trainsetname, "PREDDIMER", "TMDOCK"]
         n_files_merged = 0
         for n, file in enumerate(file_list):
-            print(file)
-            print(Path(file).is_file())
             prediction_name = prediction_name_list[n]
             if os.path.isfile(file):
                 df = pd.read_csv(file, index_col=None)
-                if "train" in prediction_name:
-                    aa = 3
                 assert prediction_name in df.columns.to_list() or "closedist" in df.columns.to_list()
                 TMD_seq = df["residue_name"].str.cat()
                 if TMD_seq not in full_seq:

@@ -63,7 +63,7 @@ def collect_indiv_validation_data(s, df_set, logging, namedict, predictors, THOI
 
         auc_pkl = Path(s["thoipapy_data_folder"]) / f"Results/{s['setname']}/crossvalidation/indiv_validation/roc_auc/{predictor}/ROC_AUC_data.pkl"
         BO_curve_data_csv = Path(s["thoipapy_data_folder"]) / f"Results/{s['setname']}/crossvalidation/indiv_validation/bocurve/data/{predictor}/BO_Curve_data.csv"
-        BO_data_excel = Path(s["thoipapy_data_folder"]) / f"Results/{s['setname']}/crossvalidation/indiv_validation/bocurve/data/{predictor}/BO_curve_data.xlsx"
+        bocurve_data_xlsx = Path(s["thoipapy_data_folder"]) / f"Results/{s['setname']}/crossvalidation/indiv_validation/bocurve/data/{predictor}/bocurve_data.xlsx"
         BO_linechart_png = Path(s["thoipapy_data_folder"]) / f"Results/{s['setname']}/crossvalidation/indiv_validation/bocurve/data/{predictor}/BO_linechart.png"
         BO_barchart_png = Path(s["thoipapy_data_folder"]) / f"Results/{s['setname']}/crossvalidation/indiv_validation/bocurve/data/{predictor}/AUBOC10_barchart.png"
         df_o_minus_r_mean_csv = Path(s["thoipapy_data_folder"]) / f"Results/{s['setname']}/crossvalidation/indiv_validation/bocurve/data/{predictor}/df_o_minus_r_mean.csv"
@@ -120,7 +120,7 @@ def collect_indiv_validation_data(s, df_set, logging, namedict, predictors, THOI
         BO_data_df.to_csv(BO_curve_data_csv)
         # parse BO data csv
         # print out mean values
-        thoipapy.figs.create_BOcurve_files.parse_BO_data_csv_to_excel(BO_curve_data_csv, BO_data_excel, logging, predictor)
+        thoipapy.figs.create_BOcurve_files.parse_BO_data_csv_to_excel(BO_curve_data_csv, bocurve_data_xlsx, logging, predictor)
 
         # ROC AUC validation
         ROC_AUC_ser = pd.Series(ROC_AUC_dict)
@@ -133,8 +133,8 @@ def collect_indiv_validation_data(s, df_set, logging, namedict, predictors, THOI
         PR_AUC_ser.sort_values(inplace=True, ascending=False)
 
         # BO curve AUBOC10 validation
-        AUBOC10_ser = pd.read_excel(BO_data_excel, sheet_name="AUBOC10", index_col=0)["AUBOC10"].copy()
-        df_o_minus_r = pd.read_excel(BO_data_excel, sheet_name="df_o_minus_r", index_col=0)
+        AUBOC10_ser = pd.read_excel(bocurve_data_xlsx, sheet_name="AUBOC10", index_col=0)["AUBOC10"].copy()
+        df_o_minus_r = pd.read_excel(bocurve_data_xlsx, sheet_name="df_o_minus_r", index_col=0)
         df_o_minus_r.columns = pd.Series(df_o_minus_r.columns).replace(namedict)
         df_o_minus_r_mean = df_o_minus_r.T.mean()
         #df_o_minus_r_mean_df= pd.concat([df_o_minus_r_mean_df,df_o_minus_r_mean],axis=1, join="outer")
@@ -145,7 +145,7 @@ def collect_indiv_validation_data(s, df_set, logging, namedict, predictors, THOI
         linechar_name_list.append(predictor)
         AUC_AUBOC_name_list.append("{}-AUC".format(predictor))
         AUC_AUBOC_name_list.append("{}-AUBOC10".format(predictor))
-        thoipapy.figs.create_BOcurve_files.save_BO_linegraph_and_barchart(s, BO_data_excel, BO_linechart_png, BO_barchart_png, namedict,
+        thoipapy.figs.create_BOcurve_files.save_BO_linegraph_and_barchart(s, bocurve_data_xlsx, BO_linechart_png, BO_barchart_png, namedict,
                                                                           logging, ROC_AUC_ser)
 
         ROC_AUC_df[predictor] = ROC_AUC_ser

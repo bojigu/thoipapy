@@ -248,7 +248,7 @@ if __name__ == "__main__":
         if s["merge_predictions"] == True:
             thoipapy.validation.combine_mult_predictors.merge_predictions(s, df_set, logging)
 
-        if s["run_indiv_validation_each_TMD"] == True:
+        if s["run_validation"] == True:
             namedict = thoipapy.utils.create_namedict(os.path.join(s["dropbox_dir"], "protein_names.xlsx"))
             THOIPA_predictor_name = "THOIPA_{}_LOO".format(s["set_number"])
             predictors = [THOIPA_predictor_name, "PREDDIMER", "TMDOCK", "LIPS_surface_ranked", "random"]
@@ -260,6 +260,10 @@ if __name__ == "__main__":
             thoipapy.validation.indiv_validation.create_indiv_validation_figs(s, logging, namedict, predictors, THOIPA_predictor_name, subsets)
             thoipapy.validation.multiple_predictors.validate_multiple_predictors_and_subsets_auboc10(s, df_set, logging)
             thoipapy.validation.multiple_predictors.validate_multiple_predictors_and_subsets_auc(s, df_set, logging)
+            thoipapy.validation.roc.create_ROC_all_residues(s, df_set, logging)
+            thoipapy.validation.precision_recall.create_precision_recall_all_residues(s, df_set, logging)
+            thoipapy.validation.gather.gather_validation_data_for_figs(s, df_set, logging)
+
 
         if s["create_merged_heatmap"] == True:
             thoipapy.figs.create_heatmap_from_merge_file.create_merged_heatmap(s, df_set, logging)
@@ -272,11 +276,6 @@ if __name__ == "__main__":
             if s["plot_coev_vs_res_dist"] == True:
                 thoipapy.figs.retrospective.calc_coev_vs_res_dist(s, dfset, logging)
                 thoipapy.figs.retrospective.plot_coev_vs_res_dist(s, logging)
-
-        if s["ROC_PR_val_all_residues_combined"]:
-            thoipapy.validation.roc.create_ROC_all_residues(s, df_set, logging)
-            thoipapy.validation.precision_recall.create_precision_recall_all_residues(s, df_set, logging)
-            thoipapy.validation.gather.gather_validation_data_for_figs(s, df_set, logging)
 
         thoipapy.setting.deployment_helper.docker_deployment_had_better_work_now()
         thoipapy.ML_model.deployment_helper2.docker_deployment_had_better_work_now2()

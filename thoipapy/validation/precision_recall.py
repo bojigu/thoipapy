@@ -14,8 +14,10 @@ def create_precision_recall_all_residues(s, df_set, logging):
     """Combine all residue predictions, so precision recall can be calculated from a single array.
 
     Effectively stacks the CSVs on top of each other.
+    Code is directly copied and modified from create_ROC_all_residues.
 
-    Code is directly copied and modified from create_ROC_all_residues
+    This is the recommended method for the pr of a dataset, and complements methods where the precision-recall
+    is calculated for each protein separately.
 
     Parameters
     ----------

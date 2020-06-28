@@ -91,10 +91,10 @@ def plot_BOcurve(s, train_set_list, test_set_list, mult_THOIPA_dir, mult_testnam
 
         for test_set in test_set_list:
             testsetname = "set{:02d}".format(int(test_set))
-            #/media/mark/sindy/m_data/THOIPA_data/Results/Bo_Curve/Testset03_Trainset01.THOIPA.validation/BO_curve_data.xlsx
-            BO_data_excel = os.path.join(s["thoipapy_data_folder"], "Results", "compare_testset_trainset", "data", "Test{}_Train{}.THOIPA".format(testsetname, trainsetname), "data", "BO_curve_data.xlsx")
+            #/media/mark/sindy/m_data/THOIPA_data/Results/Bo_Curve/Testset03_Trainset01.THOIPA.validation/bocurve_data.xlsx
+            bocurve_data_xlsx = os.path.join(s["thoipapy_data_folder"], "Results", "compare_testset_trainset", "data", "Test{}_Train{}.THOIPA".format(testsetname, trainsetname), "data", "bocurve_data.xlsx")
 
-            df = pd.read_excel(BO_data_excel, sheet_name=sheet_name, index_col=0)
+            df = pd.read_excel(bocurve_data_xlsx, sheet_name=sheet_name, index_col=0)
 
             df["mean_"] = df.mean(axis=1)
 
@@ -159,12 +159,12 @@ def compare_predictors(s):
     df = pd.DataFrame()
 
     for predictor_name in predictor_list:
-        BO_data_excel: Union[Path, str] = Path(s["thoipapy_data_folder"]) / f"Results/{s['setname']}/crossvalidation/data/{s['setname']}_thoipa_loo_bo_curve_data.xlsx"
+        bocurve_data_xlsx: Union[Path, str] = Path(s["thoipapy_data_folder"]) / f"Results/{s['setname']}/crossvalidation/data/{s['setname']}_thoipa_loo_bo_curve_data.xlsx"
 
-        if not os.path.isfile(BO_data_excel):
-            raise FileNotFoundError("BO_data_excel does not exist ({}). Try running run_testset_trainset_validation".format(BO_data_excel))
+        if not os.path.isfile(bocurve_data_xlsx):
+            raise FileNotFoundError("bocurve_data_xlsx does not exist ({}). Try running run_testset_trainset_validation".format(bocurve_data_xlsx))
 
-        df = pd.read_excel(BO_data_excel, sheet_name="df_o_minus_r", index_col=0)
+        df = pd.read_excel(bocurve_data_xlsx, sheet_name="df_o_minus_r", index_col=0)
 
         df["mean_"] = df.mean(axis=1)
 

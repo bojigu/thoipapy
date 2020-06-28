@@ -14,7 +14,7 @@ from thoipapy.utils import normalise_0_1, make_sure_path_exists
 warnings.filterwarnings("ignore")
 
 
-def parse_BO_data_csv_to_excel(bo_data_csv, BO_data_excel, logging, predictor_name=""):
+def parse_BO_data_csv_to_excel(bo_data_csv, bocurve_data_xlsx, logging, predictor_name=""):
     """
 
     Run using s["create_AUC_AUBOC_separate_database"]
@@ -22,7 +22,7 @@ def parse_BO_data_csv_to_excel(bo_data_csv, BO_data_excel, logging, predictor_na
     Parameters
     ----------
     bo_data_csv
-    BO_data_excel
+    bocurve_data_xlsx
     logging
     predictor_name
 
@@ -166,7 +166,7 @@ def parse_BO_data_csv_to_excel(bo_data_csv, BO_data_excel, logging, predictor_na
     #           SAVE PARSED DATAFRAMES TO AN EXCEL FILE             #
     #################################################################
 
-    with pd.ExcelWriter(BO_data_excel) as writer:
+    with pd.ExcelWriter(bocurve_data_xlsx) as writer:
         dfobs.to_excel(writer, sheet_name="dfobs")
         dfrand.to_excel(writer, sheet_name="dfrand")
         dfp.to_excel(writer, sheet_name="dfp")
@@ -178,7 +178,7 @@ def parse_BO_data_csv_to_excel(bo_data_csv, BO_data_excel, logging, predictor_na
         AUBOC10_df.to_excel(writer, sheet_name="AUBOC10")
 
 
-def parse_BO_data_csv_to_excel_DEPRECATED_NONFRACTION_VERSION(bo_data_csv, BO_data_excel, logging, predictor_name=""):
+def parse_BO_data_csv_to_excel_DEPRECATED_NONFRACTION_VERSION(bo_data_csv, bocurve_data_xlsx, logging, predictor_name=""):
     """
     """
     dfb = pd.read_csv(bo_data_csv, index_col=0)
@@ -275,7 +275,7 @@ def parse_BO_data_csv_to_excel_DEPRECATED_NONFRACTION_VERSION(bo_data_csv, BO_da
     #           SAVE PARSED DATAFRAMES TO AN EXCEL FILE             #
     #################################################################
 
-    with pd.ExcelWriter(BO_data_excel) as writer:
+    with pd.ExcelWriter(bocurve_data_xlsx) as writer:
         dfobs.to_excel(writer, sheet_name="dfobs")
         dfrand.to_excel(writer, sheet_name="dfrand")
         dfp.to_excel(writer, sheet_name="dfp")
@@ -285,9 +285,9 @@ def parse_BO_data_csv_to_excel_DEPRECATED_NONFRACTION_VERSION(bo_data_csv, BO_da
 
 
 
-def save_BO_linegraph_and_barchart(s, BO_data_excel, BO_linechart_png, BO_barchart_png, namedict, logging, AUC_ser, plot_o_over_r=False):
+def save_BO_linegraph_and_barchart(s, bocurve_data_xlsx, BO_linechart_png, BO_barchart_png, namedict, logging, AUC_ser, plot_o_over_r=False):
 
-    df_o_minus_r = pd.read_excel(BO_data_excel, sheet_name="df_o_minus_r", index_col=0)
+    df_o_minus_r = pd.read_excel(bocurve_data_xlsx, sheet_name="df_o_minus_r", index_col=0)
     BO_scatter_png = str(BO_barchart_png)[:-12] + "scatter.png"
 
     #######################################################################################################
@@ -296,7 +296,7 @@ def save_BO_linegraph_and_barchart(s, BO_data_excel, BO_linechart_png, BO_barcha
     #                                                                                                     #
     #######################################################################################################
     # load AUBOC10 values as a series
-    AUBOC10_ser = pd.read_excel(BO_data_excel, sheet_name="AUBOC10", index_col=0)["AUBOC10"].copy()
+    AUBOC10_ser = pd.read_excel(bocurve_data_xlsx, sheet_name="AUBOC10", index_col=0)["AUBOC10"].copy()
     # select sample sizes 5 and 10
     df_valid_indiv = df_o_minus_r.loc[[5, 10], :].T.copy()
     df_valid_indiv["AUBOC10"] = AUBOC10_ser
@@ -348,9 +348,9 @@ def save_BO_linegraph_and_barchart(s, BO_data_excel, BO_linechart_png, BO_barcha
     for col in df_valid_indiv.columns:
         df_valid_indiv[col] = normalise_0_1(df_valid_indiv[col])[0] + 0.01
 
-    BO_data_excel: Union[Path, str] = Path(s["thoipapy_data_folder"]) / f"Results/{s['setname']}/crossvalidation/data/{s['setname']}_thoipa_loo_bo_curve_data.xlsx"
+    bocurve_data_xlsx: Union[Path, str] = Path(s["thoipapy_data_folder"]) / f"Results/{s['setname']}/crossvalidation/data/{s['setname']}_thoipa_loo_bo_curve_data.xlsx"
     BO_data_valid_indiv_csv: Union[Path, str] = Path(s["thoipapy_data_folder"]) / f"Results/{s['setname']}/crossvalidation/data/{s['setname']}_BO_curve_data_valid_indiv.csv"
-    make_sure_path_exists(BO_data_excel, isfile=True)
+    make_sure_path_exists(bocurve_data_xlsx, isfile=True)
 
     df_valid_indiv = df_valid_indiv.reindex(columns=["AUBOC10", 5, 10, "ROC AUC"])
     df_valid_indiv.columns = ["AUBOC10", "sample size 5", "sample size 10", "ROC AUC"]
@@ -394,7 +394,7 @@ def save_BO_linegraph_and_barchart(s, BO_data_excel, BO_linechart_png, BO_barcha
     #                                                                                                     #
     #######################################################################################################
     if plot_o_over_r:
-        df_o_over_r = pd.read_excel(BO_data_excel, sheet_name="df_o_over_r", index_col=0)
+        df_o_over_r = pd.read_excel(bocurve_data_xlsx, sheet_name="df_o_over_r", index_col=0)
         df_o_over_r_mean = df_o_over_r.T.mean()
     df_o_minus_r.columns = pd.Series(df_o_minus_r.columns).replace(namedict)
     df_o_minus_r_mean = df_o_minus_r.T.mean()
@@ -435,16 +435,16 @@ def save_BO_linegraph_and_barchart(s, BO_data_excel, BO_linechart_png, BO_barcha
     return AUBOC10
 
 
-def save_extra_BO_figs(BO_data_excel, other_figs_path):
+def save_extra_BO_figs(bocurve_data_xlsx, other_figs_path):
     linechart_mean_obs_and_rand = os.path.join(other_figs_path, "1_linechart_mean_obs_and_rand.png")
     linechart_obs_indiv = os.path.join(other_figs_path, "2_linechart_obs_indiv.png")
     linechart_p_indiv = os.path.join(other_figs_path, "3_linechart_p_indiv.png")
     linechart_o_minus_r = os.path.join(other_figs_path, "4_linechart_o_minus_r.png")
     linechart_o_over_r = os.path.join(other_figs_path, "5_linechart_o_over_r.png")
 
-    dfrand = pd.read_excel(BO_data_excel, sheet_name="dfrand", index_col=0)
-    dfobs = pd.read_excel(BO_data_excel, sheet_name="dfobs", index_col=0)
-    df_o_minus_r = pd.read_excel(BO_data_excel, sheet_name="df_o_minus_r", index_col=0)
+    dfrand = pd.read_excel(bocurve_data_xlsx, sheet_name="dfrand", index_col=0)
+    dfobs = pd.read_excel(bocurve_data_xlsx, sheet_name="dfobs", index_col=0)
+    df_o_minus_r = pd.read_excel(bocurve_data_xlsx, sheet_name="df_o_minus_r", index_col=0)
     # linechart_mean_obs_and_rand
 
     fig, ax = plt.subplots()
@@ -465,7 +465,7 @@ def save_extra_BO_figs(BO_data_excel, other_figs_path):
     ax.set_ylabel("overlap")
     fig.savefig(linechart_obs_indiv, dpi=140)
 
-    dfp = pd.read_excel(BO_data_excel, sheet_name="dfp", index_col=0)
+    dfp = pd.read_excel(bocurve_data_xlsx, sheet_name="dfp", index_col=0)
     # linechart_p_indiv
     plt.close("all")
     fig, ax = plt.subplots()

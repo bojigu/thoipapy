@@ -29,8 +29,8 @@ def validate_multiple_predictors_and_subsets_auboc10(s, df_set, logging):
         make_sure_path_exists(mean_AUBOC_file, isfile=True)
 
         for predictor in predictors:
-            BO_data_excel = Path(s["thoipapy_data_folder"]) / f"Results/{s['setname']}/crossvalidation/indiv_validation/bocurve/data/{predictor}/BO_curve_data.xlsx"
-            df_o_minus_r = pd.read_excel(BO_data_excel, sheet_name="df_o_minus_r", index_col=0)
+            bocurve_data_xlsx = Path(s["thoipapy_data_folder"]) / f"Results/{s['setname']}/crossvalidation/indiv_validation/bocurve/data/{predictor}/bocurve_data.xlsx"
+            df_o_minus_r = pd.read_excel(bocurve_data_xlsx, sheet_name="df_o_minus_r", index_col=0)
             df_o_minus_r = df_o_minus_r.filter(regex=subset, axis=1)
             df_o_minus_r_mean = df_o_minus_r.T.mean()
             AUBOC10 = np.trapz(y=df_o_minus_r_mean, x=df_o_minus_r_mean.index)

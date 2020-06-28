@@ -6,7 +6,7 @@ import pandas as pd
 from matplotlib import pyplot as plt
 from sklearn.metrics import roc_curve, auc
 
-import thoipapy.utils
+from thoipapy.utils import get_testsetname_trainsetname_from_run_settings, make_sure_path_exists, drop_redundant_proteins_from_list
 from thoipapy.validation.gather import create_df_with_all_predictions_for_all_residues_in_set
 
 
@@ -14,6 +14,9 @@ def create_ROC_all_residues(s, df_set, logging):
     """Combine all residue predictions, so AUC can be calculated from a single array.
 
     Effectively stacks the CSVs on top of each other.
+
+    This is the current recommended ROC validation method.
+    This contrasts with older scripts that calculate a ROC using data for each protein separately, which yielded a non-normal distribution and was therefore deprecated.
 
     Parameters
     ----------
@@ -41,9 +44,9 @@ def create_ROC_all_residues(s, df_set, logging):
     all_res_ROC_data_csv: Union[Path, str] = Path(s["thoipapy_data_folder"]) / f"Results/{s['setname']}/crossvalidation/ROC/{s['setname']}_all_res_ROC_data.csv"
     all_res_ROC_png: Union[Path, str] = Path(s["thoipapy_data_folder"]) / f"Results/{s['setname']}/crossvalidation/ROC/{s['setname']}_all_res_ROC.png"
 
-    thoipapy.utils.make_sure_path_exists(pred_all_res_csv, isfile=True)
+    make_sure_path_exists(pred_all_res_csv, isfile=True)
 
-    df_set_nonred = thoipapy.utils.drop_redundant_proteins_from_list(df_set, logging)
+    df_set_nonred = drop_redundant_proteins_from_list(df_set, logging)
 
     df_all = create_df_with_all_predictions_for_all_residues_in_set(s, df_set_nonred, pred_all_res_csv, logging)
 
@@ -71,6 +74,11 @@ def save_fig_ROC_all_residues(s, df, all_res_ROC_png, all_res_ROC_data_csv, logg
     ax.plot([0, 1], [0, 1], color="0.5", linestyle="--", label="random", linewidth=1)
     THOIPA_predictor = "THOIPA_{}_LOO".format(s["set_number"])
     predictors = [THOIPA_predictor, "TMDOCK", "LIPS_surface_ranked", "PREDDIMER"]
+    testsetname, trainsetname = get_testsetname_trainsetname_from_run_settings(s)
+
+    if s["setname"] == testsetname:
+        predictors.append(f"thoipa.train{trainsetname}")
+
     output_dict = {}
     for predictor in predictors:
         df_sel = df[["interface", predictor]].dropna()
