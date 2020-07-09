@@ -10,7 +10,8 @@ import pandas as pd
 import seaborn as sns; sns.set()
 from matplotlib import pyplot as plt
 #from eccpy.tools import normalise_between_2_values
-from thoipapy.utils import normalise_between_2_values
+from thoipapy.utils import normalise_between_2_values, get_testsetname_trainsetname_from_run_settings
+
 
 def create_merged_heatmap(s, df_set, logging):
     """Create heatmap from merged disruption, combined_prediction, and features in  traindata.csv files.
@@ -36,8 +37,12 @@ def create_merged_heatmap(s, df_set, logging):
     #################################################################
     #             EXTRACT NAMES FROM NAMES EXCEL FILE               #
     #################################################################
-
-    THOIPA_col = "THOIPA_{}_LOO".format(s["set_number"])
+    setname = f"set{s['set_number']:02d}"
+    testsetname, trainsetname = get_testsetname_trainsetname_from_run_settings(s)
+    if setname == testsetname:
+        THOIPA_col = f"thoipa.train{trainsetname}"
+    else:
+        THOIPA_col = "THOIPA_{}_LOO".format(s["set_number"])
     LIPS_col = "LIPS_surface"#"LIPS_surface_ranked"
     coev_col = "DI4mean"
 
@@ -78,7 +83,7 @@ def create_merged_heatmap(s, df_set, logging):
             raise ValueError("database not recognised : {}".format(database))
 
         sys.stdout.write("\n{} {}".format(savename, fig_label))
-        create_single_merged_heatmap(s, acc, database,savename, fig_label, dfh_cols, THOIPA_col, LIPS_col, coev_col)
+        create_single_merged_heatmap(s, acc, database, savename, fig_label, dfh_cols, THOIPA_col, LIPS_col, coev_col)
 
 def create_single_merged_heatmap(s, acc, database, savename, fig_label, dfh_cols, THOIPA_col, LIPS_col, coev_col):
         merged_data_csv_path: Union[Path, str] = Path(s["thoipapy_data_folder"]) / f"Results/{s['setname']}/predictions/merged/{database}.{acc}.merged.csv"

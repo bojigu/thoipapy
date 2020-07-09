@@ -15,7 +15,7 @@ from thoipapy.utils import make_sure_path_exists
 def validate_multiple_predictors_and_subsets_auboc10(s, df_set, logging):
 
     logging.info("start create_AUBOC10_43databases_figs")
-    predictors = ["THOIPA_{}_LOO".format(s["set_number"]),"PREDDIMER", "TMDOCK", "LIPS_surface_ranked"] #"LIPS_L*E",
+    predictors = ["THOIPA_{}_LOO".format(s["set_number"]),"PREDDIMER", "TMDOCK", "LIPS_surface_ranked", "random"] #"LIPS_L*E",
     subsets = ["crystal", "NMR", "ETRA"]
     for subset in subsets:
         df_o_minus_r_mean_df = pd.DataFrame()
@@ -43,7 +43,7 @@ def validate_multiple_predictors_and_subsets_auboc10(s, df_set, logging):
         df_o_minus_r_mean_df.to_csv(BOCURVE_linechart_csv)
         plt.close("all")
         figsize = np.array([3.42, 3.42]) * 2  # DOUBLE the real size, due to problems on Bo computer with fontsizes
-        color_list = 'rgbk'
+        color_list = ["r", "g", "b", "k", "0.5", "0.25"]
         fig, ax = plt.subplots(figsize=figsize)
         for i,column in enumerate(df_o_minus_r_mean_df.columns):
             # df_o_minus_r_mean_df.plot(ax=ax, color="#0f7d9b", linestyle="-", label="prediction (AUBOC10 : {:0.2f}".format(AUBOC10))

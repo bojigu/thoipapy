@@ -20,7 +20,6 @@ import thoipapy.experimental_data.add_experimental_data_to_train_set
 import thoipapy.feature_importance.mean_decrease_accuracy
 import thoipapy.feature_importance.mean_decrease_impurity
 import thoipapy.features.physical_parameters
-import thoipapy.other.validation_deprecated.validation_deprecated
 import thoipapy.validation.gather
 from thoipapy.clustering.pairwise_aln_similarity_matrix import create_identity_matrix_from_protein_set
 from thoipapy.utils import get_testsetname_trainsetname_from_run_settings
@@ -271,10 +270,9 @@ if __name__ == "__main__":
             if s["download_10_homologues_from_ncbi"] == True:
                 thoipapy.homologues.NCBI_download.download_10_homologues_from_ncbi(s, df_set, logging)
 
-        if "plot_coev_vs_res_dist" in s:
-            if s["plot_coev_vs_res_dist"] == True:
-                thoipapy.figs.retrospective.calc_coev_vs_res_dist(s, dfset, logging)
-                thoipapy.figs.retrospective.plot_coev_vs_res_dist(s, logging)
+        if s["plot_coev_vs_res_dist"] == True:
+            thoipapy.figs.retrospective.calc_coev_vs_res_dist(s, dfset, logging)
+            thoipapy.figs.retrospective.plot_coev_vs_res_dist(s, logging)
 
         thoipapy.setting.deployment_helper.docker_deployment_had_better_work_now()
         thoipapy.ML_model.deployment_helper2.docker_deployment_had_better_work_now2()
