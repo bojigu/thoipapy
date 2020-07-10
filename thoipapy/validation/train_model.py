@@ -79,8 +79,9 @@ def train_machine_learning_model(s, logging):
     """
     logging.info('starting train_machine_learning_model')
 
+    # inputs
     train_data_filtered = Path(s["thoipapy_data_folder"]) / f"Results/{s['setname']}/train_data/03_train_data_after_first_feature_seln.csv"
-
+    # outputs
     model_pkl = os.path.join(s["thoipapy_data_folder"], "Results", s["setname"], "{}_ML_model.lpkl".format(s["setname"]))
 
     df_data = pd.read_csv(train_data_filtered, index_col=0)
@@ -90,20 +91,40 @@ def train_machine_learning_model(s, logging):
 
     df_data = df_data.dropna()
 
+    cols_excluding_y = [c for c in df_data.columns if c != s['bind_column']]
+    X = df_data[cols_excluding_y]
     y = df_data["interface"]
-    X = drop_cols_not_used_in_ML(logging, df_data, s["excel_file_with_settings"])
 
     if 1 not in y.tolist():
         raise ValueError("None of the residues are marked 1 for an interface residue!")
 
+    cls: ExtraTreesClassifier = return_classifier_with_loaded_ensemble_parameters(s)
+
     n_features = X.shape[1]
-    forest = THOIPA_classifier_with_settings(s, n_features)
-    fit = forest.fit(X, y)
+    cls = THOIPA_classifier_with_settings(s, n_features)
+    fit = cls.fit(X, y)
     joblib.dump(fit, model_pkl)
 
-    tree_depths = np.array([estimator.tree_.max_depth for estimator in forest.estimators_])
+    tree_depths = np.array([estimator.tree_.max_depth for estimator in cls.estimators_])
     logging.info("tree depth mean = {} ({})".format(tree_depths.mean(), tree_depths))
 
     logging.info('finished training machine learning algorithm ({})'.format(model_pkl))
+
+
+def return_classifier_with_loaded_ensemble_parameters(s):
+    tuned_ensemble_parameters_csv = Path(s["thoipapy_data_folder"]) / f"Results/{s['setname']}/train_data/04_tuned_ensemble_parameters.csv"
+    df_tuned_ensemble_parameters: pd.DataFrame = pd.read_csv(tuned_ensemble_parameters_csv, index_col=0)
+    ensemble_parameters_ser: pd.Series = df_tuned_ensemble_parameters["GridSearchSlowMethod"]
+    cls = ExtraTreesClassifier(
+        n_estimators=ensemble_parameters_ser["n_estimators"],
+        n_jobs=s["n_CPU_cores"],
+        criterion=ensemble_parameters_ser["criterion"],
+        min_samples_leaf=ensemble_parameters_ser["min_samples_leaf"],
+        max_depth=ensemble_parameters_ser["max_depth"],
+        oob_score=False,
+        bootstrap=bool(s["bootstrap"]),
+        max_features=ensemble_parameters_ser["max_features"]
+    )
+    return cls
 
 
