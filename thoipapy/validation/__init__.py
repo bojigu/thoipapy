@@ -10,4 +10,3 @@ import thoipapy.validation.multiple_predictors
 import thoipapy.validation.precision_recall
 import thoipapy.validation.roc
 import thoipapy.validation.tenfold
-import thoipapy.validation.train_model

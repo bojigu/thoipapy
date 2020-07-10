@@ -214,7 +214,7 @@ if __name__ == "__main__":
             thoipapy.feature_importance.mean_decrease_accuracy.fig_feat_import_from_mean_decrease_accuracy(s, logging)
 
         if s["train_machine_learning_model"]:
-            thoipapy.validation.train_model.train_machine_learning_model(s, logging)
+            thoipapy.ML_model.train_model.train_machine_learning_model(s, logging)
 
         if s["run_testset_trainset_validation"] == True:
             thoipapy.validation.testset_trainset.run_testset_trainset_validation(s, logging)

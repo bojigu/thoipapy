@@ -1,4 +1,3 @@
-import os
 import sys
 from pathlib import Path
 
@@ -9,7 +8,7 @@ from matplotlib import pyplot as plt
 from thoipapy.utils import create_colour_lists, make_sure_path_exists
 from thoipapy.feature_importance.plots import create_var_imp_plot
 from thoipapy.validation.feature_selection import drop_cols_not_used_in_ML
-from thoipapy.validation.train_model import THOIPA_classifier_with_settings
+from thoipapy.ML_model.train_model import THOIPA_classifier_with_settings
 
 
 def calc_feat_import_from_mean_decrease_impurity(s, logging):

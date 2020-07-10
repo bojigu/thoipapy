@@ -13,7 +13,7 @@ from sklearn.model_selection import StratifiedKFold
 
 import thoipapy.utils
 from thoipapy.validation.feature_selection import drop_cols_not_used_in_ML
-from thoipapy.validation.train_model import THOIPA_classifier_with_settings
+from thoipapy.ML_model.train_model import THOIPA_classifier_with_settings
 
 
 def run_10fold_cross_validation(s, logging):

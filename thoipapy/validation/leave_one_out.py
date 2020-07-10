@@ -112,7 +112,7 @@ def run_LOO_validation(s: dict, df_set: pd.DataFrame, logging):
     pred_colname = "THOIPA_{}_LOO".format(s["set_number"])
 
     n_features = thoipapy.validation.feature_selection.drop_cols_not_used_in_ML(logging, df_data, s["excel_file_with_settings"]).shape[1]
-    forest = thoipapy.validation.train_model.THOIPA_classifier_with_settings(s, n_features)
+    forest = thoipapy.ML_model.train_model.THOIPA_classifier_with_settings(s, n_features)
 
     if s["use_multiprocessing"]:
         # TURN LOGGING OFF BEFORE MULTIPROCESSING

@@ -8,8 +8,7 @@ import pandas as pd
 
 import thoipapy.utils
 from thoipapy.validation.auc import calc_mean_AUC
-from thoipapy.validation.feature_selection import drop_cols_not_used_in_ML
-from thoipapy.validation.train_model import THOIPA_classifier_with_settings
+from thoipapy.ML_model.train_model import THOIPA_classifier_with_settings
 
 
 def calc_feat_import_from_mean_decrease_accuracy(s, logging):
