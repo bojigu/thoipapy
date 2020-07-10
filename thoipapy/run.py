@@ -206,6 +206,9 @@ if __name__ == "__main__":
             thoipapy.feature_importance.ensemble_rfe.select_best_features_with_ensemble_rfe(s, logging)
             thoipapy.feature_importance.merge.merge_top_features_anova_ensemble(s, logging)
 
+        if s["tune_ensemble_parameters"]:
+            thoipapy.ML_model.tune.tune_ensemble_parameters(s, logging)
+
         if s["calc_feature_importances"]:
             thoipapy.feature_importance.mean_decrease_accuracy.calc_feat_import_from_mean_decrease_accuracy(s, logging)
             thoipapy.feature_importance.mean_decrease_accuracy.fig_feat_import_from_mean_decrease_accuracy(s, logging)

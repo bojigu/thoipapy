@@ -3,7 +3,7 @@ from typing import List
 
 import pandas as pd
 from thoipapy.utils import make_sure_path_exists
-from sklearn.feature_selection import f_classif, RFE
+from sklearn.feature_selection import RFE
 from thoipapy.validation.train_model import THOIPA_classifier_with_settings
 
 
