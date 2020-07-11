@@ -128,7 +128,10 @@ def return_classifier_with_loaded_ensemble_parameters(s, tuned_ensemble_paramete
     else:
         max_features = ensemble_parameters_ser["max_features"]
         min_samples_leaf = int(ensemble_parameters_ser["min_samples_leaf"])
-        max_depth = int(ensemble_parameters_ser["max_depth"])
+        if pd.isnull(ensemble_parameters_ser["max_depth"]):
+            max_depth = None
+        else:
+            max_depth = int(ensemble_parameters_ser["max_depth"])
         bootstrap = bool(s["bootstrap"])
 
     cls = ExtraTreesClassifier(
