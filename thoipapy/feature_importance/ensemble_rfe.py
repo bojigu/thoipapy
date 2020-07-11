@@ -4,7 +4,7 @@ from typing import List
 import pandas as pd
 from thoipapy.utils import make_sure_path_exists
 from sklearn.feature_selection import RFE
-from thoipapy.ML_model.train_model import THOIPA_classifier_with_settings
+from thoipapy.ML_model.train_model import return_classifier_with_loaded_ensemble_parameters
 
 
 def select_best_features_with_ensemble_rfe(s, logging):
@@ -31,7 +31,7 @@ def select_best_features_with_ensemble_rfe(s, logging):
 
     y = df_data[s["bind_column"]]
 
-    forest = THOIPA_classifier_with_settings(s, n_features=X.shape[1])
+    forest = return_classifier_with_loaded_ensemble_parameters(s)
     rfe = RFE(forest, s["n_top_features_to_keep"])
     fit = rfe.fit(X, y)
     print("Num Features: %d" % fit.n_features_)

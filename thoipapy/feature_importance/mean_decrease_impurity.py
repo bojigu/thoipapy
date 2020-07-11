@@ -8,7 +8,7 @@ from matplotlib import pyplot as plt
 from thoipapy.utils import create_colour_lists, make_sure_path_exists
 from thoipapy.feature_importance.plots import create_var_imp_plot
 from thoipapy.validation.feature_selection import drop_cols_not_used_in_ML
-from thoipapy.ML_model.train_model import THOIPA_classifier_with_settings
+from thoipapy.ML_model.train_model import return_classifier_with_loaded_ensemble_parameters, THOIPA_classifier_with_settings_deprecated
 
 
 def calc_feat_import_from_mean_decrease_impurity(s, logging):
@@ -46,10 +46,10 @@ def calc_feat_import_from_mean_decrease_impurity(s, logging):
 
     for model_type in model_types:
         if model_type == "_TRT":
-            forest = THOIPA_classifier_with_settings(s, n_features, totally_randomized_trees=True)
+            forest = THOIPA_classifier_with_settings_deprecated(s, n_features, totally_randomized_trees=True)
             logging.info("IMPORTANCES FOR TOTALLY RANDOMIZED TREES (max_features=1, max_depth=None, min_samples_leaf=1)")
         elif model_type == "":
-            forest = THOIPA_classifier_with_settings(s, n_features)
+            forest = THOIPA_classifier_with_settings_deprecated(s, n_features)
             logging.info("Feature ranking:")
         else:
             raise ValueError("model type unknown")

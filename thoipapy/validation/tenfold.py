@@ -13,7 +13,7 @@ from sklearn.model_selection import StratifiedKFold
 
 import thoipapy.utils
 from thoipapy.validation.feature_selection import drop_cols_not_used_in_ML
-from thoipapy.ML_model.train_model import THOIPA_classifier_with_settings
+from thoipapy.ML_model.train_model import return_classifier_with_loaded_ensemble_parameters
 
 
 def run_10fold_cross_validation(s, logging):
@@ -64,7 +64,7 @@ def run_10fold_cross_validation(s, logging):
     cv = list(skf.split(X, y))
 
     n_features = X.shape[1]
-    forest = THOIPA_classifier_with_settings(s, n_features)
+    forest = return_classifier_with_loaded_ensemble_parameters(s)
 
     mean_tpr = 0.0
     mean_fpr = np.linspace(0, 1, 100)

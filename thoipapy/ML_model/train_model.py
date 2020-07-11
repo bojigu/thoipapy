@@ -12,7 +12,7 @@ import joblib
 import pickle
 
 
-def THOIPA_classifier_with_settings(s, n_features, totally_randomized_trees=False):
+def THOIPA_classifier_with_settings_deprecated(s, n_features, totally_randomized_trees=False):
     """ Classifier or Regressor settings are specified in the settings file.
     """
     # convert max_features to python None if "None"
@@ -98,10 +98,8 @@ def train_machine_learning_model(s, logging):
     if 1 not in y.tolist():
         raise ValueError("None of the residues are marked 1 for an interface residue!")
 
-    cls: ExtraTreesClassifier = return_classifier_with_loaded_ensemble_parameters(s)
-
     n_features = X.shape[1]
-    cls = THOIPA_classifier_with_settings(s, n_features)
+    cls: ExtraTreesClassifier = return_classifier_with_loaded_ensemble_parameters(s)
     fit = cls.fit(X, y)
     joblib.dump(fit, model_pkl)
 
@@ -111,19 +109,36 @@ def train_machine_learning_model(s, logging):
     logging.info('finished training machine learning algorithm ({})'.format(model_pkl))
 
 
-def return_classifier_with_loaded_ensemble_parameters(s):
+def return_classifier_with_loaded_ensemble_parameters(s, totally_randomized_trees=False) -> ExtraTreesClassifier:
     tuned_ensemble_parameters_csv = Path(s["thoipapy_data_folder"]) / f"Results/{s['setname']}/train_data/04_tuned_ensemble_parameters.csv"
     df_tuned_ensemble_parameters: pd.DataFrame = pd.read_csv(tuned_ensemble_parameters_csv, index_col=0)
     ensemble_parameters_ser: pd.Series = df_tuned_ensemble_parameters["GridSearchSlowMethod"]
+
+    n_estimators = int(ensemble_parameters_ser["n_estimators"])
+    n_jobs = int(s["n_CPU_cores"])
+    criterion = ensemble_parameters_ser["criterion"]
+    oob_score = False
+
+    if totally_randomized_trees:
+        max_features = 1
+        min_samples_leaf = 1
+        max_depth = None
+        bootstrap = False
+    else:
+        max_features = ensemble_parameters_ser["max_features"]
+        min_samples_leaf = int(ensemble_parameters_ser["min_samples_leaf"])
+        max_depth = int(ensemble_parameters_ser["max_depth"])
+        bootstrap = bool(s["bootstrap"])
+
     cls = ExtraTreesClassifier(
-        n_estimators=ensemble_parameters_ser["n_estimators"],
-        n_jobs=s["n_CPU_cores"],
-        criterion=ensemble_parameters_ser["criterion"],
-        min_samples_leaf=ensemble_parameters_ser["min_samples_leaf"],
-        max_depth=ensemble_parameters_ser["max_depth"],
-        oob_score=False,
-        bootstrap=bool(s["bootstrap"]),
-        max_features=ensemble_parameters_ser["max_features"]
+        n_estimators=n_estimators,
+        n_jobs=n_jobs,
+        criterion=criterion,
+        min_samples_leaf=min_samples_leaf,
+        max_depth=max_depth,
+        oob_score=oob_score,
+        bootstrap=bootstrap,
+        max_features=max_features
     )
     return cls
 

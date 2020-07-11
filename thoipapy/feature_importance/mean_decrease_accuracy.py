@@ -8,7 +8,7 @@ import pandas as pd
 
 import thoipapy.utils
 from thoipapy.validation.auc import calc_mean_AUC
-from thoipapy.ML_model.train_model import THOIPA_classifier_with_settings
+from thoipapy.ML_model.train_model import return_classifier_with_loaded_ensemble_parameters
 
 
 def calc_feat_import_from_mean_decrease_accuracy(s, logging):
@@ -80,7 +80,7 @@ def calc_feat_import_from_mean_decrease_accuracy(s, logging):
     for i in range(len(features_nested_list)):
         sys.stdout.write("\n{} : {}".format(features_nested_namelist[i], features_nested_list[i]))
 
-    forest = THOIPA_classifier_with_settings(s, n_features)
+    forest = return_classifier_with_loaded_ensemble_parameters(s, n_features)
 
     pr_auc_orig, roc_auc_orig = calc_mean_AUC(X, y, forest)
 
