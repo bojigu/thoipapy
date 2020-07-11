@@ -14,9 +14,9 @@ def merge_top_features_anova_ensemble(s, logging):
     top_features_anova_csv = Path(s["thoipapy_data_folder"]) / f"Results/{s['setname']}/feat_imp/top_features_anova.csv"
     top_features_rfe_csv = Path(s["thoipapy_data_folder"]) / f"Results/{s['setname']}/feat_imp/top_features_rfe.csv"
     # outputs
-    train_data_filtered = Path(s["thoipapy_data_folder"]) / f"Results/{s['setname']}/train_data/03_train_data_after_first_feature_seln.csv"
+    train_data_after_first_feature_seln_csv = Path(s["thoipapy_data_folder"]) / f"Results/{s['setname']}/train_data/03_train_data_after_first_feature_seln.csv"
 
-    make_sure_path_exists(train_data_filtered, isfile=True)
+    make_sure_path_exists(train_data_after_first_feature_seln_csv, isfile=True)
 
     anova_ser = pd.read_csv(top_features_anova_csv, index_col=0).iloc[:, 0]
     df_rfe = pd.read_csv(top_features_rfe_csv, index_col=0)
@@ -40,6 +40,6 @@ def merge_top_features_anova_ensemble(s, logging):
     logging.info(f"n_dropped_features : {n_dropped_features}")
 
     df_train_data_excl_dup_top_feat = df_train_data_excl_duplicates.reindex(columns=combined_top_features_incl_y, index=df_train_data_excl_duplicates.index)
-    df_train_data_excl_dup_top_feat.to_csv(train_data_filtered)
+    df_train_data_excl_dup_top_feat.to_csv(train_data_after_first_feature_seln_csv)
 
     logging.info('finished merge_top_features_anova_ensemble')

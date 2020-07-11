@@ -83,7 +83,10 @@ def run_LOO_validation(s: dict, df_set: pd.DataFrame, logging):
     # drop redundant proteins according to CD-HIT
     df_set = thoipapy.utils.drop_redundant_proteins_from_list(df_set, logging)
 
-    train_data_filtered = Path(s["thoipapy_data_folder"]) / f"Results/{s['setname']}/train_data/03_train_data_after_first_feature_seln.csv"
+    # input
+    train_data_after_first_feature_seln_csv = Path(s["thoipapy_data_folder"]) / f"Results/{s['setname']}/train_data/03_train_data_after_first_feature_seln.csv"
+    tuned_ensemble_parameters_csv = Path(s["thoipapy_data_folder"]) / f"Results/{s['setname']}/train_data/04_tuned_ensemble_parameters.csv"
+    # output
     LOO_crossvalidation_pkl = os.path.join(s["thoipapy_data_folder"], "Results", s["setname"], "crossvalidation", "data", "{}_LOO_crossvalidation.pkl".format(s["setname"]))
     bocurve_data_raw_csv = os.path.join(s["thoipapy_data_folder"], "Results", s["setname"], "crossvalidation", "data", "{}_loo_bocurve_data_raw.csv".format(s["setname"]))
     bocurve_data_xlsx: Union[Path, str] = Path(s["thoipapy_data_folder"]) / f"Results/{s['setname']}/crossvalidation/data/{s['setname']}_thoipa_loo_bo_curve_data.xlsx"
@@ -94,7 +97,7 @@ def run_LOO_validation(s: dict, df_set: pd.DataFrame, logging):
 
     thoipapy.utils.make_sure_path_exists(bocurve_data_xlsx, isfile=True)
 
-    df_data = pd.read_csv(train_data_filtered, index_col=0)
+    df_data = pd.read_csv(train_data_after_first_feature_seln_csv, index_col=0)
     assert "Unnamed" not in ", ".join(df_data.columns.tolist())
 
     #df_data = df_data.dropna()
@@ -112,7 +115,7 @@ def run_LOO_validation(s: dict, df_set: pd.DataFrame, logging):
     pred_colname = "THOIPA_{}_LOO".format(s["set_number"])
 
     n_features = thoipapy.validation.feature_selection.drop_cols_not_used_in_ML(logging, df_data, s["excel_file_with_settings"]).shape[1]
-    forest = thoipapy.ML_model.train_model.return_classifier_with_loaded_ensemble_parameters(s)
+    forest = thoipapy.ML_model.train_model.return_classifier_with_loaded_ensemble_parameters(s, tuned_ensemble_parameters_csv)
 
     if s["use_multiprocessing"]:
         # TURN LOGGING OFF BEFORE MULTIPROCESSING

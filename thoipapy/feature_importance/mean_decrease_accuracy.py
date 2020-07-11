@@ -45,8 +45,11 @@ def calc_feat_import_from_mean_decrease_accuracy(s, logging):
         Comma separated values, showing decrease in AUC for each feature or group of features.
     """
     logging.info('calc_feat_import_from_mean_decrease_accuracy is running')
+    # input
     train_data_csv = Path(s["thoipapy_data_folder"]) / f"Results/{s['setname']}/train_data/03_train_data_after_first_feature_seln.csv"
+    tuned_ensemble_parameters_csv = Path(s["thoipapy_data_folder"]) / f"Results/{s['setname']}/train_data/04_tuned_ensemble_parameters.csv"
     # crossvalidation_csv = os.path.join(s["thoipapy_data_folder"], "Results", s["setname"], "crossvalidation", "data", "{}_10F_data.csv".format(s["setname"]))
+    # output
     feat_imp_MDA_csv = os.path.join(s["thoipapy_data_folder"], "Results", s["setname"], "feat_imp", "mean_decrease_accuracy_filtered_features.csv")
 
     thoipapy.utils.make_sure_path_exists(feat_imp_MDA_csv, isfile=True)
@@ -80,7 +83,7 @@ def calc_feat_import_from_mean_decrease_accuracy(s, logging):
     for i in range(len(features_nested_list)):
         sys.stdout.write("\n{} : {}".format(features_nested_namelist[i], features_nested_list[i]))
 
-    forest = return_classifier_with_loaded_ensemble_parameters(s, n_features)
+    forest = return_classifier_with_loaded_ensemble_parameters(s, tuned_ensemble_parameters_csv)
 
     pr_auc_orig, roc_auc_orig = calc_mean_AUC(X, y, forest)
 

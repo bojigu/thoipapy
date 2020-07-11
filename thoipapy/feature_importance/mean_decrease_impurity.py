@@ -5,13 +5,24 @@ import numpy as np
 import pandas as pd
 from matplotlib import pyplot as plt
 
+from thoipapy.ML_model.tune import tune_ensemble_parameters
 from thoipapy.utils import create_colour_lists, make_sure_path_exists
 from thoipapy.feature_importance.plots import create_var_imp_plot
 from thoipapy.validation.feature_selection import drop_cols_not_used_in_ML
 from thoipapy.ML_model.train_model import return_classifier_with_loaded_ensemble_parameters, THOIPA_classifier_with_settings_deprecated
 
 
-def calc_feat_import_from_mean_decrease_impurity(s, logging):
+def get_initial_ensemble_parameters_before_feature_selection(s, logging):
+
+    #logging.info('RF_variable_importance_calculate is running\n')
+    train_data_csv = Path(s["thoipapy_data_folder"]) / f"Results/{s['setname']}/train_data/01_train_data_orig.csv"
+    # output
+    tuned_ensemble_parameters_before_feature_seln_csv = Path(s["thoipapy_data_folder"]) / f"Results/{s['setname']}/train_data/01_tuned_ensemble_parameters_before_feature_seln.csv"
+
+    tune_ensemble_parameters(s, train_data_csv, tuned_ensemble_parameters_before_feature_seln_csv, logging)
+
+
+def calc_feat_import_using_MDI_before_feature_seln(s, logging):
     """Calculate the variable importance (mean decrease gini) for all variables in THOIPA.
 
     Parameters
@@ -29,8 +40,11 @@ def calc_feat_import_from_mean_decrease_impurity(s, logging):
     """
     #logging.info('RF_variable_importance_calculate is running\n')
     train_data_csv = Path(s["thoipapy_data_folder"]) / f"Results/{s['setname']}/train_data/01_train_data_orig.csv"
+    tuned_ensemble_parameters_before_feature_seln_csv = Path(s["thoipapy_data_folder"]) / f"Results/{s['setname']}/train_data/01_tuned_ensemble_parameters_before_feature_seln.csv"
 
-    mean_decrease_impurity_all_features_csv = Path(s["thoipapy_data_folder"]) / "Results" / s["setname"] / "feat_imp/mean_decrease_impurity_all_features.csv"
+    #mean_decrease_impurity_all_features_csv = Path(s["thoipapy_data_folder"]) / "Results" / s["setname"] / "feat_imp/mean_decrease_impurity_all_features.csv"
+    mean_decrease_impurity_all_features_csv = Path(s["thoipapy_data_folder"]) / f"Results/{s['setname']}/train_data/01_feat_imp_MDI_before_feature_seln.csv"
+
     make_sure_path_exists(mean_decrease_impurity_all_features_csv, isfile=True)
 
     df_data = pd.read_csv(train_data_csv, index_col=0)
@@ -46,10 +60,10 @@ def calc_feat_import_from_mean_decrease_impurity(s, logging):
 
     for model_type in model_types:
         if model_type == "_TRT":
-            forest = THOIPA_classifier_with_settings_deprecated(s, n_features, totally_randomized_trees=True)
+            forest = return_classifier_with_loaded_ensemble_parameters(s, tuned_ensemble_parameters_before_feature_seln_csv, totally_randomized_trees=True)
             logging.info("IMPORTANCES FOR TOTALLY RANDOMIZED TREES (max_features=1, max_depth=None, min_samples_leaf=1)")
         elif model_type == "":
-            forest = THOIPA_classifier_with_settings_deprecated(s, n_features)
+            forest = return_classifier_with_loaded_ensemble_parameters(s, tuned_ensemble_parameters_before_feature_seln_csv)
             logging.info("Feature ranking:")
         else:
             raise ValueError("model type unknown")
@@ -104,7 +118,7 @@ def fig_feat_import_from_mean_decrease_impurity(s, logging):
     plt.rcParams.update({'font.size':4})
     colour_dict = create_colour_lists()
 
-    mean_decrease_impurity_all_features_csv = Path(s["thoipapy_data_folder"]) / "Results" / s["setname"] / "feat_imp/mean_decrease_impurity_all_features.csv"
+    mean_decrease_impurity_all_features_csv = Path(s["thoipapy_data_folder"]) / f"Results/{s['setname']}/train_data/01_feat_imp_MDI_before_feature_seln.csv"
     variable_importance_all_png = Path(s["thoipapy_data_folder"]) / "Results" / s["setname"] / "feat_imp/all_var_import.png"
     variable_importance_top_png = Path(s["thoipapy_data_folder"]) / "Results" / s["setname"] / "feat_imp/top_var_import.png"
 

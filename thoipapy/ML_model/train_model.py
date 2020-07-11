@@ -80,11 +80,12 @@ def train_machine_learning_model(s, logging):
     logging.info('starting train_machine_learning_model')
 
     # inputs
-    train_data_filtered = Path(s["thoipapy_data_folder"]) / f"Results/{s['setname']}/train_data/03_train_data_after_first_feature_seln.csv"
+    train_data_after_first_feature_seln_csv = Path(s["thoipapy_data_folder"]) / f"Results/{s['setname']}/train_data/03_train_data_after_first_feature_seln.csv"
+    tuned_ensemble_parameters_csv = Path(s["thoipapy_data_folder"]) / f"Results/{s['setname']}/train_data/04_tuned_ensemble_parameters.csv"
     # outputs
     model_pkl = os.path.join(s["thoipapy_data_folder"], "Results", s["setname"], "{}_ML_model.lpkl".format(s["setname"]))
 
-    df_data = pd.read_csv(train_data_filtered, index_col=0)
+    df_data = pd.read_csv(train_data_after_first_feature_seln_csv, index_col=0)
 
     if s["min_n_homol_training"] != 0:
         df_data = df_data.loc[df_data.n_homologues >= s["min_n_homol_training"]]
@@ -99,7 +100,8 @@ def train_machine_learning_model(s, logging):
         raise ValueError("None of the residues are marked 1 for an interface residue!")
 
     n_features = X.shape[1]
-    cls: ExtraTreesClassifier = return_classifier_with_loaded_ensemble_parameters(s)
+
+    cls: ExtraTreesClassifier = return_classifier_with_loaded_ensemble_parameters(s, tuned_ensemble_parameters_csv)
     fit = cls.fit(X, y)
     joblib.dump(fit, model_pkl)
 
@@ -109,8 +111,7 @@ def train_machine_learning_model(s, logging):
     logging.info('finished training machine learning algorithm ({})'.format(model_pkl))
 
 
-def return_classifier_with_loaded_ensemble_parameters(s, totally_randomized_trees=False) -> ExtraTreesClassifier:
-    tuned_ensemble_parameters_csv = Path(s["thoipapy_data_folder"]) / f"Results/{s['setname']}/train_data/04_tuned_ensemble_parameters.csv"
+def return_classifier_with_loaded_ensemble_parameters(s, tuned_ensemble_parameters_csv, totally_randomized_trees=False) -> ExtraTreesClassifier:
     df_tuned_ensemble_parameters: pd.DataFrame = pd.read_csv(tuned_ensemble_parameters_csv, index_col=0)
     ensemble_parameters_ser: pd.Series = df_tuned_ensemble_parameters["GridSearchSlowMethod"]
 

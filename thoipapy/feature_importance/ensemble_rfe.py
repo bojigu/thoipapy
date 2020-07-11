@@ -16,6 +16,7 @@ def select_best_features_with_ensemble_rfe(s, logging):
     logging.info('starting select_best_features_with_rfe')
     # inputs
     train_data_excl_duplicates_csv = Path(s["thoipapy_data_folder"]) / f"Results/{s['setname']}/train_data/02_train_data_excl_duplicates.csv"
+    tuned_ensemble_parameters_csv = Path(s["thoipapy_data_folder"]) / f"Results/{s['setname']}/train_data/04_tuned_ensemble_parameters.csv"
     # outputs
     top_features_rfe_csv = Path(s["thoipapy_data_folder"]) / f"Results/{s['setname']}/feat_imp/top_features_rfe.csv"
 
@@ -31,7 +32,7 @@ def select_best_features_with_ensemble_rfe(s, logging):
 
     y = df_data[s["bind_column"]]
 
-    forest = return_classifier_with_loaded_ensemble_parameters(s)
+    forest = return_classifier_with_loaded_ensemble_parameters(s, tuned_ensemble_parameters_csv)
     rfe = RFE(forest, s["n_top_features_to_keep"])
     fit = rfe.fit(X, y)
     print("Num Features: %d" % fit.n_features_)
