@@ -70,7 +70,7 @@ def get_optimised_ensemble_parameters_using_slow_gridsearchcv_method(X, cls, log
                       'max_depth': max_depth,
                       'min_samples_leaf': min_samples_leaf,
                       'bootstrap': bootstrap}
-    cls_gridsearch = GridSearchCV(cls, random_grid_gs, cv=5, verbose=1, n_jobs=-1)
+    cls_gridsearch = GridSearchCV(cls, random_grid_gs, cv=5, verbose=1, n_jobs=-1, scoring="average_precision")
     cls_gridsearch.fit(X, y)
     logging.info(f"best parameters: {cls_gridsearch.best_params_}")
     logging.info(f"best score: {cls_gridsearch.best_score_}")
@@ -101,7 +101,7 @@ def get_optimised_ensemble_parameters_using_quick_randomizedsearchcv_method(X, c
                          'max_depth': max_depth,
                          'min_samples_leaf': min_samples_leaf,
                          'bootstrap': bootstrap}
-    cls_random = RandomizedSearchCV(estimator=cls, param_distributions=random_grid_rs_cv, n_iter=100, cv=5, verbose=1, n_jobs=-1)
+    cls_random = RandomizedSearchCV(estimator=cls, param_distributions=random_grid_rs_cv, n_iter=100, cv=5, verbose=1, n_jobs=-1, scoring="average_precision")
     cls_random.fit(X, y)
     logging.info(f"best parameters: {cls_random.best_params_}")
     logging.info(f"best score: {cls_random.best_score_}")
