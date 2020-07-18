@@ -42,7 +42,7 @@ def run_10fold_cross_validation(s, logging):
         Pickled dictionary (xv_dict) containing the results for each fold of validation.
         Also contains the mean ROC curve, and the mean AUC.
     """
-    logging.info('10-fold cross validation is running')
+    sys.stdout.write("\n--------------- starting run_10fold_cross_validation ---------------\n")
     train_data_after_first_feature_seln_csv = Path(s["thoipapy_data_folder"]) / f"Results/{s['setname']}/train_data/03_train_data_after_first_feature_seln.csv"
     tuned_ensemble_parameters_csv = Path(s["thoipapy_data_folder"]) / f"Results/{s['setname']}/train_data/04_tuned_ensemble_parameters.csv"
     crossvalidation_pkl = os.path.join(s["thoipapy_data_folder"], "Results", s["setname"], "crossvalidation", "data", "{}_10F_data.pkl".format(s["setname"]))
@@ -105,7 +105,7 @@ def run_10fold_cross_validation(s, logging):
     features_ser = pd.Series(X.columns)
     features_ser.to_csv(features_csv)
     logging.info('{} 10-fold validation. AUC({:.3f}). Time taken = {:.2f}.\nFeatures: {}'.format(s["setname"], ROC_AUC, duration, X.columns.tolist()))
-
+    sys.stdout.write("\n--------------- finished run_10fold_cross_validation ---------------\n")
 
 def create_10fold_cross_validation_fig(s, logging):
     """Create figure showing ROC curve for each fold in a 10-fold validation.
@@ -120,6 +120,7 @@ def create_10fold_cross_validation_fig(s, logging):
     logging : logging.Logger
         Python object with settings for logging to console and file.
     """
+    sys.stdout.write("\n--------------- starting create_10fold_cross_validation_fig ---------------\n")
     #plt.rcParams.update({'font.size': 7})
     crossvalidation_png = os.path.join(s["thoipapy_data_folder"], "Results", s["setname"], "crossvalidation", "{}_10F_ROC.png".format(s["setname"]))
     crossvalidation_pkl = os.path.join(s["thoipapy_data_folder"], "Results", s["setname"], "crossvalidation", "data", "{}_10F_data.pkl".format(s["setname"]))
@@ -147,3 +148,4 @@ def create_10fold_cross_validation_fig(s, logging):
     fig.tight_layout()
     fig.savefig(crossvalidation_png, dpi=240)
     #fig.savefig(thoipapy.utils.pdf_subpath(crossvalidation_png))
+    sys.stdout.write("\n--------------- finished create_10fold_cross_validation_fig ---------------\n")

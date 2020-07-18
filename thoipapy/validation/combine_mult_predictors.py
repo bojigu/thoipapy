@@ -29,6 +29,7 @@ def merge_predictions(s, df_set, logging):
 
 
     """
+    logging.info("\n--------------- starting merge_predictions ---------------\n")
     # add the THOIPA prediction name to the list of columns to keep
     THOIPA_pred_colname = "THOIPA_{}_LOO".format(s["set_number"])
 
@@ -48,7 +49,6 @@ def merge_predictions(s, df_set, logging):
         # inputs
         train_data_file = os.path.join(s["thoipapy_data_folder"], "Features", "combined", database,"{}.surr20.gaps5.combined_features.csv".format(acc))
         THOIPA_LOO_prediction_csv = Path(s["thoipapy_data_folder"]) / f"Results/{s['setname']}/predictions/THOIPA_LOO/{database}.{acc}.LOO.prediction.csv"
-        THOIPA_testset_trainset_csv = Path(s["thoipapy_data_folder"]) / f"Results/{s['setname']}/predictions/thoipa.train{trainsetname}/{database}.{acc}.thoipa.train{trainsetname}.csv"
         PREDDIMER_prediction_file = os.path.join(other_predictors_dir, database, "{}.preddimer.closedist.csv".format(acc))
         TMDOCK_prediction_file = os.path.join(other_predictors_dir, database, "{}.tmdock.closedist.csv".format(acc))
         # output
@@ -61,8 +61,12 @@ def merge_predictions(s, df_set, logging):
         # set the unique index, based on the residue number in the full sequence
         dfm.set_index("res_num_full_seq", inplace=True)
         #dfm["conservation"] = -1 * dfm["Entropy"]
-        file_list = [THOIPA_LOO_prediction_csv, THOIPA_testset_trainset_csv, PREDDIMER_prediction_file, TMDOCK_prediction_file]
-        prediction_name_list = [THOIPA_pred_colname, thoipa_trainsetname, "PREDDIMER", "TMDOCK"]
+        file_list = [THOIPA_LOO_prediction_csv, PREDDIMER_prediction_file, TMDOCK_prediction_file]
+        prediction_name_list = [THOIPA_pred_colname, "PREDDIMER", "TMDOCK"]
+        if s["setname"] == testsetname:
+            THOIPA_testset_trainset_csv = Path(s["thoipapy_data_folder"]) / f"Results/{s['setname']}/predictions/thoipa.train{trainsetname}/{database}.{acc}.thoipa.train{trainsetname}.csv"
+            file_list.append(THOIPA_testset_trainset_csv)
+            prediction_name_list.append(thoipa_trainsetname)
         n_files_merged = 0
         for n, file in enumerate(file_list):
             prediction_name = prediction_name_list[n]
@@ -116,3 +120,4 @@ def merge_predictions(s, df_set, logging):
         dfm.to_csv(merged_data_csv_path)
 
         logging.info("{} predictions combined. n_files_merged : {}. ({})".format(acc, n_files_merged, merged_data_csv_path))
+    logging.info("\n--------------- finished merge_predictions ---------------\n")

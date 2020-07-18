@@ -76,7 +76,7 @@ def run_LOO_validation(s: dict, df_set: pd.DataFrame, logging):
     bocurve_data_xlsx, csv
         excel file with the processed BO-curve data
     """
-    logging.info('Leave-One-Out cross validation is running')
+    logging.info("\n--------------- starting run_LOO_validation ---------------\n")
     setname = s["setname"]
     names_excel_path = os.path.join(s["dropbox_dir"], "protein_names.xlsx")
 
@@ -264,6 +264,7 @@ def run_LOO_validation(s: dict, df_set: pd.DataFrame, logging):
     logging.info('{} LOO crossvalidation. Time taken = {:.2f}.'.format(s["setname"], duration))
     logging.info('---ROC_AUC(mean each protein : {:.2f})(from joined data {:.2f})---'.format(mean_roc_auc_all_prot, mean_roc_auc_from_joined_data))
     logging.info('---PR_AUC(mean each protein : {:.2f})---'.format(mean_pr_auc_all_prot))
+    logging.info("\n--------------- finished run_LOO_validation ---------------\n")
 
 
 def LOO_single_prot(d: LooValidationData):

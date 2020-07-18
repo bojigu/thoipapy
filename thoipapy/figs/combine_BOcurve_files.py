@@ -115,7 +115,7 @@ def plot_BOcurve(s, train_set_list, test_set_list, mult_THOIPA_dir, mult_testnam
     sys.stdout.write("\nfig_plot_BO_curve_mult_train_datasets finished ({})".format(BO_curve_png))
 
 
-def compare_selected_predictors(s):
+def compare_selected_predictors(s, logging):
     """Plot the BO-curve for multiple prediction methods
 
     Takes the datasets listed in settings under the "selected_predictors" tab
@@ -139,6 +139,7 @@ def compare_selected_predictors(s):
     #    raise Exception("set_number and test_datasets are not identical in settings file. This is recommended for test/train validation.")
 
     #plt.rcParams.update({'font.size': 7})
+    logging.info("\n--------------- starting compare_selected_predictors ---------------\n")
     BO_curve_png: Union[Path, str] = Path(s["thoipapy_data_folder"]) / f"Results/{s['setname']}/blindvalidation/compare_selected_predictors_BO_curve.png"
     AUBOC10_bar_png: Union[Path, str] = Path(s["thoipapy_data_folder"]) / f"Results/{s['setname']}/blindvalidation/compare_selected_predictors_AUBOC10_barchart.png"
     ROC_png: Union[Path, str] = Path(s["thoipapy_data_folder"]) / f"Results/{s['setname']}/blindvalidation/compare_selected_predictors_ROC.png"
@@ -223,7 +224,8 @@ def compare_selected_predictors(s):
     fig.savefig(ROC_png, dpi=240)
     #fig.savefig(thoipapy.utils.pdf_subpath(ROC_png))
 
-    sys.stdout.write("\ncompare_selected_predictors finished ({})\n".format(BO_curve_png))
+    sys.stdout.write("\nBO_curve_png ({})\n".format(BO_curve_png))
+    logging.info("\n--------------- finished compare_selected_predictors ---------------\n")
 
 def combine_BOcurve_files_hardlinked(s):
 

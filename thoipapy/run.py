@@ -233,12 +233,13 @@ if __name__ == "__main__":
         Linewidth= s["Linewidth"]
 
         if s["compare_selected_predictors"] == True:
-            thoipapy.figs.combine_BOcurve_files.compare_selected_predictors(s)
+            thoipapy.figs.combine_BOcurve_files.compare_selected_predictors(s, logging)
 
         if s["calc_PREDDIMER_TMDOCK_closedist"] == True:
             thoipapy.figs.calc_PREDDIMER_TMDOCK_closedist.calc_closedist_from_PREDDIMER_TMDOCK_best_model(s, df_set, logging)
 
         if s["run_validation"] == True:
+            sys.stdout.write("\n--------------- starting run_validation ---------------\n")
             namedict = thoipapy.utils.create_namedict(os.path.join(s["dropbox_dir"], "protein_names.xlsx"))
             THOIPA_predictor_name = "THOIPA_{}_LOO".format(s["set_number"])
             predictors = [THOIPA_predictor_name, "PREDDIMER", "TMDOCK", "LIPS_surface_ranked", "random"]
@@ -265,6 +266,7 @@ if __name__ == "__main__":
             thoipapy.validation.precision_recall.create_precision_recall_all_residues(s, df_set, logging)
 
             thoipapy.validation.gather.gather_validation_data_for_figs(s, df_set, logging)
+            sys.stdout.write("\n--------------- finished run_validation ---------------\n")
 
 
         if s["create_merged_heatmap"] == True:
