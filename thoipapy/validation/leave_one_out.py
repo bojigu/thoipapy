@@ -16,6 +16,7 @@ from sklearn.metrics import auc, roc_curve, precision_recall_curve
 import thoipapy.figs
 import thoipapy.utils
 import thoipapy.validation
+import thoipapy.validation.bocurve
 from thoipapy.utils import Log_Only_To_Console
 
 
@@ -259,7 +260,7 @@ def run_LOO_validation(s: dict, df_set: pd.DataFrame, logging):
     #names_excel_path = os.path.join(s["dropbox_dir"], "protein_names.xlsx")
 
     #linechart_mean_obs_and_rand = thoipapy.figs.Create_Bo_Curve_files.analyse_bo_curve_underlying_data(bocurve_data_raw_csv, crossvalidation_folder, names_excel_path)
-    thoipapy.figs.create_BOcurve_files.parse_BO_data_csv_to_excel(bocurve_data_raw_csv, bocurve_data_xlsx, logging)
+    thoipapy.validation.bocurve.parse_BO_data_csv_to_excel(bocurve_data_raw_csv, bocurve_data_xlsx, logging)
 
     logging.info('{} LOO crossvalidation. Time taken = {:.2f}.'.format(s["setname"], duration))
     logging.info('---ROC_AUC(mean each protein : {:.2f})(from joined data {:.2f})---'.format(mean_roc_auc_all_prot, mean_roc_auc_from_joined_data))
@@ -339,7 +340,7 @@ def LOO_single_prot(d: LooValidationData):
         # low closest distance means high importance at interface
         df_test["interface_score"] = -1 * df_test["interface_score"]
 
-    BO_df = thoipapy.figs.fig_utils.calc_best_overlap(d.acc_db, df_test, experiment_col="interface_score", pred_col=d.pred_colname)
+    BO_df = thoipapy.validation.bocurve.calc_best_overlap(d.acc_db, df_test, experiment_col="interface_score", pred_col=d.pred_colname)
 
     if d.i == 0:
         tree_depths = np.array([estimator.tree_.max_depth for estimator in d.forest.estimators_])

@@ -13,6 +13,7 @@ from scipy.stats import linregress
 from sklearn.metrics import roc_curve, auc, precision_recall_curve
 
 import thoipapy
+import thoipapy.validation.bocurve
 from thoipapy.utils import make_sure_path_exists
 
 
@@ -90,7 +91,7 @@ def collect_indiv_validation_data(s, df_set, logging, namedict, predictors, THOI
                 merged_data_df["interface_score"] = -1 * merged_data_df["interface_score"]
             # toggle whether to use boolean (interface) or continuous data (interface_score). Here we want continuous data
             experiment_col = "interface_score"
-            BO_single_prot_df = thoipapy.figs.fig_utils.calc_best_overlap(acc_db, merged_data_df, experiment_col, predictor)
+            BO_single_prot_df = thoipapy.validation.bocurve.calc_best_overlap(acc_db, merged_data_df, experiment_col, predictor)
             if BO_data_df.empty:
                 BO_data_df = BO_single_prot_df
             else:
@@ -120,7 +121,7 @@ def collect_indiv_validation_data(s, df_set, logging, namedict, predictors, THOI
         BO_data_df.to_csv(BO_curve_data_csv)
         # parse BO data csv
         # print out mean values
-        thoipapy.figs.create_BOcurve_files.parse_BO_data_csv_to_excel(BO_curve_data_csv, bocurve_data_xlsx, logging, predictor)
+        thoipapy.validation.bocurve.parse_BO_data_csv_to_excel(BO_curve_data_csv, bocurve_data_xlsx, logging, predictor)
 
         # ROC AUC validation
         ROC_AUC_ser = pd.Series(ROC_AUC_dict)
