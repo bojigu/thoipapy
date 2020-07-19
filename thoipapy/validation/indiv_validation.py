@@ -36,7 +36,7 @@ def collect_indiv_validation_data(s, df_set, logging, namedict, predictors, THOI
     logging.info("start collect_indiv_validation_data THOIPA_PREDDIMER_TMDOCK")
     ROC_AUC_df = pd.DataFrame()
     PR_AUC_df = pd.DataFrame()
-    AUBOC10_df = pd.DataFrame()
+    mean_o_minus_r_by_sample_df = pd.DataFrame()
     AUBOC10_from_complete_data_ser = pd.Series()
 
     AUC_AUBOC_name_list = []
@@ -134,7 +134,7 @@ def collect_indiv_validation_data(s, df_set, logging, namedict, predictors, THOI
         PR_AUC_ser.sort_values(inplace=True, ascending=False)
 
         # BO curve AUBOC10 validation
-        AUBOC10_ser = pd.read_excel(bocurve_data_xlsx, sheet_name="AUBOC10", index_col=0)["AUBOC10"].copy()
+        mean_o_minus_r_by_sample_ser = pd.read_excel(bocurve_data_xlsx, sheet_name="mean_o_minus_r_by_sample", index_col=0)["mean_o_minus_r_by_sample"].copy()
         df_o_minus_r = pd.read_excel(bocurve_data_xlsx, sheet_name="df_o_minus_r", index_col=0)
         df_o_minus_r.columns = pd.Series(df_o_minus_r.columns).replace(namedict)
         df_o_minus_r_mean = df_o_minus_r.T.mean()
@@ -151,12 +151,12 @@ def collect_indiv_validation_data(s, df_set, logging, namedict, predictors, THOI
 
         ROC_AUC_df[predictor] = ROC_AUC_ser
         PR_AUC_df[predictor] = PR_AUC_ser
-        AUBOC10_df[predictor] = AUBOC10_ser
+        mean_o_minus_r_by_sample_df[predictor] = mean_o_minus_r_by_sample_ser
 
     means_df = pd.DataFrame()
     means_df["ROC_AUC"] = ROC_AUC_df.mean()
     means_df["PR_AUC"] = PR_AUC_df.mean()
-    means_df["AUBOC10_mean_indiv"] = AUBOC10_df.mean()
+    means_df["mean_o_minus_r_by_sample"] = mean_o_minus_r_by_sample_df.mean()
     means_df["AUBOC10_from_complete_data"] = AUBOC10_from_complete_data_ser
 
     """ means_df looks like this:
@@ -169,12 +169,12 @@ def collect_indiv_validation_data(s, df_set, logging, namedict, predictors, THOI
     std_df = pd.DataFrame()
     std_df["ROC_AUC"] = ROC_AUC_df.std()
     std_df["PR_AUC"] = PR_AUC_df.std()
-    std_df["AUBOC10"] = AUBOC10_df.std()
+    std_df["mean_o_minus_r_by_sample"] = mean_o_minus_r_by_sample_df.std()
 
     SEM_df = pd.DataFrame()
     SEM_df["ROC_AUC"] = ROC_AUC_df.std() / np.sqrt(ROC_AUC_df.shape[0])
     SEM_df["PR_AUC"] = PR_AUC_df.std() / np.sqrt(PR_AUC_df.shape[0])
-    SEM_df["AUBOC10"] = AUBOC10_df.std() / np.sqrt(AUBOC10_df.shape[0])
+    SEM_df["mean_o_minus_r_by_sample"] = mean_o_minus_r_by_sample_df.std() / np.sqrt(mean_o_minus_r_by_sample_df.shape[0])
 
     with pd.ExcelWriter(indiv_validation_data_xlsx) as writer:
 
@@ -184,7 +184,8 @@ def collect_indiv_validation_data(s, df_set, logging, namedict, predictors, THOI
 
         ROC_AUC_df.to_excel(writer, sheet_name="ROC_AUC_indiv")
         PR_AUC_df.to_excel(writer, sheet_name="PR_AUC_indiv")
-        AUBOC10_df.to_excel(writer, sheet_name="BO_AUBOC10_indiv")
+        #mean_o_minus_r_by_sample_df.to_excel(writer, sheet_name="BO_AUBOC10_indiv")
+        mean_o_minus_r_by_sample_df.to_excel(writer, sheet_name="mean_o_minus_r_by_sample")
 
         df_o_minus_r_mean_df.to_excel(writer, sheet_name="BO_o_minus_r")
 
@@ -237,12 +238,12 @@ def create_indiv_validation_figs(s, logging, namedict, predictors, THOIPA_predic
 
     ROC_AUC_df = pd.read_excel(indiv_validation_data_xlsx, sheet_name="ROC_AUC_indiv", index_col=0)
     PR_AUC_df = pd.read_excel(indiv_validation_data_xlsx, sheet_name="PR_AUC_indiv", index_col=0)
-    AUBOC10_df = pd.read_excel(indiv_validation_data_xlsx, sheet_name="BO_AUBOC10_indiv", index_col=0)
+    mean_o_minus_r_by_sample_df = pd.read_excel(indiv_validation_data_xlsx, sheet_name="mean_o_minus_r_by_sample", index_col=0)
     df_o_minus_r_mean_df = pd.read_excel(indiv_validation_data_xlsx, sheet_name="BO_o_minus_r", index_col=0)
 
     create_ROC_AUC_barchart(ROC_AUC_df, indiv_ROC_AUC_barchart_png, namedict, THOIPA_predictor_name)
     create_PR_AUC_barchart(PR_AUC_df, indiv_PR_AUC_barchart_png, namedict, THOIPA_predictor_name)
-    create_AUBOC10_barchart(AUBOC10_df, AUBOC10_barchart_png, namedict, THOIPA_predictor_name)
+    create_barchart_o_minus_r_bocurve_each_TMD_indiv(mean_o_minus_r_by_sample_df, AUBOC10_barchart_png, namedict, THOIPA_predictor_name)
 
     create_BOcurve_linechart(df_o_minus_r_mean_df, BOCURVE_linechart_png)
 
@@ -503,8 +504,7 @@ def create_PR_AUC_barchart(PR_AUC_df, indiv_PR_AUC_barchart_png, namedict, THOIP
     plt.close()
 
 
-
-def create_AUBOC10_barchart(AUBOC10_df, AUBOC10_barchart_png, namedict, THOIPA_predictor_name):
+def create_barchart_o_minus_r_bocurve_each_TMD_indiv(mean_o_minus_r_by_sample_df, AUBOC10_barchart_png, namedict, THOIPA_predictor_name):
     #AUC_AUBOC_df = AUBOC10_df.T.sort_values(by=[THOIPA_predictor_name], ascending=False)
     # plt.rcParams.update({'font.size': 8})
     # figsize = np.array([3.42, 3.42]) * 2  # DOUBLE the real size, due to problems on Bo computer with fontsizes
@@ -514,9 +514,9 @@ def create_AUBOC10_barchart(AUBOC10_df, AUBOC10_barchart_png, namedict, THOIPA_p
     ## replace the protein names
     #AUBOC10_df.index = pd.Series(AUBOC10_df.index).replace(namedict)
     # replace old "crystal" references with "X-ray"
-    AUBOC10_df.index = pd.Series(AUBOC10_df.index).replace("crystal", "X-ray")
-    AUBOC10_df.sort_values([THOIPA_predictor_name], ascending=False, inplace=True)
-    AUBOC10_df.plot(kind="bar", ax=ax, alpha=0.7)
+    mean_o_minus_r_by_sample_df.index = pd.Series(mean_o_minus_r_by_sample_df.index).replace("crystal", "X-ray")
+    mean_o_minus_r_by_sample_df.sort_values([THOIPA_predictor_name], ascending=False, inplace=True)
+    mean_o_minus_r_by_sample_df.plot(kind="bar", ax=ax, alpha=0.7)
 
     ax.set_ylabel("performance (AUBOC10))")
     ax.legend()  # (["sample size = 5", "sample size = 10"])
@@ -525,55 +525,6 @@ def create_AUBOC10_barchart(AUBOC10_df, AUBOC10_barchart_png, namedict, THOIPA_p
     ax.grid(False)
     fig.savefig(AUBOC10_barchart_png, dpi=240)
     #fig.savefig(AUBOC10_barchart_png[:-4] + ".pdf")
-
-
-def create_ROC_AUC_barchart_DEPRECATED(ROC_AUC_df, ROC_AUC_barchart_png, ROC_AUC_barchart_pdf, BOAUC10_barchart_png,BOAUC10_barchart_pdf,namedict, THOIPA_best_set):
-    bo_auc_list = "?"
-    THOIPA_best_setnumber = int(THOIPA_best_set[3:])
-    #colname = "THOIPA_5_LOOAUC"
-    THOIPA_x_LOOAUC = "THOIPA_{}_LOO-AUC".format(THOIPA_best_setnumber)
-    THOIPA_x_LOOAUBOC10 = "THOIPA_{}_LOO-AUBOC10".format(THOIPA_best_setnumber)
-    # auc_list = AUC_AUBOC_df.columns[[0, 2, 4, 6]]
-    # bo_auc_list = AUC_AUBOC_df.columns[[1, 3, 5, 7]]
-
-    auc_list = ROC_AUC_df.columns[::2]
-    #bo_auc_list = ROC_AUC_df.columns[1::2]
-    AUC_AUBOC_df = ROC_AUC_df.sort_values(by=[THOIPA_x_LOOAUC], ascending=False)
-    plt.close("all")
-    # plt.rcParams.update({'font.size': 8})
-    #figsize = np.array([3.42, 3.42]) * 2  # DOUBLE the real size, due to problems on Bo computer with fontsizes
-    figsize = np.array([9, 6])  # DOUBLE the real size, due to problems on Bo computer with fontsizes
-    fig, ax = plt.subplots(figsize=figsize)
-    # replace the protein names
-
-    AUC_AUBOC_df.index = pd.Series(AUC_AUBOC_df.index).replace(namedict)
-    AUC_AUBOC_df[auc_list].plot(kind="bar", ax=ax, alpha=0.7)
-
-    ax.set_ylabel("performance value\n(auc)")
-    ax.legend()  # (["sample size = 5", "sample size = 10"])
-
-    fig.tight_layout()
-    ax.grid(False)
-    fig.savefig(ROC_AUC_barchart_png, dpi=240)
-    fig.savefig(ROC_AUC_barchart_pdf, dpi=240)
-
-    AUC_AUBOC_df = AUC_AUBOC_df.sort_values(by=[THOIPA_x_LOOAUBOC10], ascending=False)
-    plt.close("all")
-    # plt.rcParams.update({'font.size': 8})
-    #figsize = np.array([3.42, 3.42]) * 2  # DOUBLE the real size, due to problems on Bo computer with fontsizes
-    fig, ax = plt.subplots(figsize=figsize)
-    # replace the protein names
-
-    AUC_AUBOC_df.index = pd.Series(AUC_AUBOC_df.index).replace(namedict)
-    AUC_AUBOC_df[bo_auc_list].plot(kind="bar", ax=ax, alpha=0.7)
-
-    ax.set_ylabel("performance value\n(observed overlap - random overlap)")
-    ax.legend()  # (["sample size = 5", "sample size = 10"])
-
-    fig.tight_layout()
-    ax.grid(False)
-    fig.savefig(BOAUC10_barchart_png, dpi=240)
-    fig.savefig(BOAUC10_barchart_pdf, dpi=240)
 
 
 def merge_4_files_alignment_method_deprecated(acc, full_seq, train_data_file, THOIPA_prediction_file, PREDDIMER_prediction_file, TMDOCK_prediction_file, merged_data_xlsx_path, columns_kept_in_combined_file):

@@ -376,3 +376,52 @@ def calc_roc_each_tmd_separately_deprecated(s, df_set, logging):
                                        columns=prediction_name_list)
     df_tpr.to_csv(roc_each_tmd_separate_deprecated_csv)
     logging.info(f"fig saved: {roc_each_tmd_separate_deprecated_png}")
+
+
+def create_ROC_AUC_barchart_DEPRECATED(ROC_AUC_df, ROC_AUC_barchart_png, ROC_AUC_barchart_pdf, BOAUC10_barchart_png,BOAUC10_barchart_pdf,namedict, THOIPA_best_set):
+    bo_auc_list = "?"
+    THOIPA_best_setnumber = int(THOIPA_best_set[3:])
+    #colname = "THOIPA_5_LOOAUC"
+    THOIPA_x_LOOAUC = "THOIPA_{}_LOO-AUC".format(THOIPA_best_setnumber)
+    THOIPA_x_LOOAUBOC10 = "THOIPA_{}_LOO-AUBOC10".format(THOIPA_best_setnumber)
+    # auc_list = AUC_AUBOC_df.columns[[0, 2, 4, 6]]
+    # bo_auc_list = AUC_AUBOC_df.columns[[1, 3, 5, 7]]
+
+    auc_list = ROC_AUC_df.columns[::2]
+    #bo_auc_list = ROC_AUC_df.columns[1::2]
+    AUC_AUBOC_df = ROC_AUC_df.sort_values(by=[THOIPA_x_LOOAUC], ascending=False)
+    plt.close("all")
+    # plt.rcParams.update({'font.size': 8})
+    #figsize = np.array([3.42, 3.42]) * 2  # DOUBLE the real size, due to problems on Bo computer with fontsizes
+    figsize = np.array([9, 6])  # DOUBLE the real size, due to problems on Bo computer with fontsizes
+    fig, ax = plt.subplots(figsize=figsize)
+    # replace the protein names
+
+    AUC_AUBOC_df.index = pd.Series(AUC_AUBOC_df.index).replace(namedict)
+    AUC_AUBOC_df[auc_list].plot(kind="bar", ax=ax, alpha=0.7)
+
+    ax.set_ylabel("performance value\n(auc)")
+    ax.legend()  # (["sample size = 5", "sample size = 10"])
+
+    fig.tight_layout()
+    ax.grid(False)
+    fig.savefig(ROC_AUC_barchart_png, dpi=240)
+    fig.savefig(ROC_AUC_barchart_pdf, dpi=240)
+
+    AUC_AUBOC_df = AUC_AUBOC_df.sort_values(by=[THOIPA_x_LOOAUBOC10], ascending=False)
+    plt.close("all")
+    # plt.rcParams.update({'font.size': 8})
+    #figsize = np.array([3.42, 3.42]) * 2  # DOUBLE the real size, due to problems on Bo computer with fontsizes
+    fig, ax = plt.subplots(figsize=figsize)
+    # replace the protein names
+
+    AUC_AUBOC_df.index = pd.Series(AUC_AUBOC_df.index).replace(namedict)
+    AUC_AUBOC_df[bo_auc_list].plot(kind="bar", ax=ax, alpha=0.7)
+
+    ax.set_ylabel("performance value\n(observed overlap - random overlap)")
+    ax.legend()  # (["sample size = 5", "sample size = 10"])
+
+    fig.tight_layout()
+    ax.grid(False)
+    fig.savefig(BOAUC10_barchart_png, dpi=240)
+    fig.savefig(BOAUC10_barchart_pdf, dpi=240)

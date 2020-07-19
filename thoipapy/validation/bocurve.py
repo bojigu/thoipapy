@@ -111,8 +111,8 @@ def calc_best_overlap(acc_db, df, experiment_col="interface_score", pred_col="TH
 
 
 def parse_BO_data_csv_to_excel(bo_data_csv, bocurve_data_xlsx, logging, predictor_name=""):
-    """
-
+    """ Parses the rather clumsy original csv, and generates data for
+    AUBOC curve, and also the mean observed-random scores for each sample (TMD).
     """
     dfb = pd.read_csv(bo_data_csv, index_col=0)
 
@@ -226,26 +226,20 @@ def parse_BO_data_csv_to_excel(bo_data_csv, bocurve_data_xlsx, logging, predicto
     5        0.227586    0.182609     0.466667
     
     """
-    #################################################################
-    #          CALCULATE MEAN VALUE FOR ALL TMDS FOR BO-CURVE       #
-    #################################################################
+    ##################################################################################
+    #          CALCULATE MEAN VALUE AT EACH POSITION FOR ALL TMDS FOR BO-CURVE       #
+    ##################################################################################
     mean_o_minus_r_df = df_o_minus_r.mean(axis=1).to_frame(name="mean_o_minus_r")
+    auboc = np.trapz(mean_o_minus_r_df["mean_o_minus_r"], mean_o_minus_r_df.index)
+
+    logging.info("---{: >24} mean_AUBOC({:.2f}) n={} ---".format(predictor_name, auboc, df_o_minus_r.shape[1]))
 
     #######################################################################################################
-    #                                                                                                     #
-    #                CALCULATE AREA UNDER THE BO CURVE FOR SAMPLE SIZES 1-10 (AUBOC10)                    #
-    #                                                                                                     #
+    #                     CALCULATE MEAN OBS-RAND FOR EACH SAMPLE(TMD) SEPARATELY                         #
     #######################################################################################################
+    mean_o_minus_r_by_sample_ser = df_o_minus_r.mean()
+    mean_o_minus_r_by_sample_ser.name = "mean_o_minus_r_by_sample"
 
-    AUBOC10_df = pd.DataFrame()
-    for acc_db in df_o_minus_r.columns:
-        o_minus_r_ser = df_o_minus_r[acc_db]
-        AUBOC10_df.loc[acc_db, "AUBOC10"] = np.trapz(o_minus_r_ser, o_minus_r_ser.index)
-
-        AUBOC10_df.loc[acc_db, "mean_all_sample_sizes"] = o_minus_r_ser.mean()
-
-    mean_AUBOC10 = AUBOC10_df["AUBOC10"].mean()
-    logging.info("---{: >24} mean_AUBOC10({:.2f}) n={} ---".format(predictor_name, mean_AUBOC10, AUBOC10_df.shape[0]))
     #################################################################
     #           SAVE PARSED DATAFRAMES TO AN EXCEL FILE             #
     #################################################################
@@ -259,4 +253,4 @@ def parse_BO_data_csv_to_excel(bo_data_csv, bocurve_data_xlsx, logging, predicto
         df_o_minus_r.to_excel(writer, sheet_name="df_o_minus_r")
         #df_o_over_r.to_excel(writer, sheet_name="df_o_over_r")
         mean_o_minus_r_df.to_excel(writer, sheet_name="mean_o_minus_r")
-        AUBOC10_df.to_excel(writer, sheet_name="AUBOC10")
+        mean_o_minus_r_by_sample_ser.to_excel(writer, sheet_name="mean_o_minus_r_by_sample")
