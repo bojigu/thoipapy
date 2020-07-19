@@ -5,7 +5,7 @@ from sklearn.metrics import precision_recall_curve, auc, roc_curve
 from sklearn.model_selection import StratifiedKFold
 
 
-def calc_mean_AUC(X, y, forest):
+def calc_PRAUC_ROCAUC_using_10F_validation(X, y, forest):
     """Calculate mean precision-recall and ROC AUC using 10-fold cross-validation.
 
     Parameters
