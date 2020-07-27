@@ -1,9 +1,9 @@
 import numpy as np
 import pandas as pd
 from scipy.special import comb
+from sklearn.metrics import average_precision_score
 
-
-def calc_best_overlap(acc_db, df, experiment_col="interface_score", pred_col="THOIPA"):
+def calc_best_overlap_from_selected_column_in_df(acc_db, df, experiment_col="interface_score", pred_col="THOIPA"):
     """
     Create Bo Curve parameter for protein acc_db and return the output as a dataframe
     Parameters
@@ -31,16 +31,23 @@ def calc_best_overlap(acc_db, df, experiment_col="interface_score", pred_col="TH
     # drop any nan values in either the experimental column, or the prediction column
     df_sel = df.dropna(subset=[experiment_col, pred_col])
 
+    experiment_data: np.ndarray = df[experiment_col].to_numpy()
+    prediction_data: np.ndarray = df[pred_col].to_numpy()
+
     # get the TMD length from the number of rows with data, after dropping nan
     # as PREDDIMER has longer TMDs, this will result in different statistics regarding the overlaps
-    tm_len = df_sel.shape[0]
+    tm_len = experiment_data.shape[0]
 
-    # rank of experimental values
-    df_sel["exp_argsort"] = df_sel[experiment_col].argsort().argsort()
-    # rank of prediction values
-    df_sel["pred_argsort"] = df_sel[pred_col].argsort().argsort()
+    # rank values
+    exp_argsort = experiment_data.argsort().argsort()
+    pred_argsort = prediction_data.argsort().argsort()
+    df_sel["exp_argsort"] = exp_argsort
+    df_sel["pred_argsort"] = pred_argsort
+
     # sort by experimental values, so that iloc can be used below to select increasing sample sizes
     df_sel.sort_values("exp_argsort", inplace=True, ascending=False)
+
+    df_sel = df_sel.iloc[:10, :]
 
     """Dataframe now contains the rank of experiment and prediction data
     Sorted descending by experiment data.
@@ -89,14 +96,14 @@ def calc_best_overlap(acc_db, df, experiment_col="interface_score", pred_col="TH
 
         pval = comb(sample_size, observed_overlap) * comb(non_sample_size, sample_size - observed_overlap) / comb(tm_len, sample_size)
 
-        #inter_num_random = calc_rand_overlap(tm_len, sample_size)
-        inter_num_random = sample_size**2 / tm_len
+        #random_overlap = calc_rand_overlap(tm_len, sample_size)
+        random_overlap = sample_size**2 / tm_len
 
         odf.at[ind, acc_db] = observed_overlap
         odf.at[ind, "sample_size"] = "Top" + str(sample_size)
         odf.at[ind, "parameters"] = "observed_overlap"
         ind = ind + 1
-        odf.at[ind, acc_db] = inter_num_random
+        odf.at[ind, acc_db] = random_overlap
         odf.at[ind, "sample_size"] = "Top" + str(sample_size)
         odf.at[ind, "parameters"] = "random_overlap"
         ind = ind + 1
@@ -106,6 +113,7 @@ def calc_best_overlap(acc_db, df, experiment_col="interface_score", pred_col="TH
         ind = ind + 1
 
     odf.set_index(["sample_size", "parameters"], inplace=True, drop=True)
+
 
     return odf
 

@@ -121,7 +121,7 @@ def validate_THOIPA_for_testset_trainset_combination(s, test_set_list, train_set
                     # (it is closest distance and low value means high propencity of interfacial)
                     combined_incl_THOIPA_df["interface_score"] = -1 * combined_incl_THOIPA_df["interface_score"]
 
-                THOIPA_BO_single_prot_df = thoipapy.validation.bocurve.calc_best_overlap(acc_db, combined_incl_THOIPA_df, pred_col=f"thoipa.train{trainsetname}")
+                THOIPA_BO_single_prot_df = thoipapy.validation.bocurve.calc_best_overlap_from_selected_column_in_df(acc_db, combined_incl_THOIPA_df, pred_col=f"thoipa.train{trainsetname}")
 
                 if THOIPA_BO_data_df.empty:
                     THOIPA_BO_data_df = THOIPA_BO_single_prot_df
@@ -249,7 +249,7 @@ def validate_LIPS_for_testset(s, logging, LIPS_name="LIPS_LE", pred_col="LIPS_L*
                 # (it is closest distance and low value means high propencity of interfacial)
                 combined_df["interface_score"] = -1 * combined_df["interface_score"]
 
-            LIPS_BO_single_prot_df = thoipapy.validation.bocurve.calc_best_overlap(acc_db, combined_df, experiment_col="interface_score", pred_col=pred_col)
+            LIPS_BO_single_prot_df = thoipapy.validation.bocurve.calc_best_overlap_from_selected_column_in_df(acc_db, combined_df, experiment_col="interface_score", pred_col=pred_col)
 
             if LIPS_BO_single_prot_df.empty:
                 LIPS_BO_data_df = LIPS_BO_single_prot_df

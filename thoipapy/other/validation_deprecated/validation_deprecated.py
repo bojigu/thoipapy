@@ -145,7 +145,7 @@ def run_LOO_validation_od_non_multiprocessing(s, df_set, logging):
             # (it is closest distance and low value means high propencity of interfacial)
             df_test["interface_score"] = -1 * df_test["interface_score"]
 
-        BO_df = thoipapy.validation.bocurve.calc_best_overlap(acc_db, df_test, experiment_col="interface_score", pred_col=pred_colname)
+        BO_df = thoipapy.validation.bocurve.calc_best_overlap_from_selected_column_in_df(acc_db, df_test, experiment_col="interface_score", pred_col=pred_colname)
 
         if BO_all_df.empty:
             BO_all_df = BO_df

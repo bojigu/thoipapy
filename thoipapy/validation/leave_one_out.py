@@ -340,7 +340,7 @@ def LOO_single_prot(d: LooValidationData):
         # low closest distance means high importance at interface
         df_test["interface_score"] = -1 * df_test["interface_score"]
 
-    BO_df = thoipapy.validation.bocurve.calc_best_overlap(d.acc_db, df_test, experiment_col="interface_score", pred_col=d.pred_colname)
+    BO_df = thoipapy.validation.bocurve.calc_best_overlap_from_selected_column_in_df(d.acc_db, df_test, experiment_col="interface_score", pred_col=d.pred_colname)
 
     if d.i == 0:
         tree_depths = np.array([estimator.tree_.max_depth for estimator in d.forest.estimators_])
