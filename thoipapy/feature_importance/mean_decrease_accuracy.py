@@ -79,6 +79,7 @@ def calc_feat_import_from_mean_decrease_accuracy(s, logging):
     forest = return_classifier_with_loaded_ensemble_parameters(s, tuned_ensemble_parameters_csv)
 
     pr_auc_orig, roc_auc_orig = calc_PRAUC_ROCAUC_using_10F_validation(X, y, forest)
+    auboc_orig = calc_AUBOC_for_feat_imp(y, X, forest, feat_imp_temp_THOIPA_BO_curve_data_csv, feat_imp_temp_bocurve_data_xlsx, logging)
 
     start = time.clock()
 
@@ -109,10 +110,12 @@ def calc_feat_import_from_mean_decrease_accuracy(s, logging):
         decrease_ROC_AUC = roc_auc_orig - ROC_AUC
         grouped_feat_decrease_ROC_AUC_dict[feature_type] = decrease_ROC_AUC
 
-        decrease_AUBOC = calc_AUBOC_for_feat_imp(y, X_t, forest, feat_imp_temp_THOIPA_BO_curve_data_csv, feat_imp_temp_bocurve_data_xlsx, logging)
-        grouped_feat_decrease_AUBOC_dict[feature_type] = decrease_AUBOC
+        auboc = calc_AUBOC_for_feat_imp(y, X_t, forest, feat_imp_temp_THOIPA_BO_curve_data_csv, feat_imp_temp_bocurve_data_xlsx, logging)
 
-        logging.info(f"  {feature_type} {decrease_AUBOC:.03f} | {decrease_PR_AUC:.03f} | {decrease_ROC_AUC:.03f}")
+        decrease_auboc = auboc_orig - auboc
+        grouped_feat_decrease_AUBOC_dict[feature_type] = decrease_auboc
+
+        logging.info(f"  {feature_type} {decrease_auboc:.03f} | {decrease_PR_AUC:.03f} | {decrease_ROC_AUC:.03f}")
 
 
     # remove temp bocurve output files
@@ -140,11 +143,12 @@ def calc_feat_import_from_mean_decrease_accuracy(s, logging):
         decrease_ROC_AUC = roc_auc_orig - ROC_AUC
         single_feat_decrease_ROC_AUC_dict[feature] = decrease_ROC_AUC
 
-        decrease_AUBOC = calc_AUBOC_for_feat_imp(y, X_t, forest, feat_imp_temp_THOIPA_BO_curve_data_csv, feat_imp_temp_bocurve_data_xlsx, logging)
-        single_feat_decrease_AUBOC_dict[feature] = decrease_AUBOC
+        auboc = calc_AUBOC_for_feat_imp(y, X_t, forest, feat_imp_temp_THOIPA_BO_curve_data_csv, feat_imp_temp_bocurve_data_xlsx, logging)
 
-        logging.info(f"  {feature} {decrease_AUBOC:.03f} | {decrease_PR_AUC:.03f} | {decrease_ROC_AUC:.03f}")
+        decrease_auboc = auboc_orig - auboc
+        single_feat_decrease_AUBOC_dict[feature] = decrease_auboc
 
+        logging.info(f"  {feature} {decrease_auboc:.03f} | {decrease_PR_AUC:.03f} | {decrease_ROC_AUC:.03f}")
 
     df_grouped_feat = pd.DataFrame()
     df_grouped_feat["PR_AUC"] = pd.Series(grouped_feat_decrease_PR_AUC_dict)
