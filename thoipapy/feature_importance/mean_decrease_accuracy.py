@@ -65,7 +65,7 @@ def calc_feat_import_from_mean_decrease_accuracy(s, logging):
     coev_features = ["DImax", "MImax", "DItop4mean", "MItop4mean", "DItop8mean", "MItop8mean", "DI4max", "MI4max", "DI1mean", "MI1mean", "DI3mean", "MI3mean", "DI4mean", "MI4mean", "DI4cum", "MI4cum"]
     DI_features = ["DImax", "DItop4mean", "DItop8mean", "DI4max", "DI1mean", "DI3mean", "DI4mean", "DI4cum"]
     MI_features = ["MImax", "MItop4mean", "MItop8mean", "MI4max", "MI1mean", "MI3mean", "MI4mean", "MI4cum"]
-    cons_features = ["conservation", "cons4mean", "rate4site"]
+    cons_features = ["entropy", "cons4mean", "rate4site"]
     motif_features =  ["GxxxG", "SmxxxSm"]
     physical_features = ["branched", "mass"]
     TMD_features = ["residue_depth", "n_TMDs", "n_homologues"]
