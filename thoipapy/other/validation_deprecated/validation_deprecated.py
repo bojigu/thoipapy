@@ -15,6 +15,7 @@ import joblib
 from sklearn.metrics import roc_curve, auc
 
 import thoipapy
+import thoipapy.validation.bocurve
 import thoipapy.validation.feature_selection
 from thoipapy.utils import get_testsetname_trainsetname_from_run_settings
 from thoipapy.validation.feature_selection import drop_cols_not_used_in_ML
@@ -63,7 +64,6 @@ def run_LOO_validation_od_non_multiprocessing(s, df_set, logging):
     train_data_csv = Path(s["thoipapy_data_folder"]) / f"Results/{s['setname']}/train_data/01_train_data_orig.csv"
     tuned_ensemble_parameters_csv = Path(s["thoipapy_data_folder"]) / f"Results/{s['setname']}/train_data/04_tuned_ensemble_parameters.csv"
     # output
-    crossvalidation_folder = os.path.join(s["thoipapy_data_folder"], "Results", s["setname"], "crossvalidation")
     LOO_crossvalidation_pkl = os.path.join(s["thoipapy_data_folder"], "Results", s["setname"], "crossvalidation", "data", "{}_LOO_crossvalidation.pkl".format(s["setname"]))
     bocurve_data_raw_csv = os.path.join(s["thoipapy_data_folder"], "Results", s["setname"], "crossvalidation", "data", "{}_loo_bocurve_data_raw.csv".format(s["setname"]))
     bocurve_data_xlsx: Union[Path, str] = Path(s["thoipapy_data_folder"]) / f"Results/{s['setname']}/crossvalidation/data/{s['setname']}_thoipa_loo_bo_curve_data.xlsx"
@@ -145,7 +145,7 @@ def run_LOO_validation_od_non_multiprocessing(s, df_set, logging):
             # (it is closest distance and low value means high propencity of interfacial)
             df_test["interface_score"] = -1 * df_test["interface_score"]
 
-        BO_df = thoipapy.figs.fig_utils.calc_best_overlap(acc_db, df_test, experiment_col="interface_score", pred_col=pred_colname)
+        BO_df = thoipapy.validation.bocurve.calc_best_overlap_from_selected_column_in_df(acc_db, df_test, experiment_col="interface_score", pred_col=pred_colname)
 
         if BO_all_df.empty:
             BO_all_df = BO_df
@@ -188,7 +188,7 @@ def run_LOO_validation_od_non_multiprocessing(s, df_set, logging):
     names_excel_path = os.path.join(s["dropbox_dir"], "protein_names.xlsx")
 
     #linechart_mean_obs_and_rand = thoipapy.figs.Create_Bo_Curve_files.analyse_bo_curve_underlying_data(bocurve_data_raw_csv, crossvalidation_folder, names_excel_path)
-    thoipapy.figs.create_BOcurve_files.parse_BO_data_csv_to_excel(bocurve_data_raw_csv, bocurve_data_xlsx, logging)
+    thoipapy.validation.bocurve.parse_BO_data_csv_to_excel(bocurve_data_raw_csv, bocurve_data_xlsx, logging)
 
     logging.info('{} LOO crossvalidation. Time taken = {:.2f}.'.format(s["setname"], duration))
     logging.info('---AUC({:.2f})---'.format(mean_roc_auc))
@@ -376,3 +376,52 @@ def calc_roc_each_tmd_separately_deprecated(s, df_set, logging):
                                        columns=prediction_name_list)
     df_tpr.to_csv(roc_each_tmd_separate_deprecated_csv)
     logging.info(f"fig saved: {roc_each_tmd_separate_deprecated_png}")
+
+
+def create_ROC_AUC_barchart_DEPRECATED(ROC_AUC_df, ROC_AUC_barchart_png, ROC_AUC_barchart_pdf, BOAUC10_barchart_png,BOAUC10_barchart_pdf,namedict, THOIPA_best_set):
+    bo_auc_list = "?"
+    THOIPA_best_setnumber = int(THOIPA_best_set[3:])
+    #colname = "THOIPA_5_LOOAUC"
+    THOIPA_x_LOOAUC = "THOIPA_{}_LOO-AUC".format(THOIPA_best_setnumber)
+    THOIPA_x_LOOAUBOC10 = "THOIPA_{}_LOO-AUBOC10".format(THOIPA_best_setnumber)
+    # auc_list = AUC_AUBOC_df.columns[[0, 2, 4, 6]]
+    # bo_auc_list = AUC_AUBOC_df.columns[[1, 3, 5, 7]]
+
+    auc_list = ROC_AUC_df.columns[::2]
+    #bo_auc_list = ROC_AUC_df.columns[1::2]
+    AUC_AUBOC_df = ROC_AUC_df.sort_values(by=[THOIPA_x_LOOAUC], ascending=False)
+    plt.close("all")
+    # plt.rcParams.update({'font.size': 8})
+    #figsize = np.array([3.42, 3.42]) * 2  # DOUBLE the real size, due to problems on Bo computer with fontsizes
+    figsize = np.array([9, 6])  # DOUBLE the real size, due to problems on Bo computer with fontsizes
+    fig, ax = plt.subplots(figsize=figsize)
+    # replace the protein names
+
+    AUC_AUBOC_df.index = pd.Series(AUC_AUBOC_df.index).replace(namedict)
+    AUC_AUBOC_df[auc_list].plot(kind="bar", ax=ax, alpha=0.7)
+
+    ax.set_ylabel("performance value\n(auc)")
+    ax.legend()  # (["sample size = 5", "sample size = 10"])
+
+    fig.tight_layout()
+    ax.grid(False)
+    fig.savefig(ROC_AUC_barchart_png, dpi=240)
+    fig.savefig(ROC_AUC_barchart_pdf, dpi=240)
+
+    AUC_AUBOC_df = AUC_AUBOC_df.sort_values(by=[THOIPA_x_LOOAUBOC10], ascending=False)
+    plt.close("all")
+    # plt.rcParams.update({'font.size': 8})
+    #figsize = np.array([3.42, 3.42]) * 2  # DOUBLE the real size, due to problems on Bo computer with fontsizes
+    fig, ax = plt.subplots(figsize=figsize)
+    # replace the protein names
+
+    AUC_AUBOC_df.index = pd.Series(AUC_AUBOC_df.index).replace(namedict)
+    AUC_AUBOC_df[bo_auc_list].plot(kind="bar", ax=ax, alpha=0.7)
+
+    ax.set_ylabel("performance value\n(observed overlap - random overlap)")
+    ax.legend()  # (["sample size = 5", "sample size = 10"])
+
+    fig.tight_layout()
+    ax.grid(False)
+    fig.savefig(BOAUC10_barchart_png, dpi=240)
+    fig.savefig(BOAUC10_barchart_pdf, dpi=240)

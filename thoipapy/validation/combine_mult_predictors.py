@@ -39,7 +39,7 @@ def merge_predictions(s, df_set, logging):
     thoipa_trainsetname = f"thoipa.train{trainsetname}"
 
     # for simplicity, keep only the predictions. Since the index is unique, it can be added later to the combined file.
-    columns_kept_in_combined_file = ['residue_num', 'residue_name', THOIPA_pred_colname, thoipa_trainsetname, 'TMDOCK', 'PREDDIMER','interface','interface_score',"LIPS_surface","LIPS_surface_ranked", 'LIPS_L*E',"relative_polarity","conservation","DI4mean"]
+    columns_kept_in_combined_file = ['residue_num', 'residue_name', THOIPA_pred_colname, thoipa_trainsetname, 'TMDOCK', 'PREDDIMER','interface','interface_score',"LIPS_surface","LIPS_surface_ranked", 'LIPS_L*E',"relative_polarity","entropy","DI4mean"]
 
 
     for i in df_set.index:
@@ -60,7 +60,7 @@ def merge_predictions(s, df_set, logging):
         dfm["acc_db_resnum_resname"] = dfm.index
         # set the unique index, based on the residue number in the full sequence
         dfm.set_index("res_num_full_seq", inplace=True)
-        #dfm["conservation"] = -1 * dfm["Entropy"]
+        #dfm["entropy"] = -1 * dfm["Entropy"]
         file_list = [THOIPA_LOO_prediction_csv, PREDDIMER_prediction_file, TMDOCK_prediction_file]
         prediction_name_list = [THOIPA_pred_colname, "PREDDIMER", "TMDOCK"]
         if s["setname"] == testsetname:
