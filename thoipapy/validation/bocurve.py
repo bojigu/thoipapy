@@ -29,45 +29,48 @@ def calc_best_overlap_from_selected_column_in_df(acc_db, df, experiment_col="int
     # https://stackoverflow.com/questions/31910407/numpy-argsort-cant-see-whats-wrong
 
     # drop any nan values in either the experimental column, or the prediction column
-    df_sel = df.dropna(subset=[experiment_col, pred_col])
+    df = df.dropna(subset=[experiment_col, pred_col])
 
     experiment_data: np.ndarray = df[experiment_col].to_numpy()
     prediction_data: np.ndarray = df[pred_col].to_numpy()
 
+    odf = calc_best_overlap(acc_db, experiment_data, prediction_data)
+
+    return odf
+
+
+def calc_best_overlap(acc_db, experiment_data, prediction_data):
     # get the TMD length from the number of rows with data, after dropping nan
     # as PREDDIMER has longer TMDs, this will result in different statistics regarding the overlaps
     tm_len = experiment_data.shape[0]
-
     # rank values
     exp_argsort = experiment_data.argsort().argsort()
     pred_argsort = prediction_data.argsort().argsort()
+
+    df_sel = pd.DataFrame()
     df_sel["exp_argsort"] = exp_argsort
     df_sel["pred_argsort"] = pred_argsort
-
     # sort by experimental values, so that iloc can be used below to select increasing sample sizes
     df_sel.sort_values("exp_argsort", inplace=True, ascending=False)
-
     df_sel = df_sel.iloc[:10, :]
-
     """Dataframe now contains the rank of experiment and prediction data
-    Sorted descending by experiment data.
-    
-    GpA Elazar 2016 example.
-    
-       residue_name  interface_score  THOIPA  exp_argsort  pred_argsort
-    12            T         0.737715   0.515           14            10
-    11            G         0.631558   0.495           13             4
-    8             G         0.622738   0.485           12             2
-    4             G         0.551554   0.515           11             8
-    7             A         0.201012   0.520           10            11
-    """
-
+        Sorted descending by experiment data.
+        
+        GpA Elazar 2016 example.
+        
+           residue_name  interface_score  THOIPA  exp_argsort  pred_argsort
+        12            T         0.737715   0.515           14            10
+        11            G         0.631558   0.495           13             4
+        8             G         0.622738   0.485           12             2
+        4             G         0.551554   0.515           11             8
+        7             A         0.201012   0.520           10            11
+        """
     odf = pd.DataFrame()
     ind = 0
     previous_overlap = 0
     for sample_size in range(1, 11):
         # length of residues tested (usually full TMD length, unless some are excluded)
-        #tm_len = len(interface_score_arr)
+        # tm_len = len(interface_score_arr)
         non_sample_size = tm_len - sample_size
 
         """
@@ -96,8 +99,8 @@ def calc_best_overlap_from_selected_column_in_df(acc_db, df, experiment_col="int
 
         pval = comb(sample_size, observed_overlap) * comb(non_sample_size, sample_size - observed_overlap) / comb(tm_len, sample_size)
 
-        #random_overlap = calc_rand_overlap(tm_len, sample_size)
-        random_overlap = sample_size**2 / tm_len
+        # random_overlap = calc_rand_overlap(tm_len, sample_size)
+        random_overlap = sample_size ** 2 / tm_len
 
         odf.at[ind, acc_db] = observed_overlap
         odf.at[ind, "sample_size"] = "Top" + str(sample_size)
@@ -111,10 +114,7 @@ def calc_best_overlap_from_selected_column_in_df(acc_db, df, experiment_col="int
         odf.at[ind, "sample_size"] = "Top" + str(sample_size)
         odf.at[ind, "parameters"] = "p_value_from_obs_overlap"
         ind = ind + 1
-
     odf.set_index(["sample_size", "parameters"], inplace=True, drop=True)
-
-
     return odf
 
 
