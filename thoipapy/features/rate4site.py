@@ -148,7 +148,7 @@ def rate4site_calculation(s, df_set, logging):
 
         # convert standard csv to csv for thoipa features
         df_rate4site = df.reindex(["seq", "score"], axis=1)
-        df_rate4site.columns = ["residue_name", "rate4site"]
+        df_rate4site.columns = ["residue_name", "conservation"]
         df_rate4site.index.name = "residue_num"
 
         # since the lipophilicity alignment was padded by 5 residues on each side, the index doesn't match the TMD residue number.
