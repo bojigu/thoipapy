@@ -206,6 +206,7 @@ if __name__ == "__main__":
             thoipapy.feature_importance.anova.select_best_features_with_anova(s, logging)
             thoipapy.feature_importance.ensemble_rfe.select_best_features_with_ensemble_rfe(s, logging)
             thoipapy.feature_importance.merge.merge_top_features_anova_ensemble(s, logging)
+            thoipapy.experimental_data.ttest_features.conduct_ttest_for_selected_features_used_in_model(s, logging)
 
         if s["tune_ensemble_parameters"]:
             thoipapy.ML_model.tune.tune_ensemble_parameters_after_feature_seln(s, logging)
