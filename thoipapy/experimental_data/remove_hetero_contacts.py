@@ -1,6 +1,9 @@
 import os
+from pathlib import Path
 
 import pandas as pd
+
+from thoipapy.utils import make_sure_path_exists
 
 
 def remove_crystal_hetero_contact_residues_mult_prot(s, df_set, logging):
@@ -18,28 +21,27 @@ def remove_crystal_hetero_contact_residues_mult_prot(s, df_set, logging):
           Python object with settings for logging to console and file.
 
       """
-    sum_hetero_contact = 0
+    hetero_contact_residues_csv = Path(s["thoipapy_data_folder"]) / f"Results/{s['setname']}/train_data/00_hetero_contact_residues.csv"
+    make_sure_path_exists(hetero_contact_residues_csv, isfile=True)
+
+    n_hetero_contact_residues = 0
+    hetero_res_summary_dict = {}
     for i in df_set.index:
         acc = df_set.loc[i, "acc"]
         database = df_set.loc[i, "database"]
         if database == "crystal":
-            feature_combined_file = os.path.join(s["thoipapy_data_folder"], "Features", "combined", database,
-                                             "{}.surr{}.gaps{}.combined_features.csv".format(acc,
-                                                                                             s["num_of_sur_residues"],
-                                                                                             s[
-                                                                                                 "max_n_gaps_in_TMD_subject_seq"]))
-            no_hetero_feature_combined_file = os.path.join(s["thoipapy_data_folder"], "Features", "combined", database,
-                                                 "{}.nohetero.surr{}.gaps{}.combined_features.csv".format(acc,
-                                                                                                 s[
-                                                                                                     "num_of_sur_residues"],
-                                                                                                 s[
-                                                                                                     "max_n_gaps_in_TMD_subject_seq"]))
-            homo_hetero_contact_file = os.path.join(s["thoipapy_data_folder"], "Features", "Structure", database, "{}.homohetero.bind.closedist.csv".format(acc))
+            feature_combined_file = Path(s["thoipapy_data_folder"]) / f"Features/combined/{database}/{acc}.surr{s['num_of_sur_residues']}.gaps{s['max_n_gaps_in_TMD_subject_seq']}.combined_features.csv"
+            no_hetero_feature_combined_file = Path(s["thoipapy_data_folder"]) / f"Features/combined/{database}/{acc}.nohetero.surr{s['num_of_sur_residues']}.gaps{s['max_n_gaps_in_TMD_subject_seq']}.combined_features.csv"
+            homo_hetero_contact_file = Path(s["thoipapy_data_folder"]) / f"Features/Structure/{database}/{acc}.homohetero.bind.closedist.csv"
 
-            hetero_contact_num = remove_crystal_hetero_contact_residues(acc, feature_combined_file, homo_hetero_contact_file,no_hetero_feature_combined_file, logging)
-            sum_hetero_contact = sum_hetero_contact + hetero_contact_num
-    logging.info(
-        "there are in crystal data set in total hetero contact residues: {}  ".format( sum_hetero_contact))
+            hetero_contact_num = remove_crystal_hetero_contact_residues(acc, feature_combined_file, homo_hetero_contact_file, no_hetero_feature_combined_file, logging)
+            n_hetero_contact_residues += hetero_contact_num
+            hetero_res_summary_dict[acc] = hetero_contact_num
+
+    hetero_ser = pd.Series(hetero_res_summary_dict).T
+    hetero_ser.to_csv(hetero_contact_residues_csv)
+
+    logging.info("n_hetero_contact_residues: {}  ".format(n_hetero_contact_residues))
 
 
 def remove_crystal_hetero_contact_residues(acc, feature_combined_file, homo_hetero_contact_file,no_hetero_feature_combined_file, logging):
