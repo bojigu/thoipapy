@@ -17,7 +17,7 @@ def generate_boot_matrix(z, B):
     return z[idz]
 
 
-def calc_ttest_pvalue_from_bootstrapped_data(x, y, equal_var=False, B=10000, plot=False):
+def calc_ttest_pvalue_from_bootstrapped_data(x, y, equal_var=False, B=100000, plot=False):
     """Calculate Student's two-sample t-test from bootstrapped data
 
     Returns bootstrap p-value, test statistics and parametric p-value
@@ -38,6 +38,7 @@ def calc_ttest_pvalue_from_bootstrapped_data(x, y, equal_var=False, B=10000, plo
 
     return 2 * min(p, 1 - p)
 
+
 def conduct_ttest_for_selected_features_used_in_model(s, logging):
     logging.info('starting conduct_ttest_for_selected_features_used_in_model')
     testsetname, trainsetname = get_testsetname_trainsetname_from_run_settings(s)
@@ -47,11 +48,7 @@ def conduct_ttest_for_selected_features_used_in_model(s, logging):
     feat_imp_MDA_xlsx = os.path.join(s["thoipapy_data_folder"], "Results", trainsetname, "feat_imp", "feat_imp_mean_decrease_accuracy.xlsx")
 
     # outputs
-    "/media/sindy/m_data/THOIPA_data/Results/set08/feat_imp/feat_imp_mean_decrease_accuracy.xlsx"
-    ttest_pvalues_bootstrapped_data_using_traindata_selected_features_xlsx = Path(s["thoipapy_data_folder"]) / f"Results/{s['setname']}/ttest/ttest_pvalues_bootstrapped_data_using_traindata_selected_features.xlsx"
-
-    # parameters
-    bootstrap_repetitions = 100000
+    ttest_pvalues_bootstrapped_data_using_traindata_selected_features_xlsx = Path(s["thoipapy_data_folder"]) / f"Results/{s['setname']}/ttest/ttest_pvalues_bootstrapped_data_using_traindata_selected_features(train{trainsetname}).xlsx"
 
     make_sure_path_exists(ttest_pvalues_bootstrapped_data_using_traindata_selected_features_xlsx, isfile=True)
 
@@ -73,17 +70,13 @@ def conduct_ttest_for_selected_features_used_in_model(s, logging):
             Rbool = "False"
         dft.loc[col, "higher for interface residues"] = Rbool
 
-        p_boot = calc_ttest_pvalue_from_bootstrapped_data(x, y, equal_var=True, B=bootstrap_repetitions)
-        print(p_boot)
+        p_bootstrapped_ttest = calc_ttest_pvalue_from_bootstrapped_data(x, y, equal_var=True)
+        print(p_bootstrapped_ttest)
 
-        dft.loc[col, "p_boot"] = p_boot
+        dft.loc[col, "p_bootstrapped_ttest"] = p_bootstrapped_ttest
 
         p_ttest = stats.ttest_ind(x, y)[1]
         dft.loc[col, "p_ttest"] = p_ttest
-
-        # print(p)
-        # if p < 0.05:
-        # print(col)
 
     dft.sort_values("p_ttest", ascending=True, inplace=True)
 
@@ -100,14 +93,14 @@ def conduct_ttest_for_selected_features_used_in_model(s, logging):
     dft.index.name = "feature"
 
     dft_sign = dft[dft.p_ttest < 0.05].copy()
-    dft_sign.drop("p_boot", axis=1, inplace=True)
+    dft_sign.drop("p_bootstrapped_ttest", axis=1, inplace=True)
     sign_coevolution_feats = [x for x in dft_sign.index.tolist() if "MI" in x or "DI" in x]
     sign_coevolution_feats = sorted(sign_coevolution_feats)
     list_sign_bootstrapped = ", ".join(sign_coevolution_feats)
     print("{} coevolution features significantly different between int and non-interface, REGULAR TTEST\n".format(len(sign_coevolution_feats)))
     print(list_sign_bootstrapped)
 
-    dft_sign_boot = dft[dft.p_boot < 0.05].copy()
+    dft_sign_boot = dft[dft.p_bootstrapped_ttest < 0.05].copy()
     dft_sign_boot.drop("p_ttest", axis=1, inplace=True)
     sign_coevolution_feats = [x for x in dft_sign_boot.index.tolist() if "MI" in x or "DI" in x]
     sign_coevolution_feats = sorted(sign_coevolution_feats)
@@ -115,11 +108,26 @@ def conduct_ttest_for_selected_features_used_in_model(s, logging):
     print("{} coevolution features significantly different between int and non-interface, BOOTSTRAPPED TTEST\n".format(len(sign_coevolution_feats)))
     print(list_sign_bootstrapped)
 
-    dft["p_boot"] = dft["p_boot"].replace(0.0, f"<{1/bootstrap_repetitions}")
+    dft["p_bootstrapped_ttest_formatted"] = dft["p_bootstrapped_ttest"].apply(convert_pvalue_to_text)
 
     with pd.ExcelWriter(ttest_pvalues_bootstrapped_data_using_traindata_selected_features_xlsx) as writer:
         dft.to_excel(writer, sheet_name="all")
-        dft_sign.to_excel(writer, sheet_name="sign_TTEST")
-        dft_sign_boot.to_excel(writer, sheet_name="sign_boot_TTEST")
+        dft_sign.to_excel(writer, sheet_name="significant")
+        dft_sign_boot.to_excel(writer, sheet_name="significant_bootstrapped")
 
     logging.info('finished conduct_ttest_for_selected_features_used_in_model')
+
+
+def convert_pvalue_to_text(p, bootstrap_replicates=100000):
+
+    n_significant_figures = len(str(bootstrap_replicates)) - 1
+
+    formatter = "{:0.%if}" % n_significant_figures
+
+    assert isinstance(p, float)
+    if p == 0.0:
+        lowest_possible_pvalue_based_on_n_bootstrap_replicates = 1 / bootstrap_replicates
+        min_value_tested = f"{float(1 / bootstrap_replicates):}"
+        return "<" + formatter.format(lowest_possible_pvalue_based_on_n_bootstrap_replicates)
+
+    return formatter.format(p)

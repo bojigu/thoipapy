@@ -1,5 +1,8 @@
 import pytest
 
+from thoipapy.experimental_data.ttest_features import convert_pvalue_to_text
+
+
 def test_convert_pvalue_to_text():
 
     p = 0.0
@@ -20,4 +23,4 @@ def test_convert_pvalue_to_text():
     p = 0.01234567890123456789
     bootstrap_replicates = 100000
     result = convert_pvalue_to_text(p, bootstrap_replicates)
-    assert result == "0.01234"
+    assert result == "0.01235"
