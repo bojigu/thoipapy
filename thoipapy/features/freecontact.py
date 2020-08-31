@@ -138,7 +138,7 @@ def parse_freecontact_coevolution(acc, freecontact_file, freecontact_parsed_csv,
         """ residue_pairs
         ['1', 'I', '2', 'T', '0.243618', '0.454792']
         ['1', 'I', '3', 'L', '0.40476', '0.44558']
-        NOTE! For the CumDI4 etc, originally the dictionary for mi and di was switched.
+        NOTE! For the DI4cum etc, originally the dictionary for mi and di was switched.
         """
         dict_mi[s.join([residue_pairs[0], residue_pairs[2]])] = residue_pairs[4]
         dict_di[s.join([residue_pairs[0], residue_pairs[2]])] = residue_pairs[5]
@@ -174,25 +174,25 @@ def parse_freecontact_coevolution(acc, freecontact_file, freecontact_parsed_csv,
     """
 
     tmd_length = int(row.strip().split()[2])
-    CumDI4 = [0] * tmd_length
-    CumMI4 = [0] * tmd_length
-    CumDI8 = [0] * tmd_length
-    CumMI8 = [0] * tmd_length
-    coev_all_top4_DI = [0] * tmd_length
-    coev_all_top4_MI = [0] * tmd_length
-    coev_all_top8_DI = [0] * tmd_length
-    coev_all_top8_MI = [0] * tmd_length
-    coev_all_max_DI_1 = [0] * tmd_length  # the sum of the top 8
-    coev_all_max_MI_1 = [0] * tmd_length
+    DI4cum = [0] * tmd_length
+    MI4cum = [0] * tmd_length
+    DI8cum = [0] * tmd_length
+    MI8cum = [0] * tmd_length
+    DItop4mean = [0] * tmd_length
+    MItop4mean = [0] * tmd_length
+    DItop8mean = [0] * tmd_length
+    MItop8mean = [0] * tmd_length
+    DImax_1 = [0] * tmd_length  # the sum of the top 8
+    MImax_1 = [0] * tmd_length
     for key in dict_di_list:
-        coev_all_top4_DI[int(key) - 1] = sum(map(float, sorted(dict_di_list[key], reverse=True)[0:4])) / 4
-        coev_all_top4_MI[int(key) - 1] = sum(map(float, sorted(dict_mi_list[key], reverse=True)[0:4])) / 4
-        coev_all_top8_DI[int(key) - 1] = sum(map(float, sorted(dict_di_list[key], reverse=True)[0:8])) / 8
-        coev_all_top8_MI[int(key) - 1] = sum(map(float, sorted(dict_mi_list[key], reverse=True)[0:8])) / 8
-        # MT note: as far as I can see, the coev_all_max_DI is not limited to [0:8], and is therefore the max DI value between
+        DItop4mean[int(key) - 1] = sum(map(float, sorted(dict_di_list[key], reverse=True)[0:4])) / 4
+        MItop4mean[int(key) - 1] = sum(map(float, sorted(dict_mi_list[key], reverse=True)[0:4])) / 4
+        DItop8mean[int(key) - 1] = sum(map(float, sorted(dict_di_list[key], reverse=True)[0:8])) / 8
+        MItop8mean[int(key) - 1] = sum(map(float, sorted(dict_mi_list[key], reverse=True)[0:8])) / 8
+        # MT note: as far as I can see, the DImax is not limited to [0:8], and is therefore the max DI value between
         # the residue of interest, and any of the residues in the TMD
-        coev_all_max_DI_1[int(key) - 1] = sorted(dict_di_list[key], reverse=True)[0]
-        coev_all_max_MI_1[int(key) - 1] = sorted(dict_mi_list[key], reverse=True)[0]
+        DImax_1[int(key) - 1] = sorted(dict_di_list[key], reverse=True)[0]
+        MImax_1[int(key) - 1] = sorted(dict_mi_list[key], reverse=True)[0]
         # sys.stdout.write(str(key)+"corresponding to"+str(dict_di_list[key]))
     dict_di_value_sort = sorted(dict_di.items(), key=lambda x: x[1], reverse=True)[0:tmd_length]
     dict_mi_value_sort = sorted(dict_mi.items(), key=lambda x: x[1], reverse=True)[0:tmd_length]
@@ -200,27 +200,27 @@ def parse_freecontact_coevolution(acc, freecontact_file, freecontact_parsed_csv,
     for i in range(0, 4):
         res0 = int(dict_di_value_sort[i][0].strip().split('-')[0]) - 1
         res1 = int(dict_di_value_sort[i][0].strip().split('-')[1]) - 1
-        CumDI4[res0] = CumDI4[res0] + float(dict_di_value_sort[i][1])
-        CumDI4[res1] = CumDI4[res1] + float(dict_di_value_sort[i][1])
-        CumMI4[res0] = CumMI4[res0] + float(dict_mi_value_sort[i][1])
-        CumMI4[res1] = CumMI4[res1] + float(dict_mi_value_sort[i][1])
+        DI4cum[res0] = DI4cum[res0] + float(dict_di_value_sort[i][1])
+        DI4cum[res1] = DI4cum[res1] + float(dict_di_value_sort[i][1])
+        MI4cum[res0] = MI4cum[res0] + float(dict_mi_value_sort[i][1])
+        MI4cum[res1] = MI4cum[res1] + float(dict_mi_value_sort[i][1])
 
     for i in range(0, 8):
         res0 = int(dict_di_value_sort[i][0].strip().split('-')[0]) - 1
         res1 = int(dict_di_value_sort[i][0].strip().split('-')[1]) - 1
-        CumDI8[res0] = CumDI8[res0] + float(dict_di_value_sort[i][1])
-        CumDI8[res1] = CumDI8[res1] + float(dict_di_value_sort[i][1])
-        CumMI8[res0] = CumMI8[res0] + float(dict_mi_value_sort[i][1])
-        CumMI8[res1] = CumMI8[res1] + float(dict_mi_value_sort[i][1])
+        DI8cum[res0] = DI8cum[res0] + float(dict_di_value_sort[i][1])
+        DI8cum[res1] = DI8cum[res1] + float(dict_di_value_sort[i][1])
+        MI8cum[res0] = MI8cum[res0] + float(dict_mi_value_sort[i][1])
+        MI8cum[res1] = MI8cum[res1] + float(dict_mi_value_sort[i][1])
 
     writer = csv.writer(freecontact_parsed_csv_handle, delimiter=',', quotechar='"',
                         lineterminator='\n',
                         quoting=csv.QUOTE_NONNUMERIC, doublequote=True)
-    writer.writerow(["residue_num", "residue_name", "coev_all_max_DI", "coev_all_top4_DI", "coev_all_top8_DI", "CumDI4", "CumDI8", "coev_all_max_MI", "coev_all_top4_MI", "coev_all_top8_MI", "CumMI4", "CumMI8"])
-    for index in range(len(CumDI8)):
+    writer.writerow(["residue_num", "residue_name", "DImax", "DItop4mean", "DItop8mean", "DI4cum", "DI8cum", "MImax", "MItop4mean", "MItop8mean", "MI4cum", "MI8cum"])
+    for index in range(len(DI8cum)):
         csv_header_for_cumulative_strength_file = [(index + 1), dict_residuenum_residuename[(index + 1)],
-                                                   coev_all_max_DI_1[index], coev_all_top4_DI[index], coev_all_top8_DI[index], CumDI4[index], CumDI8[index], coev_all_max_MI_1[index], coev_all_top4_MI[index],
-                                                   coev_all_top8_MI[index], CumMI4[index], CumMI8[index]]
+                                                   DImax_1[index], DItop4mean[index], DItop8mean[index], DI4cum[index], DI8cum[index], MImax_1[index], MItop4mean[index],
+                                                   MItop8mean[index], MI4cum[index], MI8cum[index]]
         # writer = csv.writer(freecontact_parsed_csv_handle, delimiter=',', quotechar='"', lineterminator='\n',
         # quoting=csv.QUOTE_NONNUMERIC, doublequote=True)
         writer.writerow(csv_header_for_cumulative_strength_file)
@@ -249,7 +249,7 @@ def parse_freecontact_coevolution(acc, freecontact_file, freecontact_parsed_csv,
     4  92    I  97    F  0.244482 -0.252246
     """
 
-    # open up the existing parsed freecontact file, with CumDI4, CumDI8, etc
+    # open up the existing parsed freecontact file, with DI4cum, DI8cum, etc
     df_out = pd.read_csv(freecontact_parsed_csv)
 
     # reindex based on the start of the TMD according to the original settings file
@@ -329,7 +329,7 @@ def parse_freecontact_coevolution(acc, freecontact_file, freecontact_parsed_csv,
                     # calculate mean and max of all pairwise values between i and from i-4 to i+4 (total of 8 values)
                     m4_to_p4_ser = dfp.loc[pos, i_minus:i_plus]
                     df_out.loc[pos, "coev_i1-i4_XI"] = m4_to_p4_ser.mean()
-                    df_out.loc[pos, "coev_i1-i4_max_XI"] = m4_to_p4_ser.max()
+                    df_out.loc[pos, "XI4max"] = m4_to_p4_ser.max()
 
         # HEPTAD MOTIF
         a, b, c, d, e, f, g = 1, np.nan, np.nan, 1, 1, np.nan, 1
@@ -384,8 +384,8 @@ def parse_freecontact_coevolution(acc, freecontact_file, freecontact_parsed_csv,
 
         # label the best face as 1, and all other residues as 0
         index_positions_highest_face = set(index_positions_highest_face).intersection(set(df_out.index))
-        df_out.loc[index_positions_highest_face, "highest_face_XI"] = 1
-        df_out["highest_face_XI"] = df_out["highest_face_XI"].fillna(0).astype(int)
+        df_out.loc[index_positions_highest_face, "XI_highest_face"] = 1
+        df_out["XI_highest_face"] = df_out["XI_highest_face"].fillna(0).astype(int)
 
         # replace the XI in the column names with either MI or DI
         new_column_names = pd.Series(df_out.columns).str.replace("XI", XI)
@@ -398,7 +398,7 @@ def parse_freecontact_coevolution(acc, freecontact_file, freecontact_parsed_csv,
     coev_colname_list = df_out.columns.tolist()[len(column_list):]
 
     # Specifically overwrite normalised values for Cum metrics. Convert to 0 or 1.
-    coev_cum_colname_list = ["CumDI4", "CumDI8", "CumMI4", "CumMI8"]
+    coev_cum_colname_list = ["DI4cum", "DI8cum", "MI4cum", "MI8cum"]
     for col in coev_cum_colname_list:
         df_out[col] = df_out[col].apply(lambda x : 1 if x > 0 else 0)
 

@@ -933,24 +933,26 @@ def calc_rand_overlap_DEPRECATED_METHOD(sequence_length, sample_size):
 def rename_features(df_features_single_protein):
     """rename selected features.
 
-    coev_all_top4_MI -> MItop4mean
-    coev_all_top4_DI -> DItop4mean
-    coev_all_top8_MI -> MItop8mean
-    coev_all_top8_DI -> DItop8mean
-    coev_i1_MI -> MI1mean
-    coev_i1_DI -> DI1mean
-    coev_i3_MI -> MI3mean
-    coev_i3_DI -> DI3mean
-    coev_i4_MI -> MI4mean
-    coev_i4_DI -> DI4mean
-    coev_all_max_MI -> MImax
-    coev_all_max_DI -> DImax
-    coev_i1-i4_max_MI -> MI4max
-    coev_i1-i4_max_DI -> DI4max
-    CumMI4 -> MI4cum
-    CumDI4 -> DI4cum
-    highest_face_MI -> MI_highest_face
-    highest_face_DI -> DI_highest_face
+    MItop4mean -> MItop4mean
+    DItop4mean -> DItop4mean
+    MItop8mean -> MItop8mean
+    DItop8mean -> DItop8mean
+    MI1mean -> MI1mean
+    DI1mean -> DI1mean
+    MI3mean -> MI3mean
+    DI3mean -> DI3mean
+    MI4mean -> MI4mean
+    DI4mean -> DI4mean
+    MI5mean -> MI5mean
+    DI5mean -> DI5mean
+    MImax -> MImax
+    DImax -> DImax
+    MI4max -> MI4max
+    DI4max -> DI4max
+    MI4cum -> MI4cum
+    DI4cum -> DI4cum
+    MI_highest_face -> MI_highest_face
+    DI_highest_face -> DI_highest_face
 
 
     Parameters
@@ -963,13 +965,26 @@ def rename_features(df_features_single_protein):
 
     # rename features
     df_features_single_protein = df_features_single_protein.rename(
-        columns={"coev_all_top4_MI": "MItop4mean", "coev_all_top4_DI": "DItop4mean", "coev_all_top8_MI": "MItop8mean", "coev_all_top8_DI": "DItop8mean",
-                 "coev_i1_MI": "MI1mean", "coev_i1_DI": "DI1mean", "coev_i3_MI": "MI3mean", "coev_i3_DI": "DI3mean",
-                 "coev_i4_MI": "MI4mean", "coev_i4_DI": "DI4mean",
-                 "coev_i4_MI_nonnorm": "MI4mean_nonnorm", "coev_i4_DI_nonnorm": "DI4mean_nonnorm",
-                 "coev_all_max_MI": "MImax", "coev_all_max_DI": "DImax",
-                 "coev_i1-i4_max_MI": "MI4max", "coev_i1-i4_max_DI": "DI4max", "CumMI4": "MI4cum","CumDI4": "DI4cum",
-                 "highest_face_MI": "MI_highest_face", "highest_face_DI": "DI_highest_face"})
+        columns={"coev_all_top4_MI": "MItop4mean",
+                 "coev_all_top4_DI": "DItop4mean",
+                 "coev_all_top8_MI": "MItop8mean",
+                 "coev_all_top8_DI": "DItop8mean",
+                 "coev_i1_MI": "MI1mean",
+                 "coev_i1_DI": "DI1mean",
+                 "coev_i3_MI": "MI3mean",
+                 "coev_i3_DI": "DI3mean",
+                 "coev_i4_MI": "MI4mean",
+                 "coev_i4_DI": "DI4mean",
+                 "coev_i4_MI_nonnorm": "MI4mean_nonnorm",
+                 "coev_i4_DI_nonnorm": "DI4mean_nonnorm",
+                 "coev_all_max_MI": "MImax",
+                 "coev_all_max_DI": "DImax",
+                 "coev_i1-i4_max_MI": "MI4max",
+                 "coev_i1-i4_max_DI": "DI4max",
+                 "CumMI4": "MI4cum",
+                 "CumDI4": "DI4cum",
+                 "highest_face_MI": "MI_highest_face",
+                 "highest_face_DI": "DI_highest_face"})
 
     # check for existence of feature used in Fig. 7 (analysis co-evolution vs conservation
     assert "MI4mean_nonnorm" in df_features_single_protein.columns
