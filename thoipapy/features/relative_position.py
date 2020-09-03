@@ -75,9 +75,11 @@ def calc_relative_position(acc, path_uniq_TMD_seqs_for_PSSM_FREECONTACT, relativ
             tm_seq = mat[0]
             tm_len = len(tm_seq)
             for i in range(1, tm_len):
-                rp1 = i / tm_len
-                rp2 = (i + TMD_start - 1) / seqlen
-                writer.writerow([i, tm_seq[i - 1], rp1, rp2])
+                RelPos_TMD = i / tm_len
+                RelPos_fullseq = (i + TMD_start - 1) / seqlen
+                residue_num = i
+                residue_name = tm_seq[i - 1]
+                writer.writerow([residue_num, residue_name, RelPos_TMD, RelPos_fullseq])
         relative_position_file_handle.close()
         logging.info('{} relative position calculation finished ({})'.format(acc, relative_position_file))
         dfrp = pd.read_csv(relative_position_file, index_col=0)
