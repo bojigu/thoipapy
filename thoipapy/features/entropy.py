@@ -72,7 +72,7 @@ def entropy_calculation(acc, path_uniq_TMD_seqs_for_PSSM_FREECONTACT, TMD_seq, e
                 column = []
             writer = csv.writer(entropy_file_handle, delimiter=',', quotechar='"', lineterminator='\n',
                                 quoting=csv.QUOTE_NONNUMERIC, doublequote=True)
-            writer.writerow(["residue_num", "residue_name", "Entropy"])
+            writer.writerow(["residue_num", "residue_name", "entropy"])
             # iterate through each residue position
             for j in range(0, n_residues):
                 # iterate through each sequence
@@ -89,7 +89,8 @@ def entropy_calculation(acc, path_uniq_TMD_seqs_for_PSSM_FREECONTACT, TMD_seq, e
                 p_data = column_serie.value_counts() / len(column_serie)
                 # input probabilities to get the entropy
                 # note that this currently includes gaps "-" as the 21st amino acid
-                entropy = sc.stats.entropy(p_data)
+                entropy_orig = sc.stats.entropy(p_data)
+                entropy = (entropy_orig * -1) + 3
                 csv_header_for_ncbi_homologues_file = [j + 1, TMD_seq[j], entropy]
                 writer = csv.writer(entropy_file_handle, delimiter=',', quotechar='"', lineterminator='\n',
                                     quoting=csv.QUOTE_NONNUMERIC, doublequote=True)
