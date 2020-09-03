@@ -20,9 +20,6 @@ def normalise_features(df_features_single_protein):
         Index : range index
         Columns : "residue_num", "residue_name", "Entropy", etc
     """
-    # convert entropy to conservation by inverting, and adding 3 to give positive values
-    # low values are poorly conserved. High values are highly conserved.
-    df_features_single_protein["conservation"] = - df_features_single_protein["Entropy"] + 3
     # calculate LIPS L*E for later validation. LIPS_L*E = LIPS_polarity * log(LIPS_entropy)
     df_features_single_protein["LIPS_L*E"] = df_features_single_protein.LIPS_polarity * np.log(df_features_single_protein.LIPS_entropy)
     # rank the LIPS score by adding a fraction of the L*E to the predicted interface (0 or 1)
