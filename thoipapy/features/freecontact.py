@@ -308,9 +308,7 @@ def parse_freecontact_coevolution(acc, freecontact_file, freecontact_parsed_csv,
         """
 
         # calculate max and mean over all connections (within TMD) for that residue position
-        # DEPRECATED. SAME AS ABOVE.
-        #df_out["coev_all_max_XI"] = dfp.max(axis=1)
-        df_out["coev_all_mean_XI"] = dfp.mean(axis=1)
+        df_out["XIall_mean"] = dfp.mean(axis=1)
 
         for pos in range(TMD_start, TMD_end + 1):
             #iterate from i-1 and i+1 to i-5 and i+5
@@ -319,17 +317,17 @@ def parse_freecontact_coevolution(acc, freecontact_file, freecontact_parsed_csv,
                 i_plus = pos + n if pos + n in dfp.columns else dfp.columns.max()
                 # select the two datapoints (e.g. i-4 and i+4 relative to i)
                 sel_XI_ser = dfp.loc[pos, [i_minus, i_plus]]
-                df_out.loc[pos, "coev_i{}_XI".format(n)] = sel_XI_ser.mean()
+                df_out.loc[pos, "XI{}mean".format(n)] = sel_XI_ser.mean()
 
                 if n == 4:
                     # add the direct connection between i-4 and i+4 (excluding i)
                     sel_XI_ser["m4_to_p4_value"] = dfp.loc[i_plus, i_minus]
-                    df_out.loc[pos, "coev_i4_cx_XI"] = sel_XI_ser.mean()
+                    df_out.loc[pos, "XI4value"] = sel_XI_ser.mean()
 
                     # calculate mean and max of all pairwise values between i and from i-4 to i+4 (total of 8 values)
                     m4_to_p4_ser = dfp.loc[pos, i_minus:i_plus]
-                    df_out.loc[pos, "coev_i1-i4_XI"] = m4_to_p4_ser.mean()
-                    df_out.loc[pos, "XI4max"] = m4_to_p4_ser.max()
+                    df_out.loc[pos, "XI4_inclusive_mean"] = m4_to_p4_ser.mean()
+                    df_out.loc[pos, "XI4_inclusive_max"] = m4_to_p4_ser.max()
 
         # HEPTAD MOTIF
         a, b, c, d, e, f, g = 1, np.nan, np.nan, 1, 1, np.nan, 1
@@ -391,8 +389,6 @@ def parse_freecontact_coevolution(acc, freecontact_file, freecontact_parsed_csv,
         new_column_names = pd.Series(df_out.columns).str.replace("XI", XI)
         df_out.columns = new_column_names
 
-    #"""
-
     # normalise all columns except for residue_num and residue_name
     column_list = ["residue_num", "residue_name"]
     coev_colname_list = df_out.columns.tolist()[len(column_list):]
@@ -402,17 +398,13 @@ def parse_freecontact_coevolution(acc, freecontact_file, freecontact_parsed_csv,
     for col in coev_cum_colname_list:
         df_out[col] = df_out[col].apply(lambda x : 1 if x > 0 else 0)
 
-    # Normalise each. Add as new ColumnName_norm
+    # rename so that original data is "NAME_raw" and normalised data is "NAME"
     for col in coev_colname_list:
-        # if "DI" in col:
-        #     df_out["{}_norm".format(col)] = normalise_0_1(df_out[col])[0]
-        # elif "MI" in col:
-        #     df_out["{}_nonnorm".format(col)] = df_out[col]
-        #     df_out[col] = normalise_0_1(df_out[col])[0]
 
-        # ASSUME NORMALISED VALUES ARE TO BE USED IN ALL CASES
-        df_out["{}_nonnorm".format(col)] = df_out[col]
-        df_out[col] = normalise_0_1(df_out[col])[0]
-    #"""
+        already_normalised = "cum" in col or "highest_face" in col
+
+        if not already_normalised:
+            df_out[col] = normalise_0_1(df_out[col])[0]
+            df_out["{}_raw".format(col)] = df_out[col]
 
     df_out.to_csv(freecontact_parsed_csv)
