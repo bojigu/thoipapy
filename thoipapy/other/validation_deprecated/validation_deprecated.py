@@ -61,12 +61,12 @@ def run_LOO_validation_od_non_multiprocessing(s, df_set, logging):
     df_set = thoipapy.utils.drop_redundant_proteins_from_list(df_set, logging)
 
     # input
-    train_data_csv = Path(s["thoipapy_data_folder"]) / f"Results/{s['setname']}/train_data/01_train_data_orig.csv"
-    tuned_ensemble_parameters_csv = Path(s["thoipapy_data_folder"]) / f"Results/{s['setname']}/train_data/04_tuned_ensemble_parameters.csv"
+    train_data_csv = Path(s["thoipapy_data_folder"]) / f"results/{s['setname']}/train_data/01_train_data_orig.csv"
+    tuned_ensemble_parameters_csv = Path(s["thoipapy_data_folder"]) / f"results/{s['setname']}/train_data/04_tuned_ensemble_parameters.csv"
     # output
-    LOO_crossvalidation_pkl = os.path.join(s["thoipapy_data_folder"], "Results", s["setname"], "crossvalidation", "data", "{}_LOO_crossvalidation.pkl".format(s["setname"]))
-    bocurve_data_raw_csv = os.path.join(s["thoipapy_data_folder"], "Results", s["setname"], "crossvalidation", "data", "{}_loo_bocurve_data_raw.csv".format(s["setname"]))
-    bocurve_data_xlsx: Union[Path, str] = Path(s["thoipapy_data_folder"]) / f"Results/{s['setname']}/crossvalidation/data/{s['setname']}_thoipa_loo_bo_curve_data.xlsx"
+    LOO_crossvalidation_pkl = os.path.join(s["thoipapy_data_folder"], "results", s["setname"], "crossvalidation", "data", "{}_LOO_crossvalidation.pkl".format(s["setname"]))
+    bocurve_data_raw_csv = os.path.join(s["thoipapy_data_folder"], "results", s["setname"], "crossvalidation", "data", "{}_loo_bocurve_data_raw.csv".format(s["setname"]))
+    bocurve_data_xlsx: Union[Path, str] = Path(s["thoipapy_data_folder"]) / f"results/{s['setname']}/crossvalidation/data/{s['setname']}_thoipa_loo_bo_curve_data.xlsx"
 
     thoipapy.utils.make_sure_path_exists(bocurve_data_xlsx, isfile=True)
 
@@ -91,7 +91,7 @@ def run_LOO_validation_od_non_multiprocessing(s, df_set, logging):
     for i in df_set.index:
 
         acc, acc_db, database  = df_set.loc[i, "acc"], df_set.loc[i, "acc_db"], df_set.loc[i, "database"]
-        THOIPA_LOO_prediction_csv = Path(s["thoipapy_data_folder"]) / f"Results/{s['setname']}/predictions/THOIPA_LOO/{database}.{acc}.LOO.prediction.csv"
+        THOIPA_LOO_prediction_csv = Path(s["thoipapy_data_folder"]) / f"results/{s['setname']}/predictions/THOIPA_LOO/{database}.{acc}.LOO.prediction.csv"
         thoipapy.utils.make_sure_path_exists(THOIPA_LOO_prediction_csv, isfile=True)
 
         #######################################################################################################
@@ -273,9 +273,9 @@ def predict_test_dataset_with_THOIPA_DEPRECATED(train_setname, test_setname, s, 
         rows = range(0, number of AA in test set)
     """
 
-    model_pkl = os.path.join(s["thoipapy_data_folder"], "Results", s["setname"], "{}_ML_model.lpkl".format(train_setname))
+    model_pkl = os.path.join(s["thoipapy_data_folder"], "results", s["setname"], "{}_ML_model.lpkl".format(train_setname))
     test_data_csv = os.path.join(s["Results_folder"], test_setname, "{}_train_data.csv".format(test_setname))
-    THOIPA_pred_csv = os.path.join(s["thoipapy_data_folder"], "Results", s["setname"], "trainset{}_testset{}_predictions.csv".format(train_setname[-2:], test_setname[-2:]))
+    THOIPA_pred_csv = os.path.join(s["thoipapy_data_folder"], "results", s["setname"], "trainset{}_testset{}_predictions.csv".format(train_setname[-2:], test_setname[-2:]))
 
     fit = joblib.load(model_pkl)
 
@@ -335,8 +335,8 @@ def calc_roc_each_tmd_separately_deprecated(s, df_set, logging):
     if s["setname"] == testsetname:
         prediction_name_list.append(f"thoipa.train{trainsetname}")
 
-    roc_each_tmd_separate_deprecated_csv = Path(s["thoipapy_data_folder"]) / f"Results/{s['setname']}/crossvalidation/{s['setname']}_roc_each_tmd_separate_deprecated.csv"
-    roc_each_tmd_separate_deprecated_png = Path(s["thoipapy_data_folder"]) / f"Results/{s['setname']}/crossvalidation/{s['setname']}_roc_each_tmd_separate_deprecated.png"
+    roc_each_tmd_separate_deprecated_csv = Path(s["thoipapy_data_folder"]) / f"results/{s['setname']}/crossvalidation/{s['setname']}_roc_each_tmd_separate_deprecated.csv"
+    roc_each_tmd_separate_deprecated_png = Path(s["thoipapy_data_folder"]) / f"results/{s['setname']}/crossvalidation/{s['setname']}_roc_each_tmd_separate_deprecated.png"
 
     figsize = np.array([3.42, 3.42]) * 2  # DOUBLE the real size, due to problems on Bo computer with fontsizes
     fig, ax = plt.subplots(figsize=figsize)
@@ -347,7 +347,7 @@ def calc_roc_each_tmd_separately_deprecated(s, df_set, logging):
         for i in df_set.index:
             acc = df_set.loc[i, "acc"]
             database = df_set.loc[i, "database"]
-            merged_data_csv_path: Union[Path, str] = Path(s["thoipapy_data_folder"]) / f"Results/{s['setname']}/predictions/merged/{database}.{acc}.merged.csv"
+            merged_data_csv_path: Union[Path, str] = Path(s["thoipapy_data_folder"]) / f"results/{s['setname']}/predictions/merged/{database}.{acc}.merged.csv"
             dfm = pd.read_csv(merged_data_csv_path, engine="python", index_col=0)
             dfm.dropna(inplace=True)
             interface = dfm["interface"].values

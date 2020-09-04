@@ -80,10 +80,10 @@ def train_machine_learning_model(s, logging):
     logging.info('starting train_machine_learning_model')
 
     # inputs
-    train_data_after_first_feature_seln_csv = Path(s["thoipapy_data_folder"]) / f"Results/{s['setname']}/train_data/03_train_data_after_first_feature_seln.csv"
-    tuned_ensemble_parameters_csv = Path(s["thoipapy_data_folder"]) / f"Results/{s['setname']}/train_data/04_tuned_ensemble_parameters.csv"
+    train_data_after_first_feature_seln_csv = Path(s["thoipapy_data_folder"]) / f"results/{s['setname']}/train_data/03_train_data_after_first_feature_seln.csv"
+    tuned_ensemble_parameters_csv = Path(s["thoipapy_data_folder"]) / f"results/{s['setname']}/train_data/04_tuned_ensemble_parameters.csv"
     # outputs
-    model_pkl = os.path.join(s["thoipapy_data_folder"], "Results", s["setname"], "{}_ML_model.lpkl".format(s["setname"]))
+    model_pkl = os.path.join(s["thoipapy_data_folder"], "results", s["setname"], "{}_ML_model.lpkl".format(s["setname"]))
 
     df_data = pd.read_csv(train_data_after_first_feature_seln_csv, index_col=0)
 

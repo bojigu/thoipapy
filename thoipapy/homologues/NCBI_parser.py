@@ -272,7 +272,7 @@ def extract_filtered_csv_homologues_to_alignments_mult_prot(s, df_set, logging):
 
     df_align_results = pd.DataFrame(out_dict).T
     df_align_results.index.name = "acc"
-    align_results_csv = os.path.join(s["thoipapy_data_folder"], "Results", s["setname"], "{}_alignment_summary.csv".format(s["setname"]))
+    align_results_csv = os.path.join(s["thoipapy_data_folder"], "results", s["setname"], "{}_alignment_summary.csv".format(s["setname"]))
     df_align_results.to_csv(align_results_csv)
 
     logging.info('finished extract filtered csv homologues to alignments for {} proteins. Output = {}'.format(df_align_results.shape[0], align_results_csv))

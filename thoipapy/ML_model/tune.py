@@ -22,9 +22,9 @@ def tune_ensemble_parameters_after_feature_seln(s, logging):
 
     logging.info('starting tune_ensemble_parameters')
     # inputs
-    train_data_after_first_feature_seln_csv = Path(s["thoipapy_data_folder"]) / f"Results/{s['setname']}/train_data/03_train_data_after_first_feature_seln.csv"
+    train_data_after_first_feature_seln_csv = Path(s["thoipapy_data_folder"]) / f"results/{s['setname']}/train_data/03_train_data_after_first_feature_seln.csv"
     # output
-    tuned_ensemble_parameters_csv = Path(s["thoipapy_data_folder"]) / f"Results/{s['setname']}/train_data/04_tuned_ensemble_parameters.csv"
+    tuned_ensemble_parameters_csv = Path(s["thoipapy_data_folder"]) / f"results/{s['setname']}/train_data/04_tuned_ensemble_parameters.csv"
 
     tune_ensemble_parameters(s, train_data_after_first_feature_seln_csv, tuned_ensemble_parameters_csv, logging)
 

@@ -40,10 +40,10 @@ def create_precision_recall_all_residues(s, df_set, logging):
     logging.info('Starting combine_all_residue_predictions.')
 
     # output file with all predictions
-    pred_all_res_csv: Union[Path, str] = Path(s["thoipapy_data_folder"]) / f"Results/{s['setname']}/crossvalidation/precision_recall/{s['setname']}_pred_all_res.csv"
-    #all_res_precision_recall_data_dict_pkl = os.path.join(s["thoipapy_data_folder"], "Results", s["setname"], "precision_recall", "{}_all_res_precision_recall_data_dict.pickle".format(s["setname"]))
-    all_res_precision_recall_data_csv: Path = Path(s["thoipapy_data_folder"]) / f"Results/{s['setname']}/crossvalidation/precision_recall/{s['setname']}_all_res_precision_recall_data.csv"
-    all_res_precision_recall_png: Path = Path(s["thoipapy_data_folder"]) / f"Results/{s['setname']}/crossvalidation/precision_recall/{s['setname']}_all_res_precision_recall.png"
+    pred_all_res_csv: Union[Path, str] = Path(s["thoipapy_data_folder"]) / f"results/{s['setname']}/crossvalidation/precision_recall/{s['setname']}_pred_all_res.csv"
+    #all_res_precision_recall_data_dict_pkl = os.path.join(s["thoipapy_data_folder"], "results", s["setname"], "precision_recall", "{}_all_res_precision_recall_data_dict.pickle".format(s["setname"]))
+    all_res_precision_recall_data_csv: Path = Path(s["thoipapy_data_folder"]) / f"results/{s['setname']}/crossvalidation/precision_recall/{s['setname']}_all_res_precision_recall_data.csv"
+    all_res_precision_recall_png: Path = Path(s["thoipapy_data_folder"]) / f"results/{s['setname']}/crossvalidation/precision_recall/{s['setname']}_all_res_precision_recall.png"
 
     utils.make_sure_path_exists(pred_all_res_csv, isfile=True)
 
@@ -60,8 +60,8 @@ def create_precision_recall_all_residues(s, df_set, logging):
         df_subset = df_all.loc[df_all.subset == subset]
         if df_subset.empty:
             continue
-        precision_recall_png: Union[Path, str] = Path(s["thoipapy_data_folder"]) / f"Results/{s['setname']}/crossvalidation/precision_recall/{s['setname']}_all_res_precision_recall_data_{subset}_subset.png"
-        precision_recall_data_csv: Union[Path, str] = Path(s["thoipapy_data_folder"]) / f"Results/{s['setname']}/crossvalidation/precision_recall/{s['setname']}_all_res_precision_recall_data_{subset}_subset.csv"
+        precision_recall_png: Union[Path, str] = Path(s["thoipapy_data_folder"]) / f"results/{s['setname']}/crossvalidation/precision_recall/{s['setname']}_all_res_precision_recall_data_{subset}_subset.png"
+        precision_recall_data_csv: Union[Path, str] = Path(s["thoipapy_data_folder"]) / f"results/{s['setname']}/crossvalidation/precision_recall/{s['setname']}_all_res_precision_recall_data_{subset}_subset.csv"
         save_fig_precision_recall_all_residues(s, df_subset, precision_recall_png, precision_recall_data_csv, logging)
 
     # with open(all_res_precision_recall_data_pkl, "wb") as f:

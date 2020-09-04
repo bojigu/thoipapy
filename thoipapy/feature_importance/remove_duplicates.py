@@ -22,12 +22,12 @@ def remove_duplicate_features_with_lower_MDI(s, logging):
 
     logging.info('starting remove_duplicate_features_with_lower_MDI')
     # inputs
-    train_data_csv = Path(s["thoipapy_data_folder"]) / f"Results/{s['setname']}/train_data/01_train_data_orig.csv"
+    train_data_csv = Path(s["thoipapy_data_folder"]) / f"results/{s['setname']}/train_data/01_train_data_orig.csv"
     max_similarity_duplicate_features = s["max_similarity_duplicate_features"]
     # outputs
-    mean_decrease_impurity_all_features_csv = Path(s["thoipapy_data_folder"]) / f"Results/{s['setname']}/train_data/01_feat_imp_MDI_before_feature_seln.csv"
-    results_remove_dup_feat_with_low_MDI_csv = Path(s["thoipapy_data_folder"]) / "Results" / s["setname"] / "feat_imp/results_remove_dup_feat_with_low_MDI.csv"
-    train_data_excl_duplicates_csv = Path(s["thoipapy_data_folder"]) / f"Results/{s['setname']}/train_data/02_train_data_excl_duplicates.csv"
+    mean_decrease_impurity_all_features_csv = Path(s["thoipapy_data_folder"]) / f"results/{s['setname']}/train_data/01_feat_imp_MDI_before_feature_seln.csv"
+    results_remove_dup_feat_with_low_MDI_csv = Path(s["thoipapy_data_folder"]) / "results" / s["setname"] / "feat_imp/results_remove_dup_feat_with_low_MDI.csv"
+    train_data_excl_duplicates_csv = Path(s["thoipapy_data_folder"]) / f"results/{s['setname']}/train_data/02_train_data_excl_duplicates.csv"
 
     df_MDI = pd.read_csv(mean_decrease_impurity_all_features_csv, index_col=0)
     df_data = pd.read_csv(train_data_csv, index_col=0)

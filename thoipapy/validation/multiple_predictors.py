@@ -20,16 +20,16 @@ def validate_multiple_predictors_and_subsets_auboc10(s, df_set, logging):
     for subset in subsets:
         df_o_minus_r_mean_df = pd.DataFrame()
         AUBOC10_list = []
-        mean_AUBOC_file = Path(s["thoipapy_data_folder"]) / f"Results/{s['setname']}/crossvalidation/compare_selected_predictors/data/{s['setname']}.{subset}.4predictors_mean_AUBOC10.csv"
-        mean_AUBOC_barplot_png = Path(s["thoipapy_data_folder"]) / f"Results/{s['setname']}/crossvalidation/compare_selected_predictors/figs/{s['setname']}.{subset}.4predictors_mean_AUBOC10.png"
-        BOCURVE_linechart_csv = Path(s["thoipapy_data_folder"]) / f"Results/{s['setname']}/crossvalidation/compare_selected_predictors/data/{s['setname']}.{subset}.4predictors_BOCURVE_linechart.csv"
-        BOCURVE_linechart_png = Path(s["thoipapy_data_folder"]) / f"Results/{s['setname']}/crossvalidation/compare_selected_predictors/figs/{s['setname']}.{subset}.4predictors_BOCURVE_linechart.png"
+        mean_AUBOC_file = Path(s["thoipapy_data_folder"]) / f"results/{s['setname']}/crossvalidation/compare_selected_predictors/data/{s['setname']}.{subset}.4predictors_mean_AUBOC10.csv"
+        mean_AUBOC_barplot_png = Path(s["thoipapy_data_folder"]) / f"results/{s['setname']}/crossvalidation/compare_selected_predictors/figs/{s['setname']}.{subset}.4predictors_mean_AUBOC10.png"
+        BOCURVE_linechart_csv = Path(s["thoipapy_data_folder"]) / f"results/{s['setname']}/crossvalidation/compare_selected_predictors/data/{s['setname']}.{subset}.4predictors_BOCURVE_linechart.csv"
+        BOCURVE_linechart_png = Path(s["thoipapy_data_folder"]) / f"results/{s['setname']}/crossvalidation/compare_selected_predictors/figs/{s['setname']}.{subset}.4predictors_BOCURVE_linechart.png"
         make_sure_path_exists(BOCURVE_linechart_png, isfile=True)
 
         make_sure_path_exists(mean_AUBOC_file, isfile=True)
 
         for predictor in predictors:
-            bocurve_data_xlsx = Path(s["thoipapy_data_folder"]) / f"Results/{s['setname']}/crossvalidation/indiv_validation/bocurve/data/{predictor}/bocurve_data.xlsx"
+            bocurve_data_xlsx = Path(s["thoipapy_data_folder"]) / f"results/{s['setname']}/crossvalidation/indiv_validation/bocurve/data/{predictor}/bocurve_data.xlsx"
             df_o_minus_r = pd.read_excel(bocurve_data_xlsx, sheet_name="df_o_minus_r", index_col=0)
             df_o_minus_r = df_o_minus_r.filter(regex=subset, axis=1)
             df_o_minus_r_mean = df_o_minus_r.T.mean()
@@ -85,10 +85,10 @@ def validate_multiple_predictors_and_subsets_auc(s, df_set, logging):
         mean_roc_auc_list = []
         mean_tpr_list= []
         # outputs
-        mean_AUC_file = Path(s["thoipapy_data_folder"]) / f"Results/{s['setname']}/crossvalidation/compare_selected_predictors/data/{s['setname']}.{subset}.4predictors_mean_AUC.csv"
-        mean_AUC_barplot_png = Path(s["thoipapy_data_folder"]) / f"Results/{s['setname']}/crossvalidation/compare_selected_predictors/figs/{s['setname']}.{subset}.4predictors_mean_AUC.png"
-        ROC_curve_csv = Path(s["thoipapy_data_folder"]) / f"Results/{s['setname']}/crossvalidation/compare_selected_predictors/data/{s['setname']}.{subset}.4predictors_AUC_ROC.csv"
-        AUC_ROC_png = Path(s["thoipapy_data_folder"]) / f"Results/{s['setname']}/crossvalidation/compare_selected_predictors/figs/{s['setname']}.{subset}.4predictors_AUC_ROC.png"
+        mean_AUC_file = Path(s["thoipapy_data_folder"]) / f"results/{s['setname']}/crossvalidation/compare_selected_predictors/data/{s['setname']}.{subset}.4predictors_mean_AUC.csv"
+        mean_AUC_barplot_png = Path(s["thoipapy_data_folder"]) / f"results/{s['setname']}/crossvalidation/compare_selected_predictors/figs/{s['setname']}.{subset}.4predictors_mean_AUC.png"
+        ROC_curve_csv = Path(s["thoipapy_data_folder"]) / f"results/{s['setname']}/crossvalidation/compare_selected_predictors/data/{s['setname']}.{subset}.4predictors_AUC_ROC.csv"
+        AUC_ROC_png = Path(s["thoipapy_data_folder"]) / f"results/{s['setname']}/crossvalidation/compare_selected_predictors/figs/{s['setname']}.{subset}.4predictors_AUC_ROC.png"
 
         make_sure_path_exists(mean_AUC_file, isfile=True)
 
@@ -102,7 +102,7 @@ def validate_multiple_predictors_and_subsets_auc(s, df_set, logging):
             mean_fpr = np.linspace(0, 1, 100)
             n=0
             # input
-            auc_pkl = Path(s["thoipapy_data_folder"]) / f"Results/{s['setname']}/crossvalidation/indiv_validation/roc_auc/{predictor_name}/ROC_AUC_data.pkl"
+            auc_pkl = Path(s["thoipapy_data_folder"]) / f"results/{s['setname']}/crossvalidation/indiv_validation/roc_auc/{predictor_name}/ROC_AUC_data.pkl"
             # open pickle file
             with open(auc_pkl, "rb") as f:
                 xv_dict = pickle.load(f)

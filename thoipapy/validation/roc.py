@@ -39,10 +39,10 @@ def create_ROC_all_residues(s, df_set, logging):
     logging.info('Starting combine_all_residue_predictions.')
 
     # output file with all predictions
-    pred_all_res_csv: Union[Path, str] = Path(s["thoipapy_data_folder"]) / f"Results/{s['setname']}/crossvalidation/ROC/{s['setname']}_pred_all_res.csv"
-    #all_res_ROC_data_dict_pkl: Union[Path, str] = Path(s["thoipapy_data_folder"]) / f"Results/{s['setname']}/crossvalidation/ROC/{s['setname']}_all_res_ROC_data_dict.pickle"
-    all_res_ROC_data_csv: Union[Path, str] = Path(s["thoipapy_data_folder"]) / f"Results/{s['setname']}/crossvalidation/ROC/{s['setname']}_all_res_ROC_data.csv"
-    all_res_ROC_png: Union[Path, str] = Path(s["thoipapy_data_folder"]) / f"Results/{s['setname']}/crossvalidation/ROC/{s['setname']}_all_res_ROC.png"
+    pred_all_res_csv: Union[Path, str] = Path(s["thoipapy_data_folder"]) / f"results/{s['setname']}/crossvalidation/ROC/{s['setname']}_pred_all_res.csv"
+    #all_res_ROC_data_dict_pkl: Union[Path, str] = Path(s["thoipapy_data_folder"]) / f"results/{s['setname']}/crossvalidation/ROC/{s['setname']}_all_res_ROC_data_dict.pickle"
+    all_res_ROC_data_csv: Union[Path, str] = Path(s["thoipapy_data_folder"]) / f"results/{s['setname']}/crossvalidation/ROC/{s['setname']}_all_res_ROC_data.csv"
+    all_res_ROC_png: Union[Path, str] = Path(s["thoipapy_data_folder"]) / f"results/{s['setname']}/crossvalidation/ROC/{s['setname']}_all_res_ROC.png"
 
     make_sure_path_exists(pred_all_res_csv, isfile=True)
 
@@ -59,8 +59,8 @@ def create_ROC_all_residues(s, df_set, logging):
         df_subset = df_all.loc[df_all.subset == subset]
         if df_subset.empty:
             continue
-        ROC_png: Union[Path, str] = Path(s["thoipapy_data_folder"]) / f"Results/{s['setname']}/crossvalidation/ROC/{s['setname']}_all_res_ROC_data_{subset}_subset.png"
-        ROC_data_csv: Union[Path, str] = Path(s["thoipapy_data_folder"]) / f"Results/{s['setname']}/crossvalidation/ROC/{s['setname']}_all_res_ROC_data_{subset}_subset.csv"
+        ROC_png: Union[Path, str] = Path(s["thoipapy_data_folder"]) / f"results/{s['setname']}/crossvalidation/ROC/{s['setname']}_all_res_ROC_data_{subset}_subset.png"
+        ROC_data_csv: Union[Path, str] = Path(s["thoipapy_data_folder"]) / f"results/{s['setname']}/crossvalidation/ROC/{s['setname']}_all_res_ROC_data_{subset}_subset.csv"
         save_fig_ROC_all_residues(s, df_subset, ROC_png, ROC_data_csv, logging)
 
     # with open(all_res_ROC_data_pkl, "wb") as f:

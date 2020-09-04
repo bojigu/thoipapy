@@ -199,7 +199,7 @@ def run_BOcurve_comp_hardlinked(Fontsize, Width, Size, s, Linewidth):
     output_base_filename_nmr_png = "Thoipabest_vs_NMR.png"
 
     #save_path_nmr = os.path.join("H:")
-    save_path_nmr = os.path.join(r"D:/THOIPA_data/Results/Bo_Curve/")
+    save_path_nmr = os.path.join(r"D:/THOIPA_data/results/Bo_Curve/")
     settings_folder_nmr = os.path.dirname(save_path_nmr)
     output_folder_nmr = os.path.join(settings_folder_nmr,  "figs","FigBZ14_Bocurve_THOIPAbest_NMR")
     output_folder_pdf_nmr = os.path.join(output_folder_nmr, "pdf")
@@ -209,7 +209,7 @@ def run_BOcurve_comp_hardlinked(Fontsize, Width, Size, s, Linewidth):
     output_base_filename_LIPS = "Thoipabest_vs_LIPS.pdf"
     output_base_filename_LIPS_png = "Thoipabest_vs_LIPS.png"
     #save_path_LIPS = os.path.join("H:", "figs")
-    save_path_LIPS = os.path.join(r"D:/THOIPA_data/Results/Bo_Curve/")
+    save_path_LIPS = os.path.join(r"D:/THOIPA_data/results/Bo_Curve/")
     settings_folder_LIPS = os.path.dirname(save_path_LIPS)
     output_folder_LIPS = os.path.join(settings_folder_LIPS, "figs","FigBZ15_Bocurve_THOIPAbest_LIPS")
     output_folder_pdf_LIPS = os.path.join(output_folder_LIPS, "pdf")

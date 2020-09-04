@@ -15,9 +15,9 @@ from thoipapy.ML_model.train_model import return_classifier_with_loaded_ensemble
 def get_initial_ensemble_parameters_before_feature_selection(s, logging):
 
     #logging.info('RF_variable_importance_calculate is running\n')
-    train_data_csv = Path(s["thoipapy_data_folder"]) / f"Results/{s['setname']}/train_data/01_train_data_orig.csv"
+    train_data_csv = Path(s["thoipapy_data_folder"]) / f"results/{s['setname']}/train_data/01_train_data_orig.csv"
     # output
-    tuned_ensemble_parameters_before_feature_seln_csv = Path(s["thoipapy_data_folder"]) / f"Results/{s['setname']}/train_data/01_tuned_ensemble_parameters_before_feature_seln.csv"
+    tuned_ensemble_parameters_before_feature_seln_csv = Path(s["thoipapy_data_folder"]) / f"results/{s['setname']}/train_data/01_tuned_ensemble_parameters_before_feature_seln.csv"
 
     tune_ensemble_parameters(s, train_data_csv, tuned_ensemble_parameters_before_feature_seln_csv, logging)
 
@@ -39,11 +39,11 @@ def calc_feat_import_using_MDI_before_feature_seln(s, logging):
         Also includes the standard deviation supplied by the machine learning algorithm
     """
     #logging.info('RF_variable_importance_calculate is running\n')
-    train_data_csv = Path(s["thoipapy_data_folder"]) / f"Results/{s['setname']}/train_data/01_train_data_orig.csv"
-    tuned_ensemble_parameters_before_feature_seln_csv = Path(s["thoipapy_data_folder"]) / f"Results/{s['setname']}/train_data/01_tuned_ensemble_parameters_before_feature_seln.csv"
+    train_data_csv = Path(s["thoipapy_data_folder"]) / f"results/{s['setname']}/train_data/01_train_data_orig.csv"
+    tuned_ensemble_parameters_before_feature_seln_csv = Path(s["thoipapy_data_folder"]) / f"results/{s['setname']}/train_data/01_tuned_ensemble_parameters_before_feature_seln.csv"
 
-    #mean_decrease_impurity_all_features_csv = Path(s["thoipapy_data_folder"]) / "Results" / s["setname"] / "feat_imp/mean_decrease_impurity_all_features.csv"
-    mean_decrease_impurity_all_features_csv = Path(s["thoipapy_data_folder"]) / f"Results/{s['setname']}/train_data/01_feat_imp_MDI_before_feature_seln.csv"
+    #mean_decrease_impurity_all_features_csv = Path(s["thoipapy_data_folder"]) / "results" / s["setname"] / "feat_imp/mean_decrease_impurity_all_features.csv"
+    mean_decrease_impurity_all_features_csv = Path(s["thoipapy_data_folder"]) / f"results/{s['setname']}/train_data/01_feat_imp_MDI_before_feature_seln.csv"
 
     make_sure_path_exists(mean_decrease_impurity_all_features_csv, isfile=True)
 
@@ -118,9 +118,9 @@ def fig_feat_import_from_mean_decrease_impurity(s, logging):
     plt.rcParams.update({'font.size':4})
     colour_dict = create_colour_lists()
 
-    mean_decrease_impurity_all_features_csv = Path(s["thoipapy_data_folder"]) / f"Results/{s['setname']}/train_data/01_feat_imp_MDI_before_feature_seln.csv"
-    variable_importance_all_png = Path(s["thoipapy_data_folder"]) / "Results" / s["setname"] / "feat_imp/all_var_import.png"
-    variable_importance_top_png = Path(s["thoipapy_data_folder"]) / "Results" / s["setname"] / "feat_imp/top_var_import.png"
+    mean_decrease_impurity_all_features_csv = Path(s["thoipapy_data_folder"]) / f"results/{s['setname']}/train_data/01_feat_imp_MDI_before_feature_seln.csv"
+    variable_importance_all_png = Path(s["thoipapy_data_folder"]) / "results" / s["setname"] / "feat_imp/all_var_import.png"
+    variable_importance_top_png = Path(s["thoipapy_data_folder"]) / "results" / s["setname"] / "feat_imp/top_var_import.png"
 
     df_imp = pd.read_csv(mean_decrease_impurity_all_features_csv, index_col = 0)
 

@@ -40,12 +40,12 @@ def calc_feat_import_from_mean_decrease_accuracy(s, logging):
     """
     logging.info('------------ starting calc_feat_import_from_mean_decrease_accuracy ------------')
     # input
-    train_data_csv = Path(s["thoipapy_data_folder"]) / f"Results/{s['setname']}/train_data/03_train_data_after_first_feature_seln.csv"
-    tuned_ensemble_parameters_csv = Path(s["thoipapy_data_folder"]) / f"Results/{s['setname']}/train_data/04_tuned_ensemble_parameters.csv"
+    train_data_csv = Path(s["thoipapy_data_folder"]) / f"results/{s['setname']}/train_data/03_train_data_after_first_feature_seln.csv"
+    tuned_ensemble_parameters_csv = Path(s["thoipapy_data_folder"]) / f"results/{s['setname']}/train_data/04_tuned_ensemble_parameters.csv"
     # output
-    feat_imp_MDA_xlsx = os.path.join(s["thoipapy_data_folder"], "Results", s["setname"], "feat_imp", "feat_imp_mean_decrease_accuracy.xlsx")
-    feat_imp_temp_THOIPA_BO_curve_data_csv = Path(s["thoipapy_data_folder"]) / f"Results/{s['setname']}/feat_imp/feat_imp_temp_THOIPA.best_overlap_data.csv"
-    feat_imp_temp_bocurve_data_xlsx = Path(s["thoipapy_data_folder"]) / f"Results/{s['setname']}/feat_imp/feat_imp_temp_bocurve_data.xlsx"
+    feat_imp_MDA_xlsx = os.path.join(s["thoipapy_data_folder"], "results", s["setname"], "feat_imp", "feat_imp_mean_decrease_accuracy.xlsx")
+    feat_imp_temp_THOIPA_BO_curve_data_csv = Path(s["thoipapy_data_folder"]) / f"results/{s['setname']}/feat_imp/feat_imp_temp_THOIPA.best_overlap_data.csv"
+    feat_imp_temp_bocurve_data_xlsx = Path(s["thoipapy_data_folder"]) / f"results/{s['setname']}/feat_imp/feat_imp_temp_bocurve_data.xlsx"
 
     thoipapy.utils.make_sure_path_exists(feat_imp_MDA_xlsx, isfile=True)
 
@@ -211,8 +211,8 @@ def calc_AUBOC_for_feat_imp(y, X_t, forest, feat_imp_temp_THOIPA_BO_curve_data_c
 
 def fig_feat_import_from_mean_decrease_accuracy(s, logging):
 
-    feat_imp_MDA_xlsx = os.path.join(s["thoipapy_data_folder"], "Results", s["setname"], "feat_imp", "feat_imp_mean_decrease_accuracy.xlsx")
-    feat_imp_MDA_png = os.path.join(s["thoipapy_data_folder"], "Results", s["setname"], "feat_imp", "mean_decrease_accuracy_filtered_features.png")
+    feat_imp_MDA_xlsx = os.path.join(s["thoipapy_data_folder"], "results", s["setname"], "feat_imp", "feat_imp_mean_decrease_accuracy.xlsx")
+    feat_imp_MDA_png = os.path.join(s["thoipapy_data_folder"], "results", s["setname"], "feat_imp", "mean_decrease_accuracy_filtered_features.png")
 
     #df_grouped_feat = pd.read_excel(feat_imp_MDA_xlsx, index_col=0, sheet_name="grouped_feat")
     #df_single_feat = pd.read_excel(feat_imp_MDA_xlsx, index_col=0, sheet_name="single_feat")

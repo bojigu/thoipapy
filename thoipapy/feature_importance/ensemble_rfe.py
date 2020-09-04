@@ -15,10 +15,10 @@ def select_best_features_with_ensemble_rfe(s, logging):
 
     logging.info('starting select_best_features_with_rfe')
     # inputs
-    train_data_excl_duplicates_csv = Path(s["thoipapy_data_folder"]) / f"Results/{s['setname']}/train_data/02_train_data_excl_duplicates.csv"
-    tuned_ensemble_parameters_csv = Path(s["thoipapy_data_folder"]) / f"Results/{s['setname']}/train_data/04_tuned_ensemble_parameters.csv"
+    train_data_excl_duplicates_csv = Path(s["thoipapy_data_folder"]) / f"results/{s['setname']}/train_data/02_train_data_excl_duplicates.csv"
+    tuned_ensemble_parameters_csv = Path(s["thoipapy_data_folder"]) / f"results/{s['setname']}/train_data/04_tuned_ensemble_parameters.csv"
     # outputs
-    top_features_rfe_csv = Path(s["thoipapy_data_folder"]) / f"Results/{s['setname']}/feat_imp/top_features_rfe.csv"
+    top_features_rfe_csv = Path(s["thoipapy_data_folder"]) / f"results/{s['setname']}/feat_imp/top_features_rfe.csv"
 
     make_sure_path_exists(top_features_rfe_csv, isfile=True)
 

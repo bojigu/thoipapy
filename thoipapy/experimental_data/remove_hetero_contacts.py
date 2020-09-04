@@ -21,7 +21,7 @@ def remove_crystal_hetero_contact_residues_mult_prot(s, df_set, logging):
           Python object with settings for logging to console and file.
 
       """
-    hetero_contact_residues_csv = Path(s["thoipapy_data_folder"]) / f"Results/{s['setname']}/train_data/00_hetero_contact_residues.csv"
+    hetero_contact_residues_csv = Path(s["thoipapy_data_folder"]) / f"results/{s['setname']}/train_data/00_hetero_contact_residues.csv"
     make_sure_path_exists(hetero_contact_residues_csv, isfile=True)
 
     n_hetero_contact_residues = 0
