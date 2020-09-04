@@ -404,7 +404,7 @@ def parse_freecontact_coevolution(acc, freecontact_file, freecontact_parsed_csv,
         already_normalised = "cum" in col or "highest_face" in col
 
         if not already_normalised:
-            df_out[col] = normalise_0_1(df_out[col])[0]
             df_out["{}_raw".format(col)] = df_out[col]
+            df_out[col] = normalise_0_1(df_out[col])[0]
 
     df_out.to_csv(freecontact_parsed_csv)
