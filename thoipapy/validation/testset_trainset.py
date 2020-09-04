@@ -66,12 +66,12 @@ def validate_THOIPA_for_testset_trainset_combination(s, test_set_list, train_set
 
     for n, train_set in enumerate(train_set_list):
         trainsetname = "set{:02d}".format(int(train_set))
-        model_pkl = os.path.join(s["Results_folder"], trainsetname, "{}_ML_model.lpkl".format(trainsetname))
+        model_pkl = Path(s["thoipapy_data_folder"]) / f"results/{trainsetname}/{trainsetname}_ML_model.lpkl"
 
         for test_set in test_set_list:
             testsetname = "set{:02d}".format(int(test_set))
 
-            #BO_curve_folder = Path(s["thoipapy_data_folder"]) / f"Results{testsetname}/blindvalidation/thoipa.train{trainsetname}"
+            #BO_curve_folder = Path(s["thoipapy_data_folder"]) / f"results{testsetname}/blindvalidation/thoipa.train{trainsetname}"
             #THOIPA_BO_curve_data_csv = os.path.join(s["thoipapy_data_folder"], "results", "compare_testset_trainset", "data", "Test{}_Train{}.THOIPA".format(testsetname, trainsetname), "data", "Test{}_Train{}.THOIPA.best_overlap_data.csv".format(testsetname, trainsetname))
             THOIPA_BO_curve_data_csv = Path(s["thoipapy_data_folder"]) / f"results/{testsetname}/blindvalidation/thoipa.train{trainsetname}/THOIPA.best_overlap_data.csv"
             #THOIPA_ROC_pkl = os.path.join(s["thoipapy_data_folder"], "results", "compare_testset_trainset", "data", "Test{}_Train{}.THOIPA".format(testsetname, trainsetname), "data", "Test{}_Train{}.THOIPA.ROC_data.pkl".format(testsetname, trainsetname))

@@ -29,7 +29,7 @@ def run_LOO_validation_od_non_multiprocessing(s, df_set, logging):
     The test and training datasets are based on the following:
         1) the df_set derived from the set of protein sequences, e.g. set03
             - created manually
-        2) the train_data csv, e.g."D:\data_thoipapy\Results\set03\set03_train_data.csv".
+        2) the train_data csv, e.g."D:\data_thoipapy\results\set03\set03_train_data.csv".
             - filtered according to redundancy etc by combine_all_train_data_for_machine_learning()
             - this requires a CD-HIT file for this dataset to remove redundant proteins
     If the acc_db is not in BOTH of these locations, it will not be used for training and validation.
@@ -274,7 +274,7 @@ def predict_test_dataset_with_THOIPA_DEPRECATED(train_setname, test_setname, s, 
     """
 
     model_pkl = os.path.join(s["thoipapy_data_folder"], "results", s["setname"], "{}_ML_model.lpkl".format(train_setname))
-    test_data_csv = os.path.join(s["Results_folder"], test_setname, "{}_train_data.csv".format(test_setname))
+    test_data_csv = os.path.join(s["thoipapy_data_folder"], "results", test_setname, "{}_train_data.csv".format(test_setname))
     THOIPA_pred_csv = os.path.join(s["thoipapy_data_folder"], "results", s["setname"], "trainset{}_testset{}_predictions.csv".format(train_setname[-2:], test_setname[-2:]))
 
     fit = joblib.load(model_pkl)

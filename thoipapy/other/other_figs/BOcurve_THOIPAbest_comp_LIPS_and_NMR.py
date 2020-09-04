@@ -224,7 +224,7 @@ def run_BOcurve_comp_hardlinked(Fontsize, Width, Size, s, Linewidth):
 
     #bo_curve_file = r"H:\\figs\\FigBZ14_Bocurve_THOIPAbest_NMR\\zBo_Curve_save_for_python.csv"
     #bo_curve_file = r"H:\\figs\\FigBZ14_Bocurve_THOIPAbest_NMR\\zBo_Curve_save_for_python.csv"
-    bo_curve_file = r"D:\THOIPA_data\Results\Bo_Curve\Combined_Bo_Curve_ratio_file.csv"
+    bo_curve_file = r"D:\THOIPA_data\results\Bo_Curve\Combined_Bo_Curve_ratio_file.csv"
     bo_curve_handle = pd.read_csv(bo_curve_file)
     bo_curve_handle.dropna(inplace=True)
     #overlap_num = bo_curve_handle['OverlapNum'].values
