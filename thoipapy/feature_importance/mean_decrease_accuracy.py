@@ -2,6 +2,7 @@ import os
 import sys
 import time
 from pathlib import Path
+from typing import List
 
 import numpy as np
 import pandas as pd
@@ -11,6 +12,7 @@ import thoipapy.utils
 from thoipapy.validation.auc import calc_PRAUC_ROCAUC_using_10F_validation
 from thoipapy.ML_model.train_model import return_classifier_with_loaded_ensemble_parameters
 from thoipapy.validation.bocurve import calc_best_overlap_from_selected_column_in_df, calc_best_overlap, parse_BO_data_csv_to_excel
+from thoipapy.validation.leave_one_out import get_clusters_putative_homologues_in_protein_set
 
 
 def calc_feat_import_from_mean_decrease_accuracy(s, logging):
@@ -79,7 +81,7 @@ def calc_feat_import_from_mean_decrease_accuracy(s, logging):
     forest = return_classifier_with_loaded_ensemble_parameters(s, tuned_ensemble_parameters_csv)
 
     pr_auc_orig, roc_auc_orig = calc_PRAUC_ROCAUC_using_10F_validation(X, y, forest)
-    auboc_orig = calc_AUBOC_for_feat_imp(y, X, forest, feat_imp_temp_THOIPA_BO_curve_data_csv, feat_imp_temp_bocurve_data_xlsx, logging)
+    auboc_orig = calc_AUBOC_for_feat_imp(y, X, forest, feat_imp_temp_THOIPA_BO_curve_data_csv, feat_imp_temp_bocurve_data_xlsx, s, logging)
 
     start = time.clock()
 
@@ -110,7 +112,7 @@ def calc_feat_import_from_mean_decrease_accuracy(s, logging):
         decrease_ROC_AUC = roc_auc_orig - ROC_AUC
         grouped_feat_decrease_ROC_AUC_dict[feature_type] = decrease_ROC_AUC
 
-        auboc = calc_AUBOC_for_feat_imp(y, X_t, forest, feat_imp_temp_THOIPA_BO_curve_data_csv, feat_imp_temp_bocurve_data_xlsx, logging)
+        auboc = calc_AUBOC_for_feat_imp(y, X_t, forest, feat_imp_temp_THOIPA_BO_curve_data_csv, feat_imp_temp_bocurve_data_xlsx, s, logging)
 
         decrease_auboc = auboc_orig - auboc
         grouped_feat_decrease_AUBOC_dict[feature_type] = decrease_auboc
@@ -143,7 +145,7 @@ def calc_feat_import_from_mean_decrease_accuracy(s, logging):
         decrease_ROC_AUC = roc_auc_orig - ROC_AUC
         single_feat_decrease_ROC_AUC_dict[feature] = decrease_ROC_AUC
 
-        auboc = calc_AUBOC_for_feat_imp(y, X_t, forest, feat_imp_temp_THOIPA_BO_curve_data_csv, feat_imp_temp_bocurve_data_xlsx, logging)
+        auboc = calc_AUBOC_for_feat_imp(y, X_t, forest, feat_imp_temp_THOIPA_BO_curve_data_csv, feat_imp_temp_bocurve_data_xlsx, s, logging)
 
         decrease_auboc = auboc_orig - auboc
         single_feat_decrease_AUBOC_dict[feature] = decrease_auboc
@@ -177,11 +179,16 @@ def calc_feat_import_from_mean_decrease_accuracy(s, logging):
     logging.info('------------ finished calc_feat_import_from_mean_decrease_accuracy ------------')
 
 
-def calc_AUBOC_for_feat_imp(y, X_t, forest, feat_imp_temp_THOIPA_BO_curve_data_csv, feat_imp_temp_bocurve_data_xlsx, logging):
+def calc_AUBOC_for_feat_imp(y, X_t, forest, feat_imp_temp_THOIPA_BO_curve_data_csv, feat_imp_temp_bocurve_data_xlsx, s, logging):
     THOIPA_BO_data_df = pd.DataFrame()
     acc_db_list = pd.Series(X_t.index).str.split("_").str[0].unique().tolist()
+    sim_matrix_xlsx = Path(s["thoipapy_data_folder"]) / f"results/{s['setname']}/clusters/{s['setname']}_sim_matrix.xlsx"
+    putative_homologue_clusters = get_clusters_putative_homologues_in_protein_set(sim_matrix_xlsx)
+
     for acc_db in acc_db_list:
-        rows_including_test_tmd = pd.Series(X_t.index).str.contains(acc_db).to_list()
+        clusters_containing_acc_db_of_interest = [c for c in putative_homologue_clusters if acc_db in c]
+        acc_db_putative_homologues: List[str] = clusters_containing_acc_db_of_interest[0]
+        rows_including_test_tmd = pd.Series(X_t.index).apply(lambda x: x.split("_")[0] in acc_db_putative_homologues).to_list()
         rows_excluding_test_tmd = [not i for i in rows_including_test_tmd]
         y_test_tmd = y.loc[rows_including_test_tmd]
         y_excluding_test_tmd = y.loc[rows_excluding_test_tmd]

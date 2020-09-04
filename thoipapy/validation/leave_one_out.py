@@ -124,11 +124,7 @@ def run_LOO_validation(s: dict, df_set: pd.DataFrame, logging):
     else:
         logger = logging
 
-    df_clusters = pd.read_excel(sim_matrix_xlsx, sheet_name="reduced_clusters", index_col=0)
-    df_clusters["reduced_clusters"] = df_clusters["reduced_clusters"].apply(lambda x: literal_eval(x))
-    # ignore the cd-hit numbering (1-proteinname, 18-proteinname):
-    df_clusters["acc_db_putative_homologues"] = df_clusters["reduced_clusters"].apply(lambda x: ["-".join(y.split("-")[1:]) for y in list(x)])
-    putative_homologue_clusters: List[List[str]] = df_clusters["acc_db_putative_homologues"].to_list()
+    putative_homologue_clusters = get_clusters_putative_homologues_in_protein_set(sim_matrix_xlsx)
 
     loo_validation_data_list = []
 
@@ -266,6 +262,15 @@ def run_LOO_validation(s: dict, df_set: pd.DataFrame, logging):
     logging.info('---ROC_AUC(mean each protein : {:.2f})(from joined data {:.2f})---'.format(mean_roc_auc_all_prot, mean_roc_auc_from_joined_data))
     logging.info('---PR_AUC(mean each protein : {:.2f})---'.format(mean_pr_auc_all_prot))
     logging.info("\n--------------- finished run_LOO_validation ---------------\n")
+
+
+def get_clusters_putative_homologues_in_protein_set(sim_matrix_xlsx):
+    df_clusters = pd.read_excel(sim_matrix_xlsx, sheet_name="reduced_clusters", index_col=0)
+    df_clusters["reduced_clusters"] = df_clusters["reduced_clusters"].apply(lambda x: literal_eval(x))
+    # ignore the cd-hit numbering (1-proteinname, 18-proteinname):
+    df_clusters["acc_db_putative_homologues"] = df_clusters["reduced_clusters"].apply(lambda x: ["-".join(y.split("-")[1:]) for y in list(x)])
+    putative_homologue_clusters: List[List[str]] = df_clusters["acc_db_putative_homologues"].to_list()
+    return putative_homologue_clusters
 
 
 def LOO_single_prot(d: LooValidationData):

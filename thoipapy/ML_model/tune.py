@@ -47,6 +47,7 @@ def tune_ensemble_parameters(s, train_data_csv, tuned_ensemble_parameters_csv, l
     df_tuned_ensemble_parameters["RandomizedSearchQuickMethod"] = best_params_rs
     df_tuned_ensemble_parameters["GridSearchSlowMethod"] = best_params_gs
     df_tuned_ensemble_parameters.to_csv(tuned_ensemble_parameters_csv)
+    logging.info(f"parameters tuned and saved ({tuned_ensemble_parameters_csv})")
 
 
 def get_optimised_ensemble_parameters_using_slow_gridsearchcv_method(X, cls, logging, y):
