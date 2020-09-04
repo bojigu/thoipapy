@@ -47,7 +47,7 @@ def merge_predictions(s, df_set, logging):
         full_seq = df_set.loc[i, "full_seq"]
         database = df_set.loc[i, "database"]
         # inputs
-        train_data_file = os.path.join(s["thoipapy_data_folder"], "Features", "combined", database,"{}.surr20.gaps5.combined_features.csv".format(acc))
+        train_data_file = os.path.join(s["thoipapy_data_folder"], "features", "combined", database,"{}.surr20.gaps5.combined_features.csv".format(acc))
         THOIPA_LOO_prediction_csv = Path(s["thoipapy_data_folder"]) / f"Results/{s['setname']}/predictions/THOIPA_LOO/{database}.{acc}.LOO.prediction.csv"
         PREDDIMER_prediction_file = os.path.join(other_predictors_dir, database, "{}.preddimer.closedist.csv".format(acc))
         TMDOCK_prediction_file = os.path.join(other_predictors_dir, database, "{}.tmdock.closedist.csv".format(acc))
@@ -60,7 +60,7 @@ def merge_predictions(s, df_set, logging):
         dfm["acc_db_resnum_resname"] = dfm.index
         # set the unique index, based on the residue number in the full sequence
         dfm.set_index("res_num_full_seq", inplace=True)
-        #dfm["entropy"] = -1 * dfm["Entropy"]
+        #dfm["entropy"] = -1 * dfm["entropy"]
         file_list = [THOIPA_LOO_prediction_csv, PREDDIMER_prediction_file, TMDOCK_prediction_file]
         prediction_name_list = [THOIPA_pred_colname, "PREDDIMER", "TMDOCK"]
         if s["setname"] == testsetname:

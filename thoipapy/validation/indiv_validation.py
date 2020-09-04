@@ -685,7 +685,7 @@ def merge_4_files_alignment_method_deprecated(acc, full_seq, train_data_file, TH
     dfm.sort_values("aa_pos_in_dfm", inplace=True)
     #dfm["Polarity"] = dfm["lipo_Hessa"]
     # use -entropy, named as conservation
-    #dfm["Conservation"] = -dfm["Entropy"]
+    #dfm["Conservation"] = -dfm["entropy"]
     dfm = dfm.loc[:, columns_kept_in_combined_file]
 
     with pd.ExcelWriter(merged_data_xlsx_path) as writer:

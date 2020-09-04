@@ -150,16 +150,16 @@ if __name__ == "__main__":
         #                                                                                                 #
         ###################################################################################################
 
-        if s["pssm_feature_calculation"]:
+        if s["pssm_calculation"]:
             thoipapy.features.pssm.create_PSSM_from_MSA_mult_prot(s, df_set, logging)
 
-        if s["entropy_feature_calculation"]:
+        if s["entropy_calculation"]:
             thoipapy.features.entropy.entropy_calculation_mult_prot(s, df_set, logging)
 
-        if s["rate4site_feature_calculation"]:
+        if s["rate4site_calculation"]:
             thoipapy.features.rate4site.rate4site_calculation(s, df_set, logging)
 
-        if s["cumulative_coevolution_feature_calculation"]:
+        if s["coevolution_calculation"]:
             if "Windows" in platform.system():
                 sys.stdout.write("\n Freecontact cannot be run in Windows! Skipping coevolution_calculation_with_freecontact_mult_prot.")
                 thoipapy.features.freecontact.parse_freecontact_coevolution_mult_prot(s, df_set, logging)
@@ -173,7 +173,7 @@ if __name__ == "__main__":
         if s["calc_lipo_from_pssm"]:
             thoipapy.features.lipophilicity.lipo_from_pssm_mult_prot(s, df_set, logging)
 
-        if s["lips_score_feature_calculation"]:
+        if s["lips_score_calculation"]:
             thoipapy.features.lips.LIPS_score_calculation_mult_prot(s, df_set, logging)
             thoipapy.features.lips.parse_LIPS_score_mult_prot(s, df_set, logging)
 
@@ -206,7 +206,6 @@ if __name__ == "__main__":
             thoipapy.feature_importance.anova.select_best_features_with_anova(s, logging)
             thoipapy.feature_importance.ensemble_rfe.select_best_features_with_ensemble_rfe(s, logging)
             thoipapy.feature_importance.merge.merge_top_features_anova_ensemble(s, logging)
-            thoipapy.experimental_data.ttest_features.conduct_ttest_for_selected_features_used_in_model(s, logging)
 
         if s["tune_ensemble_parameters"]:
             thoipapy.ML_model.tune.tune_ensemble_parameters_after_feature_seln(s, logging)
@@ -214,6 +213,9 @@ if __name__ == "__main__":
         if s["calc_feature_importances"]:
             thoipapy.feature_importance.mean_decrease_accuracy.calc_feat_import_from_mean_decrease_accuracy(s, logging)
             thoipapy.feature_importance.mean_decrease_accuracy.fig_feat_import_from_mean_decrease_accuracy(s, logging)
+
+        if s["conduct_ttest"]:
+            thoipapy.experimental_data.ttest_features.conduct_ttest_for_selected_features_used_in_model(s, logging)
 
         if s["train_machine_learning_model"]:
             thoipapy.ML_model.train_model.train_machine_learning_model(s, logging)

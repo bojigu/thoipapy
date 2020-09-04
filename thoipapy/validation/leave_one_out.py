@@ -52,7 +52,7 @@ def run_LOO_validation(s: dict, df_set: pd.DataFrame, logging):
     The model is trained on the train data csv (e.g. set38_train_data.csv)
          - for proteins in X-ray subset, hetero contacts (folding residues) are removed from this training set
 
-    The model is validated against each combined CSV with features (e.g. "data_thoipapy\Features\combined\ETRA\Q12983.surr20.gaps5.combined_features.csv")
+    The model is validated against each combined CSV with features (e.g. "data_thoipapy\features\combined\ETRA\Q12983.surr20.gaps5.combined_features.csv")
      - for proteins in X-ray subset, folding residues (hetero contacts) are INCLUDED here.
      - the model created without the folding contacts is therefore validated against the full seq, including folding residues
 
@@ -165,7 +165,7 @@ def run_LOO_validation(s: dict, df_set: pd.DataFrame, logging):
         loo_validation_data.i = i
         loo_validation_data.logger = logger
         loo_validation_data.pred_colname = pred_colname
-        loo_validation_data.testdata_combined_file = os.path.join(s["thoipapy_data_folder"], "Features", "combined", database, "{}.surr20.gaps5.combined_features.csv".format(acc))
+        loo_validation_data.testdata_combined_file = os.path.join(s["thoipapy_data_folder"], "features", "combined", database, "{}.surr20.gaps5.combined_features.csv".format(acc))
         loo_validation_data.THOIPA_LOO_prediction_csv = Path(s["thoipapy_data_folder"]) / f"Results/{s['setname']}/predictions/THOIPA_LOO/{database}.{acc}.LOO.prediction.csv"
 
         thoipapy.utils.make_sure_path_exists(loo_validation_data.THOIPA_LOO_prediction_csv, isfile=True)

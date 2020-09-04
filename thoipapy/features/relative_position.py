@@ -33,7 +33,7 @@ def calc_relative_position_mult_prot(s, df_set, logging):
         tm_seq = df_set.loc[i, "full_seq"]
         seqlen = df_set.loc[i, "seqlen"]
 
-        relative_position_file = os.path.join(s["thoipapy_data_folder"], "Features", "relative_position", database, "%s.relative_position%s.csv") % (acc, s["surres"])
+        relative_position_file = os.path.join(s["thoipapy_data_folder"], "features", "relative_position", database, "%s.relative_position%s.csv") % (acc, s["surres"])
         thoipapy.utils.make_sure_path_exists(relative_position_file, isfile=True)
         alignments_dir = os.path.join(s["thoipapy_data_folder"], "homologues", "alignments", database)
         path_uniq_TMD_seqs_for_PSSM_FREECONTACT = os.path.join(alignments_dir, "{}.surr{}.gaps{}.uniq.for_PSSM_FREECONTACT.txt".format(acc, s["num_of_sur_residues"], s["max_n_gaps_in_TMD_subject_seq"]))

@@ -99,7 +99,7 @@ def validate_THOIPA_for_testset_trainset_combination(s, test_set_list, train_set
                 acc = testdataset_df.loc[i, "acc"]
                 database = testdataset_df.loc[i, "database"]
                 acc_db = acc + "-" + database
-                testdata_combined_file = os.path.join(s["thoipapy_data_folder"], "Features", "combined", database,
+                testdata_combined_file = os.path.join(s["thoipapy_data_folder"], "features", "combined", database,
                                                       "{}.surr20.gaps5.combined_features.csv".format(acc))
                 THOIPA_pred_csv = Path(s["thoipapy_data_folder"]) / f"Results/{testsetname}/predictions/thoipa.train{trainsetname}/{database}.{acc}.thoipa.train{trainsetname}.csv"
                 combined_incl_THOIPA_csv = Path(s["thoipapy_data_folder"]) / f"Results/{testsetname}/predictions/thoipa.train{trainsetname}/{database}.{acc}.thoipa.train{trainsetname}_incl_combined.csv"
@@ -224,7 +224,7 @@ def validate_LIPS_for_testset(s, logging, LIPS_name="LIPS_LE", pred_col="LIPS_L*
             database = testdataset_df.loc[i, "database"]
             acc_db = acc + "-" + database
 
-            testdata_combined_file = os.path.join(s["thoipapy_data_folder"], "Features", "combined", database,
+            testdata_combined_file = os.path.join(s["thoipapy_data_folder"], "features", "combined", database,
                                                   "{}.surr20.gaps5.combined_features.csv".format(acc))
 
             combined_df = pd.read_csv(testdata_combined_file, index_col=0)
@@ -236,7 +236,7 @@ def validate_LIPS_for_testset(s, logging, LIPS_name="LIPS_LE", pred_col="LIPS_L*
             #######################################################################################################
             # SAVE LIPS PREDICTION DATA
             # this is somewhat inefficient, as it is conducted for every test dataset
-            #LIPS_pred_csv = os.path.join(os.path.dirname(s["thoipapy_data_folder"]), "Features", "Predictions", "testset_trainset", database, "{}.LIPS_pred.csv".format(acc, testsetname))
+            #LIPS_pred_csv = os.path.join(os.path.dirname(s["thoipapy_data_folder"]), "features", "Predictions", "testset_trainset", database, "{}.LIPS_pred.csv".format(acc, testsetname))
             LIPS_pred_csv = Path(s["thoipapy_data_folder"]) / f"Results/{testsetname}/predictions/{LIPS_name}/{database}.{acc}.{LIPS_name}.csv"
             LIPS_pred_df = combined_df[["residue_name", "residue_num", "LIPS_polarity", "LIPS_entropy", "LIPS_L*E", "LIPS_surface", "LIPS_surface_ranked"]]
             thoipapy.utils.make_sure_path_exists(LIPS_pred_csv, isfile=True)

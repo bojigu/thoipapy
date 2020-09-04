@@ -93,7 +93,7 @@ def create_single_merged_heatmap(s, acc, database, savename, fig_label, dfh_cols
         heatmap_path = os.path.join(s["thoipapy_data_folder"], "heatmap",database, "{}.png".format(acc))
         heatmap_pdf_path = os.path.join(s["thoipapy_data_folder"], "heatmap",database,"pdf","{}.pdf".format(acc))
         heatmap_data_xlsx_path = os.path.join(s["thoipapy_data_folder"], "heatmap",database,"xlsx","{}_merged.xlsx".format(acc))
-        hetero_bind_file = os.path.join(s["thoipapy_data_folder"], "Features", "Structure",database, "{}.hetero.bind.csv").format(acc)
+        hetero_bind_file = os.path.join(s["thoipapy_data_folder"], "features", "structure",database, "{}.hetero.bind.csv").format(acc)
         thoipapy.utils.make_sure_path_exists(heatmap_pdf_path, isfile=True)
         thoipapy.utils.make_sure_path_exists(heatmap_data_xlsx_path, isfile=True)
 

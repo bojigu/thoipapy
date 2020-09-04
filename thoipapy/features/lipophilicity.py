@@ -118,9 +118,9 @@ def lipo_from_pssm_mult_prot(s, df_set, logging):
         if tm_surr_right >= 5:
             tm_surr_right = 5
 
-        # pssm_csv = os.path.join(s["thoipapy_data_folder"], "Features", "pssm", database, "{}.mem.2gap.pssm_surr5.csv".format(acc))
-        pssm_csv_surr5 = os.path.join(s["thoipapy_data_folder"], "Features", "pssm", database, "{}.surr5.gaps{}.pssm.csv".format(acc, s["max_n_gaps_in_TMD_subject_seq"]))
-        lipo_csv = os.path.join(s["thoipapy_data_folder"], "Features", "Lipophilicity", database, "{}_{}_lipo.csv".format(acc, scalename))
+        # pssm_csv = os.path.join(s["thoipapy_data_folder"], "features", "pssm", database, "{}.mem.2gap.pssm_surr5.csv".format(acc))
+        pssm_csv_surr5 = os.path.join(s["thoipapy_data_folder"], "features", "pssm", database, "{}.surr5.gaps{}.pssm.csv".format(acc, s["max_n_gaps_in_TMD_subject_seq"]))
+        lipo_csv = os.path.join(s["thoipapy_data_folder"], "features", "lipophilicity", database, "{}_{}_lipo.csv".format(acc, scalename))
 
         result_tuple = lipo_from_pssm(acc, pssm_csv_surr5, lipo_csv, tm_surr_left, tm_surr_right, scalename, logging, plot_linechart)
 

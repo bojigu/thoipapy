@@ -116,7 +116,7 @@ def run_LOO_validation_od_non_multiprocessing(s, df_set, logging):
         #                                                                                                     #
         #######################################################################################################
         #df_test = df_data.loc[df_data.acc_db == acc_db]
-        testdata_combined_file = os.path.join(s["thoipapy_data_folder"], "Features", "combined", database, "{}.surr20.gaps5.combined_features.csv".format(acc))
+        testdata_combined_file = os.path.join(s["thoipapy_data_folder"], "features", "combined", database, "{}.surr20.gaps5.combined_features.csv".format(acc))
         df_test = pd.read_csv(testdata_combined_file)
 
         X_test = thoipapy.validation.feature_selection.drop_cols_not_used_in_ML(logging, df_test, s["excel_file_with_settings"])
@@ -303,7 +303,7 @@ def create_one_out_train_data(acc_db,set_path,s):
         acc1 = df_set04.loc[j, "acc_db"]
         if not acc1 == acc_db:
             database = df_set04.loc[j, "database"]
-            feature_combined_file = os.path.join(s["thoipapy_data_folder"], "Features", "combined", database,
+            feature_combined_file = os.path.join(s["thoipapy_data_folder"], "features", "combined", database,
                                                  "{}.surr20.gaps5.combined_features.csv".format(acc1))
 
             df_features_new_protein1 = pd.read_csv(feature_combined_file, index_col=0)

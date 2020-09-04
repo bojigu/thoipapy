@@ -14,7 +14,7 @@ def get_pivot_table_coev_data(s, i, XI, df_set):
     database = df_set.loc[i, "database"]
     TMD_start = int(df_set.loc[i, "TMD_start"])
     TMD_end = int(df_set.loc[i, "TMD_end"])
-    freecontact_file = os.path.join(s["thoipapy_data_folder"], "Features", "cumulative_coevolution", database, "{}.surr{}.gaps{}.freecontact.csv".format(acc, s["num_of_sur_residues"], s["max_n_gaps_in_TMD_subject_seq"]))
+    freecontact_file = os.path.join(s["thoipapy_data_folder"], "features", "coevolution", database, "{}.surr{}.gaps{}.freecontact.csv".format(acc, s["num_of_sur_residues"], s["max_n_gaps_in_TMD_subject_seq"]))
 
     df = pd.read_csv(freecontact_file, sep=" ", header=None)
     df.columns = ["n1", "res1", "n2", "res2", "MI", "DI"]
@@ -431,8 +431,8 @@ def calc_retrospective_coev_from_list_interf_res_single_prot(sub_dict, s, loggin
     TMD_start = int(df_set.loc[i, "TMD_start"])
     TMD_end = int(df_set.loc[i, "TMD_end"])
     TMD_len = TMD_end - TMD_start
-    freecontact_file = os.path.join(s["thoipapy_data_folder"], "Features", "cumulative_coevolution", database, "{}.surr{}.gaps{}.freecontact.csv".format(acc, s["num_of_sur_residues"], s["max_n_gaps_in_TMD_subject_seq"]))
-    feature_combined_file = os.path.join(s["thoipapy_data_folder"], "Features", "combined", database, "{}.surr{}.gaps{}.combined_features.csv".format(acc, s["num_of_sur_residues"], s["max_n_gaps_in_TMD_subject_seq"]))
+    freecontact_file = os.path.join(s["thoipapy_data_folder"], "features", "coevolution", database, "{}.surr{}.gaps{}.freecontact.csv".format(acc, s["num_of_sur_residues"], s["max_n_gaps_in_TMD_subject_seq"]))
+    feature_combined_file = os.path.join(s["thoipapy_data_folder"], "features", "combined", database, "{}.surr{}.gaps{}.combined_features.csv".format(acc, s["num_of_sur_residues"], s["max_n_gaps_in_TMD_subject_seq"]))
 
     df = pd.read_csv(freecontact_file, sep=" ", header=None)
     df.columns = ["n1", "res1", "n2", "res2", "MI", "DI"]
@@ -602,7 +602,7 @@ def calc_retrospective_coev_from_struct_contacts(s, dfset, logging):
      - this is named as "last TMD" because the randomisation takes took? the positions of first TMD and applied them to the last
 
     Takes pairwise coevolution values from FreeContact output file.
-    E.g. D:\Dropbox\tm_homodimer_dropbox\THOIPA_data\Features\cumulative_coevolution\ NMR\O15455.surr20.gaps5.freecontact.csv
+    E.g. D:\Dropbox\tm_homodimer_dropbox\THOIPA_data\Features\coevolution\ NMR\O15455.surr20.gaps5.freecontact.csv
     Data looks like this:
     1 F 2 F 0.195863 0.552187
     1 F 3 M 0.172853 -0.530669
@@ -821,7 +821,7 @@ def calc_retrospective_coev_from_struct_contacts_single_prot(sub_dict, s, pd_int
     lowest_interface_res = min(interlist)
     highest_interface_res = max(interlist)
     NoninterPairList = []
-    freecontact_file = os.path.join(s["thoipapy_data_folder"], "Features", "cumulative_coevolution", database, "{}.surr20.gaps5.freecontact.csv".format(acc))
+    freecontact_file = os.path.join(s["thoipapy_data_folder"], "features", "coevolution", database, "{}.surr20.gaps5.freecontact.csv".format(acc))
     inter_within8_dict = {}
     DI_dict = {}
 

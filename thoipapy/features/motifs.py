@@ -26,7 +26,7 @@ def motifs_from_seq_mult_protein(s, df_set, logging):
         database = df_set.loc[i, "database"]
         TMD_seq = df_set.loc[i, "TMD_seq"]
         TMD_seq_pl_surr = df_set.loc[i, "TMD_seq_pl_surr"]
-        motifs_file = os.path.join(s["thoipapy_data_folder"], "Features", "motifs", database, "{}.motifs.csv".format(acc))
+        motifs_file = os.path.join(s["thoipapy_data_folder"], "features", "motifs", database, "{}.motifs.csv".format(acc))
         thoipapy.utils.make_sure_path_exists(motifs_file, isfile=True)
         tm_surr_left = int(df_set.loc[i, "tm_surr_left"])
         tm_surr_right = int(df_set.loc[i, "tm_surr_right"])

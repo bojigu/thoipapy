@@ -18,7 +18,7 @@ def normalise_features(df_features_single_protein):
     df_features_single_protein : pd.DataFrame
         Dataframe with all features for a protein
         Index : range index
-        Columns : "residue_num", "residue_name", "Entropy", etc
+        Columns : "residue_num", "residue_name", "entropy", etc
     """
     # calculate LIPS L*E for later validation. LIPS_L*E = LIPS_polarity * log(LIPS_entropy)
     df_features_single_protein["LIPS_L*E"] = df_features_single_protein.LIPS_polarity * np.log(df_features_single_protein.LIPS_entropy)

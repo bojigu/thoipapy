@@ -28,7 +28,7 @@ def entropy_calculation_mult_prot(s, df_set, logging):
         #homo_filter_fasta_file = os.path.join(s["thoipapy_data_folder"], "homologues", "a3m",database,"%s.a3m.mem.uniq.2gaps%s") % (acc,s["surres"])
         alignments_dir = os.path.join(s["thoipapy_data_folder"], "homologues", "alignments", database)
         path_uniq_TMD_seqs_for_PSSM_FREECONTACT = os.path.join(alignments_dir, "{}.surr{}.gaps{}.uniq.for_PSSM_FREECONTACT.txt".format(acc, s["num_of_sur_residues"], s["max_n_gaps_in_TMD_subject_seq"]))
-        entropy_file = os.path.join(s["thoipapy_data_folder"], "Features", "Entropy", database, "{}.surr{}.gaps{}.uniq.entropy.csv".format(acc, s["num_of_sur_residues"], s["max_n_gaps_in_TMD_subject_seq"]))
+        entropy_file = os.path.join(s["thoipapy_data_folder"], "features", "entropy", database, "{}.surr{}.gaps{}.uniq.entropy.csv".format(acc, s["num_of_sur_residues"], s["max_n_gaps_in_TMD_subject_seq"]))
 
         entropy_calculation(acc, path_uniq_TMD_seqs_for_PSSM_FREECONTACT, TMD_seq, entropy_file, logging)
 

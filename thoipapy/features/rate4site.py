@@ -35,13 +35,13 @@ def rate4site_calculation(s, df_set, logging):
         TMD_seq = df_set.at[i, "TMD_seq"]
         alignments_dir = os.path.join(s["thoipapy_data_folder"], "homologues", "alignments", database)
         path_uniq_TMD_seqs_surr5_for_LIPO = os.path.join(alignments_dir, "{}.surr5.gaps{}.uniq.for_LIPO.fas".format(acc, s["max_n_gaps_in_TMD_subject_seq"]))
-        cons_cdhit_input_fasta: Path = Path(s["thoipapy_data_folder"]).joinpath("Features", "rate4site", database, f"{acc}.lipo_seqs_cdhit_input.fas")
-        cons_cdhit_output_fasta: Path = Path(s["thoipapy_data_folder"]).joinpath("Features", "rate4site", database, f"{acc}.lipo_seqs_cdhit_output.fas")
+        cons_cdhit_input_fasta: Path = Path(s["thoipapy_data_folder"]).joinpath("features", "rate4site", database, f"{acc}.lipo_seqs_cdhit_input.fas")
+        cons_cdhit_output_fasta: Path = Path(s["thoipapy_data_folder"]).joinpath("features", "rate4site", database, f"{acc}.lipo_seqs_cdhit_output.fas")
 
-        rate4site_input: Path = Path(s["thoipapy_data_folder"]).joinpath("Features", "rate4site", database, f"{acc}.rate4site_input.fas")
-        rate4site_orig_output: Path = Path(s["thoipapy_data_folder"]).joinpath("Features", "rate4site", database, f"{acc}.rate4site_orig_output.txt")
+        rate4site_input: Path = Path(s["thoipapy_data_folder"]).joinpath("features", "rate4site", database, f"{acc}.rate4site_input.fas")
+        rate4site_orig_output: Path = Path(s["thoipapy_data_folder"]).joinpath("features", "rate4site", database, f"{acc}.rate4site_orig_output.txt")
 
-        rate4site_csv: Path = Path(s["thoipapy_data_folder"]).joinpath("Features", "rate4site", database, f"{acc}_rate4site.csv")
+        rate4site_csv: Path = Path(s["thoipapy_data_folder"]).joinpath("features", "rate4site", database, f"{acc}_rate4site.csv")
 
         with open(str(cons_cdhit_input_fasta), "w") as f_out:
             with open(path_uniq_TMD_seqs_surr5_for_LIPO, "r") as f_in:

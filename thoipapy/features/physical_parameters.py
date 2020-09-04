@@ -26,8 +26,8 @@ def add_physical_parameters_to_features_mult_prot(s, df_set, logging):
     for i in df_set.index:
         acc = df_set.loc[i, "acc"]
         database = df_set.loc[i, "database"]
-        feature_combined_file = os.path.join(s["thoipapy_data_folder"], "Features", "combined", database, "{}.surr{}.gaps{}.combined_features.csv".format(acc, s["num_of_sur_residues"], s["max_n_gaps_in_TMD_subject_seq"]))
-        #feature_combined_file_incl_phys_param = os.path.join(s["thoipapy_data_folder"], "Features", "combined", database,
+        feature_combined_file = os.path.join(s["thoipapy_data_folder"], "features", "combined", database, "{}.surr{}.gaps{}.combined_features.csv".format(acc, s["num_of_sur_residues"], s["max_n_gaps_in_TMD_subject_seq"]))
+        #feature_combined_file_incl_phys_param = os.path.join(s["thoipapy_data_folder"], "features", "combined", database,
         #                                                     "{}.surr{}.gaps{}.combined_features_incl_phys_param.csv".format(acc, s["num_of_sur_residues"], s["max_n_gaps_in_TMD_subject_seq"]))
         add_physical_parameters_to_features(acc, feature_combined_file, logging)
 
@@ -54,9 +54,9 @@ def add_physical_parameters_to_features(acc, feature_combined_file, logging):
 
         if os.path.isfile(feature_combined_file):
             with open(feature_combined_file, "r") as train_data_file_handle:
-                # train_data_add_physical_parameter_file = os.path.join("/scratch/zeng/thoipapy/Features/cumulative_coevolution/zfullfreecontact","%s.physipara.traindata1.csv") %acc
+                # train_data_add_physical_parameter_file = os.path.join("/scratch/zeng/thoipapy/features/coevolution/zfullfreecontact","%s.physipara.traindata1.csv") %acc
                 train_data_add_physical_parameter_file_handle = open(feature_combined_file_incl_phys_param, "w")
-                # train_data_physical_parameter_file_handle = open(r"/scratch/zeng/thoipapy/Features/5hej_A2.mem.2gap.physipara.traindata.csv", "w")
+                # train_data_physical_parameter_file_handle = open(r"/scratch/zeng/thoipapy/features/5hej_A2.mem.2gap.physipara.traindata.csv", "w")
                 writer = csv.writer(train_data_add_physical_parameter_file_handle, delimiter=',', quotechar='"',
                                     lineterminator='\n',
                                     quoting=csv.QUOTE_NONNUMERIC, doublequote=True)

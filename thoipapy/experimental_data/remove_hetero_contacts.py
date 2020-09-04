@@ -30,9 +30,9 @@ def remove_crystal_hetero_contact_residues_mult_prot(s, df_set, logging):
         acc = df_set.loc[i, "acc"]
         database = df_set.loc[i, "database"]
         if database == "crystal":
-            feature_combined_file = Path(s["thoipapy_data_folder"]) / f"Features/combined/{database}/{acc}.surr{s['num_of_sur_residues']}.gaps{s['max_n_gaps_in_TMD_subject_seq']}.combined_features.csv"
-            no_hetero_feature_combined_file = Path(s["thoipapy_data_folder"]) / f"Features/combined/{database}/{acc}.nohetero.surr{s['num_of_sur_residues']}.gaps{s['max_n_gaps_in_TMD_subject_seq']}.combined_features.csv"
-            homo_hetero_contact_file = Path(s["thoipapy_data_folder"]) / f"Features/Structure/{database}/{acc}.homohetero.bind.closedist.csv"
+            feature_combined_file = Path(s["thoipapy_data_folder"]) / f"features/combined/{database}/{acc}.surr{s['num_of_sur_residues']}.gaps{s['max_n_gaps_in_TMD_subject_seq']}.combined_features.csv"
+            no_hetero_feature_combined_file = Path(s["thoipapy_data_folder"]) / f"features/combined/{database}/{acc}.nohetero.surr{s['num_of_sur_residues']}.gaps{s['max_n_gaps_in_TMD_subject_seq']}.combined_features.csv"
+            homo_hetero_contact_file = Path(s["thoipapy_data_folder"]) / f"features/structure/{database}/{acc}.homohetero.bind.closedist.csv"
 
             hetero_contact_num = remove_crystal_hetero_contact_residues(acc, feature_combined_file, homo_hetero_contact_file, no_hetero_feature_combined_file, logging)
             n_hetero_contact_residues += hetero_contact_num

@@ -30,13 +30,13 @@ def create_PSSM_from_MSA_mult_prot(s, df_set, logging):
         TMD_seq_pl_surr5 = df_set.loc[i, "TMD_seq_pl_surr5"]
         alignments_dir = os.path.join(s["thoipapy_data_folder"], "homologues", "alignments", database)
         path_uniq_TMD_seqs_for_PSSM_FREECONTACT = os.path.join(alignments_dir,"{}.surr{}.gaps{}.uniq.for_PSSM_FREECONTACT.txt".format(acc, s["num_of_sur_residues"],s["max_n_gaps_in_TMD_subject_seq"]))
-        pssm_csv = os.path.join(s["thoipapy_data_folder"], "Features", "pssm", database, "{}.surr{}.gaps{}.pssm.csv".format(acc, s["num_of_sur_residues"], s["max_n_gaps_in_TMD_subject_seq"]))
+        pssm_csv = os.path.join(s["thoipapy_data_folder"], "features", "pssm", database, "{}.surr{}.gaps{}.pssm.csv".format(acc, s["num_of_sur_residues"], s["max_n_gaps_in_TMD_subject_seq"]))
 
         create_PSSM_from_MSA(path_uniq_TMD_seqs_for_PSSM_FREECONTACT, pssm_csv, acc, TMD_seq, logging)
 
         path_uniq_TMD_seqs_surr5_for_LIPO = os.path.join(alignments_dir, "{}.surr5.gaps{}.uniq.for_LIPO.txt".format(acc, s["max_n_gaps_in_TMD_subject_seq"]))
 
-        pssm_csv_surr5 = os.path.join(s["thoipapy_data_folder"], "Features", "pssm", database, "{}.surr5.gaps{}.pssm.csv".format(acc, s["max_n_gaps_in_TMD_subject_seq"]))
+        pssm_csv_surr5 = os.path.join(s["thoipapy_data_folder"], "features", "pssm", database, "{}.surr5.gaps{}.pssm.csv".format(acc, s["max_n_gaps_in_TMD_subject_seq"]))
         create_PSSM_from_MSA(path_uniq_TMD_seqs_surr5_for_LIPO, pssm_csv_surr5, acc, TMD_seq_pl_surr5, logging)
 
 
