@@ -33,6 +33,7 @@ def normalise_features(df_features_single_protein):
     # add the mean polarity or conservation of positions i, i+4 and i-4
     window = [1,0,0,0,1,0,0,0,1]
     df_features_single_protein["cons4mean"] = calculate_weighted_windows(df_features_single_protein["conservation"], window, statistic="mean", full_output=False)
+    df_features_single_protein["rate4site4mean"] = calculate_weighted_windows(df_features_single_protein["rate4site"], window, statistic="mean", full_output=False)
     df_features_single_protein["polarity4mean"] = calculate_weighted_windows(df_features_single_protein["polarity"], window, statistic="mean", full_output=False)
 
     df_features_single_protein["CS"] = df_features_single_protein["C"] + df_features_single_protein["S"]
