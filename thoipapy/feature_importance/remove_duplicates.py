@@ -41,6 +41,9 @@ def remove_duplicate_features_with_lower_MDI(s, logging):
 
     duplicate_features_with_low_MDI_to_be_removed: List[str] = []
 
+    features_to_be_retained_during_selection = s['features_to_be_retained_during_selection'].split(",")
+    print(features_to_be_retained_during_selection)
+
     for i in range(len(correlation_matrix.columns)):
         for j in range(i):
             if abs(correlation_matrix.iloc[i, j]) > max_similarity_duplicate_features:
@@ -55,7 +58,8 @@ def remove_duplicate_features_with_lower_MDI(s, logging):
                 MDI_of_feature_with_lower_MDI = "{:.03f}".format(df_MDI.at[feature_with_lower_MDI, "mean_decrease_impurity"])
                 MDI_of_feature_with_higher_MDI = "{:.03f}".format(df_MDI.at[feature_with_higher_MDI, "mean_decrease_impurity"])
 
-                duplicate_features_with_low_MDI_to_be_removed.append(feature_with_lower_MDI)
+                if feature_with_lower_MDI not in features_to_be_retained_during_selection:
+                    duplicate_features_with_low_MDI_to_be_removed.append(feature_with_lower_MDI)
                 correlated_feature_tuple = (feature_with_higher_MDI, MDI_of_feature_with_higher_MDI, feature_with_lower_MDI, MDI_of_feature_with_lower_MDI)
                 correlated_feature_pairs.add(correlated_feature_tuple)
                 logging.info(f"duplicate feature removed: keep '{feature_with_higher_MDI}' remove '{feature_with_lower_MDI}' R2={correlation_matrix.iloc[i, j]}")
