@@ -43,7 +43,7 @@ def remove_duplicate_features_with_lower_MDI(s, logging):
 
     for i in range(len(correlation_matrix.columns)):
         for j in range(i):
-            if abs(correlation_matrix.iloc[i, j] > max_similarity_duplicate_features):
+            if abs(correlation_matrix.iloc[i, j]) > max_similarity_duplicate_features:
                 featurename1 = correlation_matrix.columns[i]
                 featurename2 = correlation_matrix.columns[j]
 
@@ -58,6 +58,7 @@ def remove_duplicate_features_with_lower_MDI(s, logging):
                 duplicate_features_with_low_MDI_to_be_removed.append(feature_with_lower_MDI)
                 correlated_feature_tuple = (feature_with_higher_MDI, MDI_of_feature_with_higher_MDI, feature_with_lower_MDI, MDI_of_feature_with_lower_MDI)
                 correlated_feature_pairs.add(correlated_feature_tuple)
+                logging.info(f"duplicate feature removed: keep '{feature_with_higher_MDI}' remove '{feature_with_lower_MDI}' R2={correlation_matrix.iloc[i, j]}")
 
     duplicate_ser = pd.Series()
     duplicate_ser["correlated_feature_pairs"] = correlated_feature_pairs
