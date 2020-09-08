@@ -39,7 +39,7 @@ def merge_predictions(s, df_set, logging):
     thoipa_trainsetname = f"thoipa.train{trainsetname}"
 
     # for simplicity, keep only the predictions. Since the index is unique, it can be added later to the combined file.
-    columns_kept_in_combined_file = ['residue_num', 'residue_name', THOIPA_pred_colname, thoipa_trainsetname, 'TMDOCK', 'PREDDIMER','interface','interface_score',"LIPS_surface","LIPS_surface_ranked", 'LIPS_L*E',"relative_polarity","entropy","DI4mean"]
+    columns_kept_in_combined_file = ['residue_num', 'residue_name', THOIPA_pred_colname, thoipa_trainsetname, 'TMDOCK', 'PREDDIMER','interface','interface_score',"LIPS_surface","LIPS_surface_ranked", 'LIPS_L*E',"relative_polarity","conservation","DI4mean"]
 
 
     for i in df_set.index:

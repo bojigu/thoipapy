@@ -20,11 +20,12 @@ def merge_top_features_anova_ensemble(s, logging):
 
     anova_ser = pd.read_csv(top_features_anova_csv, index_col=0).iloc[:, 0]
     df_rfe = pd.read_csv(top_features_rfe_csv, index_col=0)
+    features_to_be_retained_during_selection = s['features_to_be_retained_during_selection'].split(",")
 
     anova_top_features: List[str] = literal_eval(anova_ser["top_features"])
     rfe_top_features: List[str] = df_rfe.loc[df_rfe["ranking"] == 1]["features"].to_list()
 
-    combined_top_features: List[str] = list(set(anova_top_features + rfe_top_features))
+    combined_top_features: List[str] = list(set(anova_top_features + rfe_top_features + features_to_be_retained_during_selection))
     n_combined_top_features: int = len(combined_top_features)
     features_in_anova_but_not_ensemble_rfe: Set[str] = set(anova_top_features) - set(rfe_top_features)
     features_in_ensemble_rfe_but_not_anova: Set[str] = set(rfe_top_features) - set(anova_top_features)
@@ -38,6 +39,7 @@ def merge_top_features_anova_ensemble(s, logging):
     logging.info(f"features_in_anova_but_not_ensemble_rfe : {features_in_anova_but_not_ensemble_rfe}")
     logging.info(f"features_in_ensemble_rfe_but_not_anova : {features_in_ensemble_rfe_but_not_anova}")
     logging.info(f"n_dropped_features : {n_dropped_features}")
+    logging.info(f"total number of retained features : {len(combined_top_features)}")
 
     df_train_data_excl_dup_top_feat = df_train_data_excl_duplicates.reindex(columns=combined_top_features_incl_y, index=df_train_data_excl_duplicates.index)
     df_train_data_excl_dup_top_feat.to_csv(train_data_after_first_feature_seln_csv)

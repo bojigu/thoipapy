@@ -52,13 +52,19 @@ def calc_feat_import_from_mean_decrease_accuracy(s, logging):
     thoipapy.utils.make_sure_path_exists(feat_imp_MDA_xlsx, isfile=True)
 
     df_data = pd.read_csv(train_data_csv, index_col=0)
-    df_data = df_data.dropna()
+
+    if df_data.isnull().values.any():
+        for col in df_data.columns:
+            if df_data[col].isnull().values.any():
+                logging.warning(f"{col} contains nan values")
+        raise Exception("df_data contains nan values. Please check names of features_to_be_retained_during_selection in settings file.")
 
     # drop training data (full protein) that don't have enough homologues
     if s["min_n_homol_training"] != 0:
         df_data = df_data.loc[df_data.n_homologues >= s["min_n_homol_training"]]
 
     cols_excluding_y = [c for c in df_data.columns if c != s['bind_column']]
+
     X = df_data[cols_excluding_y]
     y = df_data["interface"]
 
