@@ -34,14 +34,15 @@ def select_best_features_with_anova(s, logging):
     X_selected = fit.transform(X)
 
     top_features_anova = []
-    for selected_col in X_selected.T:
-        for orig_featurename in X.columns:
+    for orig_featurename in X.columns:
+        for selected_col in X_selected.T:
             if list(selected_col) == X[orig_featurename].to_list():
                 top_features_anova.append(orig_featurename)
                 break
 
     # make sure that there are no duplicate columns that ruin the mapping to column names
-    assert len(top_features_anova) == len(set(top_features_anova))
+    if len(top_features_anova) != len(set(top_features_anova)):
+        raise Exception(f"top_features_anova contains duplicate values")
 
     top_features_anova_ser = pd.Series()
     top_features_anova_ser["top_features"] = top_features_anova
