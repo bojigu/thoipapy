@@ -1,3 +1,4 @@
+import sys
 from typing import List
 
 import pandas as pd
@@ -72,6 +73,8 @@ def conduct_ttest_for_all_features(s, logging):
     dft = pd.DataFrame()
 
     for col in feature_columns:
+        sys.stdout.write(".")
+        sys.stdout.flush()
         x = dfs0[col].to_numpy()
         y = dfs1[col].to_numpy()
         if dfs1[col].mean() - dfs0[col].mean() > 0:
@@ -80,7 +83,7 @@ def conduct_ttest_for_all_features(s, logging):
             Rbool = "False"
         dft.loc[col, "higher for interface residues"] = Rbool
 
-        p_bootstrapped_ttest = calc_ttest_pvalue_from_bootstrapped_data(x, y, equal_var=True, B=1000)
+        p_bootstrapped_ttest = calc_ttest_pvalue_from_bootstrapped_data(x, y, equal_var=True)
 
         dft.loc[col, "p_bootstrapped_ttest"] = p_bootstrapped_ttest
 
