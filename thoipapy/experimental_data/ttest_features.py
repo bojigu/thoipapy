@@ -1,3 +1,5 @@
+from typing import List
+
 import pandas as pd
 import numpy as np
 import scipy.stats as stats
@@ -78,7 +80,7 @@ def conduct_ttest_for_all_features(s, logging):
             Rbool = "False"
         dft.loc[col, "higher for interface residues"] = Rbool
 
-        p_bootstrapped_ttest = calc_ttest_pvalue_from_bootstrapped_data(x, y, equal_var=True)
+        p_bootstrapped_ttest = calc_ttest_pvalue_from_bootstrapped_data(x, y, equal_var=True, B=1000)
 
         dft.loc[col, "p_bootstrapped_ttest"] = p_bootstrapped_ttest
 
@@ -97,6 +99,9 @@ def conduct_ttest_for_all_features(s, logging):
     cutoff_R2_highly_correlated = 0.95
     dfcorr = df.corr()
     dfcorr.to_excel(correlated_features_xlsx)
+
+    highly_correlated_feature_sets: List[set] = []
+
     for col in feature_columns:
         correlated_features = dfcorr[col].loc[dfcorr[col] > cutoff_R2_correlated].index.tolist()
         correlated_features.remove(col)
@@ -106,7 +111,11 @@ def conduct_ttest_for_all_features(s, logging):
             dft.loc[col, "correlated features (R2 > 0.6)"] = ""
 
         highly_correlated_features = dfcorr[col].loc[dfcorr[col] > cutoff_R2_highly_correlated].index.tolist()
-        logging.info(f"highly correlated features: {highly_correlated_features}")
+        if len(highly_correlated_features) > 1:
+            correlated_feature_set = set(highly_correlated_features)
+            if correlated_feature_set not in highly_correlated_feature_sets:
+                highly_correlated_feature_sets.append(correlated_feature_set)
+                logging.info(f"highly correlated features: {highly_correlated_features}")
 
     dft.index.name = "feature"
 
