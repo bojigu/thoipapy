@@ -10,15 +10,6 @@ from thoipapy.validation.feature_selection import drop_cols_not_used_in_ML
 
 
 def remove_duplicate_features_with_lower_MDI(s, logging):
-    """ Select the features to keep
-
-    Parameters
-    ----------
-    s : dict
-        Settings dictionary
-    logging : logging.Logger
-        Python object with settings for logging to console and file.
-    """
 
     logging.info('starting remove_duplicate_features_with_lower_MDI')
     # inputs
@@ -47,6 +38,7 @@ def remove_duplicate_features_with_lower_MDI(s, logging):
     for i in range(len(correlation_matrix.columns)):
         for j in range(i):
             if abs(correlation_matrix.iloc[i, j]) > max_similarity_duplicate_features:
+
                 featurename1 = correlation_matrix.columns[i]
                 featurename2 = correlation_matrix.columns[j]
 
@@ -54,15 +46,24 @@ def remove_duplicate_features_with_lower_MDI(s, logging):
                 feature2_mean_decrease_impurity = df_MDI.at[featurename2, "mean_decrease_impurity"]
 
                 feature_with_lower_MDI = featurename1 if feature1_mean_decrease_impurity <= feature2_mean_decrease_impurity else featurename2
-                feature_with_higher_MDI = featurename1 if feature_with_lower_MDI == featurename2 else featurename2
-                MDI_of_feature_with_lower_MDI = "{:.03f}".format(df_MDI.at[feature_with_lower_MDI, "mean_decrease_impurity"])
-                MDI_of_feature_with_higher_MDI = "{:.03f}".format(df_MDI.at[feature_with_higher_MDI, "mean_decrease_impurity"])
 
-                if feature_with_lower_MDI not in features_to_be_retained_during_selection:
-                    duplicate_features_with_low_MDI_to_be_removed.append(feature_with_lower_MDI)
-                correlated_feature_tuple = (feature_with_higher_MDI, MDI_of_feature_with_higher_MDI, feature_with_lower_MDI, MDI_of_feature_with_lower_MDI)
+                # OVERRIDE SELECTION IF ANY FEATURES IN SETTINGS LIST TO BE RETAINED (FOR USE IN PLOTS AND COMPARISONS IN THE ARTICLE)
+                if featurename1 in features_to_be_retained_during_selection and featurename2 in features_to_be_retained_during_selection:
+                    raise Exception("features_to_be_retained_during_selection contains two correlated features")
+                elif featurename1 in features_to_be_retained_during_selection:
+                    feature_to_be_removed = featurename2
+                elif featurename2 in features_to_be_retained_during_selection:
+                    feature_to_be_removed = featurename1
+                else:
+                    feature_to_be_removed = feature_with_lower_MDI
+
+                feature_to_be_retained = featurename1 if feature_to_be_removed == featurename2 else featurename2
+                MDI_of_feature_with_lower_MDI = "{:.03f}".format(df_MDI.at[feature_with_lower_MDI, "mean_decrease_impurity"])
+                MDI_of_feature_with_higher_MDI = "{:.03f}".format(df_MDI.at[feature_to_be_retained, "mean_decrease_impurity"])
+
+                correlated_feature_tuple = (feature_to_be_retained, MDI_of_feature_with_higher_MDI, feature_with_lower_MDI, MDI_of_feature_with_lower_MDI)
                 correlated_feature_pairs.add(correlated_feature_tuple)
-                logging.info(f"duplicate feature removed: keep '{feature_with_higher_MDI}' remove '{feature_with_lower_MDI}' R2={correlation_matrix.iloc[i, j]}")
+                logging.info(f"duplicate feature removed: keep '{feature_to_be_retained}' remove '{feature_with_lower_MDI}' R2={correlation_matrix.iloc[i, j]}")
 
     duplicate_ser = pd.Series()
     duplicate_ser["correlated_feature_pairs"] = correlated_feature_pairs
