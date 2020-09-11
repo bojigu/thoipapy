@@ -5,6 +5,7 @@ import os
 from pathlib import Path
 
 from thoipapy.utils import make_sure_path_exists, get_testsetname_trainsetname_from_run_settings
+from thoipapy.validation.feature_selection import drop_cols_not_used_in_ML
 
 
 def generate_boot_matrix(z, B):
@@ -39,29 +40,35 @@ def calc_ttest_pvalue_from_bootstrapped_data(x, y, equal_var=False, B=100000, pl
     return 2 * min(p, 1 - p)
 
 
-def conduct_ttest_for_selected_features_used_in_model(s, logging):
+def conduct_ttest_for_all_features(s, logging):
     logging.info('starting conduct_ttest_for_selected_features_used_in_model')
     testsetname, trainsetname = get_testsetname_trainsetname_from_run_settings(s)
     # inputs
     train_data_csv = Path(s["thoipapy_data_folder"]) / f"results/{s['setname']}/train_data/01_train_data_orig.csv"
     # IMPORTANT: the features used in the model are taken from the trainset as defined in "train_datasets" in the excel file, not from the actual set being investigated
-    feat_imp_MDA_xlsx = os.path.join(s["thoipapy_data_folder"], "results", trainsetname, "feat_imp", "feat_imp_mean_decrease_accuracy.xlsx")
+    #feat_imp_MDA_xlsx = os.path.join(s["thoipapy_data_folder"], "results", trainsetname, "feat_imp", "feat_imp_mean_decrease_accuracy.xlsx")
 
     # outputs
     ttest_pvalues_bootstrapped_data_using_traindata_selected_features_xlsx = Path(s["thoipapy_data_folder"]) / f"results/{s['setname']}/ttest/ttest_pvalues_bootstrapped_data_using_traindata_selected_features(train{trainsetname}).xlsx"
 
     make_sure_path_exists(ttest_pvalues_bootstrapped_data_using_traindata_selected_features_xlsx, isfile=True)
 
-    df = pd.read_csv(train_data_csv, index_col=0)
+    df_orig = pd.read_csv(train_data_csv, index_col=0)
 
-    df_feat_imp_MDA_trainset = pd.read_excel(feat_imp_MDA_xlsx, sheet_name="single_feat", index_col=0)
-    cols = list(df_feat_imp_MDA_trainset.index)
+    #df_feat_imp_MDA_trainset = pd.read_excel(feat_imp_MDA_xlsx, sheet_name="single_feat", index_col=0)
+    #cols = list(df_feat_imp_MDA_trainset.index)
+
+    df = drop_cols_not_used_in_ML(logging, df_orig, s["excel_file_with_settings"])
+    feature_columns = list(df.columns)
+
+    # add back the interface "bind" column
+    df["interface"] = df_orig[s["bind_column"]]
 
     dfs0 = df[df.interface == 0]
     dfs1 = df[df.interface == 1]
     dft = pd.DataFrame()
 
-    for col in cols:
+    for col in feature_columns:
         x = dfs0[col].to_numpy()
         y = dfs1[col].to_numpy()
         if dfs1[col].mean() - dfs0[col].mean() > 0:
@@ -78,17 +85,23 @@ def conduct_ttest_for_selected_features_used_in_model(s, logging):
         p_ttest = stats.ttest_ind(x, y)[1]
         dft.loc[col, "p_ttest"] = p_ttest
 
-    dft.sort_values("p_ttest", ascending=True, inplace=True)
+    for feature in dft.index:
+        if dft.at[feature, "p_bootstrapped_ttest"] == 0.0:
+            dft.at[feature, "p_for_sorting"] = dft.at[feature, "p_ttest"]
+        else:
+            dft.at[feature, "p_for_sorting"] = dft.at[feature, "p_bootstrapped_ttest"]
 
-    cutoff = 0.3
-    dfcorr = df[cols].corr()
-    for col in cols:
-        correlated_features = dfcorr[col].loc [dfcorr[col] > cutoff].index.tolist()
+    dft.sort_values("p_for_sorting", ascending=True, inplace=True)
+
+    cutoff = 0.6
+    dfcorr = df.corr()
+    for col in feature_columns:
+        correlated_features = dfcorr[col].loc[dfcorr[col] > cutoff].index.tolist()
         correlated_features.remove(col)
         if len(correlated_features) > 0:
-            dft.loc[col, "correlated_features"] = ", ".join(correlated_features)
+            dft.loc[col, "correlated features (R2 > 0.6)"] = ", ".join(correlated_features)
         else:
-            dft.loc[col, "correlated_features"] = ""
+            dft.loc[col, "correlated features (R2 > 0.6)"] = ""
 
     dft.index.name = "feature"
 
@@ -108,14 +121,17 @@ def conduct_ttest_for_selected_features_used_in_model(s, logging):
     print("{} coevolution features significantly different between int and non-interface, BOOTSTRAPPED TTEST\n".format(len(sign_coevolution_feats)))
     print(list_sign_bootstrapped)
 
-    dft["p_bootstrapped_ttest_formatted"] = dft["p_bootstrapped_ttest"].apply(convert_pvalue_to_text)
+    dft["t-test p-value (bootstrapped data)"] = dft["p_bootstrapped_ttest"].apply(convert_pvalue_to_text)
+
+    dft_formatted = dft[["higher for interface residues", "t-test p-value (bootstrapped data)", "correlated features (R2 > 0.6)"]]
 
     with pd.ExcelWriter(ttest_pvalues_bootstrapped_data_using_traindata_selected_features_xlsx) as writer:
+        dft_formatted.to_excel(writer, sheet_name="formatted")
         dft.to_excel(writer, sheet_name="all")
         dft_sign.to_excel(writer, sheet_name="significant")
         dft_sign_boot.to_excel(writer, sheet_name="significant_bootstrapped")
 
-    logging.info('finished conduct_ttest_for_selected_features_used_in_model')
+    logging.info(f'finished conduct_ttest_for_selected_features_used_in_model ({ttest_pvalues_bootstrapped_data_using_traindata_selected_features_xlsx})')
 
 
 def convert_pvalue_to_text(p, bootstrap_replicates=100000):

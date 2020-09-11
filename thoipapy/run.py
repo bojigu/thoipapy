@@ -213,7 +213,7 @@ if __name__ == "__main__":
             thoipapy.feature_importance.plots.plot_feature_importance(s, logging)
 
         if s["conduct_ttest"]:
-            thoipapy.experimental_data.ttest_features.conduct_ttest_for_selected_features_used_in_model(s, logging)
+            thoipapy.experimental_data.ttest_features.conduct_ttest_for_all_features(s, logging)
 
         if s["train_machine_learning_model"]:
             thoipapy.ML_model.train_model.train_machine_learning_model(s, logging)
