@@ -70,9 +70,9 @@ def calc_feat_import_from_mean_decrease_accuracy(s, logging):
 
     polarity_features = ["test_dropping_of_features_not_included", "polarity", "relative_polarity", "polarity4mean", "polarity3Nmean", "polarity3Cmean", "polarity1mean"]
     pssm_features = ["A", "C", "D", "E", "F", "G", "H", "I", "K", "L", "M", "N", "P", "Q", "R", "S", "T", "V", "W", "Y", "CS", "DE", "KR", "QN", "LIV"]
-    coev_features = ["DImax", "MImax", "DItop4mean", "MItop4mean", "DItop8mean", "MItop8mean", "DI4max", "MI4max", "DI1mean", "MI1mean", "DI3mean", "MI3mean", "DI4mean", "MI4mean", "DI4cum", "MI4cum"]
+    coev_features = ["DImax", "MImax", "DItop4mean", "MItop4mean", "DItop8mean", "MItop8mean", "DI4max", "MI4max", "DI1mean", "MI1mean", "DI3mean", "MI3mean", "DI4mean", "MI4mean", "DI4cum"]
     DI_features = ["DImax", "DItop4mean", "DItop8mean", "DI4max", "DI1mean", "DI3mean", "DI4mean", "DI4cum"]
-    MI_features = ["MImax", "MItop4mean", "MItop8mean", "MI4max", "MI1mean", "MI3mean", "MI4mean", "MI4cum"]
+    MI_features = ["MImax", "MItop4mean", "MItop8mean", "MI4max", "MI1mean", "MI3mean", "MI4mean"]
     cons_features = ["entropy", "cons4mean", "conservation"]
     motif_features =  ["GxxxG", "SmxxxSm"]
     physical_features = ["branched", "mass"]
@@ -220,16 +220,3 @@ def calc_AUBOC_for_feat_imp(y, X_t, forest, feat_imp_temp_THOIPA_BO_curve_data_c
     df_bocurve = df_bocurve.iloc[:5]
     AUBOC = np.trapz(y=df_bocurve["mean_o_minus_r"], x=df_bocurve.index)
     return AUBOC
-
-
-def fig_feat_import_from_mean_decrease_accuracy(s, logging):
-
-    feat_imp_MDA_xlsx = os.path.join(s["thoipapy_data_folder"], "results", s["setname"], "feat_imp", "feat_imp_mean_decrease_accuracy.xlsx")
-    feat_imp_MDA_png = os.path.join(s["thoipapy_data_folder"], "results", s["setname"], "feat_imp", "mean_decrease_accuracy_filtered_features.png")
-
-    #df_grouped_feat = pd.read_excel(feat_imp_MDA_xlsx, index_col=0, sheet_name="grouped_feat")
-    #df_single_feat = pd.read_excel(feat_imp_MDA_xlsx, index_col=0, sheet_name="single_feat")
-
-    logging.warning("fig_feat_import_from_mean_decrease_accuracy is not yet implemented")
-
-    pass

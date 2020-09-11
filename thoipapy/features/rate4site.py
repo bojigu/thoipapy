@@ -61,7 +61,8 @@ def rate4site_calculation(s, df_set, logging):
 
         if not rate4site_orig_output.is_file() or (s["rerun_rate4site"] in [True, 1]):
 
-            print(f"decreasing cdhit cutoff for {acc}: ")
+            sys.stdout.write(f"\ndecreasing cdhit cutoff for {acc}: ")
+            sys.stdout.flush()
 
             while len_cdhit_cluster_reps > max_n_sequences_for_rate4site:
                 if rerun:
@@ -121,7 +122,8 @@ def rate4site_calculation(s, df_set, logging):
                     rate4site_orig_output.parent.mkdir(parents=True)
 
                 exect_str = f"rate4site -s {rate4site_input} -o {rate4site_orig_output}"
-                print(exect_str)
+                sys.stdout.write(exect_str)
+                sys.stdout.flush()
                 command = utils.Command(exect_str)
                 command.run(timeout=1200, log_stderr=False)
 

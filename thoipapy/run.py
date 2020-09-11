@@ -19,6 +19,7 @@ import warnings
 import thoipapy.experimental_data.add_experimental_data_to_train_set
 import thoipapy.feature_importance.mean_decrease_accuracy
 import thoipapy.feature_importance.mean_decrease_impurity
+import thoipapy.feature_importance.plots
 import thoipapy.features.physical_parameters
 import thoipapy.validation.gather
 from thoipapy.clustering.pairwise_aln_similarity_matrix import create_identity_matrix_from_protein_set
@@ -201,21 +202,18 @@ if __name__ == "__main__":
         if s["run_feature_selection"]:
             thoipapy.feature_importance.mean_decrease_impurity.get_initial_ensemble_parameters_before_feature_selection(s, logging)
             thoipapy.feature_importance.mean_decrease_impurity.calc_feat_import_using_MDI_before_feature_seln(s, logging)
-            thoipapy.feature_importance.mean_decrease_impurity.fig_feat_import_from_mean_decrease_impurity(s, logging)
             thoipapy.feature_importance.remove_duplicates.remove_duplicate_features_with_lower_MDI(s, logging)
             thoipapy.feature_importance.anova.select_best_features_with_anova(s, logging)
             thoipapy.feature_importance.ensemble_rfe.select_best_features_with_ensemble_rfe(s, logging)
             thoipapy.feature_importance.merge.merge_top_features_anova_ensemble(s, logging)
-
-        if s["tune_ensemble_parameters"]:
             thoipapy.ML_model.tune.tune_ensemble_parameters_after_feature_seln(s, logging)
 
         if s["calc_feature_importances"]:
             thoipapy.feature_importance.mean_decrease_accuracy.calc_feat_import_from_mean_decrease_accuracy(s, logging)
-            thoipapy.feature_importance.mean_decrease_accuracy.fig_feat_import_from_mean_decrease_accuracy(s, logging)
+            thoipapy.feature_importance.plots.plot_feature_importance(s, logging)
 
         if s["conduct_ttest"]:
-            thoipapy.experimental_data.ttest_features.conduct_ttest_for_selected_features_used_in_model(s, logging)
+            thoipapy.experimental_data.ttest_features.conduct_ttest_for_all_features(s, logging)
 
         if s["train_machine_learning_model"]:
             thoipapy.ML_model.train_model.train_machine_learning_model(s, logging)

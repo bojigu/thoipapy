@@ -15,7 +15,7 @@ import matplotlib as mpl
 from thoipapy.utils import make_sure_path_exists
 
 if os.environ.get('DISPLAY','') == '':
-    print('no display found. Using non-interactive Agg backend')
+    sys.stdout.write('no display found. Using non-interactive Agg backend')
     mpl.use('Agg')
 
 def combine_all_features(s, full_seq, acc, database, TMD_seq, TMD_start, feature_combined_file, entropy_file, rate4site_csv, pssm_csv, lipo_csv, freecontact_parsed_csv, relative_position_file, LIPS_parsed_csv, motifs_file, alignment_summary_csv,full_seq_fasta_file,phobius_outfile, logging):

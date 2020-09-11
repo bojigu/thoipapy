@@ -175,9 +175,7 @@ def parse_freecontact_coevolution(acc, freecontact_file, freecontact_parsed_csv,
 
     tmd_length = int(row.strip().split()[2])
     DI4cum = [0] * tmd_length
-    MI4cum = [0] * tmd_length
     DI8cum = [0] * tmd_length
-    MI8cum = [0] * tmd_length
     DItop4mean = [0] * tmd_length
     MItop4mean = [0] * tmd_length
     DItop8mean = [0] * tmd_length
@@ -202,25 +200,21 @@ def parse_freecontact_coevolution(acc, freecontact_file, freecontact_parsed_csv,
         res1 = int(dict_di_value_sort[i][0].strip().split('-')[1]) - 1
         DI4cum[res0] = DI4cum[res0] + float(dict_di_value_sort[i][1])
         DI4cum[res1] = DI4cum[res1] + float(dict_di_value_sort[i][1])
-        MI4cum[res0] = MI4cum[res0] + float(dict_mi_value_sort[i][1])
-        MI4cum[res1] = MI4cum[res1] + float(dict_mi_value_sort[i][1])
 
     for i in range(0, 8):
         res0 = int(dict_di_value_sort[i][0].strip().split('-')[0]) - 1
         res1 = int(dict_di_value_sort[i][0].strip().split('-')[1]) - 1
         DI8cum[res0] = DI8cum[res0] + float(dict_di_value_sort[i][1])
         DI8cum[res1] = DI8cum[res1] + float(dict_di_value_sort[i][1])
-        MI8cum[res0] = MI8cum[res0] + float(dict_mi_value_sort[i][1])
-        MI8cum[res1] = MI8cum[res1] + float(dict_mi_value_sort[i][1])
 
     writer = csv.writer(freecontact_parsed_csv_handle, delimiter=',', quotechar='"',
                         lineterminator='\n',
                         quoting=csv.QUOTE_NONNUMERIC, doublequote=True)
-    writer.writerow(["residue_num", "residue_name", "DImax", "DItop4mean", "DItop8mean", "DI4cum", "DI8cum", "MImax", "MItop4mean", "MItop8mean", "MI4cum", "MI8cum"])
+    writer.writerow(["residue_num", "residue_name", "DImax", "DItop4mean", "DItop8mean", "DI4cum", "DI8cum", "MImax", "MItop4mean", "MItop8mean"])
     for index in range(len(DI8cum)):
         csv_header_for_cumulative_strength_file = [(index + 1), dict_residuenum_residuename[(index + 1)],
                                                    DImax_1[index], DItop4mean[index], DItop8mean[index], DI4cum[index], DI8cum[index], MImax_1[index], MItop4mean[index],
-                                                   MItop8mean[index], MI4cum[index], MI8cum[index]]
+                                                   MItop8mean[index]]
         # writer = csv.writer(freecontact_parsed_csv_handle, delimiter=',', quotechar='"', lineterminator='\n',
         # quoting=csv.QUOTE_NONNUMERIC, doublequote=True)
         writer.writerow(csv_header_for_cumulative_strength_file)
@@ -394,7 +388,7 @@ def parse_freecontact_coevolution(acc, freecontact_file, freecontact_parsed_csv,
     coev_colname_list = df_out.columns.tolist()[len(column_list):]
 
     # Specifically overwrite normalised values for Cum metrics. Convert to 0 or 1.
-    coev_cum_colname_list = ["DI4cum", "DI8cum", "MI4cum", "MI8cum"]
+    coev_cum_colname_list = ["DI4cum", "DI8cum"]
     for col in coev_cum_colname_list:
         df_out[col] = df_out[col].apply(lambda x : 1 if x > 0 else 0)
 
