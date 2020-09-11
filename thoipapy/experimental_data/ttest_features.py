@@ -50,6 +50,7 @@ def conduct_ttest_for_all_features(s, logging):
 
     # outputs
     ttest_pvalues_bootstrapped_data_using_traindata_selected_features_xlsx = Path(s["thoipapy_data_folder"]) / f"results/{s['setname']}/ttest/ttest_pvalues_bootstrapped_data_using_traindata_selected_features(train{trainsetname}).xlsx"
+    correlated_features_xlsx = Path(s["thoipapy_data_folder"]) / f"results/{s['setname']}/ttest/correlated_features.xlsx"
 
     make_sure_path_exists(ttest_pvalues_bootstrapped_data_using_traindata_selected_features_xlsx, isfile=True)
 
@@ -78,7 +79,6 @@ def conduct_ttest_for_all_features(s, logging):
         dft.loc[col, "higher for interface residues"] = Rbool
 
         p_bootstrapped_ttest = calc_ttest_pvalue_from_bootstrapped_data(x, y, equal_var=True)
-        print(p_bootstrapped_ttest)
 
         dft.loc[col, "p_bootstrapped_ttest"] = p_bootstrapped_ttest
 
@@ -93,15 +93,20 @@ def conduct_ttest_for_all_features(s, logging):
 
     dft.sort_values("p_for_sorting", ascending=True, inplace=True)
 
-    cutoff = 0.6
+    cutoff_R2_correlated = 0.6
+    cutoff_R2_highly_correlated = 0.95
     dfcorr = df.corr()
+    dfcorr.to_excel(correlated_features_xlsx)
     for col in feature_columns:
-        correlated_features = dfcorr[col].loc[dfcorr[col] > cutoff].index.tolist()
+        correlated_features = dfcorr[col].loc[dfcorr[col] > cutoff_R2_correlated].index.tolist()
         correlated_features.remove(col)
         if len(correlated_features) > 0:
             dft.loc[col, "correlated features (R2 > 0.6)"] = ", ".join(correlated_features)
         else:
             dft.loc[col, "correlated features (R2 > 0.6)"] = ""
+
+        highly_correlated_features = dfcorr[col].loc[dfcorr[col] > cutoff_R2_highly_correlated].index.tolist()
+        logging.info(f"highly correlated features: {highly_correlated_features}")
 
     dft.index.name = "feature"
 
@@ -110,16 +115,16 @@ def conduct_ttest_for_all_features(s, logging):
     sign_coevolution_feats = [x for x in dft_sign.index.tolist() if "MI" in x or "DI" in x]
     sign_coevolution_feats = sorted(sign_coevolution_feats)
     list_sign_bootstrapped = ", ".join(sign_coevolution_feats)
-    print("{} coevolution features significantly different between int and non-interface, REGULAR TTEST\n".format(len(sign_coevolution_feats)))
-    print(list_sign_bootstrapped)
+    logging.info("{} coevolution features significantly different between int and non-interface, REGULAR TTEST\n".format(len(sign_coevolution_feats)))
+    logging.info(list_sign_bootstrapped)
 
     dft_sign_boot = dft[dft.p_bootstrapped_ttest < 0.05].copy()
     dft_sign_boot.drop("p_ttest", axis=1, inplace=True)
     sign_coevolution_feats = [x for x in dft_sign_boot.index.tolist() if "MI" in x or "DI" in x]
     sign_coevolution_feats = sorted(sign_coevolution_feats)
     list_sign_bootstrapped = ", ".join(sign_coevolution_feats)
-    print("{} coevolution features significantly different between int and non-interface, BOOTSTRAPPED TTEST\n".format(len(sign_coevolution_feats)))
-    print(list_sign_bootstrapped)
+    logging.info("{} coevolution features significantly different between int and non-interface, BOOTSTRAPPED TTEST\n".format(len(sign_coevolution_feats)))
+    logging.info(list_sign_bootstrapped)
 
     dft["t-test p-value (bootstrapped data)"] = dft["p_bootstrapped_ttest"].apply(convert_pvalue_to_text)
 
