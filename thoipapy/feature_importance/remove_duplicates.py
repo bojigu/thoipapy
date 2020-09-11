@@ -33,7 +33,7 @@ def remove_duplicate_features_with_lower_MDI(s, logging):
     duplicate_features_with_low_MDI_to_be_removed: List[str] = []
 
     features_to_be_retained_during_selection = s['features_to_be_retained_during_selection'].split(",")
-    print(features_to_be_retained_during_selection)
+    logging.info(f"features_to_be_retained_during_selection : {features_to_be_retained_during_selection}")
 
     for i in range(len(correlation_matrix.columns)):
         for j in range(i):

@@ -35,9 +35,9 @@ def select_best_features_with_ensemble_rfe(s, logging):
     forest = return_classifier_with_loaded_ensemble_parameters(s, tuned_ensemble_parameters_csv)
     rfe = RFE(forest, s["n_top_features_to_keep"])
     fit = rfe.fit(X, y)
-    print("Num Features: %d" % fit.n_features_)
-    print("Selected Features: %s" % fit.support_)
-    print("Feature Ranking: %s" % fit.ranking_)
+    logging.info("Num Features: %d" % fit.n_features_)
+    logging.info("Selected Features: %s" % fit.support_)
+    logging.info("Feature Ranking: %s" % fit.ranking_)
 
     df_rfe = pd.DataFrame()
     df_rfe["features"] = X.columns
@@ -51,35 +51,35 @@ def select_best_features_with_ensemble_rfe(s, logging):
     logging.info('finished select_best_features_with_ensemble_rfe')
 
 
-    # print("----------------------------------------------------------------------")
-    # print("starting linear RFE")
+    # logging.info("----------------------------------------------------------------------")
+    # logging.info("starting linear RFE")
     #
     # model = LogisticRegression(solver="lbfgs")
     # rfe = RFE(model, 5)
     # fit = rfe.fit(X, y)
-    # print("Num Features: %d" % fit.n_features_)
-    # print("Selected Features: %s" % fit.support_)
-    # print("Feature Ranking: %s" % fit.ranking_)
+    # logging.info("Num Features: %d" % fit.n_features_)
+    # logging.info("Selected Features: %s" % fit.support_)
+    # logging.info("Feature Ranking: %s" % fit.ranking_)
     # df_lin_ranking = pd.DataFrame()
     # df_lin_ranking["features"] = X.columns
     # df_lin_ranking["ranking"] = fit.ranking_
     #
     # df_lin_ranking.sort_values("ranking", ascending=True, inplace=True)
-    # print(df_lin_ranking)
+    # logging.info(df_lin_ranking)
     #
     #
-    # print("----------------------------------------------------------------------")
-    # print("starting PCA RFE")
+    # logging.info("----------------------------------------------------------------------")
+    # logging.info("starting PCA RFE")
     #
     # pca = PCA(n_components=5)
     # fit = pca.fit(X, y)
     #
-    # print("Explained Variance: %s" % fit.explained_variance_ratio_)
-    # print(fit.components_)
+    # logging.info("Explained Variance: %s" % fit.explained_variance_ratio_)
+    # logging.info(fit.components_)
     # X_selected = fit.components_
     #
     # for selected_col in X_selected.T:
     #     for orig_featurename in X.columns:
     #         if list(selected_col) == X[orig_featurename].to_list():
-    #             print(orig_featurename, "is a PCA hit")
+    #             logging.info(orig_featurename, "is a PCA hit")
     #

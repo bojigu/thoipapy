@@ -38,7 +38,7 @@ from thoipapy.validation.feature_selection import drop_cols_not_used_in_ML
 
 # set matplotlib backend to Agg when run on a server
 if os.environ.get('DISPLAY','') == '':
-    print('no display found. Using non-interactive Agg backend')
+    sys.stdout.write('no display found. Using non-interactive Agg backend')
     mpl.use('Agg')
 import matplotlib.pyplot as plt
 
@@ -455,7 +455,8 @@ if __name__ == "__main__":
     # get the command-line arguments
     args = parser.parse_args()
 
-    print("args ", args)
+    sys.stdout.write("args ", args)
+    sys.stdout.flush()
 
     if args.d is not None:
         # process every input file in the args.d input folder
