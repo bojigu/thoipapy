@@ -49,7 +49,7 @@ def remove_duplicate_features_with_lower_MDI(s, logging):
 
                 # OVERRIDE SELECTION IF ANY FEATURES IN SETTINGS LIST TO BE RETAINED (FOR USE IN PLOTS AND COMPARISONS IN THE ARTICLE)
                 if featurename1 in features_to_be_retained_during_selection and featurename2 in features_to_be_retained_during_selection:
-                    raise Exception("features_to_be_retained_during_selection contains two correlated features")
+                    logging.warn(f"features_to_be_retained_during_selection contains two correlated features ({featurename1} and {featurename2})")
                 elif featurename1 in features_to_be_retained_during_selection:
                     feature_to_be_removed = featurename2
                 elif featurename2 in features_to_be_retained_during_selection:

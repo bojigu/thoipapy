@@ -270,8 +270,8 @@ if __name__ == "__main__":
             sys.stdout.write("\n--------------- finished run_validation ---------------\n")
 
 
-        if s["create_merged_heatmap"] == True:
-            thoipapy.figs.create_heatmap_from_merge_file.create_merged_heatmap(s, df_set, logging)
+        if s["create_merged_heatmap_for_trainset_and_testset"] == True:
+            thoipapy.figs.create_heatmap_from_merge_file.create_merged_heatmap_for_trainset_and_testset(s, df_set, logging)
 
         if "download_10_homologues_from_ncbi" in s:
             if s["download_10_homologues_from_ncbi"] == True:

@@ -59,7 +59,7 @@ def coevolution_calculation_with_freecontact(path_uniq_TMD_seqs_for_PSSM_FREECON
             command = utils.Command(exect_str)
             command.run(timeout=400, log_stderr=False)
 
-            logging.info("Output file: %s\n" % freecontact_file)
+            logging.info(f"coevolution_calculation_with_freecontact finished ({freecontact_file})")
         except:
             logging.warning("freecontact gives an error")
     else:
@@ -80,7 +80,7 @@ def parse_freecontact_coevolution_mult_prot(s, df_set, logging):
     logging : logging.Logger
         Python object with settings for logging to console and file.
     """
-    logging.info('cumulative co-evolutionary strength parsing')
+    logging.info('starting parse_freecontact_coevolution_mult_prot')
 
     for i in df_set.index:
         sys.stdout.write(".")
@@ -94,6 +94,7 @@ def parse_freecontact_coevolution_mult_prot(s, df_set, logging):
 
         parse_freecontact_coevolution(acc, freecontact_file, freecontact_parsed_csv, TMD_start, TMD_end, logging)
     sys.stdout.write("\n")
+    logging.info('finished parse_freecontact_coevolution_mult_prot')
 
 
 def parse_freecontact_coevolution(acc, freecontact_file, freecontact_parsed_csv, TMD_start, TMD_end, logging):
@@ -123,7 +124,6 @@ def parse_freecontact_coevolution(acc, freecontact_file, freecontact_parsed_csv,
     if not os.path.isfile(freecontact_file):
         logging.warning("{} parse_freecontact_coevolution failed, {} not found.".format(acc, freecontact_file))
         raise FileNotFoundError("{} parse_freecontact_coevolution failed, {} not found.".format(acc, freecontact_file))
-        #return
 
     dict_di = {}
     dict_mi = {}
@@ -402,3 +402,5 @@ def parse_freecontact_coevolution(acc, freecontact_file, freecontact_parsed_csv,
             df_out[col] = normalise_0_1(df_out[col])[0]
 
     df_out.to_csv(freecontact_parsed_csv)
+
+    logging.info(f"parse_freecontact_coevolution finished ({freecontact_parsed_csv})")
