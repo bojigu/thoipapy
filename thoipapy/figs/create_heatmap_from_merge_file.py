@@ -226,6 +226,10 @@ def create_single_merged_heatmap(s, acc, database, savename, fig_label, dfh_cols
         ax2_0.set_xticklabels(dfh.residue_name, fontsize=fontsize)
         ax2_0.tick_params(axis="x", direction='out', pad=-0.1, tick2On=False)
 
+        # remove ticks from centre of heatmap
+        ax2_1.tick_params(axis="x", direction='out', pad=-0.1, tick2On=False)
+        ax2_2.tick_params(axis="x", direction='out', pad=-0.1, tick2On=False)
+
         plt.tight_layout()
         fig.savefig(heatmap_path, dpi=240)
         fig.savefig(heatmap_pdf_path)
