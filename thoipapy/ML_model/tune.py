@@ -37,6 +37,8 @@ def tune_ensemble_parameters(s, train_data_csv, tuned_ensemble_parameters_csv, l
     X = drop_cols_not_used_in_ML(logging, df_data, s["excel_file_with_settings"])
     #del X[s["bind_column"]]
     assert "interface" not in X.columns
+    if X.isnull().values.any():
+        raise Exception("Dataset for training contains nan values.")
     cls = ExtraTreesClassifier(oob_score=False)
 
     best_params_rs = get_optimised_ensemble_parameters_using_quick_randomizedsearchcv_method(X, cls, logging, y)

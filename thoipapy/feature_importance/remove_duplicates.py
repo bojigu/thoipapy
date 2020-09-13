@@ -30,7 +30,7 @@ def remove_duplicate_features_with_lower_MDI(s, logging):
     correlated_feature_pairs = set()
     correlation_matrix = df_X.corr()
 
-    duplicate_features_with_low_MDI_to_be_removed: List[str] = []
+    duplicate_features_to_be_removed: List[str] = []
 
     features_to_be_retained_during_selection = s['features_to_be_retained_during_selection'].split(",")
     logging.info(f"features_to_be_retained_during_selection : {features_to_be_retained_during_selection}")
@@ -57,7 +57,9 @@ def remove_duplicate_features_with_lower_MDI(s, logging):
                 else:
                     feature_to_be_removed = feature_with_lower_MDI
 
+                duplicate_features_to_be_removed.append(feature_to_be_removed)
                 feature_to_be_retained = featurename1 if feature_to_be_removed == featurename2 else featurename2
+
                 MDI_of_feature_with_lower_MDI = "{:.03f}".format(df_MDI.at[feature_with_lower_MDI, "mean_decrease_impurity"])
                 MDI_of_feature_with_higher_MDI = "{:.03f}".format(df_MDI.at[feature_to_be_retained, "mean_decrease_impurity"])
 
@@ -67,18 +69,20 @@ def remove_duplicate_features_with_lower_MDI(s, logging):
 
     duplicate_ser = pd.Series()
     duplicate_ser["correlated_feature_pairs"] = correlated_feature_pairs
-    duplicate_ser["duplicate_features_with_low_MDI_to_be_removed"] = duplicate_features_with_low_MDI_to_be_removed
-    num_duplicate_features_with_low_MDI_to_be_removed = len(duplicate_features_with_low_MDI_to_be_removed)
+    duplicate_ser["duplicate_features_to_be_removed"] = duplicate_features_to_be_removed
+    num_duplicate_features_with_low_MDI_to_be_removed = len(duplicate_features_to_be_removed)
     duplicate_ser["num_duplicate_features_with_low_MDI_to_be_removed"] = num_duplicate_features_with_low_MDI_to_be_removed
 
     duplicate_ser.to_csv(results_remove_dup_feat_with_low_MDI_csv)
 
     logging.info(f"correlated_feature_pairs: {correlated_feature_pairs}")
-    logging.info(f"duplicate_features_with_low_MDI_to_be_removed: {duplicate_features_with_low_MDI_to_be_removed}")
+    logging.info(f"duplicate_features_to_be_removed: {duplicate_features_to_be_removed}")
 
-    cols_to_keep = [c for c in df_X.columns if c not in duplicate_features_with_low_MDI_to_be_removed]
+    cols_to_keep = [c for c in df_X.columns if c not in duplicate_features_to_be_removed]
     df_X_excl_duplicates = df_X.reindex(columns=cols_to_keep, index=df_X.index)
     df_X_excl_duplicates[s["bind_column"]] = df_data[s["bind_column"]]
+    if df_X_excl_duplicates.isnull().values.any():
+        raise Exception("df_X_excl_duplicates contains nan values")
 
     df_X_excl_duplicates = reorder_dataframe_columns(df_X_excl_duplicates, ["interface"])
     df_X_excl_duplicates.to_csv(train_data_excl_duplicates_csv)

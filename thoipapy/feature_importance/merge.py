@@ -41,6 +41,10 @@ def merge_top_features_anova_ensemble(s, logging):
     logging.info(f"n_dropped_features : {n_dropped_features}")
     logging.info(f"total number of retained features : {len(combined_top_features)}")
 
+    for column_name in combined_top_features_incl_y:
+        if column_name not in df_train_data_excl_duplicates.columns:
+            raise Exception(f"df_train_data_excl_duplicates does not contain {column_name}")
+
     df_train_data_excl_dup_top_feat = df_train_data_excl_duplicates.reindex(columns=combined_top_features_incl_y, index=df_train_data_excl_duplicates.index)
     df_train_data_excl_dup_top_feat.to_csv(train_data_after_first_feature_seln_csv)
 
