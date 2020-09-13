@@ -260,7 +260,7 @@ if __name__ == "__main__":
             thoipapy.validation.indiv_validation.collect_indiv_validation_data(s, df_set, logging, namedict, predictors, THOIPA_predictor_name, subsets)
             thoipapy.validation.indiv_validation.create_indiv_validation_figs(s, logging, namedict, predictors, THOIPA_predictor_name, subsets)
 
-            thoipapy.validation.multiple_predictors.validate_multiple_predictors_and_subsets_auboc10(s, df_set, logging)
+            thoipapy.validation.multiple_predictors.validate_multiple_predictors_and_subsets_auboc(s, df_set, logging)
             thoipapy.validation.multiple_predictors.validate_multiple_predictors_and_subsets_auc(s, df_set, logging)
 
             thoipapy.validation.roc.create_ROC_all_residues(s, df_set, logging)

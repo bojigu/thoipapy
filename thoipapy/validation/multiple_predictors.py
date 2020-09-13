@@ -12,16 +12,17 @@ import thoipapy
 from thoipapy.utils import make_sure_path_exists
 
 
-def validate_multiple_predictors_and_subsets_auboc10(s, df_set, logging):
+def validate_multiple_predictors_and_subsets_auboc(s, df_set, logging):
 
-    logging.info("start create_AUBOC10_43databases_figs")
+    logging.info("start create_AUBOC_43databases_figs")
+
     predictors = ["THOIPA_{}_LOO".format(s["set_number"]),"PREDDIMER", "TMDOCK", "LIPS_surface_ranked", "random"] #"LIPS_L*E",
     subsets = ["crystal", "NMR", "ETRA"]
     for subset in subsets:
         df_o_minus_r_mean_df = pd.DataFrame()
-        AUBOC10_list = []
-        mean_AUBOC_file = Path(s["thoipapy_data_folder"]) / f"results/{s['setname']}/crossvalidation/compare_selected_predictors/data/{s['setname']}.{subset}.4predictors_mean_AUBOC10.csv"
-        mean_AUBOC_barplot_png = Path(s["thoipapy_data_folder"]) / f"results/{s['setname']}/crossvalidation/compare_selected_predictors/figs/{s['setname']}.{subset}.4predictors_mean_AUBOC10.png"
+        AUBOC_list = []
+        mean_AUBOC_file = Path(s["thoipapy_data_folder"]) / f"results/{s['setname']}/crossvalidation/compare_selected_predictors/data/{s['setname']}.{subset}.4predictors_mean_AUBOC.csv"
+        mean_AUBOC_barplot_png = Path(s["thoipapy_data_folder"]) / f"results/{s['setname']}/crossvalidation/compare_selected_predictors/figs/{s['setname']}.{subset}.4predictors_mean_AUBOC.png"
         BOCURVE_linechart_csv = Path(s["thoipapy_data_folder"]) / f"results/{s['setname']}/crossvalidation/compare_selected_predictors/data/{s['setname']}.{subset}.4predictors_BOCURVE_linechart.csv"
         BOCURVE_linechart_png = Path(s["thoipapy_data_folder"]) / f"results/{s['setname']}/crossvalidation/compare_selected_predictors/figs/{s['setname']}.{subset}.4predictors_BOCURVE_linechart.png"
         make_sure_path_exists(BOCURVE_linechart_png, isfile=True)
@@ -33,11 +34,16 @@ def validate_multiple_predictors_and_subsets_auboc10(s, df_set, logging):
             df_o_minus_r = pd.read_excel(bocurve_data_xlsx, sheet_name="df_o_minus_r", index_col=0)
             df_o_minus_r = df_o_minus_r.filter(regex=subset, axis=1)
             df_o_minus_r_mean = df_o_minus_r.T.mean()
-            AUBOC10 = np.trapz(y=df_o_minus_r_mean, x=df_o_minus_r_mean.index)
-            AUBOC10_list.append(AUBOC10)
+
+            # apply cutoff (e.g. 5 residues for AUBOC5)
+            auboc_ser = df_o_minus_r_mean.iloc[:s["n_residues_AUBOC_validation"]]
+
+            AUBOC = np.trapz(y=auboc_ser, x=auboc_ser.index)
+
+            AUBOC_list.append(AUBOC)
             df_o_minus_r_mean_df = pd.concat([df_o_minus_r_mean_df, df_o_minus_r_mean], axis=1, join="outer")
 
-        auboc_mean_df = pd.DataFrame.from_records([AUBOC10_list], columns=predictors)
+        auboc_mean_df = pd.DataFrame.from_records([AUBOC_list], columns=predictors)
         auboc_mean_df.to_csv(mean_AUBOC_file)
         df_o_minus_r_mean_df.columns = predictors
         df_o_minus_r_mean_df.to_csv(BOCURVE_linechart_csv)
@@ -46,8 +52,8 @@ def validate_multiple_predictors_and_subsets_auboc10(s, df_set, logging):
         color_list = ["r", "g", "b", "k", "0.5", "0.25"]
         fig, ax = plt.subplots(figsize=figsize)
         for i,column in enumerate(df_o_minus_r_mean_df.columns):
-            # df_o_minus_r_mean_df.plot(ax=ax, color="#0f7d9b", linestyle="-", label="prediction (AUBOC10 : {:0.2f}".format(AUBOC10))
-            label_name = "{}(AUBOC:{:.2f})".format(predictors[i] ,AUBOC10_list[i])
+            # df_o_minus_r_mean_df.plot(ax=ax, color="#0f7d9b", linestyle="-", label="prediction (AUBOC : {:0.2f}".format(AUBOC))
+            label_name = "{}(AUBOC:{:.2f})".format(predictors[i] ,AUBOC_list[i])
             df_o_minus_r_mean_df[column].plot(ax=ax,  linestyle="-",label=label_name, color = color_list[i])
         ax.plot([1, 10], [0, 0], color="#0f7d9b", linestyle="--", label="random", alpha=0.5)
         ax.grid(False)
@@ -68,7 +74,7 @@ def validate_multiple_predictors_and_subsets_auboc10(s, df_set, logging):
 
         auboc_mean_df.plot(kind="bar", ax=ax, alpha=0.7)
 
-        ax.set_ylabel("performance value\n(AUBOC10)")
+        ax.set_ylabel("performance value\n(AUBOC)")
         ax.legend()  # (["sample size = 5", "sample size = 10"])
 
         fig.tight_layout()

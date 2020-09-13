@@ -118,7 +118,7 @@ def calc_best_overlap(acc_db, experiment_data, prediction_data):
     return odf
 
 
-def parse_BO_data_csv_to_excel(bo_data_csv, bocurve_data_xlsx, logging, predictor_name=""):
+def parse_BO_data_csv_to_excel(bo_data_csv, bocurve_data_xlsx, n_residues_AUBOC_validation, logging, predictor_name=""):
     """ Parses the rather clumsy original csv, and generates data for
     AUBOC curve, and also the mean observed-random scores for each sample (TMD).
     """
@@ -238,7 +238,11 @@ def parse_BO_data_csv_to_excel(bo_data_csv, bocurve_data_xlsx, logging, predicto
     #          CALCULATE MEAN VALUE AT EACH POSITION FOR ALL TMDS FOR BO-CURVE       #
     ##################################################################################
     mean_o_minus_r_df = df_o_minus_r.mean(axis=1).to_frame(name="mean_o_minus_r")
-    auboc = np.trapz(mean_o_minus_r_df["mean_o_minus_r"], mean_o_minus_r_df.index)
+
+    # apply cutoff (e.g. 5 residues for AUBOC5)
+    auboc_ser = mean_o_minus_r_df["mean_o_minus_r"].iloc[:n_residues_AUBOC_validation]
+
+    auboc = np.trapz(auboc_ser, auboc_ser.index)
 
     logging.info("---{: >24} mean_AUBOC({:.2f}) n={} ---".format(predictor_name, auboc, df_o_minus_r.shape[1]))
 

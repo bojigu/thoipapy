@@ -17,7 +17,7 @@ def fig_plot_BOcurve_mult_train_datasets(s):
     Takes the datasets listed in settings under "train_datasets" and "test_datasets"
     and plots the BO-curve of each combination in a single figure.
 
-    The Area Under the BO Curve for a sample size of 0 to 10 (AUBOC10) is shown in the legend.
+    The Area Under the BO Curve for a sample size of 0 to 10 (AUBOC) is shown in the legend.
 
     Currently plots both the new and old performance method.
 
@@ -98,11 +98,15 @@ def plot_BOcurve(s, train_set_list, test_set_list, mult_THOIPA_dir, mult_testnam
 
             df["mean_"] = df.mean(axis=1)
 
+            # apply cutoff (e.g. 5 residues for AUBOC5)
+            auboc_ser = df["mean_"].iloc[:s["n_residues_AUBOC_validation"]]
+
             # use the composite trapezoidal rule to get the area under the curve
             # https://docs.scipy.org/doc/numpy-1.13.0/reference/generated/numpy.trapz.html
-            AUBOC10 = np.trapz(y=df["mean_"], x=df.index)
 
-            df["mean_"].plot(ax=ax, label="Test{}_Train{}(AUBOC10={:0.1f})".format(testsetname, trainsetname, AUBOC10))
+            AUBOC = np.trapz(y=auboc_ser, x=auboc_ser.index)
+
+            df["mean_"].plot(ax=ax, label="Test{}_Train{}(AUBOC={:0.1f})".format(testsetname, trainsetname, AUBOC))
 
     ax.set_xlabel("sample size")
     ax.set_ylabel("performance\n(observed overlap - random overlap)")
@@ -122,7 +126,7 @@ def compare_selected_predictors(s, logging):
     (e.g. ["Testset03_Trainset04.THOIPA","Testset03.LIPS"])
     and plots the BO-curves in a single figure.
 
-    The Area Under the BO Curve for a sample size of 0 to 10 (AUBOC10) is shown in the legend.
+    The Area Under the BO Curve for a sample size of 0 to 10 (AUBOC) is shown in the legend.
 
     Currently plots both the new and old performance method.
 
@@ -141,7 +145,7 @@ def compare_selected_predictors(s, logging):
     #plt.rcParams.update({'font.size': 7})
     logging.info("\n--------------- starting compare_selected_predictors ---------------\n")
     BO_curve_png: Union[Path, str] = Path(s["thoipapy_data_folder"]) / f"results/{s['setname']}/blindvalidation/compare_selected_predictors_BO_curve.png"
-    AUBOC10_bar_png: Union[Path, str] = Path(s["thoipapy_data_folder"]) / f"results/{s['setname']}/blindvalidation/compare_selected_predictors_AUBOC10_barchart.png"
+    AUBOC_bar_png: Union[Path, str] = Path(s["thoipapy_data_folder"]) / f"results/{s['setname']}/blindvalidation/compare_selected_predictors_AUBOC_barchart.png"
     ROC_png: Union[Path, str] = Path(s["thoipapy_data_folder"]) / f"results/{s['setname']}/blindvalidation/compare_selected_predictors_ROC.png"
 
     thoipapy.utils.make_sure_path_exists(BO_curve_png, isfile=True)
@@ -169,12 +173,16 @@ def compare_selected_predictors(s, logging):
 
         df["mean_"] = df.mean(axis=1)
 
+        # apply cutoff (e.g. 5 residues for AUBOC5)
+        auboc_ser = df["mean_"].iloc[:s["n_residues_AUBOC_validation"]]
+
         # use the composite trapezoidal rule to get the area under the curve
         # https://docs.scipy.org/doc/numpy-1.13.0/reference/generated/numpy.trapz.html
-        AUBOC10 = np.trapz(y=df["mean_"], x=df.index)
-        area_under_curve_dict[predictor_name] = AUBOC10
+        AUBOC = np.trapz(y=auboc_ser, x=auboc_ser.index)
 
-        df["mean_"].plot(ax=ax, label="{}(AUBOC10={:0.1f})".format(predictor_name, AUBOC10))
+        area_under_curve_dict[predictor_name] = AUBOC
+
+        df["mean_"].plot(ax=ax, label="{}(AUBOC={:0.1f})".format(predictor_name, AUBOC))
 
     ax.set_xlabel("sample size")
     ax.set_ylabel("performance\n(observed overlap - random overlap)")
@@ -186,14 +194,14 @@ def compare_selected_predictors(s, logging):
     #fig.savefig(thoipapy.utils.pdf_subpath(BO_curve_png))
 
     plt.close("all")
-    AUBOC10_ser = pd.Series(area_under_curve_dict).sort_index()
+    AUBOC_ser = pd.Series(area_under_curve_dict).sort_index()
     figsize = np.array([3.42, 3.42]) * 2 # DOUBLE the real size, due to problems on Bo computer with fontsizes
     fig, ax = plt.subplots(figsize=figsize)
-    AUBOC10_ser.plot(ax=ax, kind="bar")
-    ax.set_ylabel("performance (AUBOC10)")
+    AUBOC_ser.plot(ax=ax, kind="bar")
+    ax.set_ylabel("performance (AUBOC)")
     fig.tight_layout()
-    fig.savefig(AUBOC10_bar_png, dpi=240)
-    #fig.savefig(thoipapy.utils.pdf_subpath(AUBOC10_bar_png))
+    fig.savefig(AUBOC_bar_png, dpi=240)
+    #fig.savefig(thoipapy.utils.pdf_subpath(AUBOC_bar_png))
 
     plt.close("all")
 

@@ -80,7 +80,7 @@ def validate_THOIPA_for_testset_trainset_combination(s, test_set_list, train_set
 
             bocurve_data_xlsx = Path(s["thoipapy_data_folder"]) / f"results/{testsetname}/blindvalidation/thoipa.train{trainsetname}/bocurve_data.xlsx"
             BO_linechart_png = Path(s["thoipapy_data_folder"]) / f"results/{testsetname}/blindvalidation/thoipa.train{trainsetname}/BO_linechart.png"
-            BO_barchart_png = Path(s["thoipapy_data_folder"]) / f"results/{testsetname}/blindvalidation/thoipa.train{trainsetname}/AUBOC10_barchart.png"
+            BO_barchart_png = Path(s["thoipapy_data_folder"]) / f"results/{testsetname}/blindvalidation/thoipa.train{trainsetname}/AUBOC_barchart.png"
 
             thoipapy.utils.make_sure_path_exists(bocurve_data_xlsx, isfile=True)
 
@@ -154,9 +154,9 @@ def validate_THOIPA_for_testset_trainset_combination(s, test_set_list, train_set
             THOIPA_BO_data_df.to_csv(THOIPA_BO_curve_data_csv)
 
             #THOIPA_linechart_mean_obs_and_rand = analyse_bo_curve_underlying_data(THOIPA_BO_curve_data_csv, BO_curve_folder, names_excel_path)
-            parse_BO_data_csv_to_excel(THOIPA_BO_curve_data_csv, bocurve_data_xlsx, logging)
+            parse_BO_data_csv_to_excel(THOIPA_BO_curve_data_csv, bocurve_data_xlsx, s["n_residues_AUBOC_validation"], logging)
             AUC_ser = pd.Series(xv_dict_THOIPA[acc_db]["roc_auc"])
-            AUBOC10 = save_BO_linegraph_and_barchart(s, bocurve_data_xlsx, BO_linechart_png, BO_barchart_png, namedict, logging, AUC_ser)
+            AUBOC = save_BO_linegraph_and_barchart(s, bocurve_data_xlsx, BO_linechart_png, BO_barchart_png, namedict, logging, AUC_ser)
 
             if "you_want_more_details" == "TRUE":
                 other_figs_path: Union[Path, str] = Path(s["thoipapy_data_folder"]) / f"results/{s['setname']}/crossvalidation/other_figs"
@@ -183,7 +183,7 @@ def validate_THOIPA_for_testset_trainset_combination(s, test_set_list, train_set
 
             create_ROC_fig_for_testset_trainset_combination(THOIPA_ROC_pkl)
 
-            logging.info("test{}_train{} AUC({:.03f}), AUBOC10({:.2f}). ({})".format(testsetname, trainsetname, mean_roc_auc, AUBOC10, BO_barchart_png))
+            logging.info("test{}_train{} AUC({:.03f}), AUBOC({:.2f}). ({})".format(testsetname, trainsetname, mean_roc_auc, AUBOC, BO_barchart_png))
 
 
 def validate_LIPS_for_testset(s, logging, LIPS_name="LIPS_LE", pred_col="LIPS_L*E"):
@@ -206,7 +206,7 @@ def validate_LIPS_for_testset(s, logging, LIPS_name="LIPS_LE", pred_col="LIPS_L*
         thoipapy.utils.make_sure_path_exists(LIPS_BO_curve_data_csv, isfile=True)
         bocurve_data_xlsx = os.path.join(BO_curve_folder, "data", "bocurve_data.xlsx")
         BO_linechart_png = os.path.join(BO_curve_folder, "BO_linechart.png")
-        BO_barchart_png = os.path.join(BO_curve_folder, "AUBOC10_barchart.png")
+        BO_barchart_png = os.path.join(BO_curve_folder, "AUBOC_barchart.png")
         thoipapy.utils.make_sure_path_exists(bocurve_data_xlsx, isfile=True)
 
         testset_path = thoipapy.common.get_path_of_protein_set(testsetname, s["sets_folder"])
@@ -283,9 +283,9 @@ def validate_LIPS_for_testset(s, logging, LIPS_name="LIPS_LE", pred_col="LIPS_L*
         #LIPS_linechart_mean_obs_and_rand = analyse_bo_curve_underlying_data(LIPS_BO_curve_data_csv, BO_curve_folder, names_excel_path)
 
         #parse_BO_data_csv_to_excel(LIPS_BO_curve_data_csv, BO_curve_folder, names_excel_path)
-        parse_BO_data_csv_to_excel(LIPS_BO_curve_data_csv, bocurve_data_xlsx, logging)
+        parse_BO_data_csv_to_excel(LIPS_BO_curve_data_csv, bocurve_data_xlsx, s["n_residues_AUBOC_validation"], logging)
         AUC_ser = pd.Series(xv_dict_LIPS[acc_db]["roc_auc"])
-        AUBOC10 = save_BO_linegraph_and_barchart(s, bocurve_data_xlsx, BO_linechart_png, BO_barchart_png, namedict, logging, AUC_ser)
+        AUBOC = save_BO_linegraph_and_barchart(s, bocurve_data_xlsx, BO_linechart_png, BO_barchart_png, namedict, logging, AUC_ser)
 
         if "you_want_more_details" == "TRUE":
             other_figs_path: Union[Path, str] = Path(s["thoipapy_data_folder"]) / f"results/{s['setname']}/crossvalidation/other_figs"
@@ -312,7 +312,7 @@ def validate_LIPS_for_testset(s, logging, LIPS_name="LIPS_LE", pred_col="LIPS_L*
 
         create_ROC_fig_for_testset_trainset_combination(LIPS_ROC_pkl)
 
-        logging.info("test{}.{} AUC({:.03f}), AUBOC10({:.2f}). ({})".format(testsetname, LIPS_name, mean_roc_auc, AUBOC10, BO_barchart_png))
+        logging.info("test{}.{} AUC({:.03f}), AUBOC({:.2f}). ({})".format(testsetname, LIPS_name, mean_roc_auc, AUBOC, BO_barchart_png))
 
 
 def create_ROC_fig_for_testset_trainset_combination(THOIPA_ROC_pkl):

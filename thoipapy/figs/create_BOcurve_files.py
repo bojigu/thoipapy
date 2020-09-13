@@ -21,20 +21,20 @@ def save_BO_linegraph_and_barchart(s, bocurve_data_xlsx, BO_linechart_png, BO_ba
 
     #######################################################################################################
     #                                                                                                     #
-    #               Create a dataframe with AUBOC10 and AUC for individual protein (df_valid_indiv)       #
+    #               Create a dataframe with AUBOC and AUC for individual protein (df_valid_indiv)       #
     #                                                                                                     #
     #######################################################################################################
-    # load AUBOC10 values as a series
+    # load AUBOC values as a series
     mean_o_minus_r_by_sample_ser = pd.read_excel(bocurve_data_xlsx, sheet_name="mean_o_minus_r_by_sample", index_col=0)["mean_o_minus_r_by_sample"]
     # select sample sizes 5 and 10
     df_valid_indiv = df_o_minus_r.loc[[5, 10], :].T.copy()
-    df_valid_indiv["AUBOC10"] = mean_o_minus_r_by_sample_ser
+    df_valid_indiv["AUBOC"] = mean_o_minus_r_by_sample_ser
     df_valid_indiv["ROC AUC"] = AUC_ser
-    df_valid_indiv.sort_values("AUBOC10", axis=0, ascending=False, inplace=True)
+    df_valid_indiv.sort_values("AUBOC", axis=0, ascending=False, inplace=True)
 
     """ df_valid_indiv should now have the results from BO curve and ROC for each protein
     
-                      AUBOC10  sample size 5  sample size 10   ROC AUC
+                      AUBOC  sample size 5  sample size 10   ROC AUC
     3ij4_A-crystal  17.456522       1.913043        1.652174  0.714286
     4wit_A-crystal  16.620000       2.000000        2.000000  0.622807
     Q08345-ETRA     16.571429       2.809524        2.238095  0.842593
@@ -44,7 +44,7 @@ def save_BO_linegraph_and_barchart(s, bocurve_data_xlsx, BO_linechart_png, BO_ba
 
     #######################################################################################################
     #                                                                                                     #
-    #                                plot correlation between AUBOC10 and ROC                             #
+    #                                plot correlation between AUBOC and ROC                             #
     #                                                                                                     #
     #######################################################################################################
     # BO_barchart_png
@@ -52,24 +52,24 @@ def save_BO_linegraph_and_barchart(s, bocurve_data_xlsx, BO_linechart_png, BO_ba
     #plt.rcParams.update({'font.size': 8})
     figsize = np.array([3.42, 3.42]) * 2 # DOUBLE the real size, due to problems on Bo computer with fontsizes
     fig, ax = plt.subplots(figsize=figsize)
-    #df_valid_indiv_scatter = df_valid_indiv[["AUBOC10", "ROC AUC"]]
-    df_valid_indiv.plot(kind="scatter", ax=ax, x="AUBOC10", y="ROC AUC", alpha=0.7)
+    #df_valid_indiv_scatter = df_valid_indiv[["AUBOC", "ROC AUC"]]
+    df_valid_indiv.plot(kind="scatter", ax=ax, x="AUBOC", y="ROC AUC", alpha=0.7)
 
     # calculate linear regression for fitted line
-    slope, intercept, r_value, p_value, std_err = linregress(df_valid_indiv["AUBOC10"], df_valid_indiv["ROC AUC"])
+    slope, intercept, r_value, p_value, std_err = linregress(df_valid_indiv["AUBOC"], df_valid_indiv["ROC AUC"])
     #fit_fn = np.poly1d(linear_regression)
 
     #slope, intercept, r_value, p_value, std_err = scipy.stats.linregress(x, y)
-    x_first_last_dp = np.array([df_valid_indiv["AUBOC10"].min(), df_valid_indiv["AUBOC10"].max()])
+    x_first_last_dp = np.array([df_valid_indiv["AUBOC"].min(), df_valid_indiv["AUBOC"].max()])
     y_fitted = x_first_last_dp * slope + intercept
     ax.plot(x_first_last_dp, y_fitted, label="$R^2$ : {:.2f}".format(r_value**2))
 
-    ax.set_xlabel("AUBOC10")
+    ax.set_xlabel("AUBOC")
     ax.set_ylabel("ROC AUC")
     ax.legend()
     fig.tight_layout()
     ax.grid(False)
-    #BO_barchart_png = os.path.join(BO_curve_folder, "AUBOC10_barchart.png")
+    #BO_barchart_png = os.path.join(BO_curve_folder, "AUBOC_barchart.png")
 
     fig.savefig(BO_scatter_png, dpi=240)
 
@@ -81,13 +81,13 @@ def save_BO_linegraph_and_barchart(s, bocurve_data_xlsx, BO_linechart_png, BO_ba
     BO_data_valid_indiv_csv: Union[Path, str] = Path(s["thoipapy_data_folder"]) / f"results/{s['setname']}/crossvalidation/data/{s['setname']}_BO_curve_data_valid_indiv.csv"
     make_sure_path_exists(bocurve_data_xlsx, isfile=True)
 
-    df_valid_indiv = df_valid_indiv.reindex(columns=["AUBOC10", 5, 10, "ROC AUC"])
-    df_valid_indiv.columns = ["AUBOC10", "sample size 5", "sample size 10", "ROC AUC"]
+    df_valid_indiv = df_valid_indiv.reindex(columns=["AUBOC", 5, 10, "ROC AUC"])
+    df_valid_indiv.columns = ["AUBOC", "sample size 5", "sample size 10", "ROC AUC"]
 
     df_valid_indiv.to_csv(BO_data_valid_indiv_csv)
 
-    """ df_valid_indiv is now normalised within each column, and sorted by AUBOC10
-                          AUBOC10  sample size 5  sample size 10   ROC AUC
+    """ df_valid_indiv is now normalised within each column, and sorted by AUBOC
+                          AUBOC  sample size 5  sample size 10   ROC AUC
     3ij4_A-crystal       1.010000       0.789166        0.727758  0.724139
     4wit_A-crystal       0.980317       0.810587        0.793133  0.594927
     DDR1 [Q08345-ETRA]   0.978593       1.010000        0.837883  0.905371
@@ -127,15 +127,19 @@ def save_BO_linegraph_and_barchart(s, bocurve_data_xlsx, BO_linechart_png, BO_ba
         df_o_over_r_mean = df_o_over_r.T.mean()
     df_o_minus_r.columns = pd.Series(df_o_minus_r.columns).replace(namedict)
     df_o_minus_r_mean = df_o_minus_r.T.mean()
+
+    # apply cutoff (e.g. 5 residues for AUBOC5)
+    auboc_ser = df_o_minus_r_mean.iloc[:s["n_residues_AUBOC_validation"]]
+
     # get the area under the curve
-    AUBOC10 = np.trapz(y=df_o_minus_r_mean, x=df_o_minus_r_mean.index)
+    AUBOC = np.trapz(y=auboc_ser, x=auboc_ser.index)
 
     # BO_linechart_png
     plt.close("all")
     figsize = np.array([3.42, 3.42]) * 2 # DOUBLE the real size, due to problems on Bo computer with fontsizes
     fig, ax = plt.subplots(figsize=figsize)
 
-    df_o_minus_r_mean.plot(ax=ax, color="#0f7d9b", linestyle="-", label="prediction (AUBOC10 : {:0.2f}".format(AUBOC10))
+    df_o_minus_r_mean.plot(ax=ax, color="#0f7d9b", linestyle="-", label="prediction (AUBOC : {:0.2f}".format(AUBOC))
     ax.plot([1, 10], [0, 0], color="#0f7d9b", linestyle="--", label="random", alpha=0.5)
 
     if plot_o_over_r:
@@ -161,7 +165,7 @@ def save_BO_linegraph_and_barchart(s, bocurve_data_xlsx, BO_linechart_png, BO_ba
     fig.tight_layout()
     fig.savefig(BO_linechart_png, dpi=140)
 
-    return AUBOC10
+    return AUBOC
 
 
 def save_extra_BO_figs(bocurve_data_xlsx, other_figs_path):

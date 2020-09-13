@@ -256,7 +256,7 @@ def run_LOO_validation(s: dict, df_set: pd.DataFrame, logging):
     #names_excel_path = os.path.join(s["dropbox_dir"], "protein_names.xlsx")
 
     #linechart_mean_obs_and_rand = thoipapy.figs.Create_Bo_Curve_files.analyse_bo_curve_underlying_data(bocurve_data_raw_csv, crossvalidation_folder, names_excel_path)
-    thoipapy.validation.bocurve.parse_BO_data_csv_to_excel(bocurve_data_raw_csv, bocurve_data_xlsx, logging)
+    thoipapy.validation.bocurve.parse_BO_data_csv_to_excel(bocurve_data_raw_csv, bocurve_data_xlsx, s["n_residues_AUBOC_validation"], logging)
 
     logging.info('{} LOO crossvalidation. Time taken = {:.2f}.'.format(s["setname"], duration))
     logging.info('---ROC_AUC(mean each protein : {:.2f})(from joined data {:.2f})---'.format(mean_roc_auc_all_prot, mean_roc_auc_from_joined_data))
@@ -390,7 +390,7 @@ def create_LOO_validation_fig(s, df_set, logging):
     AUC_csv = os.path.join(s["thoipapy_data_folder"], "results", s["setname"], "crossvalidation", "data", "{}_LOO_AUC.csv".format(s["setname"]))
     bocurve_data_xlsx: Union[Path, str] = Path(s["thoipapy_data_folder"]) / f"results/{s['setname']}/crossvalidation/data/{s['setname']}_thoipa_loo_bo_curve_data.xlsx"
     BO_linechart_png: Union[Path, str] = Path(s["thoipapy_data_folder"]) / f"results/{s['setname']}/crossvalidation/data/{s['setname']}_BO_linechart.png"
-    BO_barchart_png: Union[Path, str] = Path(s["thoipapy_data_folder"]) / f"results/{s['setname']}/crossvalidation/data/{s['setname']}_LOO_AUBOC10_barchart.png"
+    BO_barchart_png: Union[Path, str] = Path(s["thoipapy_data_folder"]) / f"results/{s['setname']}/crossvalidation/data/{s['setname']}_LOO_AUBOC_barchart.png"
     other_figs_path: Union[Path, str] = Path(s["thoipapy_data_folder"]) / f"results/{s['setname']}/crossvalidation/other_figs"
 
     names_excel_path = os.path.join(s["dropbox_dir"], "protein_names.xlsx")
@@ -432,17 +432,17 @@ def create_LOO_validation_fig(s, df_set, logging):
     figsize = np.array([3.42, 3.42]) * 2 # DOUBLE the real size, due to problems on Bo computer with fontsizes
     fig, ax = plt.subplots(figsize=figsize)
     AUC_ser.plot(ax=ax, kind="bar")
-    ax.set_ylabel("performance (AUBOC10)")
+    ax.set_ylabel("performance (AUBOC)")
     fig.tight_layout()
     fig.savefig(LOO_crossvalidation_AUC_bar_png, dpi=240)
     #fig.savefig(thoipapy.utils.pdf_subpath(LOO_crossvalidation_AUC_bar_png))
 
-    AUBOC10 = thoipapy.figs.create_BOcurve_files.save_BO_linegraph_and_barchart(s, bocurve_data_xlsx, BO_linechart_png, BO_barchart_png, namedict, logging, AUC_ser)
+    AUBOC = thoipapy.figs.create_BOcurve_files.save_BO_linegraph_and_barchart(s, bocurve_data_xlsx, BO_linechart_png, BO_barchart_png, namedict, logging, AUC_ser)
 
     create_other_figs = False
     if create_other_figs:
         thoipapy.utils.make_sure_path_exists(other_figs_path)
         thoipapy.figs.create_BOcurve_files.save_extra_BO_figs(bocurve_data_xlsx, other_figs_path)
 
-    logging.info('{} LOO crossvalidation. AUBOC10({:.2f}).'.format(s["setname"], AUBOC10))
+    logging.info('{} LOO crossvalidation. AUBOC({:.2f}).'.format(s["setname"], AUBOC))
     logging.info("create_LOO_validation_fig finished ({})".format(LOO_crossvalidation_AUC_bar_png))

@@ -37,11 +37,11 @@ def collect_indiv_validation_data(s, df_set, logging, namedict, predictors, THOI
     ROC_AUC_df = pd.DataFrame()
     PR_AUC_df = pd.DataFrame()
     mean_o_minus_r_by_sample_df = pd.DataFrame()
-    AUBOC10_from_complete_data_ser = pd.Series()
+    AUBOC_from_complete_data_ser = pd.Series()
 
     AUC_AUBOC_name_list = []
     linechar_name_list = []
-    AUBOC10_list = []
+    AUBOC_list = []
     df_o_minus_r_mean_df = pd.DataFrame()
     roc_auc_mean_list=[]
     roc_auc_std_list = []
@@ -66,7 +66,7 @@ def collect_indiv_validation_data(s, df_set, logging, namedict, predictors, THOI
         BO_curve_data_csv = Path(s["thoipapy_data_folder"]) / f"results/{s['setname']}/crossvalidation/indiv_validation/bocurve/data/{predictor}/BO_Curve_data.csv"
         bocurve_data_xlsx = Path(s["thoipapy_data_folder"]) / f"results/{s['setname']}/crossvalidation/indiv_validation/bocurve/data/{predictor}/bocurve_data.xlsx"
         BO_linechart_png = Path(s["thoipapy_data_folder"]) / f"results/{s['setname']}/crossvalidation/indiv_validation/bocurve/data/{predictor}/BO_linechart.png"
-        BO_barchart_png = Path(s["thoipapy_data_folder"]) / f"results/{s['setname']}/crossvalidation/indiv_validation/bocurve/data/{predictor}/AUBOC10_barchart.png"
+        BO_barchart_png = Path(s["thoipapy_data_folder"]) / f"results/{s['setname']}/crossvalidation/indiv_validation/bocurve/data/{predictor}/AUBOC_barchart.png"
         df_o_minus_r_mean_csv = Path(s["thoipapy_data_folder"]) / f"results/{s['setname']}/crossvalidation/indiv_validation/bocurve/data/{predictor}/df_o_minus_r_mean.csv"
         thoipapy.utils.make_sure_path_exists(auc_pkl, isfile=True)
         thoipapy.utils.make_sure_path_exists(BO_curve_data_csv, isfile=True)
@@ -121,7 +121,7 @@ def collect_indiv_validation_data(s, df_set, logging, namedict, predictors, THOI
         BO_data_df.to_csv(BO_curve_data_csv)
         # parse BO data csv
         # print out mean values
-        thoipapy.validation.bocurve.parse_BO_data_csv_to_excel(BO_curve_data_csv, bocurve_data_xlsx, logging, predictor)
+        thoipapy.validation.bocurve.parse_BO_data_csv_to_excel(BO_curve_data_csv, bocurve_data_xlsx, s["n_residues_AUBOC_validation"], logging, predictor)
 
         # ROC AUC validation
         ROC_AUC_ser = pd.Series(ROC_AUC_dict)
@@ -133,19 +133,24 @@ def collect_indiv_validation_data(s, df_set, logging, namedict, predictors, THOI
         PR_AUC_ser = pd.Series(PR_AUC_dict)
         PR_AUC_ser.sort_values(inplace=True, ascending=False)
 
-        # BO curve AUBOC10 validation
+        # BO curve AUBOC validation
         mean_o_minus_r_by_sample_ser = pd.read_excel(bocurve_data_xlsx, sheet_name="mean_o_minus_r_by_sample", index_col=0)["mean_o_minus_r_by_sample"].copy()
         df_o_minus_r = pd.read_excel(bocurve_data_xlsx, sheet_name="df_o_minus_r", index_col=0)
         df_o_minus_r.columns = pd.Series(df_o_minus_r.columns).replace(namedict)
         df_o_minus_r_mean = df_o_minus_r.T.mean()
         #df_o_minus_r_mean_df= pd.concat([df_o_minus_r_mean_df,df_o_minus_r_mean],axis=1, join="outer")
         df_o_minus_r_mean_df[predictor] = df_o_minus_r_mean
-        AUBOC10 = np.trapz(y=df_o_minus_r_mean, x=df_o_minus_r_mean.index)
-        AUBOC10_list.append(AUBOC10)
-        AUBOC10_from_complete_data_ser[predictor] = AUBOC10
+
+        # apply cutoff (e.g. 5 residues for AUBOC5)
+        auboc_ser = df_o_minus_r_mean.iloc[:s["n_residues_AUBOC_validation"]]
+
+        AUBOC = np.trapz(y=auboc_ser, x=auboc_ser.index)
+
+        AUBOC_list.append(AUBOC)
+        AUBOC_from_complete_data_ser[predictor] = AUBOC
         linechar_name_list.append(predictor)
         AUC_AUBOC_name_list.append("{}-AUC".format(predictor))
-        AUC_AUBOC_name_list.append("{}-AUBOC10".format(predictor))
+        AUC_AUBOC_name_list.append("{}-AUBOC".format(predictor))
         thoipapy.figs.create_BOcurve_files.save_BO_linegraph_and_barchart(s, bocurve_data_xlsx, BO_linechart_png, BO_barchart_png, namedict,
                                                                           logging, ROC_AUC_ser)
 
@@ -157,10 +162,10 @@ def collect_indiv_validation_data(s, df_set, logging, namedict, predictors, THOI
     means_df["ROC_AUC"] = ROC_AUC_df.mean()
     means_df["PR_AUC"] = PR_AUC_df.mean()
     means_df["mean_o_minus_r_by_sample"] = mean_o_minus_r_by_sample_df.mean()
-    means_df["AUBOC10_from_complete_data"] = AUBOC10_from_complete_data_ser
+    means_df["AUBOC_from_complete_data"] = AUBOC_from_complete_data_ser
 
     """ means_df looks like this:
-                          ROC_AUC    PR_AUC   AUBOC10
+                          ROC_AUC    PR_AUC   AUBOC
     THOIPA_5_LOO         0.629557  0.505823  1.202355
     PREDDIMER            0.566582  0.416761  0.515193
     TMDOCK               0.598387  0.421462  0.666720
@@ -184,7 +189,7 @@ def collect_indiv_validation_data(s, df_set, logging, namedict, predictors, THOI
 
         ROC_AUC_df.to_excel(writer, sheet_name="ROC_AUC_indiv")
         PR_AUC_df.to_excel(writer, sheet_name="PR_AUC_indiv")
-        #mean_o_minus_r_by_sample_df.to_excel(writer, sheet_name="BO_AUBOC10_indiv")
+        #mean_o_minus_r_by_sample_df.to_excel(writer, sheet_name="BO_AUBOC_indiv")
         mean_o_minus_r_by_sample_df.to_excel(writer, sheet_name="mean_o_minus_r_by_sample")
 
         df_o_minus_r_mean_df.to_excel(writer, sheet_name="BO_o_minus_r")
@@ -199,9 +204,9 @@ def collect_indiv_validation_data(s, df_set, logging, namedict, predictors, THOI
             df_THOIPA_vs_others.to_excel(writer, sheet_name="THOIPA_vs_others")
 
         # #sys.stdout.write(roc_auc_mean_list)
-        # AUBOC10_mean_df = pd.DataFrame.from_records([AUBOC10_list], columns=linechar_name_list)
-        # #AUBOC10_mean_df.to_csv(mean_AUBOC_file)
-        # AUBOC10_mean_df.to_excel(writer, sheet_name="AUBOC10_mean")
+        # AUBOC_mean_df = pd.DataFrame.from_records([AUBOC_list], columns=linechar_name_list)
+        # #AUBOC_mean_df.to_csv(mean_AUBOC_file)
+        # AUBOC_mean_df.to_excel(writer, sheet_name="AUBOC_mean")
         # df_o_minus_r_mean_df.columns = linechar_name_list
         # #ROC_AUC_df.columns = AUC_AUBOC_name_list
         # ROC_AUC_df.index.name = "acc_db"
@@ -229,7 +234,7 @@ def create_indiv_validation_figs(s, logging, namedict, predictors, THOIPA_predic
 
     indiv_ROC_AUC_barchart_png: Union[Path, str] = indiv_validation_figs_dir / "indiv_ROC_AUC_barchart.png"
     indiv_PR_AUC_barchart_png: Union[Path, str] = indiv_validation_figs_dir / "indiv_PR_AUC_barchart.png"
-    AUBOC10_barchart_png: Union[Path, str] = indiv_validation_figs_dir / "indiv_AUBOC10_barchart.png"
+    AUBOC_barchart_png: Union[Path, str] = indiv_validation_figs_dir / "indiv_AUBOC_barchart.png"
     BOCURVE_linechart_png: Union[Path, str] = indiv_validation_figs_dir / "BOcurve_linechart.png"
     mean_ROC_AUC_barchart_png: Union[Path, str] = indiv_validation_figs_dir / "mean_ROC_AUC_barchart.png"
     mean_PR_AUC_barchart_png: Union[Path, str] = indiv_validation_figs_dir / "mean_PR_AUC_barchart.png"
@@ -243,7 +248,7 @@ def create_indiv_validation_figs(s, logging, namedict, predictors, THOIPA_predic
 
     create_ROC_AUC_barchart(ROC_AUC_df, indiv_ROC_AUC_barchart_png, namedict, THOIPA_predictor_name)
     create_PR_AUC_barchart(PR_AUC_df, indiv_PR_AUC_barchart_png, namedict, THOIPA_predictor_name)
-    create_barchart_o_minus_r_bocurve_each_TMD_indiv(mean_o_minus_r_by_sample_df, AUBOC10_barchart_png, namedict, THOIPA_predictor_name)
+    create_barchart_o_minus_r_bocurve_each_TMD_indiv(mean_o_minus_r_by_sample_df, AUBOC_barchart_png, namedict, THOIPA_predictor_name)
 
     create_BOcurve_linechart(df_o_minus_r_mean_df, BOCURVE_linechart_png)
 
@@ -389,8 +394,8 @@ def create_BOcurve_linechart(df_o_minus_r_mean_df, BOCURVE_linechart_png):
     color_list = 'rgbk'
     fig, ax = plt.subplots(figsize=figsize)
     # for i,column in enumerate(df_o_minus_r_mean_df.columns):
-    #     # df_o_minus_r_mean_df.plot(ax=ax, color="#0f7d9b", linestyle="-", label="prediction (AUBOC10 : {:0.2f}".format(AUBOC10))
-    #     label_name = "{}(AUBOC:{:.2f})".format(linechar_name_list[i] ,AUBOC10_list[i])
+    #     # df_o_minus_r_mean_df.plot(ax=ax, color="#0f7d9b", linestyle="-", label="prediction (AUBOC : {:0.2f}".format(AUBOC))
+    #     label_name = "{}(AUBOC:{:.2f})".format(linechar_name_list[i] ,AUBOC_list[i])
     #     df_o_minus_r_mean_df[column].plot(ax=ax,  linestyle="-",label=label_name, color = color_list[i])
 
     df_o_minus_r_mean_df.plot(ax=ax)
@@ -504,27 +509,27 @@ def create_PR_AUC_barchart(PR_AUC_df, indiv_PR_AUC_barchart_png, namedict, THOIP
     plt.close()
 
 
-def create_barchart_o_minus_r_bocurve_each_TMD_indiv(mean_o_minus_r_by_sample_df, AUBOC10_barchart_png, namedict, THOIPA_predictor_name):
-    #AUC_AUBOC_df = AUBOC10_df.T.sort_values(by=[THOIPA_predictor_name], ascending=False)
+def create_barchart_o_minus_r_bocurve_each_TMD_indiv(mean_o_minus_r_by_sample_df, AUBOC_barchart_png, namedict, THOIPA_predictor_name):
+    #AUC_AUBOC_df = AUBOC_df.T.sort_values(by=[THOIPA_predictor_name], ascending=False)
     # plt.rcParams.update({'font.size': 8})
     # figsize = np.array([3.42, 3.42]) * 2  # DOUBLE the real size, due to problems on Bo computer with fontsizes
     figsize = np.array([9, 6])  # DOUBLE the real size, due to problems on Bo computer with fontsizes
 
     fig, ax = plt.subplots(figsize=figsize)
     ## replace the protein names
-    #AUBOC10_df.index = pd.Series(AUBOC10_df.index).replace(namedict)
+    #AUBOC_df.index = pd.Series(AUBOC_df.index).replace(namedict)
     # replace old "crystal" references with "X-ray"
     mean_o_minus_r_by_sample_df.index = pd.Series(mean_o_minus_r_by_sample_df.index).replace("crystal", "X-ray")
     mean_o_minus_r_by_sample_df.sort_values([THOIPA_predictor_name], ascending=False, inplace=True)
     mean_o_minus_r_by_sample_df.plot(kind="bar", ax=ax, alpha=0.7)
 
-    ax.set_ylabel("performance (AUBOC10))")
+    ax.set_ylabel("performance (AUBOC))")
     ax.legend()  # (["sample size = 5", "sample size = 10"])
 
     fig.tight_layout()
     ax.grid(False)
-    fig.savefig(AUBOC10_barchart_png, dpi=240)
-    #fig.savefig(AUBOC10_barchart_png[:-4] + ".pdf")
+    fig.savefig(AUBOC_barchart_png, dpi=240)
+    #fig.savefig(AUBOC_barchart_png[:-4] + ".pdf")
 
 
 def merge_4_files_alignment_method_deprecated(acc, full_seq, train_data_file, THOIPA_prediction_file, PREDDIMER_prediction_file, TMDOCK_prediction_file, merged_data_xlsx_path, columns_kept_in_combined_file):

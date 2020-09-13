@@ -188,7 +188,7 @@ def run_LOO_validation_od_non_multiprocessing(s, df_set, logging):
     names_excel_path = os.path.join(s["dropbox_dir"], "protein_names.xlsx")
 
     #linechart_mean_obs_and_rand = thoipapy.figs.Create_Bo_Curve_files.analyse_bo_curve_underlying_data(bocurve_data_raw_csv, crossvalidation_folder, names_excel_path)
-    thoipapy.validation.bocurve.parse_BO_data_csv_to_excel(bocurve_data_raw_csv, bocurve_data_xlsx, logging)
+    thoipapy.validation.bocurve.parse_BO_data_csv_to_excel(bocurve_data_raw_csv, bocurve_data_xlsx, s["n_residues_AUBOC_validation"], logging)
 
     logging.info('{} LOO crossvalidation. Time taken = {:.2f}.'.format(s["setname"], duration))
     logging.info('---AUC({:.2f})---'.format(mean_roc_auc))
@@ -383,7 +383,7 @@ def create_ROC_AUC_barchart_DEPRECATED(ROC_AUC_df, ROC_AUC_barchart_png, ROC_AUC
     THOIPA_best_setnumber = int(THOIPA_best_set[3:])
     #colname = "THOIPA_5_LOOAUC"
     THOIPA_x_LOOAUC = "THOIPA_{}_LOO-AUC".format(THOIPA_best_setnumber)
-    THOIPA_x_LOOAUBOC10 = "THOIPA_{}_LOO-AUBOC10".format(THOIPA_best_setnumber)
+    THOIPA_x_LOOAUBOC = "THOIPA_{}_LOO-AUBOC".format(THOIPA_best_setnumber)
     # auc_list = AUC_AUBOC_df.columns[[0, 2, 4, 6]]
     # bo_auc_list = AUC_AUBOC_df.columns[[1, 3, 5, 7]]
 
@@ -408,7 +408,7 @@ def create_ROC_AUC_barchart_DEPRECATED(ROC_AUC_df, ROC_AUC_barchart_png, ROC_AUC
     fig.savefig(ROC_AUC_barchart_png, dpi=240)
     fig.savefig(ROC_AUC_barchart_pdf, dpi=240)
 
-    AUC_AUBOC_df = AUC_AUBOC_df.sort_values(by=[THOIPA_x_LOOAUBOC10], ascending=False)
+    AUC_AUBOC_df = AUC_AUBOC_df.sort_values(by=[THOIPA_x_LOOAUBOC], ascending=False)
     plt.close("all")
     # plt.rcParams.update({'font.size': 8})
     #figsize = np.array([3.42, 3.42]) * 2  # DOUBLE the real size, due to problems on Bo computer with fontsizes
