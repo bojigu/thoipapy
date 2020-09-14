@@ -20,8 +20,6 @@ from thoipapy.utils import convert_truelike_to_bool, convert_falselike_to_bool
 #from thoipapy.utils import convert_truelike_to_bool, convert_falselike_to_bool
 
 
-
-
 def calculate_fasta_file_length(s):
     """calculate the protein sequence length
 

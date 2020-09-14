@@ -18,8 +18,6 @@ import warnings
 
 import thoipapy.experimental_data.add_experimental_data_to_train_set
 import thoipapy.feature_importance.mean_decrease_accuracy
-import thoipapy.feature_importance.mean_decrease_impurity
-import thoipapy.feature_importance.plots
 import thoipapy.features.physical_parameters
 import thoipapy.validation.gather
 from thoipapy.clustering.pairwise_aln_similarity_matrix import create_identity_matrix_from_protein_set

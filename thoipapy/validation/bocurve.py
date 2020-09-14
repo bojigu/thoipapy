@@ -118,7 +118,7 @@ def calc_best_overlap(acc_db, experiment_data, prediction_data):
     return odf
 
 
-def parse_BO_data_csv_to_excel(bo_data_csv, bocurve_data_xlsx, n_residues_AUBOC_validation, logging, predictor_name=""):
+def parse_BO_data_csv_to_excel(bo_data_csv, bocurve_data_xlsx, n_residues_AUBOC_validation, logging, predictor_name="", log_auboc=True):
     """ Parses the rather clumsy original csv, and generates data for
     AUBOC curve, and also the mean observed-random scores for each sample (TMD).
     """
@@ -244,7 +244,8 @@ def parse_BO_data_csv_to_excel(bo_data_csv, bocurve_data_xlsx, n_residues_AUBOC_
 
     auboc = np.trapz(auboc_ser, auboc_ser.index)
 
-    logging.info("---{: >24} mean_AUBOC({:.2f}) n={} ---".format(predictor_name, auboc, df_o_minus_r.shape[1]))
+    if log_auboc:
+        logging.info("---{: >24} mean_AUBOC({:.2f}) n={} ---".format(predictor_name, auboc, df_o_minus_r.shape[1]))
 
     #######################################################################################################
     #                     CALCULATE MEAN OBS-RAND FOR EACH SAMPLE(TMD) SEPARATELY                         #

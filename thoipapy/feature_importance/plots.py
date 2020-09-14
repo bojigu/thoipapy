@@ -3,6 +3,7 @@ from pathlib import Path
 import numpy as np
 import pandas as pd
 from matplotlib import pyplot as plt
+from thoipapy.utils import normalise_0_1
 
 import thoipapy.utils
 from thoipapy.ML_model.train_model import return_classifier_with_loaded_ensemble_parameters
@@ -26,6 +27,7 @@ def plot_feature_importance(s, logging):
     tuned_ensemble_parameters_csv = Path(s["thoipapy_data_folder"]) / f"results/{s['setname']}/train_data/04_tuned_ensemble_parameters.csv"
     # output
     variable_importance_png = Path(s["thoipapy_data_folder"]) / "results" / s["setname"] / "feat_imp/FigS17_BZ13_feature_importance.png"
+    variable_importance_xlsx = Path(s["thoipapy_data_folder"]) / "results" / s["setname"] / "feat_imp/FigS17_BZ13_feature_importance.xlsx"
 
     train_data_after_first_feature_seln_csv = Path(s["thoipapy_data_folder"]) / f"results/{s['setname']}/train_data/03_train_data_after_first_feature_seln.csv"
     df_data = pd.read_csv(train_data_after_first_feature_seln_csv, index_col=0)
@@ -44,6 +46,16 @@ def plot_feature_importance(s, logging):
     df["MDA_AUBOC"] = df_MDA["AUBOC"]
     df["MDA_PR_AUC"] = df_MDA["PR_AUC"]
     df.sort_values("MDA_AUBOC", ascending=False, inplace=True)
+
+    with pd.ExcelWriter(variable_importance_xlsx) as writer:
+        df.to_excel(writer, sheet_name="var_import")
+
+        df_norm = pd.DataFrame()
+        for col in df.columns:
+            df_norm[col] = normalise_0_1(df[col])[0]
+        df_norm.index = df.index
+        df_norm.to_excel(writer, sheet_name="var_import_norm")
+        writer.save()
 
     #min_max_scaler = MinMaxScaler()
     #x_scaled = min_max_scaler.fit_transform(df.values)
