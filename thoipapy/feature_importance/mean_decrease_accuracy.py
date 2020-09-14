@@ -9,6 +9,7 @@ import pandas as pd
 from sklearn.model_selection import StratifiedKFold
 
 import thoipapy.utils
+from thoipapy import utils
 from thoipapy.validation.auc import calc_PRAUC_ROCAUC_using_10F_validation
 from thoipapy.ML_model.train_model import return_classifier_with_loaded_ensemble_parameters
 from thoipapy.validation.bocurve import calc_best_overlap_from_selected_column_in_df, calc_best_overlap, parse_BO_data_csv_to_excel
@@ -171,16 +172,26 @@ def calc_feat_import_from_mean_decrease_accuracy(s, logging):
     df_grouped_feat["AUBOC"] = pd.Series(grouped_feat_decrease_AUBOC_dict)
     df_grouped_feat.sort_values("AUBOC", ascending=False, inplace=True)
 
+    df_grouped_feat_norm = pd.DataFrame()
+    for col in df_grouped_feat.columns:
+        df_grouped_feat_norm[col] = utils.normalise_0_1(df_grouped_feat[col])[0]
+
     df_single_feat = pd.DataFrame()
     df_single_feat["PR_AUC"] = pd.Series(single_feat_decrease_PR_AUC_dict)
     df_single_feat["ROC_AUC"] = pd.Series(single_feat_decrease_ROC_AUC_dict)
     df_single_feat["AUBOC"] = pd.Series(single_feat_decrease_AUBOC_dict)
     df_single_feat.sort_values("AUBOC", ascending=False, inplace=True)
 
+    df_single_feat_norm = pd.DataFrame()
+    for col in df_single_feat.columns:
+        df_single_feat_norm[col] = utils.normalise_0_1(df_single_feat[col])[0]
+
     writer = pd.ExcelWriter(feat_imp_MDA_xlsx)
 
     df_grouped_feat.to_excel(writer, sheet_name="grouped_feat")
+    df_grouped_feat_norm.to_excel(writer, sheet_name="grouped_feat_norm")
     df_single_feat.to_excel(writer, sheet_name="single_feat")
+    df_single_feat_norm.to_excel(writer, sheet_name="single_feat_norm")
 
     writer.save()
     writer.close()
