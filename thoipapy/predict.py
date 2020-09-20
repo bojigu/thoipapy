@@ -107,6 +107,7 @@ def run_THOIPA_prediction(protein_name, md5, TMD_seq, full_seq, out_dir, create_
     pssm_surr5_csv = os.path.join(datafiles_dir,"pssm_surr5.csv")
     lipo_csv = os.path.join(datafiles_dir,"lipo.csv")
     entropy_file = os.path.join(datafiles_dir,"entropy.csv")
+    rate4site_csv = os.path.join(datafiles_dir,"rate4site.csv")
     freecontact_file = os.path.join(datafiles_dir,"freecontact_out.csv")
     freecontact_parsed_csv = os.path.join(datafiles_dir,"freecontact_parsed.csv")
     relative_position_file = os.path.join(datafiles_dir,"relative_position.csv")
@@ -233,10 +234,11 @@ def run_THOIPA_prediction(protein_name, md5, TMD_seq, full_seq, out_dir, create_
     thoipapy.features.entropy.entropy_calculation(acc, path_uniq_TMD_seqs_for_PSSM_FREECONTACT, TMD_seq, entropy_file, logging)
 
     if "Windows" in platform.system():
-        logging.warning("\n Freecontact cannot be run in Windows! Skipping coevolution_calculation_with_freecontact."
-                         "For testing, copy file from Linux and rename to {}".format(freecontact_file))
+        logging.warning("\n Freecontact, CD-HIT and rate4site cannot be run in Windows! Skipping coevolution_calculation_with_freecontact and rate4site_calculation.\n"
+                        f"For testing, copy output files from Linux and rename to {freecontact_file} and {rate4site_csv}")
     else:
         thoipapy.features.freecontact.coevolution_calculation_with_freecontact(path_uniq_TMD_seqs_for_PSSM_FREECONTACT, freecontact_file, s["freecontact_dir"], logging)
+        thoipapy.features.rate4site.rate4site_calculation(TMD_seq, acc, path_uniq_TMD_seqs_surr5_for_LIPO, rate4site_csv, logging)
 
     thoipapy.features.freecontact.parse_freecontact_coevolution(acc, freecontact_file, freecontact_parsed_csv, TMD_start, TMD_end, logging)
 
@@ -248,11 +250,9 @@ def run_THOIPA_prediction(protein_name, md5, TMD_seq, full_seq, out_dir, create_
     thoipapy.features.motifs.motifs_from_seq(TMD_seq, TMD_seq_pl_surr, tm_surr_left, tm_surr_right, motifs_file, logging)
 
     database = "standalone_prediction"
-    #combine_all_features(acc, database, TMD_seq, feature_combined_file, entropy_file, pssm_csv, lipo_csv, freecontact_parsed_csv, relative_position_file, LIPS_parsed_csv,motifs_file, alignment_summary_csv, logging)
-    thoipapy.features.combine_features.combine_all_features(s, full_seq, acc, database, TMD_seq, TMD_start, feature_combined_file, entropy_file, pssm_csv,
+    thoipapy.features.combine_features.combine_all_features(s, full_seq, acc, database, TMD_seq, TMD_start, feature_combined_file, entropy_file, rate4site_csv, pssm_csv,
                                                             lipo_csv, freecontact_parsed_csv, relative_position_file, LIPS_parsed_csv, motifs_file,
                                                             alignment_summary_csv, full_seq_fasta_file, full_seq_phobius_output_file, logging)
-
     thoipapy.features.physical_parameters.add_physical_parameters_to_features(acc, feature_combined_file, logging)
 
     ###################################################################################################
@@ -272,7 +272,7 @@ def run_THOIPA_prediction(protein_name, md5, TMD_seq, full_seq, out_dir, create_
     df_out = pd.concat([df_data[cols_to_keep], df_ML_input], axis=1, join="outer")
 
     # load the trained machine learning model, saved in the thoipapy directory
-    machine_learning_model = os.path.join(thoipapy_module_path, "ML_model", "set{:02d}_ML_model.lpkl".format(set_number))
+    machine_learning_model = os.path.join(thoipapy_module_path, "ML_model", "THOIPA_trained_ML_model.lpkl")
     fit = joblib.load(machine_learning_model)
 
     # get prediction values for each residue
