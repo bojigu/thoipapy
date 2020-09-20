@@ -48,7 +48,7 @@ def rate4site_calculation_mult_prot(s, df_set, logging):
     logging.info("rate4site_calculation finished")
 
 
-def rate4site_calculation(TMD_seq: str, acc: str, path_uniq_TMD_seqs_surr5_for_LIPO: Union[Path, str], rate4site_csv: Union[Path, str], logging, rerun_rate4site: bool = False):
+def rate4site_calculation(TMD_seq: str, acc: str, path_uniq_TMD_seqs_surr5_for_LIPO: Union[Path, str], rate4site_csv: Path, logging, rerun_rate4site: bool = False):
     output_dir: Union[Path, str] = rate4site_csv.parent
     assert output_dir.is_dir()
     # temp output files

@@ -91,39 +91,40 @@ def run_THOIPA_prediction(protein_name, md5, TMD_seq, full_seq, out_dir, create_
     #                                     setup all file paths                                        #
     #                                                                                                 #
     ###################################################################################################
-    datafiles_dir = os.path.join(out_dir, "datafiles")
+    out_dir = Path(out_dir)
+    datafiles_dir = out_dir / "datafiles"
     thoipapy.utils.make_sure_path_exists(datafiles_dir)
 
     # various residue features needs a protein folder as output
-    blast_xml_file = os.path.join(datafiles_dir, "BLAST_results.xml")
-    xml_txt = blast_xml_file[:-4] + "_details.txt"
-    xml_tar_gz = os.path.join(datafiles_dir, "BLAST_results.xml.tar.gz")
-    BLAST_csv_tar = os.path.join(datafiles_dir, "BLAST_results.csv.tar.gz")
-    fasta_all_TMD_seqs = os.path.join(datafiles_dir,"homologues.redundant.fas")
-    path_uniq_TMD_seqs_for_PSSM_FREECONTACT = os.path.join(datafiles_dir,"homologues.uniq.for_PSSM_FREECONTACT.txt")
-    path_uniq_TMD_seqs_no_gaps_for_LIPS = os.path.join(datafiles_dir,"homologues.uniq.for_LIPS.txt")
-    path_uniq_TMD_seqs_surr5_for_LIPO = os.path.join(datafiles_dir,"homologues.uniq.for_LIPO.txt")
-    pssm_csv = os.path.join(datafiles_dir,"pssm.csv")
-    pssm_surr5_csv = os.path.join(datafiles_dir,"pssm_surr5.csv")
-    lipo_csv = os.path.join(datafiles_dir,"lipo.csv")
-    entropy_file = os.path.join(datafiles_dir,"entropy.csv")
-    rate4site_csv = os.path.join(datafiles_dir,"rate4site.csv")
-    freecontact_file = os.path.join(datafiles_dir,"freecontact_out.csv")
-    freecontact_parsed_csv = os.path.join(datafiles_dir,"freecontact_parsed.csv")
-    relative_position_file = os.path.join(datafiles_dir,"relative_position.csv")
-    LIPS_output_file = os.path.join(datafiles_dir,"LIPS_output.csv")
-    LIPS_parsed_csv = os.path.join(datafiles_dir,"LIPS_output_parsed.csv")
-    motifs_file = os.path.join(datafiles_dir,  "motifs.csv")
-    full_seq_fasta_file = os.path.join(datafiles_dir,  "protein.fasta")
-    full_seq_phobius_output_file = os.path.join(datafiles_dir,  "protein.phobius")
-    feature_combined_file = os.path.join(datafiles_dir, "features_combined.csv")
-    alignment_summary_csv = os.path.join(datafiles_dir, "homologues.alignment_summary.csv")
-    THOIPA_full_out_csv = os.path.join(datafiles_dir, "THOIPA_full_out.csv")
-    THOIPA_pretty_out_xlsx = os.path.join(out_dir, "THOIPA_out.xlsx")
-    THOIPA_pretty_out_txt = os.path.join(out_dir, "THOIPA_out.csv")
-    heatmap_path = os.path.join(out_dir, "heatmap.png")
+    blast_xml_file = datafiles_dir / "BLAST_results.xml"
+    xml_txt = datafiles_dir / "BLAST_results_details.txt"
+    xml_tar_gz = datafiles_dir / "BLAST_results.xml.tar.gz"
+    BLAST_csv_tar = datafiles_dir / "BLAST_results.csv.tar.gz"
+    fasta_all_TMD_seqs = datafiles_dir /"homologues.redundant.fas"
+    path_uniq_TMD_seqs_for_PSSM_FREECONTACT = datafiles_dir /"homologues.uniq.for_PSSM_FREECONTACT.txt"
+    path_uniq_TMD_seqs_no_gaps_for_LIPS = datafiles_dir /"homologues.uniq.for_LIPS.txt"
+    path_uniq_TMD_seqs_surr5_for_LIPO = datafiles_dir /"homologues.uniq.for_LIPO.txt"
+    pssm_csv = datafiles_dir /"pssm.csv"
+    pssm_surr5_csv = datafiles_dir /"pssm_surr5.csv"
+    lipo_csv = datafiles_dir /"lipo.csv"
+    entropy_file = datafiles_dir /"entropy.csv"
+    rate4site_csv = datafiles_dir /"rate4site.csv"
+    freecontact_file = datafiles_dir /"freecontact_out.csv"
+    freecontact_parsed_csv = datafiles_dir /"freecontact_parsed.csv"
+    relative_position_file = datafiles_dir /"relative_position.csv"
+    LIPS_output_file = datafiles_dir /"LIPS_output.csv"
+    LIPS_parsed_csv = datafiles_dir /"LIPS_output_parsed.csv"
+    motifs_file = datafiles_dir /  "motifs.csv"
+    full_seq_fasta_file = datafiles_dir /  "protein.fasta"
+    full_seq_phobius_output_file = datafiles_dir /  "protein.phobius"
+    feature_combined_file = datafiles_dir / "features_combined.csv"
+    alignment_summary_csv = datafiles_dir / "homologues.alignment_summary.csv"
+    THOIPA_full_out_csv = datafiles_dir / "THOIPA_full_out.csv"
+    THOIPA_pretty_out_xlsx = out_dir / "THOIPA_out.xlsx"
+    THOIPA_pretty_out_txt = out_dir / "THOIPA_out.csv"
+    heatmap_path = out_dir / "heatmap.png"
 
-    logfile = os.path.join(out_dir, "logfile.txt")
+    logfile = out_dir / "logfile.txt"
     logging = thoipapy.common.setup_error_logging(logfile, "INFO", "INFO", print_system_info=False)
 
     logging.info("Starting THOIPA standalone prediction for {}.".format(protein_name))
@@ -508,7 +509,7 @@ if __name__ == "__main__":
         out_dir = output_dir.joinpath(protein_name)
         #out_dir = os.path.join(output_dir, protein_name)
         thoipapy.utils.make_sure_path_exists(out_dir)
-        input_ser.to_csv(os.path.join(out_dir, "input.csv"))
+        input_ser.to_csv(out_dir / "input.csv")
 
         run_THOIPA_prediction(protein_name, md5, TMD_seq, full_seq, out_dir)
         os.chmod(out_dir, stat.S_IRUSR | stat.S_IWUSR | stat.S_IXUSR | stat.S_IRGRP | stat.S_IWGRP| stat.S_IXGRP)
