@@ -199,8 +199,7 @@ def create_single_merged_heatmap(setname, s, acc, database, savename, fig_label,
 
         # plot the same data in main axis, and twinx
         # interface and interface_score
-        sns.heatmap(dfh_to_plot[0:2], ax=axes[0], xticklabels=False, cbar=False,
-                    cmap=cmap)  # fmt = "s", annot_kws={"Axes.set_facecolor", 0.5} ,
+        sns.heatmap(dfh_to_plot[0:2], ax=axes[0], xticklabels=False, cbar=False, cmap=cmap)  # fmt = "s", annot_kws={"Axes.set_facecolor", 0.5} ,
         sns.heatmap(dfh_to_plot[0:2], ax=ax2_0, cbar=False, cmap=cmap, annot=df_labels[0:2], fmt="s",
                     annot_kws={"color": "k", "fontsize" : fontsize, "verticalalignment" : "top"})
 
@@ -217,12 +216,15 @@ def create_single_merged_heatmap(setname, s, acc, database, savename, fig_label,
                     cmap=cmap, annot=df_labels[6:9], fmt="s", annot_kws={"color": "k", "fontsize" : fontsize})  # fmt = "s", annot_kws={"Axes.set_facecolor", 0.5} ,
 
         # set fontsize and rotation of y-labels
-        axes[0].set_yticklabels(axes[0].get_yticklabels(), fontsize=fontsize, rotation=0)
+        # there is currently a bug, whereby "interface" in y-axis is not written, unless y-ticks are specified and yticklabels are hard-coded as below
+        axes[0].set_yticks([-2,0.5])
+        axes[0].set_yticklabels(["interface score", "interface"], fontsize=fontsize, rotation=0)
         axes[1].set_yticklabels(axes[1].get_yticklabels(), fontsize=fontsize, rotation=0)
         axes[2].set_yticklabels(axes[2].get_yticklabels(), fontsize=fontsize, rotation=0)
 
         # bottom residue numbers
-        axes[2].set_xticklabels(dfh.index, fontsize=fontsize, rotation=0)
+        fontsize_bottom_residue_num = fontsize * 0.75
+        axes[2].set_xticklabels(dfh.index, fontsize=fontsize_bottom_residue_num, rotation=0)
         axes[2].tick_params(axis="x", direction='out', pad=1.5, tick2On=False)
 
         # figure title
