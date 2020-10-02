@@ -30,25 +30,27 @@ def rate4site_calculation_mult_prot(s, df_set, logging):
         logging.warning("Aborting rate4site calculation, ao is only implemented on linux.")
         return False
 
+    max_n_gaps_in_TMD_subject_seq = s["max_n_gaps_in_TMD_subject_seq"]
+
     for i in df_set.index:
         acc = df_set.at[i, "acc"]
         database = df_set.at[i, "database"]
         TMD_seq = df_set.at[i, "TMD_seq"]
-        alignments_dir = os.path.join(s["thoipapy_data_folder"], "homologues", "alignments", database)
+        alignments_dir = Path(s["thoipapy_data_folder"]) / f"homologues/alignments/{database}"
 
         # input
-        path_uniq_TMD_seqs_surr5_for_LIPO = os.path.join(alignments_dir, "{}.surr5.gaps{}.uniq.for_LIPO.fas".format(acc, s["max_n_gaps_in_TMD_subject_seq"]))
+        fasta_uniq_TMD_seqs_surr5_for_LIPO = alignments_dir / f"{acc}.surr5.gaps{max_n_gaps_in_TMD_subject_seq}.uniq.for_LIPO.fas"
 
         # output
         rate4site_orig_output: Path = Path(s["thoipapy_data_folder"]).joinpath("features", "rate4site", database, f"{acc}.rate4site_orig_output.txt")
         rate4site_csv: Path = Path(s["thoipapy_data_folder"]).joinpath("features", "rate4site", database, f"{acc}_rate4site.csv")
 
-        rate4site_calculation(TMD_seq, acc, path_uniq_TMD_seqs_surr5_for_LIPO, rate4site_csv, logging)
+        rate4site_calculation(TMD_seq, acc, fasta_uniq_TMD_seqs_surr5_for_LIPO, rate4site_csv, logging)
 
     logging.info("rate4site_calculation finished")
 
 
-def rate4site_calculation(TMD_seq: str, acc: str, path_uniq_TMD_seqs_surr5_for_LIPO: Union[Path, str], rate4site_csv: Path, logging, rerun_rate4site: bool = False):
+def rate4site_calculation(TMD_seq: str, acc: str, fasta_uniq_TMD_seqs_surr5_for_LIPO: Union[Path, str], rate4site_csv: Path, logging, rerun_rate4site: bool = False):
     output_dir: Union[Path, str] = rate4site_csv.parent
     assert output_dir.is_dir()
     # temp output files
@@ -56,8 +58,8 @@ def rate4site_calculation(TMD_seq: str, acc: str, path_uniq_TMD_seqs_surr5_for_L
     cons_cdhit_input_fasta: Union[Path, str] = output_dir/ f"{acc}.lipo_seqs_cdhit_input.fas"
     cons_cdhit_output_fasta: Union[Path, str] = output_dir/  f"{acc}.lipo_seqs_cdhit_output.fas"
     rate4site_input: Union[Path, str] = output_dir/ f"{acc}.rate4site_input.fas"
-    with open(str(cons_cdhit_input_fasta), "w") as f_out:
-        with open(path_uniq_TMD_seqs_surr5_for_LIPO, "r") as f_in:
+    with open(cons_cdhit_input_fasta, "w") as f_out:
+        with open(fasta_uniq_TMD_seqs_surr5_for_LIPO, "r") as f_in:
             for line in f_in:
                 f_out.write(line.replace("-", ""))
     # delete output file if it exists
@@ -109,7 +111,7 @@ def rate4site_calculation(TMD_seq: str, acc: str, path_uniq_TMD_seqs_surr5_for_L
         #    logging.info(f"repeating cd-hit with a stricter cutoff\nafter cd-hit analysis, {cons_cdhit_output_fasta} has {len(cdhit_cluster_reps)} clusters")
 
         copy_sequence = False
-        with open(path_uniq_TMD_seqs_surr5_for_LIPO, "r") as f_in:
+        with open(fasta_uniq_TMD_seqs_surr5_for_LIPO, "r") as f_in:
             with open(str(rate4site_input), "w") as f_out:
                 for line in f_in:
                     if line[0] == ">":
@@ -141,10 +143,14 @@ def rate4site_calculation(TMD_seq: str, acc: str, path_uniq_TMD_seqs_surr5_for_L
                 if Path(temp_output_file).is_file():
                     Path(temp_output_file).unlink()
 
+            if rate4site_orig_output.stat().st_size == 0:
+                rate4site_orig_output.unlink()
+                raise Exception("rate4site output is empty, file has been deleted, please check input file")
+
             logging.info('{} rate4site finished ({})'.format(acc, rate4site_orig_output))
 
         else:
-            logging.warning("{} rate4site failed. {} input file not found".format(acc, path_uniq_TMD_seqs_surr5_for_LIPO))
+            logging.warning("{} rate4site failed. {} input file not found".format(acc, fasta_uniq_TMD_seqs_surr5_for_LIPO))
     else:
         logging.info(f"skipping rate4site algo for existing file {rate4site_orig_output}. Set 'rerun_rate4site' to True to rerun calculation.")
     # convert text output to standard csv
