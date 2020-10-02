@@ -37,12 +37,10 @@ def mem_a3m_homologues_filter(s,logging):
                     continue
                 mean_hydrophobicity = calc_lipophilicity(tm_str)
                 ratio = SequenceMatcher(None, tm_query, tm_str).ratio()
-                if not re.search("-", tm_str) and not re.search("X",
-                                                                tm_str) and ratio >= s["min_identity_of_TMD_seq"] and ratio < s["max_identity_of_TMD_seq"]and mean_hydrophobicity < s["max_hydrophilicity_Hessa"]:  ##No X and gap in each alignment
+                if not re.search(r"-", tm_str) and not re.search(r"X",tm_str) and ratio >= s["min_identity_of_TMD_seq"] and ratio < s["max_identity_of_TMD_seq"]and mean_hydrophobicity < s["max_hydrophilicity_Hessa"]:  ##No X and gap in each alignment
                     p_r_i_n_t("{}".format(tm_str), file=homo_mem_lips_input_file_handle)
                 gap_num = tm_str.count("-")
-                if (gap_num <= 3 and not re.search("X",
-                                                   tm_str) and ratio >= s["min_identity_of_TMD_seq"] and ratio < s["max_identity_of_TMD_seq"] and mean_hydrophobicity < s["max_hydrophilicity_Hessa"]):  # gap number le 3 and no X in each alignment
+                if (gap_num <= 3 and not re.search(r"X",tm_str) and ratio >= s["min_identity_of_TMD_seq"] and ratio < s["max_identity_of_TMD_seq"] and mean_hydrophobicity < s["max_hydrophilicity_Hessa"]):  # gap number le 3 and no X in each alignment
                     p_r_i_n_t("{}".format(tm_str), file=homo_filter_file_handle)
                     # homo_filter_file_handle.write(line)
                     # homo_mem_lips_input_file_handle.write(tm_str

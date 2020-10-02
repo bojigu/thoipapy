@@ -156,7 +156,7 @@ if __name__ == "__main__":
             thoipapy.features.entropy.entropy_calculation_mult_prot(s, df_set, logging)
 
         if s["rate4site_calculation"]:
-            thoipapy.features.rate4site.rate4site_calculation(s, df_set, logging)
+            thoipapy.features.rate4site.rate4site_calculation_mult_prot(s, df_set, logging)
 
         if s["coevolution_calculation"]:
             if "Windows" in platform.system():

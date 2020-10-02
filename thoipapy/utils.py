@@ -183,7 +183,7 @@ def delete_BLAST_xml(blast_xml_file):
     blast_xml_file : str
         Path to BLAST xml file
     """
-    xml_txt = blast_xml_file[:-4] + "_details.txt"
+    xml_txt = str(blast_xml_file)[:-4] + "_details.txt"
 
     # delete the original files
     try:
@@ -469,7 +469,7 @@ def Get_Closedist_between_ChianA_ChainB(hashclosedist):
 
     jk = ""
     for k, v in sorted(hashclosedist.items()):
-        if re.search('NEN', k) or re.search('CEN', k):
+        if re.search(r'NEN', k) or re.search(r'CEN', k):
             continue
         k = k.split(':')
         k1 = '_'.join(k)

@@ -70,7 +70,7 @@ def calc_relative_position(acc, path_uniq_TMD_seqs_for_PSSM_FREECONTACT, relativ
         with open(path_uniq_TMD_seqs_for_PSSM_FREECONTACT) as f:
             mat = []
             for line in f.readlines():
-                if not re.search("^>", line):
+                if not re.search(r"^>", line):
                     mat.append(list(line))
             tm_seq = mat[0]
             tm_len = len(tm_seq)

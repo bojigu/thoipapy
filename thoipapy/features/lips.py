@@ -357,7 +357,7 @@ def parse_LIPS_score(acc, LIPS_output_file, LIPS_parsed_csv, logging):
                 array = []
                 dict = {}
                 for row in LIPS_output_handle:
-                    if re.search("^\s+\d+\s+[A-Z]", row):
+                    if re.search(r"^\s+\d+\s+[A-Z]", row):
                         array = row.split()
                         if not int(array[0]) in dict:
                             dict[int(array[0])] = " ".join([array[1], array[2], array[3]])
@@ -374,10 +374,10 @@ def parse_LIPS_score(acc, LIPS_output_file, LIPS_parsed_csv, logging):
                 dict1 = {}
                 LIPS_output_handle = open(LIPS_output_file, "r")
                 for row in LIPS_output_handle:
-                    if re.search("^SURFACE\s" + surface_num, row):
+                    if re.search(r"^SURFACE\s" + surface_num, row):
                         surface_find = 1
                         continue
-                    if surface_find == 1 and re.search("^\s+\d+\s+[A-Z]", row):
+                    if surface_find == 1 and re.search(r"^\s+\d+\s+[A-Z]", row):
                         array = row.split()
                         if not int(array[0]) in dict1:
                             dict1[int(array[0])] = " ".join([array[1], array[2], array[3]])
