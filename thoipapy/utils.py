@@ -183,7 +183,7 @@ def delete_BLAST_xml(blast_xml_file):
     blast_xml_file : str
         Path to BLAST xml file
     """
-    xml_txt = blast_xml_file[:-4] + "_details.txt"
+    xml_txt = str(blast_xml_file)[:-4] + "_details.txt"
 
     # delete the original files
     try:
