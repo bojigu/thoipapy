@@ -69,13 +69,9 @@ def run_THOIPA_prediction(protein_name, md5, TMD_seq, full_seq, out_dir, create_
     predictions_folder = "/path/to/your/output/folder"
     thoipapy.run_THOIPA_prediction(protein_name, TMD_seq, full_seq, predictions_folder)
     """
-
-    ## default model is the combined ETRA, NMR, crystal non-redundant dataset (set05)
-    #set_number = 5
-
     # create settings dict from xlsx file
-    thoipapy_module_path = os.path.dirname(os.path.abspath(thoipapy.__file__))
-    settings_path = os.path.join(thoipapy_module_path, "setting", "thoipapy_standalone_run_settings.xlsx")
+    thoipapy_module_path = Path(thoipapy.__file__).parent
+    settings_path = thoipapy_module_path / "setting/thoipapy_standalone_run_settings.xlsx"
     s = thoipapy.common.create_settingdict(settings_path)
 
     #folder_with_md5_exists = False
@@ -84,7 +80,6 @@ def run_THOIPA_prediction(protein_name, md5, TMD_seq, full_seq, out_dir, create_
     #    sys.stdout.write("You shuld just email the results here.")
     #acc = md5[0:6]
     #out_dir = os.path.join(predictions_folder, md5)
-
 
     ###################################################################################################
     #                                                                                                 #
@@ -101,28 +96,32 @@ def run_THOIPA_prediction(protein_name, md5, TMD_seq, full_seq, out_dir, create_
     xml_tar_gz = datafiles_dir / "BLAST_results.xml.tar.gz"
     BLAST_csv_tar = datafiles_dir / "BLAST_results.csv.tar.gz"
     fasta_all_TMD_seqs = datafiles_dir /"homologues.redundant.fas"
-    path_uniq_TMD_seqs_for_PSSM_FREECONTACT = datafiles_dir /"homologues.uniq.for_PSSM_FREECONTACT.txt"
-    path_uniq_TMD_seqs_no_gaps_for_LIPS = datafiles_dir /"homologues.uniq.for_LIPS.txt"
-    path_uniq_TMD_seqs_surr5_for_LIPO = datafiles_dir /"homologues.uniq.for_LIPO.txt"
-    pssm_csv = datafiles_dir /"pssm.csv"
-    pssm_surr5_csv = datafiles_dir /"pssm_surr5.csv"
-    lipo_csv = datafiles_dir /"lipo.csv"
-    entropy_file = datafiles_dir /"entropy.csv"
-    rate4site_csv = datafiles_dir /"rate4site.csv"
-    freecontact_file = datafiles_dir /"freecontact_out.csv"
-    freecontact_parsed_csv = datafiles_dir /"freecontact_parsed.csv"
-    relative_position_file = datafiles_dir /"relative_position.csv"
-    LIPS_output_file = datafiles_dir /"LIPS_output.csv"
-    LIPS_parsed_csv = datafiles_dir /"LIPS_output_parsed.csv"
-    motifs_file = datafiles_dir /  "motifs.csv"
-    full_seq_fasta_file = datafiles_dir /  "protein.fasta"
-    full_seq_phobius_output_file = datafiles_dir /  "protein.phobius"
+    path_uniq_TMD_seqs_for_PSSM_FREECONTACT = datafiles_dir / "homologues.uniq.for_PSSM_FREECONTACT.txt"
+    path_uniq_TMD_seqs_no_gaps_for_LIPS = datafiles_dir / "homologues.uniq.for_LIPS.txt"
+    path_uniq_TMD_seqs_surr5_for_LIPO = datafiles_dir / "homologues.uniq.for_LIPO.txt"
+    fasta_uniq_TMD_seqs_surr5_for_LIPO = datafiles_dir / "homologues.uniq.for_LIPO.fas"
+    pssm_csv = datafiles_dir / "pssm.csv"
+    pssm_surr5_csv = datafiles_dir / "pssm_surr5.csv"
+    lipo_csv = datafiles_dir / "lipo.csv"
+    entropy_file = datafiles_dir / "entropy.csv"
+    rate4site_csv = datafiles_dir / "rate4site.csv"
+    freecontact_file = datafiles_dir / "freecontact_out.csv"
+    freecontact_parsed_csv = datafiles_dir / "freecontact_parsed.csv"
+    relative_position_file = datafiles_dir / "relative_position.csv"
+    LIPS_output_file = datafiles_dir / "LIPS_output.csv"
+    LIPS_parsed_csv = datafiles_dir / "LIPS_output_parsed.csv"
+    motifs_file = datafiles_dir / "motifs.csv"
+    full_seq_fasta_file = datafiles_dir / "protein.fasta"
+    full_seq_phobius_output_file = datafiles_dir / "protein.phobius"
     feature_combined_file = datafiles_dir / "features_combined.csv"
     alignment_summary_csv = datafiles_dir / "homologues.alignment_summary.csv"
     THOIPA_full_out_csv = datafiles_dir / "THOIPA_full_out.csv"
     THOIPA_pretty_out_xlsx = out_dir / "THOIPA_out.xlsx"
     THOIPA_pretty_out_txt = out_dir / "THOIPA_out.csv"
     heatmap_path = out_dir / "heatmap.png"
+
+    model_features_txt = thoipapy_module_path / "ML_model/model_features.txt"
+    machine_learning_model = thoipapy_module_path / "ML_model/THOIPA_trained_ML_model.lpkl"
 
     logfile = out_dir / "logfile.txt"
     logging = thoipapy.common.setup_error_logging(logfile, "INFO", "INFO", print_system_info=False)
@@ -132,16 +131,11 @@ def run_THOIPA_prediction(protein_name, md5, TMD_seq, full_seq, out_dir, create_
     if os.path.isfile(THOIPA_full_out_csv):
         logging.info("{} already analysed. Previous results will be overwritten.".format(protein_name))
 
-    #logging.info("acc = md5[0:6] = {}".format(acc))
-    #logging.shutdown()
-    #logging = korbinian.utils.Log_Only_To_Console()
-
     ###################################################################################################
     #                                                                                                 #
     #                       check validity of the TMD and full sequence                               #
     #                                                                                                 #
     ###################################################################################################
-
 
     logging.info("md5 checksum of TMD and full sequence = {}".format(md5))
 
@@ -160,12 +154,12 @@ def run_THOIPA_prediction(protein_name, md5, TMD_seq, full_seq, out_dir, create_
     TMD_end = m.end()
     logging.info("TMD found in full sequence. start = {}, end = {}".format(TMD_start, TMD_end))
 
-
     ###################################################################################################
     #                                                                                                 #
     #                   get residues surrounding the TMD from the full sequence                       #
     #                                                                                                 #
     ###################################################################################################
+
     surr = s["num_of_sur_residues"]
     TMD_start_pl_surr, TMD_end_pl_surr = get_start_end_pl_surr(TMD_start, TMD_end, seqlen, surr=surr)
     TMD_start_pl_5, TMD_end_pl_5 = get_start_end_pl_surr(TMD_start, TMD_end, seqlen, surr=5)
@@ -239,7 +233,7 @@ def run_THOIPA_prediction(protein_name, md5, TMD_seq, full_seq, out_dir, create_
                         f"For testing, copy output files from Linux and rename to {freecontact_file} and {rate4site_csv}")
     else:
         thoipapy.features.freecontact.coevolution_calculation_with_freecontact(path_uniq_TMD_seqs_for_PSSM_FREECONTACT, freecontact_file, s["freecontact_dir"], logging)
-        thoipapy.features.rate4site.rate4site_calculation(TMD_seq, acc, path_uniq_TMD_seqs_surr5_for_LIPO, rate4site_csv, logging)
+        thoipapy.features.rate4site.rate4site_calculation(TMD_seq, acc, fasta_uniq_TMD_seqs_surr5_for_LIPO, rate4site_csv, logging, rerun_rate4site=False)
 
     thoipapy.features.freecontact.parse_freecontact_coevolution(acc, freecontact_file, freecontact_parsed_csv, TMD_start, TMD_end, logging)
 
@@ -263,17 +257,16 @@ def run_THOIPA_prediction(protein_name, md5, TMD_seq, full_seq, out_dir, create_
     ###################################################################################################
 
     df_data = pd.read_csv(feature_combined_file, index_col=0)
-    df_ML_input = drop_cols_not_used_in_ML(logging, df_data, s["excel_file_with_settings"])
+    with open(model_features_txt, "r") as f:
+        model_features = [x.strip() for x in f.readlines()]
+
+    df_ML_input = df_data[model_features]
 
     cols_to_keep = ["residue_num", "residue_name", "res_num_full_seq"]
-
-    #df_out = df_data[cols_to_keep]
-    #df_out.merge(df_ML_input, how="left")
 
     df_out = pd.concat([df_data[cols_to_keep], df_ML_input], axis=1, join="outer")
 
     # load the trained machine learning model, saved in the thoipapy directory
-    machine_learning_model = os.path.join(thoipapy_module_path, "ML_model", "THOIPA_trained_ML_model.lpkl")
     fit = joblib.load(machine_learning_model)
 
     # get prediction values for each residue
@@ -285,7 +278,7 @@ def run_THOIPA_prediction(protein_name, md5, TMD_seq, full_seq, out_dir, create_
     #                                                                                                 #
     ###################################################################################################
 
-    df_pretty_out = df_out[["residue_num", "residue_name", "THOIPA"]]
+    df_pretty_out = df_out[["residue_num", "residue_name", "THOIPA"]].copy()
     df_pretty_out.columns = ["residue number", "residue name", "THOIPA"]
 
     df_pretty_out["THOIPA"] = df_pretty_out["THOIPA"].round(3)
@@ -321,7 +314,7 @@ def run_THOIPA_prediction(protein_name, md5, TMD_seq, full_seq, out_dir, create_
         cols_to_plot_renamed = ['THOIPA', 'conservation', 'relative polarity', 'coevolution']
 
         # transpose dataframe so that "interface" etc is on the left
-        df = df_out[cols_to_plot]
+        df = df_out[cols_to_plot].copy()
         df.columns = cols_to_plot_renamed
         # start residue indexing from 1
         df.index = df.index + 1
@@ -365,7 +358,7 @@ def run_THOIPA_prediction(protein_name, md5, TMD_seq, full_seq, out_dir, create_
 
         plt.tight_layout()
         fig.savefig(heatmap_path, dpi=240)
-        fig.savefig(heatmap_path[:-4] + ".pdf")
+        fig.savefig(str(heatmap_path)[:-4] + ".pdf")
         logging.info("Output heatmap : {}".format(heatmap_path))
 
     logging.info("Output file : {}\n"
