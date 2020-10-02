@@ -1,10 +1,9 @@
 import csv
 import os
 import re
+from pathlib import Path
 from shutil import copyfile
-
 import pandas as pd
-
 import thoipapy
 
 
@@ -44,7 +43,7 @@ def add_physical_parameters_to_features(acc, feature_combined_file, logging):
     logging : logging.Logger
         Python object with settings for logging to console and file.
     """
-    feature_combined_file_incl_phys_param = feature_combined_file[:-4] + "_incl_phys_param.csv"
+    feature_combined_file_incl_phys_param: Path = Path(str(feature_combined_file)[:-4] + "_incl_phys_param.csv")
     thoipapy_module_path = os.path.dirname(os.path.abspath(thoipapy.__file__))
     physical_parameter_file = os.path.join(thoipapy_module_path, "setting", "Physical_Property_csv.txt")
 
