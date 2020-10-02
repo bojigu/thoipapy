@@ -66,7 +66,7 @@ def add_physical_parameters_to_features(acc, feature_combined_file, logging):
                         array = row.split()
                         dictionary[array[0]] = array[1:16]
                 for row1 in train_data_file_handle:
-                    if re.search("residue_num", row1):
+                    if re.search(r"residue_num", row1):
                         array1 = row1.rstrip().split(",")
                         array1[42:14] = ["Hydrophobicity_sAA", "Charge_sAA", "PI_sAA", "LIPSI_sAA", "LIPSM_sAA", "Hydrophobic_sAA", "Aliphatic_sAA", "Aromatic_sAA", "Polar_sAA", "Negative_sAA", "Positive_sAA", "Small_sAA", "branched",
                                          "mass", "Volume_sAA"]#Mass_sAA

@@ -64,7 +64,7 @@ def create_TMD_surround20_fasta_file(s, database, protein_folder):
         tmp_file_handle.seek(0)
         tmp_file_handle.truncate()
         for row in lines:
-            if re.search("^Protein",row):
+            if re.search(r"^Protein",row):
                 # make sure in the input protein list file only contain four columns as shown in the example file
                 if len(row.strip().split(",")) == 4:
                     line = row.strip() + "," + "TMD_Sur_Left" + "," + "TMD_Sur_Right"+"\n"
@@ -83,7 +83,7 @@ def create_TMD_surround20_fasta_file(s, database, protein_folder):
                 fasta_text = ""
                 with open(tmp_protein_fasta) as f:
                     for line in f.readlines():
-                        if re.search("^>", line):
+                        if re.search(r"^>", line):
                              pass
                         else:
                             fasta_text = fasta_text + line.rstrip()
@@ -125,13 +125,13 @@ def tmd_positions_match_fasta(s):
     tmd_text=""
     with open(fasta_file_loc) as f:
         for line in f.readlines():
-            if re.search("^>",line):
+            if re.search(r"^>",line):
                 next
             else:
                 fasta_text=fasta_text+line.rstrip()
     with open(tmd_file_loc) as f1:
         for line in f1.readlines():
-            if re.search("^>",line):
+            if re.search(r"^>",line):
                 next
             else:
                 tmd_text=tmd_text+line.rstrip()

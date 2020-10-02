@@ -455,7 +455,7 @@ def single_add_closedist_rr_inter_pairs(pdbtm_trpdb_file,chainA, chainB, aligned
     hash_inter_pair = {}
     with gzip.open(pdbtm_trpdb_file, "rt") as f:
         for line in f:
-            if re.search("^ATOM", line):
+            if re.search(r"^ATOM", line):
                 atom = line[12:16]
                 if not re.search("^H", atom):  # non-H atom distance
                     index = line[6:11]

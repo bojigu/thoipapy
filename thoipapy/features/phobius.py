@@ -48,7 +48,7 @@ def return_num_tmd(s, acc,  full_seq, full_seq_fasta_file,phobius_outfile,loggin
         tm_num = 1
         with open(phobius_outfile) as file:
             for line in file:
-                if re.search('TRANSMEM', line):
+                if re.search(r'TRANSMEM', line):
                     tm_num = tm_num + 1
 
         # Options are only 0 (no TMD predicted by phobius), 1, 2, 3, or 4 (4 or more TMDs predicted by phobius)

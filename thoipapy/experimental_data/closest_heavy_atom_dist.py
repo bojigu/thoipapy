@@ -44,7 +44,7 @@ def homodimer_residue_closedist_calculate_from_complex(thoipapy,s,logging):
         closedist_output_file_handle = open(closedist_output_file, 'w')
         pdbfile_handle=open(pdbfile,"r")
         for row1 in pdbfile_handle:
-            Atom_line=re.search("^ATOM",row1)
+            Atom_line=re.search(r"^ATOM",row1)
             if Atom_line:
                 index=row1[6:11]
                 x=row1[30:38]

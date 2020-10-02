@@ -121,7 +121,7 @@ def parse_NCBI_xml_to_csv(s, acc, blast_xml_tar, BLAST_csv_tar, TMD_start, TMD_e
                         else:
                             description = alignment.title
                         match_details_dict["description"] = description
-                        taxonomy = re.search('\[(.*?)\]', alignment.title)
+                        taxonomy = re.search(r'\[(.*?)\]', alignment.title)
                         if taxonomy:
                             taxonomyNode = taxonomy.group(1)
                             match_details_dict["organism"] = taxonomyNode

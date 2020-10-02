@@ -91,13 +91,13 @@ def closedist_calculate_from_dimer(acc, s, logging, pdb_file, closedist_out_csv)
 
     with open(pdb_file, "r") as f:
         for line in f:
-            if re.search("^MODEL\s+2", line):
+            if re.search(r"^MODEL\s+2", line):
                 break
-            if re.search("^ATOM", line):
+            if re.search(r"^ATOM", line):
                 atom = line[12:16]
                 #sys.stdout.write("{},".format(atom))
                 # skip any hydrogens
-                if re.search("^\s*H", atom):  # non-H atom distance
+                if re.search(r"^\s*H", atom):  # non-H atom distance
                     continue
                 index = line[6:11]
                 x = line[30:38]
@@ -177,7 +177,7 @@ def get_closedist_between_chainA_and_chainB(hashclosedist):
     closest_dist_arr = []
 
     for k, v in sorted(hashclosedist.items()):
-        if re.search('NEN', k) or re.search('CEN', k):
+        if re.search(r'NEN', k) or re.search(r'CEN', k):
             continue
         k = k.split(':')
         chain = k[1]

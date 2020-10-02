@@ -60,9 +60,9 @@ def calc_closedist_from_NMR_best_model(s):
 
                         # if re.search('^MODEL\s+2\s+', row):
                         #     break
-                        if re.search("^MODEL\s+2",row):
+                        if re.search(r"^MODEL\s+2",row):
                             break
-                        if re.search("^ATOM", row):
+                        if re.search(r"^ATOM", row):
                             atom = row[12:16]
                             if not re.search("^\s*H", atom):  # non-H atom distance
                                 index = row[6:11]
@@ -138,7 +138,7 @@ def get_closedist_between_chiana_chainb(hashclosedist):
     closest_dist_arr = []
 
     for k, v in sorted(hashclosedist.items()):
-        if re.search('NEN', k) or re.search('CEN', k):
+        if re.search(r'NEN', k) or re.search(r'CEN', k):
             continue
         k = k.split(':')
         chain = k[1]
