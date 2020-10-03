@@ -42,7 +42,7 @@ if os.environ.get('DISPLAY','') == '':
     mpl.use('Agg')
 import matplotlib.pyplot as plt
 
-def run_THOIPA_prediction(protein_name, md5, TMD_seq, full_seq, out_dir, create_heatmap=True, set_number=5):
+def run_THOIPA_prediction(protein_name, md5, TMD_seq, full_seq, out_dir, create_heatmap=True):
     """Function to run standalone THOIPA prediction for a protein transmembrane domain of interest.
 
     Parameters
