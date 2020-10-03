@@ -1,8 +1,10 @@
 include readme.rst
 include manifest.in
 include license.txt
-recursive-include thoipapy/ML_model *.lpkl
-recursive-include thoipapy/setting *.xlsx *.txt *.csv
-include thoipapy/setting/*.xlsx
-include thoipapy/setting/*.csv
-include thoipapy/ML_model/*.lpkl
+include requirements.txt
+include docs/releases.rst
+include ML_model/model_features.txt
+include ML_model/THOIPA_trained_ML_model.lpkl
+include setting/hydrophobicity_scales.xlsx
+include setting/Physical_Property_csv.txt
+include setting/thoipapy_run_settings_example.xlsx
