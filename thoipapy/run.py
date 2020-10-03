@@ -1,19 +1,13 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 """
-Author:         BO ZENG
-Created:        Monday November 20 12:33:08 2017
-Operation system required: Linux (currently not available for windows)
-Dependencies:   Python 3.5
-                numpy
-                Bio
-                freecontact (currently only availble in linux)
-                pandas
-Purpose:        Self-interacting single-pass membrane protein interface residues prediction
+
+Author:   BO ZENG
+Created:  Monday November 20 12:33:08 2017
+Purpose:  Self-interacting single-pass membrane protein interface residues prediction
 
 """
-# I'm getting sick of the warnings that occur due to imported seaborn and statsmodels.stats.api modules, and have nothing to do with your code.
-# you should turn on warnings once a month to check if there is anything related to your code
+# Avoid warnings due to imported seaborn and statsmodels.stats.api packages, etc
 import warnings
 
 import thoipapy.experimental_data.add_experimental_data_to_train_set
