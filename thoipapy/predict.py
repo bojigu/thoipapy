@@ -1,14 +1,6 @@
 import warnings
 
-import thoipapy.features.physical_parameters
-import thoipapy.features.combine_features
-import thoipapy.features.entropy
-import thoipapy.features.freecontact
-import thoipapy.features.lipophilicity
-import thoipapy.features.lips
-import thoipapy.features.motifs
-import thoipapy.features.pssm
-import thoipapy.features.relative_position
+import thoipapy.features as tf
 
 warnings.filterwarnings("ignore")
 
@@ -34,7 +26,6 @@ import thoipapy
 from thoipapy.homologues.NCBI_download import download_homologues_from_ncbi
 from thoipapy.homologues.NCBI_parser import parse_NCBI_xml_to_csv, extract_filtered_csv_homologues_to_alignments
 from thoipapy.utils import normalise_between_2_values, open_csv_as_series
-from thoipapy.validation.feature_selection import drop_cols_not_used_in_ML
 
 # set matplotlib backend to Agg when run on a server
 if os.environ.get('DISPLAY','') == '':
@@ -215,8 +206,8 @@ def run_THOIPA_prediction(protein_name, md5, TMD_seq, full_seq, out_dir, create_
                                                       path_uniq_TMD_seqs_no_gaps_for_LIPS, path_uniq_TMD_seqs_surr5_for_LIPO, BLAST_csv_tar,
                                                       TMD_seq, query_TMD_seq_surr5, logging)
 
-    thoipapy.features.pssm.create_PSSM_from_MSA(path_uniq_TMD_seqs_for_PSSM_FREECONTACT, pssm_csv, acc, TMD_seq, logging)
-    thoipapy.features.pssm.create_PSSM_from_MSA(path_uniq_TMD_seqs_surr5_for_LIPO, pssm_surr5_csv, acc, query_TMD_seq_surr5, logging)
+    tf.pssm.create_PSSM_from_MSA(path_uniq_TMD_seqs_for_PSSM_FREECONTACT, pssm_csv, acc, TMD_seq, logging)
+    tf.pssm.create_PSSM_from_MSA(path_uniq_TMD_seqs_surr5_for_LIPO, pssm_surr5_csv, acc, query_TMD_seq_surr5, logging)
 
     ###################################################################################################
     #                                                                                                 #
@@ -224,31 +215,31 @@ def run_THOIPA_prediction(protein_name, md5, TMD_seq, full_seq, out_dir, create_
     #                                                                                                 #
     ###################################################################################################
 
-    thoipapy.features.lipophilicity.lipo_from_pssm(acc, pssm_surr5_csv, lipo_csv, tm_surr_left_lipo, tm_surr_right_lipo, s["lipophilicity_scale"], logging, plot_linechart=True)
+    tf.lipophilicity.lipo_from_pssm(acc, pssm_surr5_csv, lipo_csv, tm_surr_left_lipo, tm_surr_right_lipo, s["lipophilicity_scale"], logging, plot_linechart=True)
 
-    thoipapy.features.entropy.entropy_calculation(acc, path_uniq_TMD_seqs_for_PSSM_FREECONTACT, TMD_seq, entropy_file, logging)
+    tf.entropy.entropy_calculation(acc, path_uniq_TMD_seqs_for_PSSM_FREECONTACT, TMD_seq, entropy_file, logging)
 
     if "Windows" in platform.system():
         logging.warning("\n Freecontact, CD-HIT and rate4site cannot be run in Windows! Skipping coevolution_calculation_with_freecontact and rate4site_calculation.\n"
                         f"For testing, copy output files from Linux and rename to {freecontact_file} and {rate4site_csv}")
     else:
-        thoipapy.features.freecontact.coevolution_calculation_with_freecontact(path_uniq_TMD_seqs_for_PSSM_FREECONTACT, freecontact_file, s["freecontact_dir"], logging)
-        thoipapy.features.rate4site.rate4site_calculation(TMD_seq, acc, fasta_uniq_TMD_seqs_surr5_for_LIPO, rate4site_csv, logging, rerun_rate4site=False)
+        tf.freecontact.coevolution_calculation_with_freecontact(path_uniq_TMD_seqs_for_PSSM_FREECONTACT, freecontact_file, s["freecontact_dir"], logging)
+        tf.rate4site.rate4site_calculation(TMD_seq, acc, fasta_uniq_TMD_seqs_surr5_for_LIPO, rate4site_csv, logging, rerun_rate4site=False)
 
-    thoipapy.features.freecontact.parse_freecontact_coevolution(acc, freecontact_file, freecontact_parsed_csv, TMD_start, TMD_end, logging)
+    tf.freecontact.parse_freecontact_coevolution(acc, freecontact_file, freecontact_parsed_csv, TMD_start, TMD_end, logging)
 
-    thoipapy.features.relative_position.calc_relative_position(acc, path_uniq_TMD_seqs_for_PSSM_FREECONTACT, relative_position_file, TMD_start, seqlen, logging)
+    tf.relative_position.calc_relative_position(acc, path_uniq_TMD_seqs_for_PSSM_FREECONTACT, relative_position_file, TMD_start, seqlen, logging)
 
-    thoipapy.features.lips.LIPS_score_calculation(path_uniq_TMD_seqs_no_gaps_for_LIPS, LIPS_output_file)
+    tf.lips.LIPS_score_calculation(path_uniq_TMD_seqs_no_gaps_for_LIPS, LIPS_output_file)
 
-    thoipapy.features.lips.parse_LIPS_score(acc, LIPS_output_file, LIPS_parsed_csv, logging)
-    thoipapy.features.motifs.motifs_from_seq(TMD_seq, TMD_seq_pl_surr, tm_surr_left, tm_surr_right, motifs_file, logging)
+    tf.lips.parse_LIPS_score(acc, LIPS_output_file, LIPS_parsed_csv, logging)
+    tf.motifs.motifs_from_seq(TMD_seq, TMD_seq_pl_surr, tm_surr_left, tm_surr_right, motifs_file, logging)
 
     database = "standalone_prediction"
-    thoipapy.features.combine_features.combine_all_features(s, full_seq, acc, database, TMD_seq, TMD_start, feature_combined_file, entropy_file, rate4site_csv, pssm_csv,
+    tf.combine_features.combine_all_features(s, full_seq, acc, database, TMD_seq, TMD_start, feature_combined_file, entropy_file, rate4site_csv, pssm_csv,
                                                             lipo_csv, freecontact_parsed_csv, relative_position_file, LIPS_parsed_csv, motifs_file,
                                                             alignment_summary_csv, full_seq_fasta_file, full_seq_phobius_output_file, logging)
-    thoipapy.features.physical_parameters.add_physical_parameters_to_features(acc, feature_combined_file, logging)
+    tf.physical_parameters.add_physical_parameters_to_features(acc, feature_combined_file, logging)
 
     ###################################################################################################
     #                                                                                                 #
@@ -460,6 +451,7 @@ if __name__ == "__main__":
     elif args.i is not None:
         # process only a single input file
         infile_list = [Path(args.i)]
+        input_dir = Path(args.i).parent
     elif args.d is not None and args.i is not None:
         raise ValueError("Please include either an input directory of files to process (-d D:\data),"
                          "or an input file (-i D:\data\Q12983.txt), but not both.")
@@ -499,7 +491,7 @@ if __name__ == "__main__":
 
         # create output directory based on protein name
         # save the original csv
-        out_dir = output_dir.joinpath(protein_name)
+        out_dir = output_dir.joinpath(md5)
         #out_dir = os.path.join(output_dir, protein_name)
         thoipapy.utils.make_sure_path_exists(out_dir)
         input_ser.to_csv(out_dir / "input.csv")
