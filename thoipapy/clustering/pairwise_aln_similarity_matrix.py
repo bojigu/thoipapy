@@ -4,7 +4,7 @@ import numpy as np
 import pandas as pd
 from Bio import pairwise2
 from Bio.pairwise2 import format_alignment
-from Bio.SubsMat import MatrixInfo as matlist
+from Bio.Align import substitution_matrices
 from Bio import SeqIO
 from ast import literal_eval as make_tuple
 from pathlib import Path
@@ -24,7 +24,7 @@ def create_identity_matrix_from_protein_set(s, logging):
     create_identity_matrix_using_pairwise_alignments(protein_set_full_seq_fasta, output_align, sim_matrix_xlsx, gap_open, gap_extend, logging, aln_cutoff=aln_cutoff)
 
 
-def create_identity_matrix_using_pairwise_alignments(protein_set_full_seq_fasta: Union[Path, str], output_align: Union[Path, str], ident_matrix_xlsx: Union[Path, str], gap_open: float, gap_extend: float, logging, matrix = matlist.blosum62, aln_cutoff: float = 15.0):
+def create_identity_matrix_using_pairwise_alignments(protein_set_full_seq_fasta: Union[Path, str], output_align: Union[Path, str], ident_matrix_xlsx: Union[Path, str], gap_open: float, gap_extend: float, logging, matrix: str = "BLOSUM62", aln_cutoff: float= 15.0):
     """Create identity matrix using pairwise alignments.
 
     This is a clustering method used to complement cd-hit, which is not designed for clustering at very low levels of identity.
@@ -38,6 +38,9 @@ def create_identity_matrix_using_pairwise_alignments(protein_set_full_seq_fasta:
     have identity above the threshold, even if the alignment of a-c does not.
     """
     logging.info('~~~~~~~~~~~~                 starting create_identity_matrix_using_pairwise_alignments              ~~~~~~~~~~~~')
+    all_subst_matrices: List[str] = substitution_matrices.load()
+    assert matrix in all_subst_matrices
+    subst_mat: np.ndarray = substitution_matrices.load(matrix)
     acc_pairs_analysed = []
     acc_pairs_above_cutoff = []
     df_ident = pd.DataFrame()
@@ -52,7 +55,7 @@ def create_identity_matrix_using_pairwise_alignments(protein_set_full_seq_fasta:
                     df_ident.at[acc, target_acc] = 0
                     continue
                 if (acc, target_acc) not in acc_pairs_analysed and (target_acc, acc) not in acc_pairs_analysed:
-                    alignments = pairwise2.align.globalds(query, target_seq, matrix, gap_open, gap_extend)
+                    alignments = pairwise2.align.globalds(query, target_seq, subst_mat, gap_open, gap_extend)
                     a = alignments[0]
                     q = np.array(list(a[0]))
                     m = np.array(list(a[1]))
@@ -146,7 +149,7 @@ def create_identity_matrix_using_pairwise_alignments(protein_set_full_seq_fasta:
     df_settings.at["input_fasta", "value"] = protein_set_full_seq_fasta
     df_settings.at["alignment_file", "value"] = output_align
     df_settings.at["sim_matrix_csv", "value"] = ident_matrix_xlsx
-    df_settings.at["matrix", "value"] = "matlist.blosum62"
+    df_settings.at["matrix", "value"] = matrix
     df_settings.at["gap_open", "value"] = gap_open
     df_settings.at["gap_extend", "value"] = gap_extend
     df_settings.at["acc_pairs_analysed", "value"] = acc_pairs_analysed
