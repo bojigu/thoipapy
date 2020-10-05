@@ -23,9 +23,6 @@ def run_10fold_cross_validation(s, logging):
 
     The number of folds is determined by "cross_validation_number_of_splits" in the settings file.
 
-    The number of estimators in the machine learning algorithm is determined by "RF_number_of_estimators" in the settings file,
-    therefore it should match the full training result of the whole dataset.
-
     IMPORTANT. CURRENTLY THERE IS NO AUTOMATIC REDUNDANCY CHECK.
      - homologues of the tested protein could be in the training dataset
 
