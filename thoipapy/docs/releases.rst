@@ -2,6 +2,10 @@
 THOIPApy releases
 =================
 
+1.1.0
+-----
+* update settings files
+
 1.0.1
 -----
 * fix missing psutil dependency
