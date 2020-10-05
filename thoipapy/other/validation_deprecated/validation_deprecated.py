@@ -4,15 +4,21 @@ import subprocess
 import sys
 import threading
 import time
+from pathlib import Path
+from typing import Union
 
 import numpy as np
 import pandas as pd
+from matplotlib import pyplot as plt
 from numpy import interp
 import joblib
 from sklearn.metrics import roc_curve, auc
 
 import thoipapy
-from thoipapy.validation.validation import drop_cols_not_used_in_ML
+import thoipapy.validation.bocurve
+import thoipapy.validation.feature_selection
+from thoipapy.utils import get_testsetname_trainsetname_from_run_settings
+from thoipapy.validation.feature_selection import drop_cols_not_used_in_ML
 
 
 def run_LOO_validation_od_non_multiprocessing(s, df_set, logging):
@@ -23,7 +29,7 @@ def run_LOO_validation_od_non_multiprocessing(s, df_set, logging):
     The test and training datasets are based on the following:
         1) the df_set derived from the set of protein sequences, e.g. set03
             - created manually
-        2) the train_data csv, e.g."D:\data_thoipapy\Results\set03\set03_train_data.csv".
+        2) the train_data csv, e.g."D:\data_thoipapy\results\set03\set03_train_data.csv".
             - filtered according to redundancy etc by combine_all_train_data_for_machine_learning()
             - this requires a CD-HIT file for this dataset to remove redundant proteins
     If the acc_db is not in BOTH of these locations, it will not be used for training and validation.
@@ -54,20 +60,22 @@ def run_LOO_validation_od_non_multiprocessing(s, df_set, logging):
     # drop redundant proteins according to CD-HIT
     df_set = thoipapy.utils.drop_redundant_proteins_from_list(df_set, logging)
 
-    train_data_csv = os.path.join(s["thoipapy_data_folder"], "Results", s["setname"], "{}_train_data.csv".format(s["setname"]))
-    crossvalidation_folder = os.path.join(s["thoipapy_data_folder"], "Results", s["setname"], "crossvalidation")
-    LOO_crossvalidation_pkl = os.path.join(s["thoipapy_data_folder"], "Results", s["setname"], "crossvalidation", "data", "{}_LOO_crossvalidation.pkl".format(s["setname"]))
-    BO_all_data_csv = os.path.join(s["thoipapy_data_folder"], "Results", s["setname"], "crossvalidation", "data", "{}_LOO_BO_data.csv".format(s["setname"]))
-    BO_curve_folder = os.path.join(s["thoipapy_data_folder"], "Results", s["setname"], "crossvalidation")
-    BO_data_excel = os.path.join(BO_curve_folder, "data", "{}_BO_curve_data.xlsx".format(s["setname"]))
+    # input
+    train_data_csv = Path(s["thoipapy_data_folder"]) / f"results/{s['setname']}/train_data/01_train_data_orig.csv"
+    tuned_ensemble_parameters_csv = Path(s["thoipapy_data_folder"]) / f"results/{s['setname']}/train_data/04_tuned_ensemble_parameters.csv"
+    # output
+    LOO_crossvalidation_pkl = os.path.join(s["thoipapy_data_folder"], "results", s["setname"], "crossvalidation", "data", "{}_LOO_crossvalidation.pkl".format(s["setname"]))
+    bocurve_data_raw_csv = os.path.join(s["thoipapy_data_folder"], "results", s["setname"], "crossvalidation", "data", "{}_loo_bocurve_data_raw.csv".format(s["setname"]))
+    bocurve_data_xlsx: Union[Path, str] = Path(s["thoipapy_data_folder"]) / f"results/{s['setname']}/crossvalidation/data/{s['setname']}_thoipa_loo_bo_curve_data.xlsx"
 
-    thoipapy.utils.make_sure_path_exists(BO_data_excel, isfile=True)
+    thoipapy.utils.make_sure_path_exists(bocurve_data_xlsx, isfile=True)
 
     df_data = pd.read_csv(train_data_csv, index_col=0)
     df_data = df_data.dropna()
 
     # drop training data (full protein) that don't have enough homologues
-    df_data = df_data.loc[df_data.n_homologues >= s["min_n_homol_training"]]
+    if s["min_n_homol_training"] != 0:
+        df_data = df_data.loc[df_data.n_homologues >= s["min_n_homol_training"]]
 
     acc_db_list = df_data.acc_db.unique()
     xv_dict = {}
@@ -77,14 +85,14 @@ def run_LOO_validation_od_non_multiprocessing(s, df_set, logging):
     BO_all_df = pd.DataFrame()
     pred_colname = "THOIPA_{}_LOO".format(s["set_number"])
 
-    n_features = thoipapy.validation.validation.drop_cols_not_used_in_ML(logging, df_data, s["excel_file_with_settings"]).shape[1]
-    forest = thoipapy.validation.validation.THOIPA_classifier_with_settings(s, n_features)
+    n_features = thoipapy.validation.feature_selection.drop_cols_not_used_in_ML(logging, df_data, s["excel_file_with_settings"]).shape[1]
+    forest = thoipapy.ML_model.train_model.return_classifier_with_loaded_ensemble_parameters(s, tuned_ensemble_parameters_csv)
 
     for i in df_set.index:
 
         acc, acc_db, database  = df_set.loc[i, "acc"], df_set.loc[i, "acc_db"], df_set.loc[i, "database"]
-        THOIPA_prediction_csv = os.path.join(s["thoipapy_data_folder"], "Predictions", "leave_one_out", database, "{}.{}.{}.LOO.prediction.csv".format(acc, database, s["setname"]))
-        thoipapy.utils.make_sure_path_exists(THOIPA_prediction_csv, isfile=True)
+        THOIPA_LOO_prediction_csv = Path(s["thoipapy_data_folder"]) / f"results/{s['setname']}/predictions/THOIPA_LOO/{database}.{acc}.LOO.prediction.csv"
+        thoipapy.utils.make_sure_path_exists(THOIPA_LOO_prediction_csv, isfile=True)
 
         #######################################################################################################
         #                                                                                                     #
@@ -98,7 +106,7 @@ def run_LOO_validation_od_non_multiprocessing(s, df_set, logging):
             # skip protein
             continue
         df_train = df_data.loc[df_data.acc_db != acc_db]
-        X_train = thoipapy.validation.validation.drop_cols_not_used_in_ML(logging, df_train, s["excel_file_with_settings"], i)
+        X_train = thoipapy.validation.feature_selection.drop_cols_not_used_in_ML(logging, df_train, s["excel_file_with_settings"], i)
         y_train = df_train[s["bind_column"]]
 
         #######################################################################################################
@@ -108,10 +116,10 @@ def run_LOO_validation_od_non_multiprocessing(s, df_set, logging):
         #                                                                                                     #
         #######################################################################################################
         #df_test = df_data.loc[df_data.acc_db == acc_db]
-        testdata_combined_file = os.path.join(s["thoipapy_data_folder"], "Features", "combined", database, "{}.surr20.gaps5.combined_features.csv".format(acc))
+        testdata_combined_file = os.path.join(s["thoipapy_data_folder"], "features", "combined", database, "{}.surr20.gaps5.combined_features.csv".format(acc))
         df_test = pd.read_csv(testdata_combined_file)
 
-        X_test = thoipapy.validation.validation.drop_cols_not_used_in_ML(logging, df_test, s["excel_file_with_settings"])
+        X_test = thoipapy.validation.feature_selection.drop_cols_not_used_in_ML(logging, df_test, s["excel_file_with_settings"])
         y_test = df_test["interface"].fillna(0).astype(int)
 
         #######################################################################################################
@@ -125,7 +133,7 @@ def run_LOO_validation_od_non_multiprocessing(s, df_set, logging):
         df_test[pred_colname] = prediction
         # save just the prediction alone to csv
         prediction_df = df_test[["residue_num", "residue_name", pred_colname]]
-        prediction_df.to_csv(THOIPA_prediction_csv, index=False)
+        prediction_df.to_csv(THOIPA_LOO_prediction_csv, index=False)
 
         fpr, tpr, thresholds = roc_curve(y_test, prediction, drop_intermediate=False)
         roc_auc = auc(fpr, tpr)
@@ -137,7 +145,7 @@ def run_LOO_validation_od_non_multiprocessing(s, df_set, logging):
             # (it is closest distance and low value means high propencity of interfacial)
             df_test["interface_score"] = -1 * df_test["interface_score"]
 
-        BO_df = thoipapy.figs.fig_utils.calc_best_overlap(acc_db, df_test, experiment_col="interface_score", pred_col=pred_colname)
+        BO_df = thoipapy.validation.bocurve.calc_best_overlap_from_selected_column_in_df(acc_db, df_test, experiment_col="interface_score", pred_col=pred_colname)
 
         if BO_all_df.empty:
             BO_all_df = BO_df
@@ -176,11 +184,11 @@ def run_LOO_validation_od_non_multiprocessing(s, df_set, logging):
     #                                                                                                     #
     #######################################################################################################
 
-    BO_all_df.to_csv(BO_all_data_csv)
+    BO_all_df.to_csv(bocurve_data_raw_csv)
     names_excel_path = os.path.join(s["dropbox_dir"], "protein_names.xlsx")
 
-    #linechart_mean_obs_and_rand = thoipapy.figs.Create_Bo_Curve_files.analyse_bo_curve_underlying_data(BO_all_data_csv, crossvalidation_folder, names_excel_path)
-    thoipapy.figs.create_BOcurve_files.parse_BO_data_csv_to_excel(BO_all_data_csv, BO_data_excel, logging)
+    #linechart_mean_obs_and_rand = thoipapy.figs.Create_Bo_Curve_files.analyse_bo_curve_underlying_data(bocurve_data_raw_csv, crossvalidation_folder, names_excel_path)
+    thoipapy.validation.bocurve.parse_BO_data_csv_to_excel(bocurve_data_raw_csv, bocurve_data_xlsx, s["n_residues_AUBOC_validation"], logging)
 
     logging.info('{} LOO crossvalidation. Time taken = {:.2f}.'.format(s["setname"], duration))
     logging.info('---AUC({:.2f})---'.format(mean_roc_auc))
@@ -265,9 +273,9 @@ def predict_test_dataset_with_THOIPA_DEPRECATED(train_setname, test_setname, s, 
         rows = range(0, number of AA in test set)
     """
 
-    model_pkl = os.path.join(s["thoipapy_data_folder"], "Results", s["setname"], "{}_ML_model.lpkl".format(train_setname))
-    test_data_csv = os.path.join(s["Results_folder"], test_setname, "{}_train_data.csv".format(test_setname))
-    THOIPA_pred_csv = os.path.join(s["thoipapy_data_folder"], "Results", s["setname"], "trainset{}_testset{}_predictions.csv".format(train_setname[-2:], test_setname[-2:]))
+    model_pkl = os.path.join(s["thoipapy_data_folder"], "results", s["setname"], "{}_ML_model.lpkl".format(train_setname))
+    test_data_csv = os.path.join(s["thoipapy_data_folder"], "results", test_setname, "{}_train_data.csv".format(test_setname))
+    THOIPA_pred_csv = os.path.join(s["thoipapy_data_folder"], "results", s["setname"], "trainset{}_testset{}_predictions.csv".format(train_setname[-2:], test_setname[-2:]))
 
     fit = joblib.load(model_pkl)
 
@@ -290,12 +298,12 @@ def predict_test_dataset_with_THOIPA_DEPRECATED(train_setname, test_setname, s, 
 
 def create_one_out_train_data(acc_db,set_path,s):
     df_train = pd.DataFrame()
-    df_set04 = pd.read_excel(set_path, sheetname='proteins')
+    df_set04 = pd.read_excel(set_path, sheet_name='proteins')
     for j in df_set04.index:
         acc1 = df_set04.loc[j, "acc_db"]
         if not acc1 == acc_db:
             database = df_set04.loc[j, "database"]
-            feature_combined_file = os.path.join(s["thoipapy_data_folder"], "Features", "combined", database,
+            feature_combined_file = os.path.join(s["thoipapy_data_folder"], "features", "combined", database,
                                                  "{}.surr20.gaps5.combined_features.csv".format(acc1))
 
             df_features_new_protein1 = pd.read_csv(feature_combined_file, index_col=0)
@@ -315,3 +323,105 @@ def create_one_out_train_data(acc_db,set_path,s):
                 # reset the index to be a range (0,...).
     df_train.index = range(df_train.shape[0])
     return df_train
+
+
+def calc_roc_each_tmd_separately_deprecated(s, df_set, logging):
+
+    logging.info("start create_ROC_Curve_figs_THOIPA_PREDDIMER_TMDOCK_LIPS")
+    pred_colname = "THOIPA_{}_LOO".format(s["set_number"])
+
+    prediction_name_list = [pred_colname, "PREDDIMER", "TMDOCK", "LIPS_surface_ranked"]
+    testsetname, trainsetname = get_testsetname_trainsetname_from_run_settings(s)
+    if s["setname"] == testsetname:
+        prediction_name_list.append(f"thoipa.train{trainsetname}")
+
+    roc_each_tmd_separate_deprecated_csv = Path(s["thoipapy_data_folder"]) / f"results/{s['setname']}/crossvalidation/{s['setname']}_roc_each_tmd_separate_deprecated.csv"
+    roc_each_tmd_separate_deprecated_png = Path(s["thoipapy_data_folder"]) / f"results/{s['setname']}/crossvalidation/{s['setname']}_roc_each_tmd_separate_deprecated.png"
+
+    figsize = np.array([3.42, 3.42]) * 2  # DOUBLE the real size, due to problems on Bo computer with fontsizes
+    fig, ax = plt.subplots(figsize=figsize)
+    mean_tpr_list=[]
+    for n, predictor in enumerate(prediction_name_list):
+        mean_tpr = 0.0
+        mean_fpr = np.linspace(0, 1, 100)
+        for i in df_set.index:
+            acc = df_set.loc[i, "acc"]
+            database = df_set.loc[i, "database"]
+            merged_data_csv_path: Union[Path, str] = Path(s["thoipapy_data_folder"]) / f"results/{s['setname']}/predictions/merged/{database}.{acc}.merged.csv"
+            dfm = pd.read_csv(merged_data_csv_path, engine="python", index_col=0)
+            dfm.dropna(inplace=True)
+            interface = dfm["interface"].values
+            if n ==0 or n == 3:
+                predict = dfm[predictor].values
+            else:
+                predict = -1 * dfm[predictor].values
+            fpr, tpr, thresholds = roc_curve(interface, predict, drop_intermediate=False)
+            mean_tpr += interp(mean_fpr, fpr, tpr)
+            mean_tpr[0] = 0.0
+        mean_tpr /= len(df_set.index)
+        mean_tpr[-1] = 1.0
+        mean_roc_auc = auc(mean_fpr, mean_tpr)
+        mean_tpr_list.append(mean_tpr)
+        ax.plot(mean_fpr, mean_tpr, lw=1,label="{} (area = {:.2f})".format(predictor, mean_roc_auc), alpha=0.8)
+    ax.plot([0, 1], [0, 1], '--', color=(0.6, 0.6, 0.6), label='random')
+    ax.set_xlim([-0.05, 1.05])
+    ax.set_ylim([-0.05, 1.05])
+    ax.set_xlabel("False positive rate")
+    ax.set_ylabel("True positive rate")
+    ax.legend(loc="lower right")
+    fig.tight_layout()
+    fig.savefig(roc_each_tmd_separate_deprecated_png, dpi=240)
+    #fig.savefig(thoipapy.utils.pdf_subpath(ROC_4predictor_png))
+    df_tpr = pd.DataFrame.from_records(list(map(list, zip(*mean_tpr_list))),
+                                       columns=prediction_name_list)
+    df_tpr.to_csv(roc_each_tmd_separate_deprecated_csv)
+    logging.info(f"fig saved: {roc_each_tmd_separate_deprecated_png}")
+
+
+def create_ROC_AUC_barchart_DEPRECATED(ROC_AUC_df, ROC_AUC_barchart_png, ROC_AUC_barchart_pdf, BOAUC10_barchart_png,BOAUC10_barchart_pdf,namedict, THOIPA_best_set):
+    bo_auc_list = "?"
+    THOIPA_best_setnumber = int(THOIPA_best_set[3:])
+    #colname = "THOIPA_5_LOOAUC"
+    THOIPA_x_LOOAUC = "THOIPA_{}_LOO-AUC".format(THOIPA_best_setnumber)
+    THOIPA_x_LOOAUBOC = "THOIPA_{}_LOO-AUBOC".format(THOIPA_best_setnumber)
+    # auc_list = AUC_AUBOC_df.columns[[0, 2, 4, 6]]
+    # bo_auc_list = AUC_AUBOC_df.columns[[1, 3, 5, 7]]
+
+    auc_list = ROC_AUC_df.columns[::2]
+    #bo_auc_list = ROC_AUC_df.columns[1::2]
+    AUC_AUBOC_df = ROC_AUC_df.sort_values(by=[THOIPA_x_LOOAUC], ascending=False)
+    plt.close("all")
+    # plt.rcParams.update({'font.size': 8})
+    #figsize = np.array([3.42, 3.42]) * 2  # DOUBLE the real size, due to problems on Bo computer with fontsizes
+    figsize = np.array([9, 6])  # DOUBLE the real size, due to problems on Bo computer with fontsizes
+    fig, ax = plt.subplots(figsize=figsize)
+    # replace the protein names
+
+    AUC_AUBOC_df.index = pd.Series(AUC_AUBOC_df.index).replace(namedict)
+    AUC_AUBOC_df[auc_list].plot(kind="bar", ax=ax, alpha=0.7)
+
+    ax.set_ylabel("performance value\n(auc)")
+    ax.legend()  # (["sample size = 5", "sample size = 10"])
+
+    fig.tight_layout()
+    ax.grid(False)
+    fig.savefig(ROC_AUC_barchart_png, dpi=240)
+    fig.savefig(ROC_AUC_barchart_pdf, dpi=240)
+
+    AUC_AUBOC_df = AUC_AUBOC_df.sort_values(by=[THOIPA_x_LOOAUBOC], ascending=False)
+    plt.close("all")
+    # plt.rcParams.update({'font.size': 8})
+    #figsize = np.array([3.42, 3.42]) * 2  # DOUBLE the real size, due to problems on Bo computer with fontsizes
+    fig, ax = plt.subplots(figsize=figsize)
+    # replace the protein names
+
+    AUC_AUBOC_df.index = pd.Series(AUC_AUBOC_df.index).replace(namedict)
+    AUC_AUBOC_df[bo_auc_list].plot(kind="bar", ax=ax, alpha=0.7)
+
+    ax.set_ylabel("performance value\n(observed overlap - random overlap)")
+    ax.legend()  # (["sample size = 5", "sample size = 10"])
+
+    fig.tight_layout()
+    ax.grid(False)
+    fig.savefig(BOAUC10_barchart_png, dpi=240)
+    fig.savefig(BOAUC10_barchart_pdf, dpi=240)

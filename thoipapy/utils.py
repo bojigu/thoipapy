@@ -6,7 +6,6 @@ More recent functions are at the top.
 Many of these are taken from he korbinian python package by Mark Teese. This is allowed under the permissive MIT license.
 """
 import csv
-import errno
 import glob
 import logging
 import os
@@ -15,6 +14,9 @@ import subprocess
 import sys
 import tarfile
 import threading
+from pathlib import Path
+from typing import Union
+
 import numpy as np
 import pandas as pd
 from shutil import copyfile
@@ -67,7 +69,6 @@ def run_command(command):
     return iter(p.stdout.readline, b'')
 
 
-
 def aaa(df_or_series):
     """ Function for use in debugging.
     Saves pandas Series or Dataframes to a user-defined csv file.
@@ -78,23 +79,22 @@ def aaa(df_or_series):
     csv_out = r"D:\data\000_aaa_temp_df_out.csv"
     df_or_series.to_csv(csv_out, sep=",", quoting=csv.QUOTE_NONNUMERIC)
 
-def make_sure_path_exists(path, isfile=False):
-    """ If path to directory or folder doesn't exist, creates the necessary folders.
 
-    Parameters
-    ----------
-    path : str
-        Path to desired directory or file.
-    isfile :
-        If True, the path is to a file, and the subfolder will be created if necessary
+def make_sure_path_exists(input_path: Union[Path, str], isfile: bool=False):
+    """ If path to directory or folder doesn't exist, creates the necessary directory.
+    Set isfile=True to indicate a filepath, where the parent directory needs to be created.
     """
+    input_path = Path(input_path)
+
     if isfile:
-        path = os.path.dirname(path)
-    try:
-        os.makedirs(path)
-    except OSError as exception:
-        if exception.errno != errno.EEXIST:
-            raise
+        directory = input_path.parent
+    else:
+        directory = input_path
+
+    if directory.exists():
+        return
+    else:
+        directory.mkdir(parents=True)
 
 def reorder_dataframe_columns(dataframe, cols, front=True):
     '''Takes a dataframe and a subsequence of its columns,
@@ -183,7 +183,7 @@ def delete_BLAST_xml(blast_xml_file):
     blast_xml_file : str
         Path to BLAST xml file
     """
-    xml_txt = blast_xml_file[:-4] + "_details.txt"
+    xml_txt = str(blast_xml_file)[:-4] + "_details.txt"
 
     # delete the original files
     try:
@@ -469,7 +469,7 @@ def Get_Closedist_between_ChianA_ChainB(hashclosedist):
 
     jk = ""
     for k, v in sorted(hashclosedist.items()):
-        if re.search('NEN', k) or re.search('CEN', k):
+        if re.search(r'NEN', k) or re.search(r'CEN', k):
             continue
         k = k.split(':')
         k1 = '_'.join(k)
@@ -930,47 +930,6 @@ def calc_rand_overlap_DEPRECATED_METHOD(sequence_length, sample_size):
 
     return inter_num_random
 
-def rename_features(df_features_single_protein):
-    """rename selected features.
-
-    coev_all_top4_MI -> MItop4mean
-    coev_all_top4_DI -> DItop4mean
-    coev_all_top8_MI -> MItop8mean
-    coev_all_top8_DI -> DItop8mean
-    coev_i1_MI -> MI1mean
-    coev_i1_DI -> DI1mean
-    coev_i3_MI -> MI3mean
-    coev_i3_DI -> DI3mean
-    coev_i4_MI -> MI4mean
-    coev_i4_DI -> DI4mean
-    coev_all_max_MI -> MImax
-    coev_all_max_DI -> DImax
-    coev_i1-i4_max_MI -> MI4max
-    coev_i1-i4_max_DI -> DI4max
-    CumMI4 -> MI4cum
-    CumDI4 -> DI4cum
-    highest_face_MI -> MI_highest_face
-    highest_face_DI -> DI_highest_face
-
-
-    Parameters
-    ----------
-    df_features_single_protein : pd.DataFrame
-        Dataframe with all features for a protein
-        Index : range index
-        Columns : "residue_num", "residue_name", "Entropy", etc
-    """
-
-    # rename features
-    df_features_single_protein = df_features_single_protein.rename(
-        columns={"coev_all_top4_MI": "MItop4mean", "coev_all_top4_DI": "DItop4mean", "coev_all_top8_MI": "MItop8mean", "coev_all_top8_DI": "DItop8mean",
-                 "coev_i1_MI": "MI1mean", "coev_i1_DI": "DI1mean", "coev_i3_MI": "MI3mean","coev_i3_DI": "DI3mean",
-                 "coev_i4_MI": "MI4mean", "coev_i4_DI": "DI4mean", "coev_all_max_MI": "MImax","coev_all_max_DI": "DImax",
-                 "coev_i1-i4_max_MI": "MI4max", "coev_i1-i4_max_DI": "DI4max", "CumMI4": "MI4cum","CumDI4": "DI4cum",
-                 "highest_face_MI": "MI_highest_face", "highest_face_DI": "DI_highest_face"})
-
-    return df_features_single_protein
-
 
 def open_csv_as_series(input_csv):
     # extract name and sequences from input csv
@@ -978,3 +937,43 @@ def open_csv_as_series(input_csv):
     input_df.columns = ["data"]
     input_ser = input_df["data"]
     return input_ser
+
+
+def intersect(a, b):
+     return list(set(a) & set(b))
+
+
+def get_testsetname_trainsetname_from_run_settings(s):
+    test_set_list, train_set_list = get_test_and_train_set_lists(s)
+    assert len(test_set_list) == 1
+    assert len(train_set_list) == 1
+    testsetname = "set{:02d}".format(int(test_set_list[0]))
+    trainsetname = "set{:02d}".format(int(train_set_list[0]))
+    return testsetname, trainsetname
+
+
+def get_test_and_train_set_lists(s):
+
+    if s["test_datasets"] == True:
+        test_set_list = ["1"]
+    elif s["test_datasets"] == False:
+        test_set_list = ["0"]
+    elif isinstance(s["test_datasets"], int):
+        test_set_list = [str(s["test_datasets"])]
+    elif isinstance(s["test_datasets"], str):
+        test_set_list = s["test_datasets"].split(",")
+    else:
+        raise ValueError("test_datasets type is not correct {} ({})".format(s["test_datasets"], type(s["test_datasets"])))
+
+    if s["train_datasets"] == True:
+        train_set_list = ["1"]
+    elif s["train_datasets"] == False:
+        train_set_list = ["0"]
+    elif isinstance(s["train_datasets"], int):
+        train_set_list = [str(s["train_datasets"])]
+    elif isinstance(s["train_datasets"], str):
+        train_set_list = s["train_datasets"].split(",")
+    else:
+        raise ValueError("train_datasets type is not correct {} ({})".format(s["train_datasets"], type(s["train_datasets"])))
+
+    return test_set_list, train_set_list

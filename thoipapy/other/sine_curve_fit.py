@@ -141,7 +141,7 @@ def save_sine_vurve_result(s, output_file_loc, output_png_loc):
             tickname.set_color('red')
         i+=1
     #plt.show()
-    #plt.savefig('Results\Q7L4S7.png')
+    #plt.savefig('results\Q7L4S7.png')
     plt.savefig(output_png_loc)
     plt.close()
     plt.close(fig)

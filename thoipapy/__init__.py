@@ -1,10 +1,11 @@
+import thoipapy.clustering
 import thoipapy.homologues
 import thoipapy.validation
 import thoipapy.utils
 import thoipapy.common
 import thoipapy.figs
-import thoipapy.residue_properties
-import thoipapy.closest_heavy_atom_dist
+import thoipapy.experimental_data.closest_heavy_atom_dist
 import thoipapy.setting
 import thoipapy.ML_model
-from thoipapy.thoipa import run_THOIPA_prediction
+import thoipapy.other
+from thoipapy.predict import run_THOIPA_prediction

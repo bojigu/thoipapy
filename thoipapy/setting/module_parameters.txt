@@ -38,8 +38,8 @@
     mult_testname : str
         String denoting this combination of test and training datasets
         E.g. testsets(2)_trainsets(2)
-    sheetname : str
-        Excel sheetname
+    sheet_name : str
+        Excel sheet_name
         This is the toggle deciding whether the OLD or NEW performance measure is used
         Default = new method ("df_o_minus_r"), where the overlap MINUS random_overlap is used
     suffix : str

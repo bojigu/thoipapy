@@ -1,5 +1,8 @@
 import os
 import sys
+from pathlib import Path
+from typing import Union
+
 import thoipapy
 #import eccpy
 import numpy as np
@@ -7,9 +10,10 @@ import pandas as pd
 import seaborn as sns; sns.set()
 from matplotlib import pyplot as plt
 #from eccpy.tools import normalise_between_2_values
-from thoipapy.utils import normalise_between_2_values
+from thoipapy.utils import normalise_between_2_values, get_testsetname_trainsetname_from_run_settings, get_test_and_train_set_lists
 
-def create_merged_heatmap(s, df_set, logging):
+
+def create_merged_heatmap_for_trainset_and_testset(s, df_set, logging):
     """Create heatmap from merged disruption, combined_prediction, and features in  traindata.csv files.
         Parameters
         ----------
@@ -33,59 +37,70 @@ def create_merged_heatmap(s, df_set, logging):
     #################################################################
     #             EXTRACT NAMES FROM NAMES EXCEL FILE               #
     #################################################################
+    #setname = f"set{s['set_number']:02d}"
+    test_set_list, train_set_list = get_test_and_train_set_lists(s)
+    testsetname, trainsetname = get_testsetname_trainsetname_from_run_settings(s)
+    THOIPA_column_testset = f"thoipa.train{trainsetname}"
+    THOIPA_column_trainset = f"THOIPA_{train_set_list[0]}_LOO"
 
-    THOIPA_col = "THOIPA_{}_LOO".format(s["set_number"])
-    LIPS_col = "LIPS_surface"#"LIPS_surface_ranked"
-    coev_col = "DI4mean"
+    set_list = [trainsetname, testsetname]
+    THOIPA_column_list = [THOIPA_column_trainset, THOIPA_column_testset]
 
-    dfh_cols = ["res_num_full_seq", "residue_name", "interface", "interface_score", THOIPA_col, "PREDDIMER", "TMDOCK", LIPS_col, "conservation", "relative_polarity", coev_col]
+    for setname, THOIPA_column in zip(set_list, THOIPA_column_list):
 
-    names_excel_path = os.path.join(s["dropbox_dir"], "protein_names.xlsx")
-    df_names = pd.read_excel(names_excel_path, index_col=0)
-    df_names["acc_db"] = df_names.index + "_" + df_names["database"]
-    df_names["acc"] = df_names.index
-    df_names.set_index("acc_db", inplace=True)
+        set_path = thoipapy.common.get_path_of_protein_set(setname, Path(s["dropbox_dir"]) / "sets")
+        df_set = pd.read_excel(set_path, sheet_name='proteins')
 
-    for i in df_set.index:
-        acc = df_set.loc[i, "acc"]
-        database = df_set.loc[i, "database"]
+        LIPS_col = "LIPS_surface"#"LIPS_surface_ranked"
+        coev_col = "DI4mean"
 
-        if database == "crystal":
-            acc_db = acc + "_X-ray"
-        else:
-            acc_db = acc + "_" + database
-        shortname = df_names.loc[acc_db, "shortname"]
-        uniprot = df_names.loc[acc_db, "uniprot"]
+        dfh_cols = ["res_num_full_seq", "residue_name", "interface", "interface_score", THOIPA_column, "PREDDIMER", "TMDOCK", LIPS_col, "conservation", "relative_polarity", coev_col]
 
-        if database == "ETRA":
-            ref = "".join(df_names.loc[acc_db, "source":"date"].dropna().astype(str).tolist())
-            savename = "{}_{}".format(acc, shortname)
-            fig_label = "{shortname} [{subset} dataset, {acc}, {ref}]".format(shortname=shortname,
-                                                                            subset=database, acc=acc, ref=ref)
-        elif database == "NMR":
-            ref = "".join(df_names.loc[acc_db, "source":"date"].dropna().astype(str).tolist())
-            savename = "{}_{}".format(acc, shortname)
-            fig_label = "{shortname} [{subset} dataset, {acc}, PDB:{pdb}, {ref}]".format(shortname=shortname,
-                        subset=database, acc=acc, pdb=df_names.loc[acc_db, "PDB acc"],ref=ref)
-        elif database == "crystal":
-            savename = acc + "_".format(database)
-            #fig_label = acc + " [{} subset, PDB:{}, chain:{}, TMD:{}]".format(database, acc[:-2], acc[-2], acc[-1])
-            fig_label = "{} [X-ray dataset, {}, PDB:{}, chain:{}, TMD:{}]]".format(shortname, uniprot, acc[:-2], acc[-2], acc[-1])
-        else:
-            raise ValueError("database not recognised : {}".format(database))
+        names_excel_path = os.path.join(s["dropbox_dir"], "protein_names.xlsx")
+        df_names = pd.read_excel(names_excel_path, index_col=0)
+        df_names["acc_db"] = df_names.index + "_" + df_names["database"]
+        df_names["acc"] = df_names.index
+        df_names.set_index("acc_db", inplace=True)
 
-        sys.stdout.write("\n{} {}".format(savename, fig_label))
-        create_single_merged_heatmap(s, acc, database,savename, fig_label, dfh_cols, THOIPA_col, LIPS_col, coev_col)
+        for i in df_set.index:
+            acc = df_set.loc[i, "acc"]
+            database = df_set.loc[i, "database"]
 
-def create_single_merged_heatmap(s, acc, database, savename, fig_label, dfh_cols, THOIPA_col, LIPS_col, coev_col):
-        merged_data_csv_path = os.path.join(s["thoipapy_data_folder"], "Results", s["setname"], "predictions", database, "{}.merged.csv".format(acc))
-        dfm = pd.read_csv(merged_data_csv_path, engine = "python")
+            if database == "crystal":
+                acc_db = acc + "_X-ray"
+            else:
+                acc_db = acc + "_" + database
+            shortname = df_names.loc[acc_db, "shortname"]
+            uniprot = df_names.loc[acc_db, "uniprot"]
 
+            if database == "ETRA":
+                ref = "".join(df_names.loc[acc_db, "source":"date"].dropna().astype(str).tolist())
+                savename = "{}_{}".format(acc, shortname)
+                fig_label = "{shortname} [{subset} dataset, {acc}, {ref}]".format(shortname=shortname,
+                                                                                subset=database, acc=acc, ref=ref)
+            elif database == "NMR":
+                ref = "".join(df_names.loc[acc_db, "source":"date"].dropna().astype(str).to_list())
+                savename = "{}_{}".format(acc, shortname)
+                fig_label = "{shortname} [{subset} dataset, {acc}, PDB:{pdb}, {ref}]".format(shortname=shortname,
+                            subset=database, acc=acc, pdb=df_names.loc[acc_db, "PDB acc"],ref=ref)
+            elif database == "crystal":
+                savename = acc + "_".format(database)
+                #fig_label = acc + " [{} subset, PDB:{}, chain:{}, TMD:{}]".format(database, acc[:-2], acc[-2], acc[-1])
+                fig_label = "{} [X-ray dataset, {}, PDB:{}, chain:{}, TMD:{}]]".format(shortname, uniprot, acc[:-2], acc[-2], acc[-1])
+            else:
+                raise ValueError("database not recognised : {}".format(database))
+
+            sys.stdout.write("\n{} {}".format(savename, fig_label))
+            create_single_merged_heatmap(setname, s, acc, database, savename, fig_label, dfh_cols, THOIPA_column, LIPS_col, coev_col)
+
+def create_single_merged_heatmap(setname, s, acc, database, savename, fig_label, dfh_cols, THOIPA_column, LIPS_col, coev_col):
+        merged_data_csv_path: Union[Path, str] = Path(s["thoipapy_data_folder"]) / f"results/{setname}/predictions/merged/{database}.{acc}.merged.csv"
+        dfm = pd.read_csv(merged_data_csv_path, index_col=None)
 
         heatmap_path = os.path.join(s["thoipapy_data_folder"], "heatmap",database, "{}.png".format(acc))
         heatmap_pdf_path = os.path.join(s["thoipapy_data_folder"], "heatmap",database,"pdf","{}.pdf".format(acc))
         heatmap_data_xlsx_path = os.path.join(s["thoipapy_data_folder"], "heatmap",database,"xlsx","{}_merged.xlsx".format(acc))
-        hetero_bind_file = os.path.join(s["thoipapy_data_folder"], "Features", "Structure",database, "{}.hetero.bind.csv").format(acc)
+        hetero_bind_file = os.path.join(s["thoipapy_data_folder"], "features", "structure",database, "{}.hetero.bind.csv").format(acc)
         thoipapy.utils.make_sure_path_exists(heatmap_pdf_path, isfile=True)
         thoipapy.utils.make_sure_path_exists(heatmap_data_xlsx_path, isfile=True)
 
@@ -115,7 +130,7 @@ def create_single_merged_heatmap(s, acc, database, savename, fig_label, dfh_cols
         # norm conservation
         dfh["conservation_norm"] = normalise_between_2_values(dfh["conservation"], 1.25, 3, invert=False)
         # norm THOIPA
-        dfh["THOIPA_norm"] = normalise_between_2_values(dfh[THOIPA_col], 0.15, 0.5, invert=False)
+        dfh["THOIPA_norm"] = normalise_between_2_values(dfh[THOIPA_column], 0.15, 0.5, invert=False)
         # norm polarity
         dfh["relative polarity_norm"] = normalise_between_2_values(dfh["relative_polarity"], 0.5, 2.5, invert=False)
         # norm LIPS
@@ -184,8 +199,7 @@ def create_single_merged_heatmap(s, acc, database, savename, fig_label, dfh_cols
 
         # plot the same data in main axis, and twinx
         # interface and interface_score
-        sns.heatmap(dfh_to_plot[0:2], ax=axes[0], xticklabels=False, cbar=False,
-                    cmap=cmap)  # fmt = "s", annot_kws={"Axes.set_facecolor", 0.5} ,
+        sns.heatmap(dfh_to_plot[0:2], ax=axes[0], xticklabels=False, cbar=False, cmap=cmap)  # fmt = "s", annot_kws={"Axes.set_facecolor", 0.5} ,
         sns.heatmap(dfh_to_plot[0:2], ax=ax2_0, cbar=False, cmap=cmap, annot=df_labels[0:2], fmt="s",
                     annot_kws={"color": "k", "fontsize" : fontsize, "verticalalignment" : "top"})
 
@@ -202,12 +216,15 @@ def create_single_merged_heatmap(s, acc, database, savename, fig_label, dfh_cols
                     cmap=cmap, annot=df_labels[6:9], fmt="s", annot_kws={"color": "k", "fontsize" : fontsize})  # fmt = "s", annot_kws={"Axes.set_facecolor", 0.5} ,
 
         # set fontsize and rotation of y-labels
-        axes[0].set_yticklabels(axes[0].get_yticklabels(), fontsize=fontsize, rotation=0)
+        # there is currently a bug, whereby "interface" in y-axis is not written, unless y-ticks are specified and yticklabels are hard-coded as below
+        axes[0].set_yticks([-2,0.5])
+        axes[0].set_yticklabels(["interface score", "interface"], fontsize=fontsize, rotation=0)
         axes[1].set_yticklabels(axes[1].get_yticklabels(), fontsize=fontsize, rotation=0)
         axes[2].set_yticklabels(axes[2].get_yticklabels(), fontsize=fontsize, rotation=0)
 
         # bottom residue numbers
-        axes[2].set_xticklabels(dfh.index, fontsize=fontsize, rotation=0)
+        fontsize_bottom_residue_num = fontsize * 0.75
+        axes[2].set_xticklabels(dfh.index, fontsize=fontsize_bottom_residue_num, rotation=0)
         axes[2].tick_params(axis="x", direction='out', pad=1.5, tick2On=False)
 
         # figure title
@@ -217,6 +234,10 @@ def create_single_merged_heatmap(s, acc, database, savename, fig_label, dfh_cols
         ax2_0.xaxis.tick_top()
         ax2_0.set_xticklabels(dfh.residue_name, fontsize=fontsize)
         ax2_0.tick_params(axis="x", direction='out', pad=-0.1, tick2On=False)
+
+        # remove ticks from centre of heatmap
+        ax2_1.tick_params(axis="x", direction='out', pad=-0.1, tick2On=False)
+        ax2_2.tick_params(axis="x", direction='out', pad=-0.1, tick2On=False)
 
         plt.tight_layout()
         fig.savefig(heatmap_path, dpi=240)

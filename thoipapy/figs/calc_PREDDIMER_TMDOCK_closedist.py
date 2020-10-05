@@ -2,6 +2,8 @@ import math
 import os
 import re
 import sys
+from pathlib import Path
+
 import pandas as pd
 import thoipapy
 
@@ -26,11 +28,11 @@ def calc_closedist_from_PREDDIMER_TMDOCK_best_model(s, df_set, logging):
         sys.stdout.write("{}, ".format(acc)), sys.stdout.flush()
         database = df_set.loc[i, "database"]
         protein = acc
-        PREDDIMER_TMDOCK_folder = os.path.join(s["base_dir"], "figs", "FigBZ18-PreddimerTmdockComparison")
-        pdb_file_preddimer = os.path.join(PREDDIMER_TMDOCK_folder,database,"{}.preddimer.pdb".format(protein))
-        pdb_file_tmdock = os.path.join(PREDDIMER_TMDOCK_folder, database, "{}.tmdock.pdb".format(protein))
-        preddimer_closedist_file = os.path.join(PREDDIMER_TMDOCK_folder, database,"{}.preddimer.closedist.csv".format(protein))
-        tmdock_closedist_file = os.path.join(PREDDIMER_TMDOCK_folder, database,"{}.tmdock.closedist.csv".format(protein))
+        other_predictors_dir = Path(s["thoipapy_data_folder"]) / "Predictions/other_predictors"
+        pdb_file_preddimer = os.path.join(other_predictors_dir,database,"{}.preddimer.pdb".format(protein))
+        pdb_file_tmdock = os.path.join(other_predictors_dir, database, "{}.tmdock.pdb".format(protein))
+        preddimer_closedist_file = os.path.join(other_predictors_dir, database,"{}.preddimer.closedist.csv".format(protein))
+        tmdock_closedist_file = os.path.join(other_predictors_dir, database,"{}.tmdock.closedist.csv".format(protein))
 
         #closedist_calculate_from_dimer(s,pdb_file_preddimer,preddimer_closedist_file)
         if os.path.isfile(pdb_file_tmdock):
@@ -89,13 +91,13 @@ def closedist_calculate_from_dimer(acc, s, logging, pdb_file, closedist_out_csv)
 
     with open(pdb_file, "r") as f:
         for line in f:
-            if re.search("^MODEL\s+2", line):
+            if re.search(r"^MODEL\s+2", line):
                 break
-            if re.search("^ATOM", line):
+            if re.search(r"^ATOM", line):
                 atom = line[12:16]
                 #sys.stdout.write("{},".format(atom))
                 # skip any hydrogens
-                if re.search("^\s*H", atom):  # non-H atom distance
+                if re.search(r"^\s*H", atom):  # non-H atom distance
                     continue
                 index = line[6:11]
                 x = line[30:38]
@@ -175,7 +177,7 @@ def get_closedist_between_chainA_and_chainB(hashclosedist):
     closest_dist_arr = []
 
     for k, v in sorted(hashclosedist.items()):
-        if re.search('NEN', k) or re.search('CEN', k):
+        if re.search(r'NEN', k) or re.search(r'CEN', k):
             continue
         k = k.split(':')
         chain = k[1]

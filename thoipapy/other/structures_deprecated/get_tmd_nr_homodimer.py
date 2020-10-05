@@ -70,7 +70,7 @@ def create_redundant_interact_homodimer_rm_shorttm(s, logging):
         cols = [c for c in df_homo.columns if c[:7] != 'Unnamed']
         df_homo = df_homo[cols]
         df_homo.rename(columns={"interpari_4.5": "interpair_4.5"}, inplace=True)
-        df_homo_matrix = df_homo.as_matrix()
+        df_homo_matrix = df_homo.to_numpy()
         index_drop = []
         for i in range(df_homo.shape[0]):
             ## filter1: remove all pairs without interact pair
@@ -180,8 +180,7 @@ def create_multiple_bind_closedist_file(s,df_set, logging):
 def create_single_bind_closedist_file(s, df_homo,i, inter_pair_max):
         pdb_id_chain = df_homo.iloc[i]['pdb_id'] + df_homo.iloc[i]['tm_numA']
         row = []
-        #bind_closedist_file = os.path.join(s['structure_bind'], "crystal", "{}.{}pairmax.bind.closedist.csv".format(pdb_id_chain,inter_pair_max))
-        bind_closedist_file = os.path.join(s['structure_bind'], "crystal", "{}.{}pairmax.bind.closedist.csv".format(pdb_id_chain,inter_pair_max))
+        bind_closedist_file = os.path.join(s['thoipapy_data_folder'], "features", "structure", "crystal", "{}.{}pairmax.bind.closedist.csv".format(pdb_id_chain,inter_pair_max))
         tm_seq = df_homo.iloc[i]['aligned_AB']
         full_seq = df_homo.iloc[i]['full_seqA']
         aligned_AB_startA = df_homo.iloc[i]['full_seqA'].index(tm_seq) + 1
@@ -456,7 +455,7 @@ def single_add_closedist_rr_inter_pairs(pdbtm_trpdb_file,chainA, chainB, aligned
     hash_inter_pair = {}
     with gzip.open(pdbtm_trpdb_file, "rt") as f:
         for line in f:
-            if re.search("^ATOM", line):
+            if re.search(r"^ATOM", line):
                 atom = line[12:16]
                 if not re.search("^H", atom):  # non-H atom distance
                     index = line[6:11]

@@ -73,16 +73,16 @@ def extract_filtered_csv_homologues_to_alignments_orig_handle_method(s,logging):
                     mean_hydrophobicity= thoipapy.common.calc_lipophilicity(row["tm_sbjt_seq"])
                     ratio = SequenceMatcher(None, row["tm_query_seq"], row["tm_sbjt_seq"]).ratio()
                     gap_num = row["tm_sbjt_seq"].count("-")
-                    if not re.search("-", row["tm_sbjt_seq"]) and not re.search("X",row["tm_sbjt_seq"]) and ratio >= s["min_identity_of_TMD_seq"] and ratio < s["max_identity_of_TMD_seq"] :  ##No X and gap in each alignment
+                    if not re.search(r"-", row["tm_sbjt_seq"]) and not re.search(r"X",row["tm_sbjt_seq"]) and ratio >= s["min_identity_of_TMD_seq"] and ratio < s["max_identity_of_TMD_seq"] :  ##No X and gap in each alignment
                         if not row["tm_sbjt_seq"] in alignment_dict:
                             alignment_dict[row["tm_sbjt_seq"]]=1
                             homo_filtered_out_csv_file_handle.write(">" + row["description"] + "\n")
                             p_r_i_n_t("{}".format(row["tm_sbjt_seq"]), file=homo_filtered_out_csv_file_handle)
-                    if not re.search("-", row["tm_sbjt_seq"]) and not re.search("X",row["tm_sbjt_seq"]) and ratio >= s["min_identity_of_TMD_seq"] and ratio < s["max_identity_of_TMD_seq"] :  ##No X and gap in each alignment
+                    if not re.search(r"-", row["tm_sbjt_seq"]) and not re.search(r"X",row["tm_sbjt_seq"]) and ratio >= s["min_identity_of_TMD_seq"] and ratio < s["max_identity_of_TMD_seq"] :  ##No X and gap in each alignment
                         if not row["tm_sbjt_seq"] in alignment_dict1:
                             alignment_dict1[row["tm_sbjt_seq"]]=1
                             p_r_i_n_t("{}".format(row["tm_sbjt_seq"]), file=homo_mem_lips_input_file_handle)
-                    if (gap_num <= 2 and not re.search("X",row["tm_sbjt_seq"]) and ratio >= s["min_identity_of_TMD_seq"] and ratio < s["max_identity_of_TMD_seq"] ):  # gap number le 3 and no X in each alignment
+                    if (gap_num <= 2 and not re.search(r"X",row["tm_sbjt_seq"]) and ratio >= s["min_identity_of_TMD_seq"] and ratio < s["max_identity_of_TMD_seq"] ):  # gap number le 3 and no X in each alignment
                         if not row["tm_sbjt_seq"] in alignment_dict2:
                             alignment_dict2[row["tm_sbjt_seq"]]=1
                             p_r_i_n_t("{}".format(row["tm_sbjt_seq"]), file=homo_filter_file_handle)

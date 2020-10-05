@@ -3,14 +3,11 @@ import os
 import re
 import sys
 import tarfile
-
 import numpy as np
 import pandas as pd
 from Bio.Blast import NCBIXML
-
-import thoipapy
-# from korbinian.utils import create_regex_string
-from thoipapy.utils import create_regex_string
+from pathlib import Path
+from thoipapy.utils import create_regex_string, delete_BLAST_xml
 
 
 def parse_NCBI_xml_to_csv_mult_prot(s, df_set, logging):
@@ -67,8 +64,8 @@ def parse_NCBI_xml_to_csv_mult_prot(s, df_set, logging):
 
 def parse_NCBI_xml_to_csv(s, acc, blast_xml_tar, BLAST_csv_tar, TMD_start, TMD_end, logging):
     # remove the final ".tar.gz" to get the xml and csv filename
-    BLAST_xml_file = blast_xml_tar[:-7]
-    BLAST_csv_file = BLAST_csv_tar[:-7]
+    BLAST_xml_file = str(blast_xml_tar)[:-7]
+    BLAST_csv_file = str(BLAST_csv_tar)[:-7]
 
     match_details_dict = {}
 
@@ -124,7 +121,7 @@ def parse_NCBI_xml_to_csv(s, acc, blast_xml_tar, BLAST_csv_tar, TMD_start, TMD_e
                         else:
                             description = alignment.title
                         match_details_dict["description"] = description
-                        taxonomy = re.search('\[(.*?)\]', alignment.title)
+                        taxonomy = re.search(r'\[(.*?)\]', alignment.title)
                         if taxonomy:
                             taxonomyNode = taxonomy.group(1)
                             match_details_dict["organism"] = taxonomyNode
@@ -160,7 +157,7 @@ def parse_NCBI_xml_to_csv(s, acc, blast_xml_tar, BLAST_csv_tar, TMD_start, TMD_e
         logging.info("n_hsps_excluded_due_to_e_value_cutoff = {}".format(n_hsps_excluded_due_to_e_value_cutoff))
 
     # delete the extracted xml file
-    thoipapy.utils.delete_BLAST_xml(BLAST_xml_file)
+    delete_BLAST_xml(BLAST_xml_file)
 
     with tarfile.open(BLAST_csv_tar, mode='w:gz') as tar:
         # add the files to the compressed tarfile
@@ -243,6 +240,9 @@ def extract_filtered_csv_homologues_to_alignments_mult_prot(s, df_set, logging):
     logging.info('start extract filtered csv homologues to alignments')
     out_dict = {}
 
+    num_of_sur_residues = s["num_of_sur_residues"]
+    max_n_gaps_in_TMD_subject_seq = s["max_n_gaps_in_TMD_subject_seq"]
+
     for i in df_set.index:
         acc = df_set.loc[i, "acc"]
         database = df_set.loc[i, "database"]
@@ -252,18 +252,17 @@ def extract_filtered_csv_homologues_to_alignments_mult_prot(s, df_set, logging):
         TMD_len = df_set.loc[i, "TMD_len"]
         query_TMD_seq_surr5 = df_set.loc[i, "TMD_seq_pl_surr5"]
 
-        homo_out_dir = os.path.join(s["thoipapy_data_folder"], "homologues", "ncbi", database)
-        BLAST_csv_tar = os.path.join(homo_out_dir, "{}.surr{}.BLAST.csv.tar.gz".format(acc, s["num_of_sur_residues"]))
+        homo_out_dir: Path = Path(s["thoipapy_data_folder"]) / "homologues/ncbi/{database}"
+        BLAST_csv_tar: Path = homo_out_dir / f"{acc}.surr{num_of_sur_residues}.BLAST.csv.tar.gz"
 
-        alignments_dir = os.path.join(s["thoipapy_data_folder"], "homologues", "alignments", database)
-        if not os.path.isdir(alignments_dir):
-            os.makedirs(alignments_dir)
+        alignments_dir: Path = Path(s["thoipapy_data_folder"]) / f"homologues/alignments/{database}"
+        if not alignments_dir.is_dir():
+            alignments_dir.mkdir(parents=True)
 
-        fasta_all_TMD_seqs = os.path.join(alignments_dir, "{}.surr{}.gaps{}.redundant.fas".format(acc, s["num_of_sur_residues"], s["max_n_gaps_in_TMD_subject_seq"]))
-        path_uniq_TMD_seqs_for_PSSM_FREECONTACT = os.path.join(alignments_dir, "{}.surr{}.gaps{}.uniq.for_PSSM_FREECONTACT.txt".format(acc, s["num_of_sur_residues"], s["max_n_gaps_in_TMD_subject_seq"]))
-        path_uniq_TMD_seqs_no_gaps_for_LIPS = os.path.join(alignments_dir, "{}.surr{}.gaps0.uniq.for_LIPS.txt".format(acc, s["num_of_sur_residues"]))
-        path_uniq_TMD_seqs_surr5_for_LIPO = os.path.join(alignments_dir, "{}.surr5.gaps{}.uniq.for_LIPO.txt".format(acc, s["max_n_gaps_in_TMD_subject_seq"]))
-
+        fasta_all_TMD_seqs: Path = alignments_dir / f"{acc}.surr{num_of_sur_residues}.gaps{max_n_gaps_in_TMD_subject_seq}.redundant.fas"
+        path_uniq_TMD_seqs_for_PSSM_FREECONTACT: Path = alignments_dir / f"{acc}.surr{num_of_sur_residues}.gaps{max_n_gaps_in_TMD_subject_seq}.uniq.for_PSSM_FREECONTACT.txt"
+        path_uniq_TMD_seqs_no_gaps_for_LIPS: Path = alignments_dir / f"{acc}.surr{num_of_sur_residues}.gaps0.uniq.for_LIPS.txt"
+        path_uniq_TMD_seqs_surr5_for_LIPO: Path = alignments_dir / f"{acc}.surr5.gaps{max_n_gaps_in_TMD_subject_seq}.uniq.for_LIPO.txt"
 
         single_prot_dict = extract_filtered_csv_homologues_to_alignments(s, acc, TMD_len, fasta_all_TMD_seqs, path_uniq_TMD_seqs_for_PSSM_FREECONTACT,
                                                                          path_uniq_TMD_seqs_no_gaps_for_LIPS, path_uniq_TMD_seqs_surr5_for_LIPO, BLAST_csv_tar,
@@ -272,26 +271,34 @@ def extract_filtered_csv_homologues_to_alignments_mult_prot(s, df_set, logging):
 
     df_align_results = pd.DataFrame(out_dict).T
     df_align_results.index.name = "acc"
-    align_results_csv = os.path.join(s["thoipapy_data_folder"], "Results", s["setname"], "{}_alignment_summary.csv".format(s["setname"]))
+    align_results_csv = os.path.join(s["thoipapy_data_folder"], "results", s["setname"], "{}_alignment_summary.csv".format(s["setname"]))
     df_align_results.to_csv(align_results_csv)
 
     logging.info('finished extract filtered csv homologues to alignments for {} proteins. Output = {}'.format(df_align_results.shape[0], align_results_csv))
 
 
-def extract_filtered_csv_homologues_to_alignments(s, acc, TMD_len, fasta_all_TMD_seqs, path_uniq_TMD_seqs_for_PSSM_FREECONTACT,
-                                                  path_uniq_TMD_seqs_no_gaps_for_LIPS, path_uniq_TMD_seqs_surr5_for_LIPO, BLAST_csv_tar,
-                                                  query_TMD_seq, query_TMD_seq_surr5, logging):
-    fasta_uniq_TMD_seqs_for_PSSM_FREECONTACT = path_uniq_TMD_seqs_for_PSSM_FREECONTACT[:-4] + ".fas"
-    fasta_uniq_TMD_seqs_no_gaps_for_LIPS = path_uniq_TMD_seqs_no_gaps_for_LIPS[:-4] + ".fas"
-    fasta_uniq_TMD_seqs_surr5_for_LIPO = path_uniq_TMD_seqs_surr5_for_LIPO[:-4] + ".fas"
-    alignment_summary_csv = fasta_all_TMD_seqs[:-13] + "alignment_summary.csv"
+def extract_filtered_csv_homologues_to_alignments(s: dict,
+                                                  acc: str,
+                                                  TMD_len: int,
+                                                  fasta_all_TMD_seqs: Path,
+                                                  path_uniq_TMD_seqs_for_PSSM_FREECONTACT: Path,
+                                                  path_uniq_TMD_seqs_no_gaps_for_LIPS: Path,
+                                                  path_uniq_TMD_seqs_surr5_for_LIPO: Path,
+                                                  BLAST_csv_tar: Path,
+                                                  query_TMD_seq: str,
+                                                  query_TMD_seq_surr5: str,
+                                                  logging):
+    fasta_uniq_TMD_seqs_for_PSSM_FREECONTACT: Path = Path(str(path_uniq_TMD_seqs_for_PSSM_FREECONTACT)[:-4] + ".fas")
+    fasta_uniq_TMD_seqs_no_gaps_for_LIPS: Path = Path(str(path_uniq_TMD_seqs_no_gaps_for_LIPS)[:-4] + ".fas")
+    fasta_uniq_TMD_seqs_surr5_for_LIPO: Path = Path(str(path_uniq_TMD_seqs_surr5_for_LIPO)[:-4] + ".fas")
+    alignment_summary_csv: Path = Path(str(fasta_all_TMD_seqs)[:-13] + "alignment_summary.csv")
 
     single_prot_dict = {}
 
     # remove the final ".tar.gz" to get the csv filename
-    BLAST_csv_file = BLAST_csv_tar[:-7]
+    BLAST_csv_file = Path(str(BLAST_csv_tar)[:-7])
 
-    if os.path.isfile(BLAST_csv_tar):
+    if BLAST_csv_tar.is_file:
         with tarfile.open(BLAST_csv_tar, 'r:gz') as tar:
             BLAST_csv_file_basename = os.path.basename(BLAST_csv_file)
             with tar.extractfile(BLAST_csv_file_basename) as BLAST_csv_extracted:
@@ -350,6 +357,9 @@ def extract_filtered_csv_homologues_to_alignments(s, acc, TMD_len, fasta_all_TMD
 
                 # save unique sequences WITH gaps (FOR COEVOLUTION WITH FREECONTACT, ETC)
                 uniq_TMD_seqs_for_PSSM_FREECONTACT = df.subject_TMD_align_seq.unique()
+                # remove seqs with O, U, or J that are not accepted by rate4site
+                uniq_TMD_seqs_for_PSSM_FREECONTACT = [x for x in uniq_TMD_seqs_for_PSSM_FREECONTACT if not contains_unaccepted_letter(x)]
+
                 save_seqs(uniq_TMD_seqs_for_PSSM_FREECONTACT, path_uniq_TMD_seqs_for_PSSM_FREECONTACT, query_TMD_seq)
                 save_fasta_from_array(uniq_TMD_seqs_for_PSSM_FREECONTACT, fasta_uniq_TMD_seqs_for_PSSM_FREECONTACT, acc, query_TMD_seq)
 
@@ -366,6 +376,7 @@ def extract_filtered_csv_homologues_to_alignments(s, acc, TMD_len, fasta_all_TMD
                 # only keep the seqs that have the same length as the first one
                 df_no_gaps_in_q_plus5 = df.loc[df['subject_TMD_align_seq_surr5'].str.len() == TMD_plus_5_len]
                 uniq_TMD_seqs_surr5_for_LIPO = df_no_gaps_in_q_plus5['subject_TMD_align_seq_surr5'].unique()
+                uniq_TMD_seqs_surr5_for_LIPO = [x for x in uniq_TMD_seqs_surr5_for_LIPO if not contains_unaccepted_letter(x)]
                 save_seqs(uniq_TMD_seqs_surr5_for_LIPO, path_uniq_TMD_seqs_surr5_for_LIPO, query_TMD_seq=query_TMD_seq_surr5)
                 save_fasta_from_array(uniq_TMD_seqs_surr5_for_LIPO, fasta_uniq_TMD_seqs_surr5_for_LIPO, acc, query_TMD_seq=query_TMD_seq_surr5)
 
@@ -386,3 +397,7 @@ def extract_filtered_csv_homologues_to_alignments(s, acc, TMD_len, fasta_all_TMD
         sys.stdout.write("{} not found".format(BLAST_csv_tar))
 
     return single_prot_dict
+
+def contains_unaccepted_letter(seq):
+    unaccepted_letters = ['O', 'U', 'J']
+    return any([u in seq for u in unaccepted_letters])

@@ -1,24 +1,27 @@
-.. image:: https://raw.githubusercontent.com/bojigu/thoipapy/master/thoipapy/docs/THOIPApy_logo.png
+.. image:: https://raw.githubusercontent.com/bojigu/thoipapy/develop/thoipapy/docs/THOIPA_banner.png
 
 THOIPApy
 ========
 
 The Transmembrane HOmodimer Interface Prediction Algorithm (THOIPA) is a machine learning method for the analysis of protein-protein-interactions.
 
-THOIPA predicts TM homodimer interface residues from evolutionary sequence information alone.
+THOIPA predicts transmembrane homodimer interface residues from evolutionary sequence information.
 
-THOIPA was designed to complement experimental approaches, and also energy-based modelling of TM homodimers.
+THOIPA helps predict potential homotypic transmembrane interface residues, which can then be verified experimentally.
+THOIPA also aids in the energy-based modelling of transmembrane homodimers.
 
-See the `FAQ`__ in the THOIPA wiki for more information.
+Important links:
 
-.. _FAQ: https://github.com/bojigu/thoipapy/wiki/What-is-THOIPA%3F
-__ FAQ_
+* `THOIPA webserver <http://www.thoipa.org>`_
+* `THOIPA FAQ <https://github.com/bojigu/thoipapy/wiki/What-is-THOIPA%3F>`_
+* `THOIPA wiki main page <https://github.com/bojigu/thoipapy/wiki/THOIPA-wiki-main-page>`_
 
-What does thoipapy do?
-----------------------
 
-* download protein homologues with BLAST
-* extract residue properties (e.g. residue conservation and polarity)
+How does thoipapy work?
+-----------------------
+
+* downloads protein homologues with BLAST
+* extracts residue properties (e.g. residue conservation and polarity)
 * trains a machine learning classifier
 * validates the prediction performance
 * creates heatmaps of residue properties and THOIPA prediction
@@ -30,46 +33,31 @@ Installation
 
     pip install thoipapy
 
-THOIPA has external dependencies such as FreeContact and Phobius that are only working on Linux.
-
-Use the "Docker" implementation detailed in the `Wiki`__ to:
-* run THOIPA standalone on platforms such as Windows or MacOS
-* run THOIPA standalone on Linux without installing the dependencies on your system
-
-.. _Wiki: https://github.com/bojigu/thoipapy/wiki
-__ Wiki_
+THOIPA has only been tested on Linux, due to reliance on external dependencies such as FreeContact, Phobius, CD-HIT and rate4site.
+For predictions only, a dockerised version is available that runs on Windows or MacOS.
+Please see the `THOIPA webserver <http://www.thoipa.org>`_ for the latest information.
 
 
 Dependencies
 ------------
 
-We recommend the `Anaconda python distribution`__, which contains all the required python modules (numpy, scipy, pandas,biopython and matplotlib). THOIPApy is currently tested for python 3.6.
+We recommend the `Anaconda python distribution <https://www.anaconda.com/products/individual>`_, which contains all the required python modules
+(numpy, scipy, pandas,biopython and matplotlib). THOIPApy is currently tested for python 3.8.5. The requirements.txt contains a snapshot of compatible
+dependencies.
 
-Pip should automatically install the pytoxr package of Mark Teese.
-
-.. _AnacondaLink: https://www.continuum.io/downloads
-__ AnacondaLink_
-
-THOIPApy depends on the command-line programs phobius and freecontact.
-Both of these are only available for Linux. THOIPApy itself has been tested on several different systems running Windows and Linux.
 
 Development status
 ------------------
 
 The code has been extensively updated and annotated for public release. However is released "as is" with some known issues, limitations and legacy code.
-The THOIPA standalone predictor is currently available to use. The settings file and databases used for THOIPA training are not yet released.
+
 
 Usage as a standalone predictor
 -------------------------------
 
-For TMD interface residue predictions of a protein of interest, we recommend running THOIPA as a standalone program via Docker, as described in the `Wiki`__ .
-
-.. _Wiki: https://github.com/bojigu/thoipapy/wiki
-__ Wiki_
-
-THOIPA can also be installed in Linux and used as a standalone predictor:
-* The operating system needs to have freecontact, phobius, and NCBI_BLAST installed.
-* The biopython wrapper for NCBIblast should be installed.
+* first check if your needs are met by the `THOIPA webserver <http://www.thoipa.org>`_ or the latest version of dockerised software
+* for local predictions on linux, first install phobius, NCBI_BLAST, biopython, freecontact, CD-HIT, and rate4site
+* please see `thoipapy/test/functional/test_standalone_prediction.py <https://github.com/bojigu/thoipapy/tree/develop/thoipapy/test/functional/test_standalone_prediction.py>`_ for the latest run syntax, typically
 
 .. code:: python
 
@@ -84,20 +72,27 @@ THOIPA can also be installed in Linux and used as a standalone predictor:
     md5 = get_md5_checksum(TMD_seq, full_seq)
     run_THOIPA_prediction(protein_name, md5, TMD_seq, full_seq, out_dir)
 
+
 **Example Output**
 
+* the output includes a csv showing the THOIPA prediction for each residue, as well as a heatmap figure as a summary
+* below is a heatmap showing the THOIPA prediction, and underlying conservation, relative polarity, and coevolution
+
 .. image:: https://raw.githubusercontent.com/bojigu/thoipapy/master/thoipapy/docs/standalone_heatmap_example.png
+
 
 Create your own machine learning predictor
 ------------------------------------------
 
-Details on how to train THOIPA on your own datasets will be released after publication.
+* THOIPA can be retrained to any dataset of your choice
+* the original set of training sequences and other resources are available via the `Open Science Foundation <https://osf.io/txjev/>`_
+* the THOIPA feature extraction, feature selection, and training pipeline is fully automated
+* contact us for an introduction to the THOIPA software pipeline and settings
 
-.. code:: python
+.. code:: bash
 
-    import THOIPApy
-    settings = r"D:\data\THOIPApy_settings.xlsx"
-    THOIPApy.run(settings)
+    python path/to/thoipapy/run.py -s home/user/thoipa/THOIPA_settings.xlsx
+
 
 License
 -------
@@ -108,31 +103,28 @@ THOIPApy is free software distributed under the permissive MIT License.
 Contribute
 -------------
 
-THOIPApy is not yet officially published. However, feedback regarding the installation and usage of the standalone version is appreciated. Simply email us directly, or initiate an issue in Github.
+* Contributors are welcome.
+* For feedback or troubleshooting, please email us directly and initiate an issue in Github.
 
 
 Contact
 -------
 
-For contact details, see the relevant TU-Munich websites:
+* Mark Teese, `TNG Technology Consulting GmbH <https://www.tngtech.com/en/index.html>`_, formerly of the `Langosch Lab <http://cbp.wzw.tum.de/index.php?id=10>`_ at the `Technical University of Munich <https://www.tum.de/en/>`_
+* `Bo Zeng <http://frishman.wzw.tum.de/index.php?id=50>`_, `Chinese Academy of Sciences, Beijing <http://english.cas.cn/>`_ formerly of the `Frishman Lab <http://frishman.wzw.tum.de/index.php?id=2>`_ at the `Technical University of Munich <https://www.tum.de/en/>`_
 
-Author: `Bo Zeng`__  of the `Frishman lab`__, TU-Munich, Weihenstephan Campus
+.. image:: https://raw.githubusercontent.com/bojigu/thoipapy/develop/thoipapy/docs/signac_seine_bei_samois_mt.png
+   :height: 150px
+   :width: 250px
 
-Further coding and supervision: `Mark Teese`__ of the `Langosch lab`__, TU-Munich, Weihenstephan Campus
-
-.. _BoWebsite: http://frishman.wzw.tum.de/index.php?id=50
-.. _FrishmanWebsite: http://frishman.wzw.tum.de/index.php?id=2
-.. _MarkWebsite: http://cbp.wzw.tum.de/index.php?id=49&L=1
-.. _LangoschWebsite: http://cbp.wzw.tum.de/index.php?id=10
-__ BoWebsite_
-__ FrishmanWebsite_
-__ MarkWebsite_
-__ LangoschWebsite_
+.. image:: https://raw.githubusercontent.com/bojigu/thoipapy/develop/thoipapy/docs/signac_notredame_bz.png
+   :height: 120px
+   :width: 250px
 
 
 Citation
 --------
 
-Citation to be added.
-Full Credits: Bo Zeng, Yao Xiao, Dmitrij Frishman, Dieter Langosch, Mark Teese
-
+Yao Xiao, Bo Zeng, Nicola Berner, Dmitrij Frishman, Dieter Langosch, and Mark George Teese (2020)
+Experimental determination and data-driven prediction of homotypic transmembrane domain interfaces,
+Computational and Structural Biotechnology Journal, accepted manuscript.

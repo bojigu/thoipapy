@@ -15,68 +15,46 @@ setup(
     long_description=long_description,
     long_description_content_type='text/x-rst',
     url="https://github.com/bojigu/thoipapy",
-    download_url='https://github.com/bojigu/thoipapy/archive/0.0.7.tar.gz',
+    download_url='https://github.com/bojigu/thoipapy/archive/1.0.0.tar.gz',
     license='MIT',
     classifiers=
     [
-    'Programming Language :: Python :: 3.6',
-    'License :: OSI Approved :: MIT License',
-    'Intended Audience :: Science/Research',
-    'Topic :: Scientific/Engineering :: Chemistry',
-    'Topic :: Scientific/Engineering :: Physics',
-    'Topic :: Scientific/Engineering :: Bio-Informatics',
+        'Programming Language :: Python :: 3.8',
+        'License :: OSI Approved :: MIT License',
+        'Intended Audience :: Science/Research',
+        'Topic :: Scientific/Engineering :: Chemistry',
+        'Topic :: Scientific/Engineering :: Physics',
+        'Topic :: Scientific/Engineering :: Bio-Informatics',
     ],
     install_requires=[
-    "pandas",
-    "numpy",
-    "scipy",
-    "seaborn",
-    "biopython",
-    "matplotlib",
-    "django",
-    "pytoxr",
-    "statsmodels",
-    "scikit-learn",
-    "weighslide"
+        "pandas",
+        "numpy",
+        "scipy",
+        "seaborn",
+        "biopython",
+        "matplotlib",
+        "django",
+        "pytoxr",
+        "statsmodels",
+        "scikit-learn",
+        "weighslide",
+        "pytest"
     ],
     project_urls=
     {
-    'BoZeng': 'http://frishman.wzw.tum.de/index.php?id=50',
-    'FrishmanLab': 'http://frishman.wzw.tum.de/index.php?id=2',
-    'LangoschLab': 'http://cbp.wzw.tum.de/index.php?id=10',
-    "TU_Munich": "https://www.tum.de"
+        'BoZeng': 'http://frishman.wzw.tum.de/index.php?id=50',
+        'FrishmanLab': 'http://frishman.wzw.tum.de/index.php?id=2',
+        'LangoschLab': 'http://cbp.wzw.tum.de/index.php?id=10',
+        "TU_Munich": "https://www.tum.de"
     },
     keywords="bioinformatics protein transmembrane residue conservation coevolution covariance evolutionary "
              "couplings polarity hydrophobicity randomforest machinelearning interface LIPS evolution",
     packages=find_packages(),
     # datafiles MUST be included, either as "modules" or as package directories..
     package_dir={'thoipapy': 'thoipapy'},
-    package_data={'': ['*.txt', '*.xlsx', '*.csv', '*.lpkl'],# In theory f any package contains *.txt etc files, include them. Doesn't seem to work, though.
-                  'ML_model': ['*.lpkl'],
+    package_data={'': ['*.txt', '*.xlsx', '*.csv', '*.lpkl'],  # In theory f any package contains *.txt etc files, include them. Doesn't seem to work, though.
+                  'ML_model': ['*.lpkl', '*.txt'],
                   'setting': ['*.txt', '*.xlsx', '*.csv', '*.lpkl']},
-    include_package_data = True,
-    version = "0.0.7",
-    )
-
-
-"""
-https://docs.python.org/3.7/distutils/setupscript.html
-
-setup.py
-src/
-    mypkg/
-        __init__.py
-        module.py
-        data/
-            tables.dat
-            spoons.dat
-            forks.dat
-            
-            
-setup(...,
-      packages=['mypkg'],
-      package_dir={'mypkg': 'src/mypkg'},
-      package_data={'mypkg': ['data/*.dat']},
-      )  
-        
-"""
+    include_package_data=True,
+    version="1.0.0",
+)
