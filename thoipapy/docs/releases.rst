@@ -2,6 +2,11 @@
 THOIPApy releases
 =================
 
+1.0.1
+-----
+* fix missing psutil dependency
+* fix biopython syntax to remove warning message
+
 1.0.0
 -----
 * added new prediction features including conservation calculated with rate4site
