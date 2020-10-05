@@ -38,7 +38,8 @@ setup(
         "statsmodels",
         "scikit-learn",
         "weighslide",
-        "pytest"
+        "pytest",
+        "psutil"
     ],
     project_urls=
     {
