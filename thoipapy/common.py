@@ -237,7 +237,7 @@ def create_settingdict(excel_file_with_settings):
         s.update(sheet_as_dict)
 
     list_paths_to_normalise = ['MiRMAK_data_folder', 'dropbox_dir', 'sets_folder', 'thoipapy_data_folder',
-                               'Rcode', 'freecontact_dir', 'hhblits_dir', 'uniprot_database_dir', 'Rscript_dir']
+                               'Rcode', 'hhblits_dir', 'uniprot_database_dir', 'Rscript_dir']
     # normalise the paths for selected columns, so that they are appropriate for the operating system
     for path in list_paths_to_normalise:
         if path in s:
