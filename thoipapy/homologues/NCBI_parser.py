@@ -57,12 +57,11 @@ def parse_NCBI_xml_to_csv_mult_prot(s, df_set, logging):
         if not os.path.isdir(homo_out_dir):
             os.makedirs(homo_out_dir)
         BLAST_csv_tar = os.path.join(homo_out_dir, "{}.surr{}.BLAST.csv.tar.gz".format(acc, s["num_of_sur_residues"]))
-
-        parse_NCBI_xml_to_csv(s, acc, BLAST_xml_tar, BLAST_csv_tar, TMD_start, TMD_end, logging)
+        parse_NCBI_xml_to_csv(acc, BLAST_xml_tar, BLAST_csv_tar, TMD_start, TMD_end, s["e_value_cutoff"], logging)
 
     logging.info('~~~~~~~~~~~~                 finished parse_NCBI_xml_to_csv_mult_prot              ~~~~~~~~~~~~')
 
-def parse_NCBI_xml_to_csv(s, acc, blast_xml_tar, BLAST_csv_tar, TMD_start, TMD_end, logging):
+def parse_NCBI_xml_to_csv(acc, blast_xml_tar, BLAST_csv_tar, TMD_start, TMD_end, e_value_cutoff, logging):
     # remove the final ".tar.gz" to get the xml and csv filename
     BLAST_xml_file = str(blast_xml_tar)[:-7]
     BLAST_csv_file = str(BLAST_csv_tar)[:-7]
@@ -89,12 +88,11 @@ def parse_NCBI_xml_to_csv(s, acc, blast_xml_tar, BLAST_csv_tar, TMD_start, TMD_e
     with open(BLAST_csv_file, 'w') as homo_out_csv_file_handle:
         with open(BLAST_xml_file) as xml_result_handle:
             xml_record = NCBIXML.read(xml_result_handle)
-            E_VALUE_THRESH = s["e_value_cutoff"]
             hit_num = 0
             n_hsps_excluded_due_to_e_value_cutoff = 0
             for alignment in xml_record.alignments:
                 for hsp in alignment.hsps:
-                    if hsp.expect <= E_VALUE_THRESH:  # set homologues evalue cutoff
+                    if hsp.expect <= e_value_cutoff:  # set homologues evalue cutoff
                         match_details_dict['hit_num'] = hit_num
                         query_seq_no_gap = re.sub('-', '', hsp.query)
                         if hsp.query_start <= TMD_start and hsp.query_end >= TMD_end:

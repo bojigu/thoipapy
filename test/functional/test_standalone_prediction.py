@@ -6,11 +6,11 @@ from thoipapy.predict import get_md5_checksum
 
 
 def test_standalone_prediction():
-    protein_name = "ERBB3"
-    TMD_seq = "MALTVIAGLVVIFMMLGGTFL"
-    full_seq = "MVQNECRPCHENCTQGCKGPELQDCLGQTLVLIGKTHLTMALTVIAGLVVIFMMLGGTFLYWRGRRIQNKRAMRRYLERGESIEPLDPSEKANKVLA"
+    protein_name = "Q12983_BNIP3"
+    TMD_seq = "LLFYVIFYGCLAGIFIGTIQVMLLTI"
+    full_seq = "MARGKAKEEGSWKKFIWNSEKKEFLGRTGGSWFKILLFYVIFYGCLAGIFIGTIQVMLLTISEFKPTYQDRVAPPGLTQIPQIQKTEISFRPNDPKSYEEYVRNIVRFLEKY"
     md5 = get_md5_checksum(TMD_seq, full_seq)
-    thoipapy_module_path = Path(thoipapy.__file__).parent
+    thoipapy_module_path = Path(thoipapy.__file__).parents[1]
     out_dir = thoipapy_module_path / "test/test_outputs/test_predict"
 
     run_THOIPA_prediction(protein_name, md5, TMD_seq, full_seq, out_dir, create_heatmap=True)

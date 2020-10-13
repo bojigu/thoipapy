@@ -17,7 +17,7 @@ import thoipapy.figs
 import thoipapy.utils
 import thoipapy.validation
 import thoipapy.validation.bocurve
-from thoipapy.utils import Log_Only_To_Console
+from thoipapy.utils import LogOnlyToConsole
 
 
 class LooValidationData:
@@ -120,7 +120,7 @@ def run_LOO_validation(s: dict, df_set: pd.DataFrame, logging):
 
     if s["use_multiprocessing"]:
         # TURN LOGGING OFF BEFORE MULTIPROCESSING
-        logger = Log_Only_To_Console()
+        logger = LogOnlyToConsole()
     else:
         logger = logging
 
