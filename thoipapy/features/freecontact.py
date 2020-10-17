@@ -25,7 +25,6 @@ def coevolution_calculation_with_freecontact_mult_prot(s, df_set, logging):
         Python object with settings for logging to console and file.
     """
     logging.info('start coevolution calculation using freecontact')
-    freecontact_loc=s["freecontact_dir"]
 
     for i in df_set.index:
         acc = df_set.loc[i, "acc"]
@@ -33,10 +32,10 @@ def coevolution_calculation_with_freecontact_mult_prot(s, df_set, logging):
         alignments_dir = alignments_dir = os.path.join(s["thoipapy_data_folder"], "homologues", "alignments", database)
         path_uniq_TMD_seqs_for_PSSM_FREECONTACT = os.path.join(alignments_dir, "{}.surr{}.gaps{}.uniq.for_PSSM_FREECONTACT.txt".format(acc, s["num_of_sur_residues"], s["max_n_gaps_in_TMD_subject_seq"]))
         freecontact_file = os.path.join(s["thoipapy_data_folder"], "features", "coevolution", database, "{}.surr{}.gaps{}.freecontact.csv".format(acc, s["num_of_sur_residues"], s["max_n_gaps_in_TMD_subject_seq"]))
-        coevolution_calculation_with_freecontact(path_uniq_TMD_seqs_for_PSSM_FREECONTACT, freecontact_file, freecontact_loc, logging)
+        coevolution_calculation_with_freecontact(path_uniq_TMD_seqs_for_PSSM_FREECONTACT, freecontact_file, logging)
 
 
-def coevolution_calculation_with_freecontact(path_uniq_TMD_seqs_for_PSSM_FREECONTACT, freecontact_file, freecontact_loc, logging):
+def coevolution_calculation_with_freecontact(path_uniq_TMD_seqs_for_PSSM_FREECONTACT, freecontact_file, logging):
     """Runs freecontact from command line on a multiple sequence alignment in FASTA format.
 
     Parameters
@@ -45,16 +44,14 @@ def coevolution_calculation_with_freecontact(path_uniq_TMD_seqs_for_PSSM_FREECON
         Path to text file with list of TMD sequences
     freecontact_file : str
         Path to freecontact output file.
-    freecontact_loc : str
-        Path to the executable freecontact file (e.g. "freecontact" or "D:/programs/freecontact/bin/freecontact")
     logging : logging.Logger
         Python object with settings for logging to console and file.
     """
     if os.path.isfile(path_uniq_TMD_seqs_for_PSSM_FREECONTACT):
         try:
             thoipapy.utils.make_sure_path_exists(freecontact_file, isfile=True)
-            exect_str = "grep -v '^>' {aln_file} |sed 's/[a-z]//g'|{freecontact} >{freecontact_output_file}".format(
-                aln_file=path_uniq_TMD_seqs_for_PSSM_FREECONTACT, freecontact=freecontact_loc, freecontact_output_file=freecontact_file)
+            exect_str = "grep -v '^>' {aln_file} |sed 's/[a-z]//g'|freecontact >{freecontact_output_file}".format(
+                aln_file=path_uniq_TMD_seqs_for_PSSM_FREECONTACT, freecontact_output_file=freecontact_file)
 
             command = utils.Command(exect_str)
             command.run(timeout=400, log_stderr=False)

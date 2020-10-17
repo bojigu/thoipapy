@@ -15,7 +15,7 @@ setup(
     long_description=long_description,
     long_description_content_type='text/x-rst',
     url="https://github.com/bojigu/thoipapy",
-    download_url='https://github.com/bojigu/thoipapy/archive/1.1.0.tar.gz',
+    download_url='https://github.com/bojigu/thoipapy/archive/1.1.1.tar.gz',
     license='MIT',
     classifiers=
     [
@@ -26,12 +26,13 @@ setup(
         'Topic :: Scientific/Engineering :: Physics',
         'Topic :: Scientific/Engineering :: Bio-Informatics',
     ],
+    python_requires='>=3',
     install_requires=[
         "pandas",
         "numpy",
         "scipy",
         "seaborn",
-        "biopython",
+        "biopython>=1.78",
         "matplotlib",
         "django",
         "pytoxr",
@@ -57,5 +58,5 @@ setup(
                   'ML_model': ['*.lpkl', '*.txt'],
                   'setting': ['*.txt', '*.xlsx', '*.csv', '*.lpkl']},
     include_package_data=True,
-    version="1.1.0",
+    version="1.1.1",
 )

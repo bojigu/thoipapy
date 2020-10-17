@@ -110,12 +110,18 @@ def download_homologues_from_ncbi(acc, TMD_seq_pl_surr, blast_xml_file, xml_txt,
         Python object with settings for logging to console and file.
     """
     logging.info('{} starting download_homologues_from_ncbi'.format(acc))
+
+    # create an empty text file with the download date
+    date = strftime("%Y%m%d")
+    with open(xml_txt, "w") as f:
+        f.write("acc\t{}\ndownload_date\t{}\ndatabase\tncbi_nr\nexpect_value\t{}\n".format(acc, date, expect_value))
+
     query_fasta_string = ">{} TMD add surround 20 residues\n{}".format(acc, TMD_seq_pl_surr)
     make_sure_path_exists(blast_xml_file, isfile=True)
 
+    start = time.time()
+
     try:
-        # NOTE : time.clock gives a different unit in Linux!
-        start = time.clock()
         tmp_protein_homologues_xml_handle = NCBIWWW.qblast("blastp", "nr", query_fasta_string,
                                                            expect=expect_value,
                                                            hitlist_size=hit_list_size)
@@ -123,15 +129,11 @@ def download_homologues_from_ncbi(acc, TMD_seq_pl_surr, blast_xml_file, xml_txt,
             save_tmp_xml_file.write(tmp_protein_homologues_xml_handle.read())
 
         tmp_protein_homologues_xml_handle.close()
-        duration = time.clock() - start
 
     except:
-        logging.warning("{} Query string not found in the CGI context in qblast".format(acc))
+        logging.warning(f"{acc} query string not found in the CGI context in qblast")
 
-    # create an empty text file with the download date
-    date = strftime("%Y%m%d")
-    with open(xml_txt, "w") as f:
-        f.write("acc\t{}\ndownload_date\t{}\ndatabase\tncbi_nr\nexpect_value\t{}\n".format(acc, date, expect_value))
+    duration = time.time() - start
 
     if os.path.isfile(blast_xml_file):
         with tarfile.open(xml_tar_gz, mode='w:gz') as tar:

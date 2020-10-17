@@ -193,7 +193,8 @@ def run_THOIPA_prediction(protein_name, md5, TMD_seq, full_seq, out_dir, create_
         download_homologues_from_ncbi(acc, TMD_seq_pl_surr, blast_xml_file, xml_txt, xml_tar_gz, expect_value, hit_list_size, logging)
 
     if not os.path.isfile(BLAST_csv_tar):
-        parse_NCBI_xml_to_csv(s, acc, xml_tar_gz, BLAST_csv_tar, TMD_start, TMD_end, logging)
+        e_value_cutoff = s["e_value_cutoff"]
+        parse_NCBI_xml_to_csv(acc, xml_tar_gz, BLAST_csv_tar, TMD_start, TMD_end, e_value_cutoff, logging)
 
     ###################################################################################################
     #                                                                                                 #
@@ -223,7 +224,7 @@ def run_THOIPA_prediction(protein_name, md5, TMD_seq, full_seq, out_dir, create_
         logging.warning("\n Freecontact, CD-HIT and rate4site cannot be run in Windows! Skipping coevolution_calculation_with_freecontact and rate4site_calculation.\n"
                         f"For testing, copy output files from Linux and rename to {freecontact_file} and {rate4site_csv}")
     else:
-        tf.freecontact.coevolution_calculation_with_freecontact(path_uniq_TMD_seqs_for_PSSM_FREECONTACT, freecontact_file, s["freecontact_dir"], logging)
+        tf.freecontact.coevolution_calculation_with_freecontact(path_uniq_TMD_seqs_for_PSSM_FREECONTACT, freecontact_file, logging)
         tf.rate4site.rate4site_calculation(TMD_seq, acc, fasta_uniq_TMD_seqs_surr5_for_LIPO, rate4site_csv, logging, rerun_rate4site=False)
 
     tf.freecontact.parse_freecontact_coevolution(acc, freecontact_file, freecontact_parsed_csv, TMD_start, TMD_end, logging)

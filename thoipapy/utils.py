@@ -848,7 +848,7 @@ class HardDriveSpaceException(Exception):
         canonical_string_representation = repr
         return canonical_string_representation(self.parameter)
 
-class Log_Only_To_Console(object):
+class LogOnlyToConsole(object):
     def __init__(self):
         pass
     def info(self, message):
