@@ -29,7 +29,7 @@ How does thoipapy work?
 
 Installation
 ------------
-.. code:: python
+.. code::
 
     pip install thoipapy
 
