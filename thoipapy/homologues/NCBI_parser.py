@@ -3,6 +3,8 @@ import os
 import re
 import sys
 import tarfile
+from shutil import move
+
 import numpy as np
 import pandas as pd
 from Bio.Blast import NCBIXML
@@ -84,6 +86,8 @@ def parse_NCBI_xml_to_csv(acc, blast_xml_tar, BLAST_csv_tar, TMD_start, TMD_end,
     # opening as a handle currently doesn't work, as not recognised by NCBIXML.read
     with tarfile.open(blast_xml_tar, 'r:gz') as tar:
         tar.extractall(os.path.dirname(blast_xml_tar))
+
+    remove_undesired_text_from_xml(BLAST_xml_file)
 
     with open(BLAST_csv_file, 'w') as homo_out_csv_file_handle:
         with open(BLAST_xml_file) as xml_result_handle:
@@ -171,6 +175,18 @@ def parse_NCBI_xml_to_csv(acc, blast_xml_tar, BLAST_csv_tar, TMD_start, TMD_end,
     return acc, True, "no errors"
 
 
+def remove_undesired_text_from_xml(BLAST_xml_file):
+    """ Removes undesired text from malformed XML files delivered by NCBI server via biopython wrapper.
+    """
+    undesired_text = "CREATE_VIEW\n"
+    BLAST_xml_file_orig = BLAST_xml_file[:-4] + "_orig.xml"
+    move(BLAST_xml_file, BLAST_xml_file_orig)
+    with open(BLAST_xml_file_orig, "r") as orig_xml:
+        with open(BLAST_xml_file, "w") as cleaned_xml:
+            for line in orig_xml:
+                if line != undesired_text:
+                    cleaned_xml.write(line)
+    Path(BLAST_xml_file_orig).unlink()
 
 
 def get_start_and_end_of_TMD_in_query(x, TMD_regex_ss):

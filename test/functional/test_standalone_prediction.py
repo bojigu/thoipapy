@@ -1,19 +1,18 @@
 from pathlib import Path
 
 import thoipapy
+from test.helpers.helpers import TestProtein
 from thoipapy import run_THOIPA_prediction
 from thoipapy.predict import get_md5_checksum
 
 
 def test_standalone_prediction():
-    protein_name = "Q12983_BNIP3"
-    TMD_seq = "LLFYVIFYGCLAGIFIGTIQVMLLTI"
-    full_seq = "MARGKAKEEGSWKKFIWNSEKKEFLGRTGGSWFKILLFYVIFYGCLAGIFIGTIQVMLLTISEFKPTYQDRVAPPGLTQIPQIQKTEISFRPNDPKSYEEYVRNIVRFLEKY"
-    md5 = get_md5_checksum(TMD_seq, full_seq)
+    tp: TestProtein = TestProtein()
+    tp.with_BNIP3()
     thoipapy_module_path = Path(thoipapy.__file__).parents[1]
     out_dir = thoipapy_module_path / "test/test_outputs/test_predict"
 
-    run_THOIPA_prediction(protein_name, md5, TMD_seq, full_seq, out_dir, create_heatmap=True)
+    run_THOIPA_prediction(tp.protein_name, tp.md5, tp.tmd_seq, tp.full_seq, out_dir, create_heatmap=True)
 
     assert (out_dir / "datafiles").is_dir()
     assert (out_dir / "heatmap.pdf").is_file()

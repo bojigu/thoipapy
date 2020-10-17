@@ -52,7 +52,7 @@ def run_LOO_validation(s: dict, df_set: pd.DataFrame, logging):
     The model is trained on the train data csv (e.g. set38_train_data.csv)
          - for proteins in X-ray subset, hetero contacts (folding residues) are removed from this training set
 
-    The model is validated against each combined CSV with features (e.g. "data_thoipapy\features\combined\ETRA\Q12983.surr20.gaps5.combined_features.csv")
+    The model is validated against each combined CSV with features (e.g. "data_thoipapy/features/combined/ETRA/Q12983.surr20.gaps5.combined_features.csv")
      - for proteins in X-ray subset, folding residues (hetero contacts) are INCLUDED here.
      - the model created without the folding contacts is therefore validated against the full seq, including folding residues
 
