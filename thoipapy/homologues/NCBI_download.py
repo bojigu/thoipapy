@@ -86,6 +86,7 @@ def download_homologues_from_ncbi_mult_prot(s, df_set, logging):
 
     logging.info('homologues download was finished')
 
+
 def download_homologues_from_ncbi(acc, TMD_seq_pl_surr, blast_xml_file, xml_txt, xml_tar_gz, expect_value, hit_list_size, logging):
     """Downloads homologue xml file using NCBI BLAST via the biopython qBLAST wrapper.
 

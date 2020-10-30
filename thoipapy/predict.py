@@ -1,4 +1,5 @@
 import warnings
+from typing import Union
 
 import thoipapy.features as tf
 
@@ -33,44 +34,14 @@ if os.environ.get('DISPLAY','') == '':
     mpl.use('Agg')
 import matplotlib.pyplot as plt
 
-def run_THOIPA_prediction(protein_name, md5, TMD_seq, full_seq, out_dir, create_heatmap=True):
+
+def run_THOIPA_prediction(protein_name: str, md5: str, TMD_seq: str, full_seq: str, out_dir: Union[Path, str], create_heatmap: bool = True):
     """Function to run standalone THOIPA prediction for a protein transmembrane domain of interest.
-
-    Parameters
-    ----------
-    protein_name : str
-        Protein name
-    TMD_seq : str
-        Transmembrane domain sequence
-    full_seq : str
-        Full protein sequence
-    out_dir : str
-        Path to folder where the output will be saved
-
-    Saved files and figures
-    -----------------------
-
-
-    Usage
-    -----
-    import thoipapy
-    protein_name = "1c17_A"
-    TMD_seq = "AAVMMGLAAIGAAIGIGILG"
-    full_seq = "MENLNMDLLYMAAAVMMGLAAIGAAIGIGILGGKFLEGAARQPDLIPLLRTQFFIVMGLVDAIPMIAVGLGLYVMFAVA"
-    predictions_folder = "/path/to/your/output/folder"
-    thoipapy.run_THOIPA_prediction(protein_name, TMD_seq, full_seq, predictions_folder)
     """
     # create settings dict from xlsx file
     thoipapy_module_path = Path(thoipapy.__file__).parent
     settings_path = thoipapy_module_path / "setting/thoipapy_standalone_run_settings.xlsx"
     s = thoipapy.common.create_settingdict(settings_path)
-
-    #folder_with_md5_exists = False
-    #if folder_with_md5_exists:
-    #    create_indiv_name_and_email = 99
-    #    sys.stdout.write("You shuld just email the results here.")
-    #acc = md5[0:6]
-    #out_dir = os.path.join(predictions_folder, md5)
 
     ###################################################################################################
     #                                                                                                 #
@@ -86,7 +57,7 @@ def run_THOIPA_prediction(protein_name, md5, TMD_seq, full_seq, out_dir, create_
     xml_txt = datafiles_dir / "BLAST_results_details.txt"
     xml_tar_gz = datafiles_dir / "BLAST_results.xml.tar.gz"
     BLAST_csv_tar = datafiles_dir / "BLAST_results.csv.tar.gz"
-    fasta_all_TMD_seqs = datafiles_dir /"homologues.redundant.fas"
+    fasta_all_TMD_seqs = datafiles_dir / "homologues.redundant.fas"
     path_uniq_TMD_seqs_for_PSSM_FREECONTACT = datafiles_dir / "homologues.uniq.for_PSSM_FREECONTACT.txt"
     path_uniq_TMD_seqs_no_gaps_for_LIPS = datafiles_dir / "homologues.uniq.for_LIPS.txt"
     path_uniq_TMD_seqs_surr5_for_LIPO = datafiles_dir / "homologues.uniq.for_LIPO.txt"
@@ -202,7 +173,7 @@ def run_THOIPA_prediction(protein_name, md5, TMD_seq, full_seq, out_dir, create_
     #                                                                                                 #
     ###################################################################################################
 
-    #if not os.path.isfile(path_uniq_TMD_seqs_for_PSSM_FREECONTACT):
+    # if not os.path.isfile(path_uniq_TMD_seqs_for_PSSM_FREECONTACT):
     extract_filtered_csv_homologues_to_alignments(s, acc, len(TMD_seq), fasta_all_TMD_seqs, path_uniq_TMD_seqs_for_PSSM_FREECONTACT,
                                                       path_uniq_TMD_seqs_no_gaps_for_LIPS, path_uniq_TMD_seqs_surr5_for_LIPO, BLAST_csv_tar,
                                                       TMD_seq, query_TMD_seq_surr5, logging)
@@ -335,7 +306,6 @@ def run_THOIPA_prediction(protein_name, md5, TMD_seq, full_seq, out_dir, create_
         sns.heatmap(df, ax=ax, cmap=cmap)
 
         # format residue numbering at bottom
-
         ax.tick_params(axis="x", direction='out', pad=1.5, tick2On=False)
         ax.set_xlabel("position in TMD", fontsize=fontsize)
         ax.set_yticklabels(df.index, rotation=0, fontsize=fontsize)
@@ -356,20 +326,9 @@ def run_THOIPA_prediction(protein_name, md5, TMD_seq, full_seq, out_dir, create_
     logging.info("Output file : {}\n"
                  "THOIPA standalone completed successfully for {}.\n\n".format(THOIPA_pretty_out_xlsx, protein_name))
 
-def get_start_end_pl_surr(TMD_start, TMD_end, seqlen, surr):
-    """Get start and end of TMD plus surrounding sequence
 
-    Parameters
-    ----------
-    TMD_start
-    TMD_end
-    seqlen
-    surr
-
-    Returns
-    -------
-
-    """
+def get_start_end_pl_surr(TMD_start: int, TMD_end: int, seqlen: int, surr: int):
+    """Get start and end of TMD plus surrounding sequence"""
     TMD_start_pl_surr = TMD_start - surr
     if TMD_start_pl_surr < 1:
         TMD_start_pl_surr = 1
@@ -379,21 +338,8 @@ def get_start_end_pl_surr(TMD_start, TMD_end, seqlen, surr):
     return TMD_start_pl_surr, TMD_end_pl_surr
 
 
-def get_md5_checksum(TMD_seq, full_seq):
-    """Create md5 checksum from a concatemer of the TMD_seq and full_seq
-
-    Parameters
-    ----------
-    TMD_seq : str
-        TMD sequence
-    full_seq : str
-        Full protein sequence
-
-    Returns
-    -------
-    md5 : str
-        md5 checksum
-    """
+def get_md5_checksum(TMD_seq: str, full_seq: str) -> str:
+    """Create md5 checksum from a concatemer of the TMD_seq and full_seq"""
     TMD_plus_full_seq = TMD_seq + "_" + full_seq
     # adjust encoding for md5 creation
     #TMD_plus_full_seq = unicodedata.normalize('NFKD', TMD_plus_full_seq).encode('ascii', 'ignore')
@@ -413,12 +359,13 @@ def print_help():
     sys.stdout.write("\n\n")
     sys.stdout.flush()
 
+
 usage = "\nthoipa.py [-h] [-d D] [-i I] [-f F]\n\nexample: \npython thoipa.py -d /Path/to/your/input/csv/text/files"
 
 # read the command line arguments
 parser = argparse.ArgumentParser(usage=usage)
 
-#parser.add_argument("-h", help = "Prints help")
+# parser.add_argument("-h", help = "Prints help")
 
 parser.add_argument("-d",  # "-directory",
                     help=r'Path to directory containing input csv text files.')
@@ -441,7 +388,7 @@ if __name__ == "__main__":
     # get the command-line arguments
     args = parser.parse_args()
 
-    sys.stdout.write("args ", args)
+    sys.stdout.write(f"args: {args}")
     sys.stdout.flush()
 
     if args.d is not None:
@@ -454,12 +401,12 @@ if __name__ == "__main__":
         infile_list = [Path(args.i)]
         input_dir = Path(args.i).parent
     elif args.d is not None and args.i is not None:
-        raise ValueError("Please include either an input directory of files to process (-d D:\data),"
-                         "or an input file (-i D:\data\Q12983.txt), but not both.")
+        raise ValueError("Please include either an input directory of files to process (-d D:/data),"
+                         "or an input file (-i D:/data/Q12983.txt), but not both.")
     else:
         sys.stdout.write("usage: " + usage + "\n\n")
         raise ValueError("Input error. The command should include an input directory of files to process (-d directory), "
-                         "or an input file (-i D:\data\Q12983.txt).")
+                         "or an input file (-i D:/data/Q12983.txt).")
 
     # use the output directory given as -f
     # or Q
@@ -470,32 +417,25 @@ if __name__ == "__main__":
         if not output_dir.is_dir():
             os.makedirs(output_dir)
 
-
     for input_csv in infile_list:
         input_ser = open_csv_as_series(input_csv)
 
         # convert protein_name to file-format-friendly text, without symbols etc, max 20 characters
-        protein_name = slugify(input_ser["name"])[0:20]
-        if protein_name != input_ser["name"]:
-            sys.stdout.write("\nprotein name modified from {} to directory-folder-friendly {}\n".format(input_ser["name"], protein_name))
+        protein_name_cleaned = slugify(input_ser["name"])[0:20]
+        if protein_name_cleaned != input_ser["name"]:
+            sys.stdout.write("\nprotein name modified from {} to directory-folder-friendly {}\n".format(input_ser["name"], protein_name_cleaned))
 
-        input_ser["slugified_name"] = protein_name
-
-        TMD_seq = input_ser["TMD_seq"]
-        full_seq = input_ser["full_seq"]
-
-        #predictions_folder = os.path.normpath(args.f)
+        input_ser["slugified_name"] = protein_name_cleaned
 
         # get checksum
-        md5 = get_md5_checksum(TMD_seq, full_seq)
-        input_ser["md5"] = md5
+        md5_checksum = get_md5_checksum(input_ser["TMD_seq"], input_ser["full_seq"])
+        input_ser["md5"] = md5_checksum
 
         # create output directory based on protein name
         # save the original csv
-        out_dir = output_dir.joinpath(md5)
-        #out_dir = os.path.join(output_dir, protein_name)
-        thoipapy.utils.make_sure_path_exists(out_dir)
-        input_ser.to_csv(out_dir / "input.csv")
+        out_dir_incl_md5 = output_dir.joinpath(md5_checksum)
+        thoipapy.utils.make_sure_path_exists(out_dir_incl_md5)
+        input_ser.to_csv(out_dir_incl_md5 / "input.csv")
 
-        run_THOIPA_prediction(protein_name, md5, TMD_seq, full_seq, out_dir)
-        os.chmod(out_dir, stat.S_IRUSR | stat.S_IWUSR | stat.S_IXUSR | stat.S_IRGRP | stat.S_IWGRP| stat.S_IXGRP)
+        run_THOIPA_prediction(protein_name_cleaned, md5_checksum, input_ser["TMD_seq"], input_ser["full_seq"], out_dir_incl_md5)
+        os.chmod(out_dir_incl_md5, stat.S_IRUSR | stat.S_IWUSR | stat.S_IXUSR | stat.S_IRGRP | stat.S_IWGRP| stat.S_IXGRP)

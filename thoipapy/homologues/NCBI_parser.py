@@ -63,6 +63,7 @@ def parse_NCBI_xml_to_csv_mult_prot(s, df_set, logging):
 
     logging.info('~~~~~~~~~~~~                 finished parse_NCBI_xml_to_csv_mult_prot              ~~~~~~~~~~~~')
 
+
 def parse_NCBI_xml_to_csv(acc, blast_xml_tar, BLAST_csv_tar, TMD_start, TMD_end, e_value_cutoff, logging):
     # remove the final ".tar.gz" to get the xml and csv filename
     BLAST_xml_file = str(blast_xml_tar)[:-7]
@@ -202,14 +203,22 @@ def get_start_and_end_of_TMD_in_query(x, TMD_regex_ss):
         # if the tmd is not in the query, return False, 0, 0
         return np.nan
 
+
 def slice_query_TMD_seq(x):
     return x['query_align_seq'][int(x["start"]):int(x["end"])]
+
+
 def slice_markup_TMD_seq(x):
     return x['match_markup_seq'][int(x["start"]):int(x["end"])]
+
+
 def slice_match_TMD_seq(x):
     return x['subject_align_seq'][int(x["start"]):int(x["end"])]
+
+
 def slice_match_TMD_seq_surr5(x):
     return x['subject_align_seq'][int(x["start_min_5"]) : int(x["end"]) + 5]
+
 
 def save_fasta(df, col_with_seqs, filepath, acc, query_TMD_seq):
     with open(filepath, "w") as f:
@@ -222,6 +231,7 @@ def save_fasta(df, col_with_seqs, filepath, acc, query_TMD_seq):
                 continue
             description = df.loc[n, "description"]
             f.write(">{}\n{}\n".format(description, seq))
+
 
 def save_fasta_from_array(array_of_seqs, filepath, acc, query_TMD_seq):
     with open(filepath, "w") as f:
@@ -236,6 +246,7 @@ def save_fasta_from_array(array_of_seqs, filepath, acc, query_TMD_seq):
             for n, seq in enumerate(array_of_seqs):
                 f.write(">{}\n{}\n".format(n, seq))
 
+
 def save_seqs(array_of_seqs, filepath, query_TMD_seq):
     with open(filepath, "w") as f:
         if query_TMD_seq is not None:
@@ -248,6 +259,7 @@ def save_seqs(array_of_seqs, filepath, query_TMD_seq):
         else:
             for seq in array_of_seqs:
                 f.write("{}\n".format(seq))
+
 
 def extract_filtered_csv_homologues_to_alignments_mult_prot(s, df_set, logging):
 
@@ -333,10 +345,10 @@ def extract_filtered_csv_homologues_to_alignments(s: dict,
                 df["end"] = df["end"].astype(int)
 
                 if df.empty:
-                    BLAST_xml_tar = "{}.surr{}.BLAST.xml.tar.gz".format(acc, s["num_of_sur_residues"])
-                    raise ValueError("{} extract_filtered_csv_homologues_to_alignments failed\n. None of the homologues contained the original TMD sequence.\n"
-                                     "This can occur when the homologue xml file is old, and the sequences from BLAST and the protein set don't match. Delete the"
-                                     "homologue xml file ({}), re-run NCBI blast, and try-again".format(acc, BLAST_xml_tar))
+                    BLAST_xml_tar = f"{acc}.surr{s['num_of_sur_residues']}.BLAST.xml.tar.gz"
+                    raise ValueError(f"{acc} extract_filtered_csv_homologues_to_alignments failed.\nNone of the homologues in csv-tarball {BLAST_csv_tar} contained the original TMD sequence.\n"
+                                     "This can occur when the homologue xml file is old, and the sequences from BLAST and the protein set don't match.\nDelete the "
+                                     f"homologue xml file ({BLAST_xml_tar}), re-run NCBI blast, and try-again")
 
                 df['query_TMD_align_seq'] = df.apply(slice_query_TMD_seq, axis=1)
                 df['markup_TMD_align_seq'] = df.apply(slice_markup_TMD_seq, axis=1)
@@ -411,6 +423,7 @@ def extract_filtered_csv_homologues_to_alignments(s: dict,
         sys.stdout.write("{} not found".format(BLAST_csv_tar))
 
     return single_prot_dict
+
 
 def contains_unaccepted_letter(seq):
     unaccepted_letters = ['O', 'U', 'J']
