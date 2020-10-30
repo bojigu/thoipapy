@@ -198,7 +198,7 @@ def get_word_size(cutoff):
 def run_cdhit(cons_cdhit_input_fasta, cons_cdhit_output_fasta, cutoff):
     word_size = get_word_size(cutoff)
     word_size_command = "" if cutoff == 1.0 else f"-n {word_size}"
-    exect_str = f"cdhit -i {cons_cdhit_input_fasta} -o {cons_cdhit_output_fasta} -c {cutoff:0.2f} {word_size_command}"
+    exect_str = f"cd-hit -i {cons_cdhit_input_fasta} -o {cons_cdhit_output_fasta} -c {cutoff:0.2f} {word_size_command}"
     command = utils.Command(exect_str)
     command.run(timeout=120, log_stderr=False)
     assert cons_cdhit_output_fasta.is_file()
