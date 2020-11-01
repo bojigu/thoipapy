@@ -15,7 +15,6 @@ warnings.filterwarnings("ignore")
 
 
 def save_BO_linegraph_and_barchart(s, bocurve_data_xlsx, BO_linechart_png, BO_barchart_png, namedict, logging, AUC_ser, plot_o_over_r=False):
-
     df_o_minus_r = pd.read_excel(bocurve_data_xlsx, sheet_name="df_o_minus_r", index_col=0)
     BO_scatter_png = str(BO_barchart_png)[:-12] + "scatter.png"
 
@@ -49,27 +48,27 @@ def save_BO_linegraph_and_barchart(s, bocurve_data_xlsx, BO_linechart_png, BO_ba
     #######################################################################################################
     # BO_barchart_png
     plt.close("all")
-    #plt.rcParams.update({'font.size': 8})
-    figsize = np.array([3.42, 3.42]) * 2 # DOUBLE the real size, due to problems on Bo computer with fontsizes
+    # plt.rcParams.update({'font.size': 8})
+    figsize = np.array([3.42, 3.42]) * 2  # DOUBLE the real size, due to problems on Bo computer with fontsizes
     fig, ax = plt.subplots(figsize=figsize)
-    #df_valid_indiv_scatter = df_valid_indiv[["AUBOC", "ROC AUC"]]
+    # df_valid_indiv_scatter = df_valid_indiv[["AUBOC", "ROC AUC"]]
     df_valid_indiv.plot(kind="scatter", ax=ax, x="AUBOC", y="ROC AUC", alpha=0.7)
 
     # calculate linear regression for fitted line
     slope, intercept, r_value, p_value, std_err = linregress(df_valid_indiv["AUBOC"], df_valid_indiv["ROC AUC"])
-    #fit_fn = np.poly1d(linear_regression)
+    # fit_fn = np.poly1d(linear_regression)
 
-    #slope, intercept, r_value, p_value, std_err = scipy.stats.linregress(x, y)
+    # slope, intercept, r_value, p_value, std_err = scipy.stats.linregress(x, y)
     x_first_last_dp = np.array([df_valid_indiv["AUBOC"].min(), df_valid_indiv["AUBOC"].max()])
     y_fitted = x_first_last_dp * slope + intercept
-    ax.plot(x_first_last_dp, y_fitted, label="$R^2$ : {:.2f}".format(r_value**2))
+    ax.plot(x_first_last_dp, y_fitted, label="$R^2$ : {:.2f}".format(r_value ** 2))
 
     ax.set_xlabel("AUBOC")
     ax.set_ylabel("ROC AUC")
     ax.legend()
     fig.tight_layout()
     ax.grid(False)
-    #BO_barchart_png = os.path.join(BO_curve_folder, "AUBOC_barchart.png")
+    # BO_barchart_png = os.path.join(BO_curve_folder, "AUBOC_barchart.png")
 
     fig.savefig(BO_scatter_png, dpi=240)
 
@@ -102,20 +101,19 @@ def save_BO_linegraph_and_barchart(s, bocurve_data_xlsx, BO_linechart_png, BO_ba
     #######################################################################################################
     # BO_barchart_png
     plt.close("all")
-    #plt.rcParams.update({'font.size': 8})
-    figsize = np.array([3.42, 3.42]) * 2 # DOUBLE the real size, due to problems on Bo computer with fontsizes
+    # plt.rcParams.update({'font.size': 8})
+    figsize = np.array([3.42, 3.42]) * 2  # DOUBLE the real size, due to problems on Bo computer with fontsizes
     fig, ax = plt.subplots(figsize=figsize)
     # replace the protein names
     df_valid_indiv.index = pd.Series(df_valid_indiv.index).replace(namedict)
     df_valid_indiv.plot(kind="bar", ax=ax, alpha=0.7)
 
     ax.set_ylabel("performance value\n(observed overlap - random overlap)")
-    ax.legend()#(["sample size = 5", "sample size = 10"])
+    ax.legend()  # (["sample size = 5", "sample size = 10"])
 
     fig.tight_layout()
     ax.grid(False)
     fig.savefig(BO_barchart_png, dpi=240)
-
 
     #######################################################################################################
     #                                                                                                     #
@@ -136,7 +134,7 @@ def save_BO_linegraph_and_barchart(s, bocurve_data_xlsx, BO_linechart_png, BO_ba
 
     # BO_linechart_png
     plt.close("all")
-    figsize = np.array([3.42, 3.42]) * 2 # DOUBLE the real size, due to problems on Bo computer with fontsizes
+    figsize = np.array([3.42, 3.42]) * 2  # DOUBLE the real size, due to problems on Bo computer with fontsizes
     fig, ax = plt.subplots(figsize=figsize)
 
     df_o_minus_r_mean.plot(ax=ax, color="#0f7d9b", linestyle="-", label="prediction (AUBOC : {:0.2f}".format(AUBOC))
@@ -157,7 +155,7 @@ def save_BO_linegraph_and_barchart(s, bocurve_data_xlsx, BO_linechart_png, BO_ba
     if plot_o_over_r:
         ax2.tick_params('y', colors="#9b2d0f")
         ax2.spines['right'].set_color("#9b2d0f")
-        #ax.set_ylabel("performance value\n (observed / random)", color="#9b2d0f")
+        # ax.set_ylabel("performance value\n (observed / random)", color="#9b2d0f")
         ax.set_ylabel("fraction of correctly predicted residues\n(observed / random)", color="#9b2d0f")
         ax2.legend()
 

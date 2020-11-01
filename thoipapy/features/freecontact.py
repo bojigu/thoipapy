@@ -275,15 +275,15 @@ def parse_freecontact_coevolution(acc, freecontact_file, freecontact_parsed_csv,
         # get min and max of the actual TMD position (should be equivalent to TMD_start and
         # min_ = int(position_list_unique.min())
         # max_ = int(position_list_unique.max())
-        #position_list = range(min_ - padding, max_ + padding + 1)
+        # position_list = range(min_ - padding, max_ + padding + 1)
         position_list = range(TMD_start - padding, TMD_end + padding + 1)
-        dfp = dfp.reindex(index = position_list, columns=position_list)
-        #put data on both sides of the table for easy indexing
+        dfp = dfp.reindex(index=position_list, columns=position_list)
+        # put data on both sides of the table for easy indexing
         for col in dfp.columns:
             start = col + 1
             dfp.loc[start:, col] = dfp.loc[col, start:]
         # drop rows with only nan
-        #dfp.dropna(how="all", inplace=True)
+        # dfp.dropna(how="all", inplace=True)
         """ now is symmetrical, with nans in the central positions
     
             n2   231  232  233  234       235       236       237       238       239       240 ...        252       253       254       255       256       257  258  259  260  261
@@ -302,7 +302,7 @@ def parse_freecontact_coevolution(acc, freecontact_file, freecontact_parsed_csv,
         df_out["XIall_mean"] = dfp.mean(axis=1)
 
         for pos in range(TMD_start, TMD_end + 1):
-            #iterate from i-1 and i+1 to i-5 and i+5
+            # iterate from i-1 and i+1 to i-5 and i+5
             for n in range(1, 6):
                 i_minus = pos - n if pos - n in dfp.columns else dfp.columns.min()
                 i_plus = pos + n if pos + n in dfp.columns else dfp.columns.max()
@@ -324,7 +324,7 @@ def parse_freecontact_coevolution(acc, freecontact_file, freecontact_parsed_csv,
         a, b, c, d, e, f, g = 1, np.nan, np.nan, 1, 1, np.nan, 1
         # extend the list longer than any TMD
         # e.g. [1, nan, nan, 1, 1, nan, 1, 1, nan, nan, 1, 1, nan, 1, 1, nan, nan, 1, 1, nan, 1, 1, nan, nan, 1, 1, nan, ......
-        hep_list = [a, b, c, d, e, f, g]*10
+        hep_list = [a, b, c, d, e, f, g] * 10
 
         highest_XI_face_value = 0
 
@@ -335,7 +335,7 @@ def parse_freecontact_coevolution(acc, freecontact_file, freecontact_parsed_csv,
             hep_list_trunc = hep_list[face: end]
             hep_list_trunc = np.array(hep_list_trunc)
             # get indices of the residues corresponding to that heptad motif
-            #e.g. [ 88  91  92  94  95  98  99 101 102 105 106 108 109 112 113 115 116]
+            # e.g. [ 88  91  92  94  95  98  99 101 102 105 106 108 109 112 113 115 116]
             hep_cols = hep_list_trunc * np.array(dfp.index)
             hep_cols = hep_cols[~np.isnan(hep_cols)].astype(int)
 
@@ -387,7 +387,7 @@ def parse_freecontact_coevolution(acc, freecontact_file, freecontact_parsed_csv,
     # Specifically overwrite normalised values for Cum metrics. Convert to 0 or 1.
     coev_cum_colname_list = ["DI4cum", "DI8cum"]
     for col in coev_cum_colname_list:
-        df_out[col] = df_out[col].apply(lambda x : 1 if x > 0 else 0)
+        df_out[col] = df_out[col].apply(lambda x: 1 if x > 0 else 0)
 
     # rename so that original data is "NAME_raw" and normalised data is "NAME"
     for col in coev_colname_list:

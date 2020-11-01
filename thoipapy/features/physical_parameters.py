@@ -26,7 +26,7 @@ def add_physical_parameters_to_features_mult_prot(s, df_set, logging):
         acc = df_set.loc[i, "acc"]
         database = df_set.loc[i, "database"]
         feature_combined_file = os.path.join(s["thoipapy_data_folder"], "features", "combined", database, "{}.surr{}.gaps{}.combined_features.csv".format(acc, s["num_of_sur_residues"], s["max_n_gaps_in_TMD_subject_seq"]))
-        #feature_combined_file_incl_phys_param = os.path.join(s["thoipapy_data_folder"], "features", "combined", database,
+        # feature_combined_file_incl_phys_param = os.path.join(s["thoipapy_data_folder"], "features", "combined", database,
         #                                                     "{}.surr{}.gaps{}.combined_features_incl_phys_param.csv".format(acc, s["num_of_sur_residues"], s["max_n_gaps_in_TMD_subject_seq"]))
         add_physical_parameters_to_features(acc, feature_combined_file, logging)
 
@@ -69,7 +69,7 @@ def add_physical_parameters_to_features(acc, feature_combined_file, logging):
                     if re.search(r"residue_num", row1):
                         array1 = row1.rstrip().split(",")
                         array1[42:14] = ["Hydrophobicity_sAA", "Charge_sAA", "PI_sAA", "LIPSI_sAA", "LIPSM_sAA", "Hydrophobic_sAA", "Aliphatic_sAA", "Aromatic_sAA", "Polar_sAA", "Negative_sAA", "Positive_sAA", "Small_sAA", "branched",
-                                         "mass", "Volume_sAA"]#Mass_sAA
+                                         "mass", "Volume_sAA"]  # Mass_sAA
                         # array2 = array1[0:31]
                         # array2.extend(["Hydrophobicity", "Charge", "PI", "LIPS", "LIPSM", "Hydrophobic", "Aliphatic", "Aromatic", "Polar","Negative", "Positive", "Small", "Cbbranched", "Mass", "Volumn", array1[30].rstrip()])
                         writer.writerow(array1)

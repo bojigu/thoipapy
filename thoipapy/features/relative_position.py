@@ -27,8 +27,8 @@ def calc_relative_position_mult_prot(s, df_set, logging):
     for i in df_set.index:
         acc = df_set.loc[i, "acc"]
         database = df_set.loc[i, "database"]
-        #TMD_start = int(row.strip().split(",")[2])
-        #seqlen = int(row.strip().split(",")[1])
+        # TMD_start = int(row.strip().split(",")[2])
+        # seqlen = int(row.strip().split(",")[1])
         TMD_start = df_set.loc[i, "TMD_start"]
         tm_seq = df_set.loc[i, "full_seq"]
         seqlen = df_set.loc[i, "seqlen"]

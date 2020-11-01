@@ -21,7 +21,6 @@ from thoipapy.utils import get_test_and_train_set_lists
 
 
 def run_testset_trainset_validation(s, logging):
-
     # create list of test and train datasets
     # if only one is given, make a list with only one dataset
     test_set_list, train_set_list = thoipapy.utils.get_test_and_train_set_lists(s)
@@ -71,12 +70,11 @@ def validate_THOIPA_for_testset_trainset_combination(s, test_set_list, train_set
         for test_set in test_set_list:
             testsetname = "set{:02d}".format(int(test_set))
 
-            #BO_curve_folder = Path(s["thoipapy_data_folder"]) / f"results{testsetname}/blindvalidation/thoipa.train{trainsetname}"
-            #THOIPA_BO_curve_data_csv = os.path.join(s["thoipapy_data_folder"], "results", "compare_testset_trainset", "data", "Test{}_Train{}.THOIPA".format(testsetname, trainsetname), "data", "Test{}_Train{}.THOIPA.best_overlap_data.csv".format(testsetname, trainsetname))
+            # BO_curve_folder = Path(s["thoipapy_data_folder"]) / f"results{testsetname}/blindvalidation/thoipa.train{trainsetname}"
+            # THOIPA_BO_curve_data_csv = os.path.join(s["thoipapy_data_folder"], "results", "compare_testset_trainset", "data", "Test{}_Train{}.THOIPA".format(testsetname, trainsetname), "data", "Test{}_Train{}.THOIPA.best_overlap_data.csv".format(testsetname, trainsetname))
             THOIPA_BO_curve_data_csv = Path(s["thoipapy_data_folder"]) / f"results/{testsetname}/blindvalidation/thoipa.train{trainsetname}/THOIPA.best_overlap_data.csv"
-            #THOIPA_ROC_pkl = os.path.join(s["thoipapy_data_folder"], "results", "compare_testset_trainset", "data", "Test{}_Train{}.THOIPA".format(testsetname, trainsetname), "data", "Test{}_Train{}.THOIPA.ROC_data.pkl".format(testsetname, trainsetname))
+            # THOIPA_ROC_pkl = os.path.join(s["thoipapy_data_folder"], "results", "compare_testset_trainset", "data", "Test{}_Train{}.THOIPA".format(testsetname, trainsetname), "data", "Test{}_Train{}.THOIPA.ROC_data.pkl".format(testsetname, trainsetname))
             THOIPA_ROC_pkl = Path(s["thoipapy_data_folder"]) / f"results/{testsetname}/blindvalidation/thoipa.train{trainsetname}/ROC_data.pkl"
-
 
             bocurve_data_xlsx = Path(s["thoipapy_data_folder"]) / f"results/{testsetname}/blindvalidation/thoipa.train{trainsetname}/bocurve_data.xlsx"
             BO_linechart_png = Path(s["thoipapy_data_folder"]) / f"results/{testsetname}/blindvalidation/thoipa.train{trainsetname}/BO_linechart.png"
@@ -88,7 +86,7 @@ def validate_THOIPA_for_testset_trainset_combination(s, test_set_list, train_set
 
             testdataset_df = pd.read_excel(testset_path)
             THOIPA_BO_data_df = pd.DataFrame()
-            #LIPS_BO_data_df = pd.DataFrame()
+            # LIPS_BO_data_df = pd.DataFrame()
 
             # save all outputs to a cross-validation dictionary, to be saved as a pickle file
             xv_dict_THOIPA = {}
@@ -103,7 +101,6 @@ def validate_THOIPA_for_testset_trainset_combination(s, test_set_list, train_set
                                                       "{}.surr20.gaps5.combined_features.csv".format(acc))
                 THOIPA_pred_csv = Path(s["thoipapy_data_folder"]) / f"results/{testsetname}/predictions/thoipa.train{trainsetname}/{database}.{acc}.thoipa.train{trainsetname}.csv"
                 combined_incl_THOIPA_csv = Path(s["thoipapy_data_folder"]) / f"results/{testsetname}/predictions/thoipa.train{trainsetname}/{database}.{acc}.thoipa.train{trainsetname}_incl_combined.csv"
-
 
                 thoipapy.utils.make_sure_path_exists(combined_incl_THOIPA_csv, isfile=True)
 
@@ -143,7 +140,7 @@ def validate_THOIPA_for_testset_trainset_combination(s, test_set_list, train_set
                 mean_tpr += interp(mean_fpr, fpr, tpr)
                 mean_tpr[0] = 0.0
 
-                xv_dict_THOIPA[acc_db] = {"fpr" : fpr, "tpr" : tpr, "roc_auc" : roc_auc}
+                xv_dict_THOIPA[acc_db] = {"fpr": fpr, "tpr": tpr, "roc_auc": roc_auc}
 
             #######################################################################################################
             #                                                                                                     #
@@ -153,7 +150,7 @@ def validate_THOIPA_for_testset_trainset_combination(s, test_set_list, train_set
 
             THOIPA_BO_data_df.to_csv(THOIPA_BO_curve_data_csv)
 
-            #THOIPA_linechart_mean_obs_and_rand = analyse_bo_curve_underlying_data(THOIPA_BO_curve_data_csv, BO_curve_folder, names_excel_path)
+            # THOIPA_linechart_mean_obs_and_rand = analyse_bo_curve_underlying_data(THOIPA_BO_curve_data_csv, BO_curve_folder, names_excel_path)
             parse_BO_data_csv_to_excel(THOIPA_BO_curve_data_csv, bocurve_data_xlsx, s["n_residues_AUBOC_validation"], logging)
             AUC_ser = pd.Series(xv_dict_THOIPA[acc_db]["roc_auc"])
             AUBOC = save_BO_linegraph_and_barchart(s, bocurve_data_xlsx, BO_linechart_png, BO_barchart_png, namedict, logging, AUC_ser)
@@ -172,7 +169,7 @@ def validate_THOIPA_for_testset_trainset_combination(s, test_set_list, train_set
 
             mean_roc_auc = auc(mean_fpr, mean_tpr)
 
-            ROC_out_dict = {"xv_dict_THOIPA" : xv_dict_THOIPA}
+            ROC_out_dict = {"xv_dict_THOIPA": xv_dict_THOIPA}
             ROC_out_dict["true_positive_rate_mean"] = mean_tpr
             ROC_out_dict["false_positive_rate_mean"] = mean_fpr
             ROC_out_dict["mean_roc_auc"] = mean_roc_auc
@@ -187,7 +184,6 @@ def validate_THOIPA_for_testset_trainset_combination(s, test_set_list, train_set
 
 
 def validate_LIPS_for_testset(s, logging, LIPS_name="LIPS_LE", pred_col="LIPS_L*E"):
-
     names_excel_path = os.path.join(s["dropbox_dir"], "protein_names.xlsx")
     namedict = thoipapy.utils.create_namedict(names_excel_path)
 
@@ -198,11 +194,11 @@ def validate_LIPS_for_testset(s, logging, LIPS_name="LIPS_LE", pred_col="LIPS_L*
     for test_set in test_set_list:
         testsetname = "set{:02d}".format(int(test_set))
         LIPS_BO_curve_data_csv = Path(s["thoipapy_data_folder"]) / "results" / testsetname / f"blindvalidation/{LIPS_name}/{LIPS_name}.best_overlap_data.csv.csv"
-        #LIPS_BO_curve_data_csv = os.path.join(s["thoipapy_data_folder"], "results", "compare_testset_trainset", "data", "Test{}.{}".format(testsetname, LIPS_name), "Test{}.{}.best_overlap_data.csv".format(testsetname, LIPS_name))
-        #BO_curve_folder = os.path.join(s["thoipapy_data_folder"], "results", "compare_testset_trainset", "data", "Test{}.{}".format(testsetname, LIPS_name))
+        # LIPS_BO_curve_data_csv = os.path.join(s["thoipapy_data_folder"], "results", "compare_testset_trainset", "data", "Test{}.{}".format(testsetname, LIPS_name), "Test{}.{}.best_overlap_data.csv".format(testsetname, LIPS_name))
+        # BO_curve_folder = os.path.join(s["thoipapy_data_folder"], "results", "compare_testset_trainset", "data", "Test{}.{}".format(testsetname, LIPS_name))
         BO_curve_folder = Path(s["thoipapy_data_folder"]) / "results" / testsetname / f"blindvalidation/{LIPS_name}"
         LIPS_ROC_pkl = Path(s["thoipapy_data_folder"]) / "results" / testsetname / f"blindvalidation/{LIPS_name}/ROC_data.pkl"
-        #LIPS_ROC_pkl = os.path.join(s["thoipapy_data_folder"], "results", "compare_testset_trainset", "data", "Test{}.{}".format(testsetname, LIPS_name), "data", "Test{}.{}.ROC_data.pkl".format(testsetname, LIPS_name))
+        # LIPS_ROC_pkl = os.path.join(s["thoipapy_data_folder"], "results", "compare_testset_trainset", "data", "Test{}.{}".format(testsetname, LIPS_name), "data", "Test{}.{}.ROC_data.pkl".format(testsetname, LIPS_name))
         thoipapy.utils.make_sure_path_exists(LIPS_BO_curve_data_csv, isfile=True)
         bocurve_data_xlsx = os.path.join(BO_curve_folder, "data", "bocurve_data.xlsx")
         BO_linechart_png = os.path.join(BO_curve_folder, "BO_linechart.png")
@@ -236,7 +232,7 @@ def validate_LIPS_for_testset(s, logging, LIPS_name="LIPS_LE", pred_col="LIPS_L*
             #######################################################################################################
             # SAVE LIPS PREDICTION DATA
             # this is somewhat inefficient, as it is conducted for every test dataset
-            #LIPS_pred_csv = os.path.join(os.path.dirname(s["thoipapy_data_folder"]), "features", "Predictions", "testset_trainset", database, "{}.LIPS_pred.csv".format(acc, testsetname))
+            # LIPS_pred_csv = os.path.join(os.path.dirname(s["thoipapy_data_folder"]), "features", "Predictions", "testset_trainset", database, "{}.LIPS_pred.csv".format(acc, testsetname))
             LIPS_pred_csv = Path(s["thoipapy_data_folder"]) / f"results/{testsetname}/predictions/{LIPS_name}/{database}.{acc}.{LIPS_name}.csv"
             LIPS_pred_df = combined_df[["residue_name", "residue_num", "LIPS_polarity", "LIPS_entropy", "LIPS_L*E", "LIPS_surface", "LIPS_surface_ranked"]]
             thoipapy.utils.make_sure_path_exists(LIPS_pred_csv, isfile=True)
@@ -269,7 +265,7 @@ def validate_LIPS_for_testset(s, logging, LIPS_name="LIPS_LE", pred_col="LIPS_L*
             mean_tpr += interp(mean_fpr, fpr, tpr)
             mean_tpr[0] = 0.0
 
-            xv_dict_LIPS[acc_db] = {"fpr" : fpr, "tpr" : tpr, "roc_auc" : roc_auc}
+            xv_dict_LIPS[acc_db] = {"fpr": fpr, "tpr": tpr, "roc_auc": roc_auc}
 
         #######################################################################################################
         #                                                                                                     #
@@ -280,9 +276,9 @@ def validate_LIPS_for_testset(s, logging, LIPS_name="LIPS_LE", pred_col="LIPS_L*
         LIPS_BO_data_df.to_csv(LIPS_BO_curve_data_csv)
         names_excel_path = os.path.join(s["dropbox_dir"], "protein_names.xlsx")
 
-        #LIPS_linechart_mean_obs_and_rand = analyse_bo_curve_underlying_data(LIPS_BO_curve_data_csv, BO_curve_folder, names_excel_path)
+        # LIPS_linechart_mean_obs_and_rand = analyse_bo_curve_underlying_data(LIPS_BO_curve_data_csv, BO_curve_folder, names_excel_path)
 
-        #parse_BO_data_csv_to_excel(LIPS_BO_curve_data_csv, BO_curve_folder, names_excel_path)
+        # parse_BO_data_csv_to_excel(LIPS_BO_curve_data_csv, BO_curve_folder, names_excel_path)
         parse_BO_data_csv_to_excel(LIPS_BO_curve_data_csv, bocurve_data_xlsx, s["n_residues_AUBOC_validation"], logging)
         AUC_ser = pd.Series(xv_dict_LIPS[acc_db]["roc_auc"])
         AUBOC = save_BO_linegraph_and_barchart(s, bocurve_data_xlsx, BO_linechart_png, BO_barchart_png, namedict, logging, AUC_ser)
@@ -301,7 +297,7 @@ def validate_LIPS_for_testset(s, logging, LIPS_name="LIPS_LE", pred_col="LIPS_L*
 
         mean_roc_auc = auc(mean_fpr, mean_tpr)
 
-        ROC_out_dict = {"xv_dict_THOIPA" : xv_dict_LIPS}
+        ROC_out_dict = {"xv_dict_THOIPA": xv_dict_LIPS}
         ROC_out_dict["true_positive_rate_mean"] = mean_tpr
         ROC_out_dict["false_positive_rate_mean"] = mean_fpr
         ROC_out_dict["mean_roc_auc"] = mean_roc_auc
@@ -316,8 +312,7 @@ def validate_LIPS_for_testset(s, logging, LIPS_name="LIPS_LE", pred_col="LIPS_L*
 
 
 def create_ROC_fig_for_testset_trainset_combination(THOIPA_ROC_pkl):
-
-    #plt.rcParams.update({'font.size': 6})
+    # plt.rcParams.update({'font.size': 6})
     ROC_pkl_basename = os.path.basename(THOIPA_ROC_pkl)[:-4]
     ROC_pkl_dir = os.path.dirname(THOIPA_ROC_pkl)
 
@@ -330,14 +325,14 @@ def create_ROC_fig_for_testset_trainset_combination(THOIPA_ROC_pkl):
 
     xv_dict_THOIPA = ROC_out_dict["xv_dict_THOIPA"]
 
-    figsize = np.array([3.42, 3.42]) * 2 # DOUBLE the real size, due to problems on Bo computer with fontsizes
+    figsize = np.array([3.42, 3.42]) * 2  # DOUBLE the real size, due to problems on Bo computer with fontsizes
     fig, ax = plt.subplots(figsize=figsize)
 
     for acc_db in xv_dict_THOIPA:
         roc_auc = xv_dict_THOIPA[acc_db]["roc_auc"]
         ax.plot(xv_dict_THOIPA[acc_db]["fpr"], xv_dict_THOIPA[acc_db]["tpr"], lw=1, label='{} ({:0.2f})'.format(acc_db, roc_auc), alpha=0.8)
 
-    #mean_roc_auc = auc(df_xv["false_positive_rate"], df_xv["true_positive_rate"])
+    # mean_roc_auc = auc(df_xv["false_positive_rate"], df_xv["true_positive_rate"])
     mean_roc_auc = ROC_out_dict["mean_roc_auc"]
 
     ax.plot(ROC_out_dict["false_positive_rate_mean"], ROC_out_dict["true_positive_rate_mean"], color="k", label='mean (area = %0.2f)' % mean_roc_auc, lw=1.5)
@@ -349,11 +344,10 @@ def create_ROC_fig_for_testset_trainset_combination(THOIPA_ROC_pkl):
     ax.legend(loc="lower right")
     fig.tight_layout()
     fig.savefig(ROC_png, dpi=240)
-    #fig.savefig(thoipapy.utils.pdf_subpath(ROC_png))
+    # fig.savefig(thoipapy.utils.pdf_subpath(ROC_png))
 
 
 def save_THOIPA_pred_indiv_prot(s, model_pkl, testdata_combined_file, THOIPA_pred_csv, test_combined_incl_pred, trainsetname, logging):
-
     combined_incl_THOIPA_df = pd.read_csv(testdata_combined_file, sep=',', engine='python', index_col=0)
 
     test_set_list, train_set_list = get_test_and_train_set_lists(s)

@@ -39,5 +39,5 @@ thoipapy==1.1.1
 threadpoolctl==2.1.0
 toml==0.10.1
 twine==3.2.0
-weighslide==0.1.7
+weighslide==0.2.5
 xlrd==1.2.0

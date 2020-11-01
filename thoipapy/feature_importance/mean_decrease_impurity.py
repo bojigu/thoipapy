@@ -11,8 +11,7 @@ from thoipapy.ML_model.train_model import return_classifier_with_loaded_ensemble
 
 
 def get_initial_ensemble_parameters_before_feature_selection(s, logging):
-
-    #logging.info('RF_variable_importance_calculate is running\n')
+    # logging.info('RF_variable_importance_calculate is running\n')
     train_data_csv = Path(s["thoipapy_data_folder"]) / f"results/{s['setname']}/train_data/01_train_data_orig.csv"
     # output
     tuned_ensemble_parameters_before_feature_seln_csv = Path(s["thoipapy_data_folder"]) / f"results/{s['setname']}/train_data/01_tuned_ensemble_parameters_before_feature_seln.csv"
@@ -36,11 +35,11 @@ def calc_feat_import_using_MDI_before_feature_seln(s, logging):
         List of variables, sorted by their importance to the algorithm.
         Also includes the standard deviation supplied by the machine learning algorithm
     """
-    #logging.info('RF_variable_importance_calculate is running\n')
+    # logging.info('RF_variable_importance_calculate is running\n')
     train_data_csv = Path(s["thoipapy_data_folder"]) / f"results/{s['setname']}/train_data/01_train_data_orig.csv"
     tuned_ensemble_parameters_before_feature_seln_csv = Path(s["thoipapy_data_folder"]) / f"results/{s['setname']}/train_data/01_tuned_ensemble_parameters_before_feature_seln.csv"
 
-    #mean_decrease_impurity_all_features_csv = Path(s["thoipapy_data_folder"]) / "results" / s["setname"] / "feat_imp/mean_decrease_impurity_all_features.csv"
+    # mean_decrease_impurity_all_features_csv = Path(s["thoipapy_data_folder"]) / "results" / s["setname"] / "feat_imp/mean_decrease_impurity_all_features.csv"
     mean_decrease_impurity_all_features_csv = Path(s["thoipapy_data_folder"]) / f"results/{s['setname']}/train_data/01_feat_imp_MDI_before_feature_seln.csv"
 
     make_sure_path_exists(mean_decrease_impurity_all_features_csv, isfile=True)
@@ -98,5 +97,3 @@ def calculate_mean_decrease_impurity_for_dataset(X, y, forest, model_type, loggi
     # df_imp.set_index("feature", inplace=True)
     df_imp.set_index("original_order", inplace=True)
     return df_imp
-
-

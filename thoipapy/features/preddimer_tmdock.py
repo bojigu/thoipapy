@@ -78,7 +78,7 @@ def add_PREDDIMER_TMDOCK_to_combined_features(acc, feature_combined_file, merged
 
         # join the two dataframes together
         # if either the residue_num or residue_name don't match, the rows will be dropped
-        #df_combined_new = df_predictions.merge(df_combined, on=["residue_num", "residue_name"])
+        # df_combined_new = df_predictions.merge(df_combined, on=["residue_num", "residue_name"])
         df_combined_new = pd.concat([df_combined, df_predictions], axis=1, join="outer")
 
         # TMD_seq_in_new_combined_file = df_combined_new.residue_name.str.cat()

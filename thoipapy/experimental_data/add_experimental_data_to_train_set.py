@@ -29,7 +29,7 @@ def add_experimental_data_to_combined_features_mult_prot(s, df_set, logging):
         if database == "ETRA":
             experimental_data_file = os.path.join(s["dropbox_dir"], "ETRA_data", "Average_with_interface", "{}_mul_scan_average_data.xlsx".format(acc))
         else:
-            experimental_data_file = os.path.join(s["thoipapy_data_folder"], "features", 'structure', database, '{}.{}pairmax.bind.closedist.csv'.format(acc,s['inter_pair_max']))
+            experimental_data_file = os.path.join(s["thoipapy_data_folder"], "features", 'structure', database, '{}.{}pairmax.bind.closedist.csv'.format(acc, s['inter_pair_max']))
 
         add_experimental_data_to_combined_features(acc, database, TMD_seq, feature_combined_file, experimental_data_file, logging)
 
@@ -66,7 +66,7 @@ def add_experimental_data_to_combined_features(acc, database, TMD_seq, feature_c
             df_experiment_data = pd.read_excel(experimental_data_file, index_col=0)
             # confirm that correct index_col is chosen
             assert list(df_experiment_data.index) == list(range(1, df_experiment_data.shape[0] + 1))
-            df_experiment_data = df_experiment_data.rename(columns={"aa_position" : "residue_num", "orig_aa" : "residue_name", "Interface" : "interface", "Disruption" : "interface_score"})
+            df_experiment_data = df_experiment_data.rename(columns={"aa_position": "residue_num", "orig_aa": "residue_name", "Interface": "interface", "Disruption": "interface_score"})
         else:
             df_experiment_data = pd.read_csv(experimental_data_file)
             df_experiment_data = df_experiment_data.rename(columns={"bind": "interface", "closedist": "interface_score"})
@@ -90,7 +90,7 @@ def add_experimental_data_to_combined_features(acc, database, TMD_seq, feature_c
             sys.stdout.write("\n{}, TMD_seq_in_combined_file = {}".format(acc, TMD_seq_in_combined_file))
             sys.stdout.write("\n{}, TMD_seq_in_bind_file     = {}".format(acc, TMD_seq_in_bind_file))
             sys.stdout.write("\n{}, TMD_seq_in_merged_file   = {}\n".format(acc, TMD_seq_in_merged_file))
-            #sys.stdout.write("TMD_seq in original settings file and final merged features dataframe does not match.")
+            # sys.stdout.write("TMD_seq in original settings file and final merged features dataframe does not match.")
             raise IndexError("TMD_seq in original settings file and final merged features dataframe does not match.")
 
         # create normalised interface scores from both ETRA and closedist(NMR/crystal) data

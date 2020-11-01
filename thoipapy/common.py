@@ -16,8 +16,10 @@ from Bio import SeqIO
 from Bio.SeqUtils.ProtParam import ProteinAnalysis
 import thoipapy
 from thoipapy.utils import convert_truelike_to_bool, convert_falselike_to_bool
-#from korbinian.utils import convert_truelike_to_bool, convert_falselike_to_bool
-#from thoipapy.utils import convert_truelike_to_bool, convert_falselike_to_bool
+
+
+# from korbinian.utils import convert_truelike_to_bool, convert_falselike_to_bool
+# from thoipapy.utils import convert_truelike_to_bool, convert_falselike_to_bool
 
 
 def calculate_fasta_file_length(s):
@@ -32,12 +34,13 @@ def calculate_fasta_file_length(s):
     SeqLen : int
             protein sequence length
     """
-    seqLen=int()
+    seqLen = int()
     FastaFile = open(s["input_fasta_file"], 'r')
     for rec in SeqIO.parse(FastaFile, 'fasta'):
         seqLen = len(rec)
     FastaFile.close()
     return seqLen
+
 
 def create_TMD_surround20_fasta_file(s, database, protein_folder):
     """create fasta file with tmd and surround 20 residues as new sequence for further blastp.
@@ -60,14 +63,14 @@ def create_TMD_surround20_fasta_file(s, database, protein_folder):
     tmp_list_loc = s["list_of_tmd_start_end"]
 
     with open(tmp_list_loc, 'r+') as tmp_file_handle:
-        lines=tmp_file_handle.readlines()
+        lines = tmp_file_handle.readlines()
         tmp_file_handle.seek(0)
         tmp_file_handle.truncate()
         for row in lines:
-            if re.search(r"^Protein",row):
+            if re.search(r"^Protein", row):
                 # make sure in the input protein list file only contain four columns as shown in the example file
                 if len(row.strip().split(",")) == 4:
-                    line = row.strip() + "," + "TMD_Sur_Left" + "," + "TMD_Sur_Right"+"\n"
+                    line = row.strip() + "," + "TMD_Sur_Left" + "," + "TMD_Sur_Right" + "\n"
                     tmp_file_handle.write(line)
                 else:
                     tmp_file_handle.write(row)
@@ -77,39 +80,40 @@ def create_TMD_surround20_fasta_file(s, database, protein_folder):
             tmp_length = int(row.strip().split(",")[1])
             tmp_start = int(row.strip().split(",")[2])
             tmp_end = int(row.strip().split(",")[3])
-            tmp_protein_fasta = os.path.join(protein_folder, database,"%s.fasta") % acc
-            line=""
+            tmp_protein_fasta = os.path.join(protein_folder, database, "%s.fasta") % acc
+            line = ""
             if os.path.isfile(tmp_protein_fasta):
                 fasta_text = ""
                 with open(tmp_protein_fasta) as f:
                     for line in f.readlines():
                         if re.search(r"^>", line):
-                             pass
+                            pass
                         else:
                             fasta_text = fasta_text + line.rstrip()
-                fasta_text=re.sub('[\s+]', '', fasta_text)
+                fasta_text = re.sub('[\s+]', '', fasta_text)
                 f.close()
-                if tmp_start>20:
-                    s["tmp_surr_left"]=20
+                if tmp_start > 20:
+                    s["tmp_surr_left"] = 20
                 else:
-                    s["tmp_surr_left"] = tmp_start-1
-                if tmp_length-tmp_end>20:
-                    s["tmp_surr_right"]=20
+                    s["tmp_surr_left"] = tmp_start - 1
+                if tmp_length - tmp_end > 20:
+                    s["tmp_surr_right"] = 20
                 else:
-                    s["tmp_surr_right"]=tmp_length-tmp_end
-                tmp_surr_string=fasta_text[(tmp_start-s["tmp_surr_left"]-1):(tmp_end+s["tmp_surr_right"])]
-                tmp_surr_fasta_file=os.path.join(protein_folder, database, "%s.surr20.fasta") % acc
-                tmp_surr_fasta_file_handle=open(tmp_surr_fasta_file,"w")
+                    s["tmp_surr_right"] = tmp_length - tmp_end
+                tmp_surr_string = fasta_text[(tmp_start - s["tmp_surr_left"] - 1):(tmp_end + s["tmp_surr_right"])]
+                tmp_surr_fasta_file = os.path.join(protein_folder, database, "%s.surr20.fasta") % acc
+                tmp_surr_fasta_file_handle = open(tmp_surr_fasta_file, "w")
                 tmp_surr_fasta_file_handle.write("> %s TMD add surround 20 residues\n" % acc)
                 tmp_surr_fasta_file_handle.write(tmp_surr_string)
                 tmp_surr_fasta_file_handle.close()
-            if len(row.strip().split(","))==4:
-                line=row.strip()+","+str(s["tmp_surr_left"])+","+str(s["tmp_surr_right"])+"\n"
+            if len(row.strip().split(",")) == 4:
+                line = row.strip() + "," + str(s["tmp_surr_left"]) + "," + str(s["tmp_surr_right"]) + "\n"
                 tmp_file_handle.write(line)
             else:
                 tmp_file_handle.write(row)
     tmp_file_handle.close()
-    #return s["tmp_surr_left"],s["tmp_surr_right"]
+    # return s["tmp_surr_left"],s["tmp_surr_right"]
+
 
 def tmd_positions_match_fasta(s):
     """ calculate the tmd start and end positions in the protein sequence,
@@ -119,29 +123,29 @@ def tmd_positions_match_fasta(s):
 
     :return: tmd start and end positions in the full sequence
     """
-    fasta_file_loc=s["input_fasta_file"]
-    tmd_file_loc=s["input_tmd_file"]
-    fasta_text=""
-    tmd_text=""
+    fasta_file_loc = s["input_fasta_file"]
+    tmd_file_loc = s["input_tmd_file"]
+    fasta_text = ""
+    tmd_text = ""
     with open(fasta_file_loc) as f:
         for line in f.readlines():
-            if re.search(r"^>",line):
+            if re.search(r"^>", line):
                 next
             else:
-                fasta_text=fasta_text+line.rstrip()
+                fasta_text = fasta_text + line.rstrip()
     with open(tmd_file_loc) as f1:
         for line in f1.readlines():
-            if re.search(r"^>",line):
+            if re.search(r"^>", line):
                 next
             else:
-                tmd_text=tmd_text+line.rstrip()
-    tmd_length=len(tmd_text)
-    tmd_start=fasta_text.find(tmd_text)+1
-    tmd_end=tmd_start+tmd_length-1
+                tmd_text = tmd_text + line.rstrip()
+    tmd_length = len(tmd_text)
+    tmd_start = fasta_text.find(tmd_text) + 1
+    tmd_end = tmd_start + tmd_length - 1
     return tmd_start, tmd_end
 
 
-def calc_lipophilicity(seq, method = "mean"):
+def calc_lipophilicity(seq, method="mean"):
     """ Calculates the average hydrophobicity of a sequence according to the Hessa biological scale.
 
     Function taken from korbinian.utils (allowed under MIT license).
@@ -216,10 +220,9 @@ def calc_lipophilicity(seq, method = "mean"):
         return sum_of_multiplied
 
 
-
 def create_settingdict(excel_file_with_settings):
     sheetnames = ["run_settings", "file_locations", "variables"]
-    s = {"excel_file_with_settings" : excel_file_with_settings}
+    s = {"excel_file_with_settings": excel_file_with_settings}
     for sheet_name in sheetnames:
         # open excel file as pandas dataframe
         dfset = pd.read_excel(excel_file_with_settings, sheet_name=sheet_name)
@@ -246,14 +249,17 @@ def create_settingdict(excel_file_with_settings):
             #     os.makedirs(s[path])
     return s
 
+
 def setup_keyboard_interrupt_and_error_logging(s, setname):
     ''' -------Setup keyboard interrupt----------
         Taken from korbinian python package by Mark Teese. This is allowed under the permissive MIT license.
     '''
+
     # import arcgisscripting
 
     def ctrlc(sig, frame):
         raise KeyboardInterrupt("CTRL-C!")
+
     signal.signal(signal.SIGINT, ctrlc)
     '''+++++++++++++++LOGGING++++++++++++++++++'''
     date_string = strftime("%Y%m%d_%H_%M_%S")
@@ -274,6 +280,7 @@ def setup_keyboard_interrupt_and_error_logging(s, setname):
 
     logging = thoipapy.common.setup_error_logging(logfile, level_console, level_logfile)
     return logging
+
 
 def setup_error_logging(logfile, level_console="DEBUG", level_logfile="DEBUG", print_system_info=True):
     """ Sets up error logging, and logs a number of system settings.
@@ -329,20 +336,20 @@ def setup_error_logging(logfile, level_console="DEBUG", level_logfile="DEBUG", p
         }
     }, skipkeys=True, sort_keys=True, indent=4, separators=(',', ': '))
 
-    config=json.loads(logsettings)
+    config = json.loads(logsettings)
     # add user parameters to the logging settings (logfile, and logging levels)
     config['handlers']['file']['filename'] = logfile
     config['handlers']['console']['level'] = level_console
     config['handlers']['file']['level'] = level_logfile
 
-    #create a blank logging file
+    # create a blank logging file
     thoipapy.utils.make_sure_path_exists(logfile, isfile=True)
     with open(logfile, 'w') as f:
         pass
 
-    #clear any previous logging handlers that might have been previously run in the console
+    # clear any previous logging handlers that might have been previously run in the console
     logging.getLogger('').handlers = []
-    #load the logging settings from the modified json string
+    # load the logging settings from the modified json string
     logging.config.dictConfig(config)
     # collect a number of system settings that could be useful for troubleshooting
     system_settings_dict = {}
@@ -365,13 +372,13 @@ def setup_error_logging(logfile, level_console="DEBUG", level_logfile="DEBUG", p
     # log the system settings
     if print_system_info:
         logging.warning(system_settings_dict)
-    #test error message reporting
-    #logging.warning('LOGGING TEST:')
-    #try:
+    # test error message reporting
+    # logging.warning('LOGGING TEST:')
+    # try:
     #    open('/path/to/does/not/exist', 'rb')
-    #except (SystemExit, KeyboardInterrupt):
+    # except (SystemExit, KeyboardInterrupt):
     #    raise
-    #except Exception:
+    # except Exception:
     #    logging.error('Failed to open file', exc_info=True)
     logging.warning('LOGGING SETUP IS SUCCESSFUL (logging levels: console={}, logfile={}). \n'.format(level_console, level_logfile))
     return logging
@@ -407,6 +414,7 @@ def get_path_of_protein_set(setname, sets_folder):
         raise ValueError(f"More than one excel file in set folder contains '{setname}' in the filename.\nmatching file list = {matching_xlsx_file_list}")
 
     return set_path
+
 
 def process_set_protein_seqs(s, setname, df_set, set_path):
     df_set["seqlen"] = df_set.full_seq.str.len()

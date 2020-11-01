@@ -49,7 +49,7 @@ def conduct_ttest_for_all_features(s, logging):
     # inputs
     train_data_csv = Path(s["thoipapy_data_folder"]) / f"results/{s['setname']}/train_data/01_train_data_orig.csv"
     # IMPORTANT: the features used in the model are taken from the trainset as defined in "train_datasets" in the excel file, not from the actual set being investigated
-    #feat_imp_MDA_xlsx = os.path.join(s["thoipapy_data_folder"], "results", trainsetname, "feat_imp", "feat_imp_mean_decrease_accuracy.xlsx")
+    # feat_imp_MDA_xlsx = os.path.join(s["thoipapy_data_folder"], "results", trainsetname, "feat_imp", "feat_imp_mean_decrease_accuracy.xlsx")
 
     # outputs
     ttest_pvalues_bootstrapped_data_using_traindata_selected_features_xlsx = Path(s["thoipapy_data_folder"]) / f"results/{s['setname']}/ttest/ttest_pvalues_bootstrapped_data_using_traindata_selected_features(train{trainsetname}).xlsx"
@@ -59,8 +59,8 @@ def conduct_ttest_for_all_features(s, logging):
 
     df_orig = pd.read_csv(train_data_csv, index_col=0)
 
-    #df_feat_imp_MDA_trainset = pd.read_excel(feat_imp_MDA_xlsx, sheet_name="single_feat", index_col=0)
-    #cols = list(df_feat_imp_MDA_trainset.index)
+    # df_feat_imp_MDA_trainset = pd.read_excel(feat_imp_MDA_xlsx, sheet_name="single_feat", index_col=0)
+    # cols = list(df_feat_imp_MDA_trainset.index)
 
     df = drop_cols_not_used_in_ML(logging, df_orig, s["excel_file_with_settings"])
     feature_columns = list(df.columns)
@@ -152,7 +152,6 @@ def conduct_ttest_for_all_features(s, logging):
 
 
 def convert_pvalue_to_text(p, bootstrap_replicates=100000):
-
     n_significant_figures = len(str(bootstrap_replicates)) - 1
 
     formatter = "{:0.%if}" % n_significant_figures

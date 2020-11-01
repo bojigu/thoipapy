@@ -1,5 +1,7 @@
+from pathlib import Path
+from typing import Union
+
 from Bio.Blast import NCBIWWW
-#from korbinian.utils import get_free_space, HardDriveSpaceException
 from thoipapy.utils import get_free_space, HardDriveSpaceException
 import os
 import tarfile
@@ -7,6 +9,7 @@ import platform
 import time
 from time import strftime
 from thoipapy.utils import delete_BLAST_xml, make_sure_path_exists
+
 
 def download_homologues_from_ncbi_mult_prot(s, df_set, logging):
     """Runs download_homologues_from_ncbi for a set of proteins
@@ -58,9 +61,8 @@ def download_homologues_from_ncbi_mult_prot(s, df_set, logging):
     for i in df_set.index:
         acc = df_set.loc[i, "acc"]
         TMD_seq_pl_surr = df_set.loc[i, "TMD_seq_pl_surr"]
-        #TMD_seq_pl_surr = df_set.loc[i, "full_seq"]
+        # TMD_seq_pl_surr = df_set.loc[i, "full_seq"]
         database = df_set.loc[i, "database"]
-
 
         # run online server NCBI blastp with biopython module
         blast_xml_file = os.path.join(s["thoipapy_data_folder"], "homologues", "xml", database, "{}.surr{}.BLAST.xml".format(acc, s["num_of_sur_residues"]))
@@ -86,7 +88,8 @@ def download_homologues_from_ncbi_mult_prot(s, df_set, logging):
 
     logging.info('homologues download was finished')
 
-def download_homologues_from_ncbi(acc, TMD_seq_pl_surr, blast_xml_file, xml_txt, xml_tar_gz, expect_value, hit_list_size, logging):
+
+def download_homologues_from_ncbi(acc: str, TMD_seq_pl_surr: str, blast_xml_file: Union[Path, str], xml_txt: Union[Path, str], xml_tar_gz: Union[Path, str], expect_value: float, hit_list_size: int, logging, db: str = "nr"):
     """Downloads homologue xml file using NCBI BLAST via the biopython qBLAST wrapper.
 
     Parameters
@@ -108,6 +111,9 @@ def download_homologues_from_ncbi(acc, TMD_seq_pl_surr, blast_xml_file, xml_txt,
         Maximum number of BLAST hits.
     logging : logging.Logger
         Python object with settings for logging to console and file.
+    db : database
+        NCBI database to search.
+        Default is "nr"
     """
     logging.info('{} starting download_homologues_from_ncbi'.format(acc))
 
@@ -122,7 +128,7 @@ def download_homologues_from_ncbi(acc, TMD_seq_pl_surr, blast_xml_file, xml_txt,
     start = time.time()
 
     try:
-        tmp_protein_homologues_xml_handle = NCBIWWW.qblast("blastp", "nr", query_fasta_string,
+        tmp_protein_homologues_xml_handle = NCBIWWW.qblast("blastp", db, query_fasta_string,
                                                            expect=expect_value,
                                                            hitlist_size=hit_list_size)
         with open(blast_xml_file, "w") as save_tmp_xml_file:

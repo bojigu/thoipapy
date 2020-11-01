@@ -15,7 +15,7 @@ setup(
     long_description=long_description,
     long_description_content_type='text/x-rst',
     url="https://github.com/bojigu/thoipapy",
-    download_url='https://github.com/bojigu/thoipapy/archive/1.1.2.tar.gz',
+    download_url='https://github.com/bojigu/thoipapy/archive/1.1.3.tar.gz',
     license='MIT',
     classifiers=
     [
@@ -58,5 +58,5 @@ setup(
                   'ML_model': ['*.lpkl', '*.txt'],
                   'setting': ['*.txt', '*.xlsx', '*.csv', '*.lpkl']},
     include_package_data=True,
-    version="1.1.2",
+    version="1.1.3",
 )

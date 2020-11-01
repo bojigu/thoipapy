@@ -3,6 +3,7 @@ import pandas as pd
 from scipy.special import comb
 from sklearn.metrics import average_precision_score
 
+
 def calc_best_overlap_from_selected_column_in_df(acc_db, df, experiment_col="interface_score", pred_col="THOIPA"):
     """
     Create Bo Curve parameter for protein acc_db and return the output as a dataframe
@@ -201,7 +202,7 @@ def parse_BO_data_csv_to_excel(bo_data_csv, bocurve_data_xlsx, n_residues_AUBOC_
 
     # the observed minus random is now calculated for the fraction correct, rather than the original numbers
     df_o_minus_r = dfobs_frac - dfrand_frac
-    #df_o_over_r = dfobs_frac / dfrand_frac
+    # df_o_over_r = dfobs_frac / dfrand_frac
 
     """df_o_minus_r is negative where the result is lower than random
 
@@ -264,6 +265,6 @@ def parse_BO_data_csv_to_excel(bo_data_csv, bocurve_data_xlsx, n_residues_AUBOC_
         dfobs_frac.to_excel(writer, sheet_name="dfobs_frac")
         dfrand_frac.to_excel(writer, sheet_name="dfrand_frac")
         df_o_minus_r.to_excel(writer, sheet_name="df_o_minus_r")
-        #df_o_over_r.to_excel(writer, sheet_name="df_o_over_r")
+        # df_o_over_r.to_excel(writer, sheet_name="df_o_over_r")
         mean_o_minus_r_df.to_excel(writer, sheet_name="mean_o_minus_r")
         mean_o_minus_r_by_sample_ser.to_excel(writer, sheet_name="mean_o_minus_r_by_sample")

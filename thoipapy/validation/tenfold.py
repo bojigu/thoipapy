@@ -72,7 +72,7 @@ def run_10fold_cross_validation(s, logging):
     start = time.clock()
 
     for i, (train, test) in enumerate(cv):
-        sys.stdout.write("f{}.".format(i+1)), sys.stdout.flush()
+        sys.stdout.write("f{}.".format(i + 1)), sys.stdout.flush()
         probas_ = forest.fit(X.iloc[train], y.iloc[train]).predict_proba(X.iloc[test])
         # Compute ROC curve and area the curve
         fpr, tpr, thresholds = roc_curve(y.iloc[test], probas_[:, 1], drop_intermediate=False)
@@ -104,6 +104,7 @@ def run_10fold_cross_validation(s, logging):
     logging.info('{} 10-fold validation. AUC({:.3f}). Time taken = {:.2f}.\nFeatures: {}'.format(s["setname"], ROC_AUC, duration, X.columns.tolist()))
     sys.stdout.write("\n--------------- finished run_10fold_cross_validation ---------------\n")
 
+
 def create_10fold_cross_validation_fig(s, logging):
     """Create figure showing ROC curve for each fold in a 10-fold validation.
 
@@ -118,7 +119,7 @@ def create_10fold_cross_validation_fig(s, logging):
         Python object with settings for logging to console and file.
     """
     sys.stdout.write("\n--------------- starting create_10fold_cross_validation_fig ---------------\n")
-    #plt.rcParams.update({'font.size': 7})
+    # plt.rcParams.update({'font.size': 7})
     crossvalidation_png = os.path.join(s["thoipapy_data_folder"], "results", s["setname"], "crossvalidation", "{}_10F_ROC.png".format(s["setname"]))
     crossvalidation_pkl = os.path.join(s["thoipapy_data_folder"], "results", s["setname"], "crossvalidation", "data", "{}_10F_data.pkl".format(s["setname"]))
 
@@ -126,7 +127,7 @@ def create_10fold_cross_validation_fig(s, logging):
     with open(crossvalidation_pkl, "rb") as f:
         xv_dict = pickle.load(f)
 
-    figsize = np.array([3.42, 3.42]) * 2 # DOUBLE the real size, due to problems on Bo computer with fontsizes
+    figsize = np.array([3.42, 3.42]) * 2  # DOUBLE the real size, due to problems on Bo computer with fontsizes
     fig, ax = plt.subplots(figsize=figsize)
 
     for i in range(s["cross_validation_number_of_splits"]):
@@ -144,5 +145,5 @@ def create_10fold_cross_validation_fig(s, logging):
     ax.legend(loc="lower right")
     fig.tight_layout()
     fig.savefig(crossvalidation_png, dpi=240)
-    #fig.savefig(thoipapy.utils.pdf_subpath(crossvalidation_png))
+    # fig.savefig(thoipapy.utils.pdf_subpath(crossvalidation_png))
     sys.stdout.write("\n--------------- finished create_10fold_cross_validation_fig ---------------\n")

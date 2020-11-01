@@ -769,9 +769,9 @@ def calc_retrospective_coev_from_struct_contacts(s, dfset, logging):
 
         colname = "real_interface" if not randomise_int_res else "random_interface"
         summary_dict[colname] = {"n_TMDs_with_higher_DI_of_interface_than_noninterface": n_TMDs_with_higher_int,
-                                          "n_TMDs_total": n_TMDs_total,
-                                          "perc_higher_int": perc_higher_int,
-                                          "p_value": p_value}
+                                 "n_TMDs_total": n_TMDs_total,
+                                 "perc_higher_int": perc_higher_int,
+                                 "p_value": p_value}
 
     df_summary = pd.DataFrame(summary_dict)
 

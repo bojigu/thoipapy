@@ -1,5 +1,3 @@
-import pytest
-
 from thoipapy.experimental_data.ttest_features import convert_pvalue_to_text
 
 

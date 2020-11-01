@@ -90,5 +90,3 @@ def return_classifier_with_loaded_ensemble_parameters(s, tuned_ensemble_paramete
         max_features=max_features
     )
     return cls
-
-

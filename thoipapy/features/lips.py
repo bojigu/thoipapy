@@ -28,15 +28,15 @@ def LIPS_score_calculation_mult_prot(s, df_set, logging):
     for i in df_set.index:
         acc = df_set.loc[i, "acc"]
         database = df_set.loc[i, "database"]
-        #LIPS_input_file = os.path.join(s["thoipapy_data_folder"], "homologues", "a3m",database, "%s.mem.lips.input%s") % (acc,s["surres"])
+        # LIPS_input_file = os.path.join(s["thoipapy_data_folder"], "homologues", "a3m",database, "%s.mem.lips.input%s") % (acc,s["surres"])
         alignments_dir = os.path.join(s["thoipapy_data_folder"], "homologues", "alignments", database)
         path_uniq_TMD_seqs_no_gaps_for_LIPS = os.path.join(alignments_dir, "{}.surr{}.gaps0.uniq.for_LIPS.txt".format(acc, s["num_of_sur_residues"]))
 
         if os.path.isfile(path_uniq_TMD_seqs_no_gaps_for_LIPS):
             # LIPS_output_file = os.path.join(s["thoipapy_data_folder"], "features", "lips_score", "zpro/NoRedundPro/%s.mem.lips.output") % acc
-            #path_uniq_TMD_seqs_no_gaps_for_LIPS = os.path.join(alignments_dir, "{}.surr{}.gaps0.uniq.for_LIPS.txt".format(acc, s["num_of_sur_residues"]))
+            # path_uniq_TMD_seqs_no_gaps_for_LIPS = os.path.join(alignments_dir, "{}.surr{}.gaps0.uniq.for_LIPS.txt".format(acc, s["num_of_sur_residues"]))
 
-            #LIPS_output_file = os.path.join(s["thoipapy_data_folder"], "features", "lips_score", database, "%s.mem.lips.output%s") % (acc, s["surres"])
+            # LIPS_output_file = os.path.join(s["thoipapy_data_folder"], "features", "lips_score", database, "%s.mem.lips.output%s") % (acc, s["surres"])
 
             LIPS_output_file = os.path.join(alignments_dir, "{}.surr{}.LIPS_output.csv".format(acc, s["num_of_sur_residues"]))
 
@@ -81,7 +81,6 @@ def LIPS_score_calculation(input_seq_file, LIPS_output_file):
         ##in TMLIP scale paper, the membrane headgroup regions is defined as the first (tmlen/5) and (tmlen-tmlen/5) residues which
         ##more likely the membrane bilayer
         ##while the other residues are defined as hydrophobic core region
-
 
         propi = {
             'A': 0.71,
@@ -196,8 +195,8 @@ def LIPS_score_calculation(input_seq_file, LIPS_output_file):
                 rn = j + resnum
                 # r3=residuename123(res)
                 p_r_i_n_t("%3s" % rn, res, "%6.3f" % prop,
-                      "%6.3f" % exp_entropy[j],
-                      file=LIPS_output_file_handle)  # print residue information which is in surface i
+                          "%6.3f" % exp_entropy[j],
+                          file=LIPS_output_file_handle)  # print residue information which is in surface i
                 # LIPS_output_file_handle.write("%3s" % rn, res, "%6.3f" % prop,"%6.3f" % exp_entropy[j])
                 k = j + 3
                 while (k <= j + 4):  # here add the the residues of i+3 and i+4 into surface i to form heptad repeat
@@ -219,7 +218,7 @@ def LIPS_score_calculation(input_seq_file, LIPS_output_file):
                             aanum[i] = 1
                         rn = k + resnum
                         p_r_i_n_t("%3s" % rn, res, "%6.3f" % prob, "%6.3f" % exp_entropy[k],
-                              file=LIPS_output_file_handle)
+                                  file=LIPS_output_file_handle)
                         # LIPS_output_file_handle.write("%3s" % rn, res, "%6.3f" % prob, "%6.3f" % exp_entropy[k])
                     k = k + 1
                 j = j + 7
@@ -266,7 +265,7 @@ def LIPS_score_calculation(input_seq_file, LIPS_output_file):
                             aanum[i] = 1
                         rn = k + resnum
                         p_r_i_n_t("%3s" % rn, res, "%6.3f" % prob, "%6.3f" % exp_entropy[k],
-                              file=LIPS_output_file_handle)
+                                  file=LIPS_output_file_handle)
                         # LIPS_output_file_handle.write("%3s" % rn, res, "%6.3f" % prob, "%6.3f" % exp_entropy[k])
                     k = k + 1
                 j = j + 7
@@ -300,8 +299,8 @@ def LIPS_score_calculation(input_seq_file, LIPS_output_file):
             ave = sume[i] / aanum[i]  # average entropy for surface i
             peim = avpim * ave  # average entropy*lipophilicity for surface i which is LIPS score
             p_r_i_n_t("%s" % i, "%10.3f" % avpim, "%8.3f" % ave,
-                  "%8.3f" % peim,
-                  file=LIPS_output_file_handle)  # print seven surfaces and see which surface with lowewst LIPS score
+                      "%8.3f" % peim,
+                      file=LIPS_output_file_handle)  # print seven surfaces and see which surface with lowewst LIPS score
             # LIPS_output_file_handle.write("%s" % i, "%10.3f" % avpim, "%8.3f" % ave, "%8.3f" % peim)
 
 

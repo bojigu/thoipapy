@@ -50,7 +50,6 @@ def select_best_features_with_ensemble_rfe(s, logging):
     logging.info(f"output saved to {top_features_rfe_csv}")
     logging.info('finished select_best_features_with_ensemble_rfe')
 
-
     # logging.info("----------------------------------------------------------------------")
     # logging.info("starting linear RFE")
     #
