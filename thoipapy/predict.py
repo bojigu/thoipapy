@@ -35,7 +35,7 @@ if os.environ.get('DISPLAY','') == '':
 import matplotlib.pyplot as plt
 
 
-def run_THOIPA_prediction(protein_name: str, md5: str, TMD_seq: str, full_seq: str, out_dir: Union[Path, str], create_heatmap: bool = True):
+def run_THOIPA_prediction(protein_name: str, md5: str, TMD_seq: str, full_seq: str, out_dir: Union[Path, str], create_heatmap: bool = True, rerun_blast: bool = False):
     """Function to run standalone THOIPA prediction for a protein transmembrane domain of interest.
     """
     # create settings dict from xlsx file
@@ -160,10 +160,10 @@ def run_THOIPA_prediction(protein_name: str, md5: str, TMD_seq: str, full_seq: s
 
     expect_value = s["expect_value"]
     hit_list_size = s["hit_list_size"]
-    if not os.path.isfile(xml_tar_gz):
+    if not os.path.isfile(xml_tar_gz) or rerun_blast:
         download_homologues_from_ncbi(acc, TMD_seq_pl_surr, blast_xml_file, xml_txt, xml_tar_gz, expect_value, hit_list_size, logging)
 
-    if not os.path.isfile(BLAST_csv_tar):
+    if not os.path.isfile(BLAST_csv_tar) or rerun_blast:
         e_value_cutoff = s["e_value_cutoff"]
         parse_NCBI_xml_to_csv(acc, xml_tar_gz, BLAST_csv_tar, TMD_start, TMD_end, e_value_cutoff, logging)
 

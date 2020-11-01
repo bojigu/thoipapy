@@ -1,6 +1,7 @@
 import os
 import platform
 import sys
+import time
 from pathlib import Path
 from typing import Union
 
@@ -57,7 +58,7 @@ def rate4site_calculation(TMD_seq: str, acc: str, fasta_uniq_TMD_seqs_surr5_for_
     rate4site_orig_output: Union[Path, str] = output_dir / f"{acc}.rate4site_orig_output.txt"
     cons_cdhit_input_fasta: Union[Path, str] = output_dir / f"{acc}.lipo_seqs_cdhit_input.fas"
     cons_cdhit_output_fasta: Union[Path, str] = output_dir / f"{acc}.lipo_seqs_cdhit_output.fas"
-    rate4site_input: Union[Path, str] = output_dir/ f"{acc}.rate4site_input.fas"
+    rate4site_input: Union[Path, str] = output_dir / f"{acc}.rate4site_input.fas"
     with open(cons_cdhit_input_fasta, "w") as f_out:
         with open(fasta_uniq_TMD_seqs_surr5_for_LIPO, "r") as f_in:
             for line in f_in:
@@ -73,7 +74,7 @@ def rate4site_calculation(TMD_seq: str, acc: str, fasta_uniq_TMD_seqs_surr5_for_
     cdhit_cluster_reps = []
     if not rate4site_orig_output.is_file() or (rerun_rate4site in [True, 1]):
 
-        sys.stdout.write(f"\ndecreasing cdhit cutoff for {acc}: ")
+        sys.stdout.write(f"decreasing cdhit cutoff for {acc}: ")
         sys.stdout.flush()
 
         while len_cdhit_cluster_reps > max_n_sequences_for_rate4site:
@@ -87,7 +88,7 @@ def rate4site_calculation(TMD_seq: str, acc: str, fasta_uniq_TMD_seqs_surr5_for_
                 cdhit_cluster_reps = run_cdhit(cons_cdhit_input_fasta, cons_cdhit_output_fasta, cutoff)
 
             len_cdhit_cluster_reps = len(cdhit_cluster_reps)
-            sys.stdout.write(f"{cutoff:0.2f}({len_cdhit_cluster_reps}), ")
+            sys.stdout.write(f"cutoff={cutoff:0.2f}(n_reps={len_cdhit_cluster_reps}), ")
             sys.stdout.flush()
             cutoff -= cutoff_decrease_per_round
             if cutoff <= 0.20:
@@ -130,10 +131,14 @@ def rate4site_calculation(TMD_seq: str, acc: str, fasta_uniq_TMD_seqs_surr5_for_
                 rate4site_orig_output.parent.mkdir(parents=True)
 
             exect_str = f"rate4site -s {rate4site_input} -o {rate4site_orig_output}"
-            sys.stdout.write(exect_str)
-            sys.stdout.flush()
+            #sys.stdout.write(exect_str)
+            #sys.stdout.flush()
+            logging.info("starting rate4site")
+            start = time.time()
             command = utils.Command(exect_str)
             command.run(timeout=1200, log_stderr=False)
+            duration = time.time() - start
+            logging.info(f"rate4site finished after {duration} seconds")
 
             if not Path(rate4site_orig_output).is_file():
                 raise FileNotFoundError("rate4site output file is not found")
