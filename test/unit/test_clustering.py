@@ -1,4 +1,3 @@
-import pytest
 from typing import List, Set
 
 from thoipapy.clustering.pairwise_aln_similarity_matrix import reduce_clusters_based_on_common_elements
