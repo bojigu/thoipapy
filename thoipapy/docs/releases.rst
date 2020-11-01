@@ -2,6 +2,19 @@
 THOIPApy releases
 =================
 
+1.1.3
+-----
+* fix bug where cd-hit not found when installed using apt-get
+* improve functional tests by using pre-downloaded homologue
+
+1.1.2
+-----
+* fix requirements.txt
+
+1.1.1
+-----
+* fix bug where CREATE_VIEW indicates malformed xml from ncbi blast servers
+
 1.1.0
 -----
 * update settings files
