@@ -125,6 +125,6 @@ Contact
 Citation
 --------
 
-Yao Xiao, Bo Zeng, Nicola Berner, Dmitrij Frishman, Dieter Langosch, and Mark George Teese (2020)
+`Yao Xiao, Bo Zeng, Nicola Berner, Dmitrij Frishman, Dieter Langosch, and Mark George Teese (2020)
 Experimental determination and data-driven prediction of homotypic transmembrane domain interfaces,
-Computational and Structural Biotechnology Journal, accepted manuscript.
+Computational and Structural Biotechnology Journal <https://doi.org/10.1016/j.csbj.2020.09.035>`_
