@@ -57,12 +57,12 @@ def plot_feature_importance(s, logging):
         df_norm.to_excel(writer, sheet_name="var_import_norm")
         writer.save()
 
-    #min_max_scaler = MinMaxScaler()
-    #x_scaled = min_max_scaler.fit_transform(df.values)
-    #df_norm = pd.DataFrame(x_scaled)
-    #df_norm.columns = df.columns
-    #df_norm.index = df.index
-    #df_norm.sort_values("MDA_AUBOC", ascending=False, inplace=True)
+    # min_max_scaler = MinMaxScaler()
+    # x_scaled = min_max_scaler.fit_transform(df.values)
+    # df_norm = pd.DataFrame(x_scaled)
+    # df_norm.columns = df.columns
+    # df_norm.index = df.index
+    # df_norm.sort_values("MDA_AUBOC", ascending=False, inplace=True)
 
     n_features_in_plot = df.shape[0]
     # determine the plot height by the number of features
@@ -74,7 +74,7 @@ def plot_feature_importance(s, logging):
     TUMblue = colour_dict["TUM_colours"]['TUMBlue']
 
     df["MDA_AUBOC"].plot(kind="bar", ax=ax, color=TUMblue)
-    #df["MDA_PR_AUC"].plot(kind="bar", ax=ax, position=1, color="#17a8a5")
+    # df["MDA_PR_AUC"].plot(kind="bar", ax=ax, position=1, color="#17a8a5")
 
     ax.set_xlabel("")
     ax.set_ylabel("variable importance\n(mean decrease AUBOC5)")

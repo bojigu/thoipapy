@@ -29,7 +29,7 @@ def create_PSSM_from_MSA_mult_prot(s, df_set, logging):
         TMD_seq = df_set.loc[i, "TMD_seq"]
         TMD_seq_pl_surr5 = df_set.loc[i, "TMD_seq_pl_surr5"]
         alignments_dir = os.path.join(s["thoipapy_data_folder"], "homologues", "alignments", database)
-        path_uniq_TMD_seqs_for_PSSM_FREECONTACT = os.path.join(alignments_dir,"{}.surr{}.gaps{}.uniq.for_PSSM_FREECONTACT.txt".format(acc, s["num_of_sur_residues"],s["max_n_gaps_in_TMD_subject_seq"]))
+        path_uniq_TMD_seqs_for_PSSM_FREECONTACT = os.path.join(alignments_dir, "{}.surr{}.gaps{}.uniq.for_PSSM_FREECONTACT.txt".format(acc, s["num_of_sur_residues"], s["max_n_gaps_in_TMD_subject_seq"]))
         pssm_csv = os.path.join(s["thoipapy_data_folder"], "features", "pssm", database, "{}.surr{}.gaps{}.pssm.csv".format(acc, s["num_of_sur_residues"], s["max_n_gaps_in_TMD_subject_seq"]))
 
         create_PSSM_from_MSA(path_uniq_TMD_seqs_for_PSSM_FREECONTACT, pssm_csv, acc, TMD_seq, logging)
@@ -83,7 +83,7 @@ def create_PSSM_from_MSA(path_uniq_TMD_seqs_for_PSSM_FREECONTACT, pssm_csv, acc,
             # pssm_file_handle.write(
             # 'residue'+' '+'A' + ' ' + 'I' + ' ' + 'L' + ' ' + 'V' + ' ' + 'F' + ' ' + 'W' + ' ' + 'Y' + ' ' + 'N' + ' ' + 'C' + ' ' + 'Q' + ' ' + 'M' + ' ' + 'S' + ' ' + 'T' + ' ' + 'D' + ' ' + 'E' + ' ' + 'R' + ' ' + 'H' + ' ' + 'K' + ' ' + 'G' + ' ' + 'P' + '\n')
 
-            #for j in range(0, rowlen - 1):
+            # for j in range(0, rowlen - 1):
 
             # no need to exclude final \n anymore. iterate through number of residues
             for j in range(0, n_residues):
@@ -98,7 +98,7 @@ def create_PSSM_from_MSA(path_uniq_TMD_seqs_for_PSSM_FREECONTACT, pssm_csv, acc,
                           column.count('R') / n_seqs, column.count('H') / n_seqs, column.count('K') / n_seqs, column.count('G') / n_seqs, column.count('P') / n_seqs]
                 # add the residue name to the second column
                 aa_num.insert(0, TMD_seq[j])
-                #aa_num.insert(0, mat[0][j])  #DEPRECATED: Assumes that first sequence is always the original sequence (will break as soon as this is not the case...)
+                # aa_num.insert(0, mat[0][j])  #DEPRECATED: Assumes that first sequence is always the original sequence (will break as soon as this is not the case...)
                 # add the residue number to the first column
                 aa_num.insert(0, j + 1)
                 """ the aa_num now looks like this:

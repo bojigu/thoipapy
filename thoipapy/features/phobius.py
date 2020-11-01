@@ -5,7 +5,7 @@ import re
 from thoipapy import utils as utils
 
 
-def return_num_tmd(s, acc,  full_seq, full_seq_fasta_file,phobius_outfile,logging):
+def return_num_tmd(s, acc, full_seq, full_seq_fasta_file, phobius_outfile, logging):
     """Calculate the number of TMDs for the protein using the phobius prediction algorithm.
 
     Important when mixing crystal dataset (multipass) with single-pass protein datasets.
@@ -35,9 +35,9 @@ def return_num_tmd(s, acc,  full_seq, full_seq_fasta_file,phobius_outfile,loggin
     if "Windows" in platform.system():
         logging.warning("phobius currently not run for Windows! Skipping phobius prediction.")
     else:
-        #perl_dir = s["perl_dir"]
-        #phobius_dir = s["phobius_dir"]
-        #exect_str = "{} {} {}> {}".format(perl_dir, phobius_dir, full_seq_fasta_file, phobius_outfile)
+        # perl_dir = s["perl_dir"]
+        # phobius_dir = s["phobius_dir"]
+        # exect_str = "{} {} {}> {}".format(perl_dir, phobius_dir, full_seq_fasta_file, phobius_outfile)
         # use sudo ln -s /path/to/phobius.pl /usr/local/bin/phobius to create a link,
         # so the perl and phobius directory are not necessary
         exect_str = "phobius {}> {}".format(full_seq_fasta_file, phobius_outfile)
@@ -56,6 +56,6 @@ def return_num_tmd(s, acc,  full_seq, full_seq_fasta_file,phobius_outfile,loggin
             tm_num = 4
         return tm_num
     else:
-        #sys.stdout.write("no phobius output file found, try to check the reason")
-        #return None
+        # sys.stdout.write("no phobius output file found, try to check the reason")
+        # return None
         raise FileNotFoundError("{} Phobius output not found ({})".format(acc, phobius_outfile))

@@ -40,7 +40,7 @@ def create_ROC_all_residues(s, df_set, logging):
 
     # output file with all predictions
     pred_all_res_csv: Union[Path, str] = Path(s["thoipapy_data_folder"]) / f"results/{s['setname']}/crossvalidation/ROC/{s['setname']}_pred_all_res.csv"
-    #all_res_ROC_data_dict_pkl: Union[Path, str] = Path(s["thoipapy_data_folder"]) / f"results/{s['setname']}/crossvalidation/ROC/{s['setname']}_all_res_ROC_data_dict.pickle"
+    # all_res_ROC_data_dict_pkl: Union[Path, str] = Path(s["thoipapy_data_folder"]) / f"results/{s['setname']}/crossvalidation/ROC/{s['setname']}_all_res_ROC_data_dict.pickle"
     all_res_ROC_data_csv: Union[Path, str] = Path(s["thoipapy_data_folder"]) / f"results/{s['setname']}/crossvalidation/ROC/{s['setname']}_all_res_ROC_data.csv"
     all_res_ROC_png: Union[Path, str] = Path(s["thoipapy_data_folder"]) / f"results/{s['setname']}/crossvalidation/ROC/{s['setname']}_all_res_ROC.png"
 
@@ -69,8 +69,8 @@ def create_ROC_all_residues(s, df_set, logging):
 
 
 def save_fig_ROC_all_residues(s, df, all_res_ROC_png, all_res_ROC_data_csv, logging):
-    fontsize=8
-    fig, ax = plt.subplots(figsize=(5,5))
+    fontsize = 8
+    fig, ax = plt.subplots(figsize=(5, 5))
     ax.plot([0, 1], [0, 1], color="0.5", linestyle="--", label="random", linewidth=1)
     THOIPA_predictor = "THOIPA_{}_LOO".format(s["set_number"])
     predictors = [THOIPA_predictor, "TMDOCK", "LIPS_surface_ranked", "PREDDIMER"]
@@ -89,14 +89,14 @@ def save_fig_ROC_all_residues(s, df, all_res_ROC_png, all_res_ROC_data_csv, logg
             pred = df_sel[predictor]
         fpr, tpr, thresholds = roc_curve(df_sel.interface, pred, drop_intermediate=False)
         pred_auc = auc(fpr, tpr)
-        #sys.stdout.write("{} AUC : {:.03f}\n".format(predictor, pred_auc))
+        # sys.stdout.write("{} AUC : {:.03f}\n".format(predictor, pred_auc))
         label = "{}. AUC : {:.03f}".format(predictor, pred_auc)
         ax.plot(fpr, tpr, label=label, linewidth=1)
         # output_dict["fpr_{}".format(predictor)] = fpr
         # output_dict["tpr_{}".format(predictor)] = tpr
         # output_dict["auc_{}".format(predictor)] = auc
 
-        output_dict[predictor] = {"fpr" : list(fpr), "tpr" : list(tpr), "pred_auc" : pred_auc}
+        output_dict[predictor] = {"fpr": list(fpr), "tpr": list(tpr), "pred_auc": pred_auc}
     ax.grid(False)
     ax.set_xlabel("false positive rate", fontsize=fontsize)
     ax.set_ylabel("true positive rate", fontsize=fontsize)

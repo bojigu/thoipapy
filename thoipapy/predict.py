@@ -29,7 +29,7 @@ from thoipapy.homologues.NCBI_parser import parse_NCBI_xml_to_csv, extract_filte
 from thoipapy.utils import normalise_between_2_values, open_csv_as_series
 
 # set matplotlib backend to Agg when run on a server
-if os.environ.get('DISPLAY','') == '':
+if os.environ.get('DISPLAY', '') == '':
     sys.stdout.write('no display found. Using non-interactive Agg backend')
     mpl.use('Agg')
 import matplotlib.pyplot as plt
@@ -175,8 +175,8 @@ def run_THOIPA_prediction(protein_name: str, md5: str, TMD_seq: str, full_seq: s
 
     # if not os.path.isfile(path_uniq_TMD_seqs_for_PSSM_FREECONTACT):
     extract_filtered_csv_homologues_to_alignments(s, acc, len(TMD_seq), fasta_all_TMD_seqs, path_uniq_TMD_seqs_for_PSSM_FREECONTACT,
-                                                      path_uniq_TMD_seqs_no_gaps_for_LIPS, path_uniq_TMD_seqs_surr5_for_LIPO, BLAST_csv_tar,
-                                                      TMD_seq, query_TMD_seq_surr5, logging)
+                                                  path_uniq_TMD_seqs_no_gaps_for_LIPS, path_uniq_TMD_seqs_surr5_for_LIPO, BLAST_csv_tar,
+                                                  TMD_seq, query_TMD_seq_surr5, logging)
 
     tf.pssm.create_PSSM_from_MSA(path_uniq_TMD_seqs_for_PSSM_FREECONTACT, pssm_csv, acc, TMD_seq, logging)
     tf.pssm.create_PSSM_from_MSA(path_uniq_TMD_seqs_surr5_for_LIPO, pssm_surr5_csv, acc, query_TMD_seq_surr5, logging)
@@ -209,8 +209,8 @@ def run_THOIPA_prediction(protein_name: str, md5: str, TMD_seq: str, full_seq: s
 
     database = "standalone_prediction"
     tf.combine_features.combine_all_features(s, full_seq, acc, database, TMD_seq, TMD_start, feature_combined_file, entropy_file, rate4site_csv, pssm_csv,
-                                                            lipo_csv, freecontact_parsed_csv, relative_position_file, LIPS_parsed_csv, motifs_file,
-                                                            alignment_summary_csv, full_seq_fasta_file, full_seq_phobius_output_file, logging)
+                                             lipo_csv, freecontact_parsed_csv, relative_position_file, LIPS_parsed_csv, motifs_file,
+                                             alignment_summary_csv, full_seq_fasta_file, full_seq_phobius_output_file, logging)
     tf.physical_parameters.add_physical_parameters_to_features(acc, feature_combined_file, logging)
 
     ###################################################################################################
@@ -250,7 +250,7 @@ def run_THOIPA_prediction(protein_name: str, md5: str, TMD_seq: str, full_seq: s
     # pad all content with spaces so it lines up with the column name
     df_pretty_out["residue number"] = df_pretty_out["residue number"].apply(lambda x: "{: >14}".format(x))
     df_pretty_out["residue name"] = df_pretty_out["residue name"].apply(lambda x: "{: >12}".format(x))
-    df_pretty_out["THOIPA"] = df_pretty_out["THOIPA"].apply(lambda x : "{:>6.03f}".format(x))
+    df_pretty_out["THOIPA"] = df_pretty_out["THOIPA"].apply(lambda x: "{:>6.03f}".format(x))
 
     df_pretty_out.set_index("residue number", inplace=True)
 
@@ -263,7 +263,6 @@ def run_THOIPA_prediction(protein_name: str, md5: str, TMD_seq: str, full_seq: s
     logging.info("\n\nTHOIPA homotypic TMD interface prediction:\n\n{}".format(out.getvalue()))
 
     if create_heatmap:
-
         ###################################################################################################
         #                                                                                                 #
         #         Save a heatmap with THOIPA output, conservation, polarity, and coevolution              #
@@ -342,7 +341,7 @@ def get_md5_checksum(TMD_seq: str, full_seq: str) -> str:
     """Create md5 checksum from a concatemer of the TMD_seq and full_seq"""
     TMD_plus_full_seq = TMD_seq + "_" + full_seq
     # adjust encoding for md5 creation
-    #TMD_plus_full_seq = unicodedata.normalize('NFKD', TMD_plus_full_seq).encode('ascii', 'ignore')
+    # TMD_plus_full_seq = unicodedata.normalize('NFKD', TMD_plus_full_seq).encode('ascii', 'ignore')
     TMD_plus_full_seq = TMD_plus_full_seq.encode('ascii', 'ignore')
     hash_object = hashlib.md5(TMD_plus_full_seq)
     md5 = hash_object.hexdigest()
@@ -438,4 +437,4 @@ if __name__ == "__main__":
         input_ser.to_csv(out_dir_incl_md5 / "input.csv")
 
         run_THOIPA_prediction(protein_name_cleaned, md5_checksum, input_ser["TMD_seq"], input_ser["full_seq"], out_dir_incl_md5)
-        os.chmod(out_dir_incl_md5, stat.S_IRUSR | stat.S_IWUSR | stat.S_IXUSR | stat.S_IRGRP | stat.S_IWGRP| stat.S_IXGRP)
+        os.chmod(out_dir_incl_md5, stat.S_IRUSR | stat.S_IWUSR | stat.S_IXUSR | stat.S_IRGRP | stat.S_IWGRP | stat.S_IXGRP)

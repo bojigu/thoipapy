@@ -10,7 +10,6 @@ from thoipapy.validation.feature_selection import drop_cols_not_used_in_ML
 
 
 def remove_duplicate_features_with_lower_MDI(s, logging):
-
     logging.info('starting remove_duplicate_features_with_lower_MDI')
     # inputs
     train_data_csv = Path(s["thoipapy_data_folder"]) / f"results/{s['setname']}/train_data/01_train_data_orig.csv"
@@ -96,4 +95,3 @@ def remove_duplicate_features_with_lower_MDI(s, logging):
     logging.info(f"{df_data.shape[1] - 4} features collected in total, {df_X.shape[1]} included in initial analysis, {df_X_excl_duplicates.shape[1] - 1} remaining after removing duplicates.")
     logging.info(f"output saved to {train_data_excl_duplicates_csv}")
     logging.info("finished remove_duplicate_features_with_lower_MDI")
-

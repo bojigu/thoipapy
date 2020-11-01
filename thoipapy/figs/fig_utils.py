@@ -1,6 +1,4 @@
-
 def get_set_lists(s: dict):
-
     if s["set_list"] == True:
         set_list = ["1"]
     elif s["set_list"] == False:

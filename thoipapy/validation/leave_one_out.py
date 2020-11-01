@@ -101,7 +101,7 @@ def run_LOO_validation(s: dict, df_set: pd.DataFrame, logging):
     df_data = pd.read_csv(train_data_after_first_feature_seln_csv, index_col=0)
     assert "Unnamed" not in ", ".join(df_data.columns.tolist())
 
-    #df_data = df_data.dropna()
+    # df_data = df_data.dropna()
 
     # drop training data (full protein) that don't have enough homologues
     if s["min_n_homol_training"] != 0:
@@ -109,7 +109,7 @@ def run_LOO_validation(s: dict, df_set: pd.DataFrame, logging):
 
     acc_db_ser = pd.Series(df_data.index).apply(lambda x: x.split("_")[0])
     acc_db_list = acc_db_ser.to_list()
-    #df_data["acc_db"] = acc_db_ser
+    # df_data["acc_db"] = acc_db_ser
     acc_db_unique_list = acc_db_ser.unique()
     logging.info(f"Dataset has {len(acc_db_unique_list)} unique proteins for training.")
     start = time.clock()
@@ -143,7 +143,7 @@ def run_LOO_validation(s: dict, df_set: pd.DataFrame, logging):
 
         acc_db_putative_homologues: List[str] = clusters_containing_acc_db_of_interest[0]
         row_filter_excluding_putative_homologues = [acc_db not in acc_db_putative_homologues for acc_db in acc_db_list]
-        #index_excluding_putative_homologues = df_data.acc_db.apply(lambda x: x not in acc_db_putative_homologues)
+        # index_excluding_putative_homologues = df_data.acc_db.apply(lambda x: x not in acc_db_putative_homologues)
 
         df_train = df_data.loc[row_filter_excluding_putative_homologues]
 
@@ -207,7 +207,7 @@ def run_LOO_validation(s: dict, df_set: pd.DataFrame, logging):
     xv_dict = {}
     acc_db_unique_list = df_set.acc_db.tolist()
 
-    #iterate through the output tuple (auc_dict, BO_df)
+    # iterate through the output tuple (auc_dict, BO_df)
     for nn, val_tuple in enumerate(val_list):
         acc_db = acc_db_unique_list[nn]
         auc_dict = val_tuple[0]
@@ -253,9 +253,9 @@ def run_LOO_validation(s: dict, df_set: pd.DataFrame, logging):
     #######################################################################################################
 
     BO_all_df.to_csv(bocurve_data_raw_csv)
-    #names_excel_path = os.path.join(s["dropbox_dir"], "protein_names.xlsx")
+    # names_excel_path = os.path.join(s["dropbox_dir"], "protein_names.xlsx")
 
-    #linechart_mean_obs_and_rand = thoipapy.figs.Create_Bo_Curve_files.analyse_bo_curve_underlying_data(bocurve_data_raw_csv, crossvalidation_folder, names_excel_path)
+    # linechart_mean_obs_and_rand = thoipapy.figs.Create_Bo_Curve_files.analyse_bo_curve_underlying_data(bocurve_data_raw_csv, crossvalidation_folder, names_excel_path)
     thoipapy.validation.bocurve.parse_BO_data_csv_to_excel(bocurve_data_raw_csv, bocurve_data_xlsx, s["n_residues_AUBOC_validation"], logging)
 
     logging.info('{} LOO crossvalidation. Time taken = {:.2f}.'.format(s["setname"], duration))
@@ -289,7 +289,7 @@ def LOO_single_prot(d: LooValidationData):
     #                                                                                                     #
     #######################################################################################################
 
-    #X_train = thoipapy.validation.feature_selection.drop_cols_not_used_in_ML(d.logger, d.df_train, d.excel_file_with_settings, d.i)
+    # X_train = thoipapy.validation.feature_selection.drop_cols_not_used_in_ML(d.logger, d.df_train, d.excel_file_with_settings, d.i)
     X_train = d.df_train.drop(d.bind_column, axis=1)
     y_train = d.df_train[d.bind_column]
 
@@ -305,8 +305,8 @@ def LOO_single_prot(d: LooValidationData):
     assert d.bind_column in df_testdata_combined.columns
     df_test = df_testdata_combined.reindex(columns=d.df_train.columns, index=df_testdata_combined.index)
 
-    #X_test = thoipapy.validation.feature_selection.drop_cols_not_used_in_ML(logger, df_test, d.excel_file_with_settings, d.i)
-    #y_test = df_test["interface"].fillna(0).astype(int)
+    # X_test = thoipapy.validation.feature_selection.drop_cols_not_used_in_ML(logger, df_test, d.excel_file_with_settings, d.i)
+    # y_test = df_test["interface"].fillna(0).astype(int)
 
     X_test = df_test.drop(d.bind_column, axis=1)
     y_test = df_test[d.bind_column]
@@ -316,7 +316,7 @@ def LOO_single_prot(d: LooValidationData):
     if d.bind_column == "interface":
         prediction = fitted.predict_proba(X_test)[:, 1]
     elif d.bind_column == "interface_score_norm":
-        prediction = fitted.predict(X_test)#[:, 1]
+        prediction = fitted.predict(X_test)  # [:, 1]
     else:
         raise ValueError("bind_column in excel settings file is not recognised ({})".format(d.bind_column))
     # add the prediction to the combined file
@@ -335,7 +335,7 @@ def LOO_single_prot(d: LooValidationData):
     precision, recall, thresholds_PRC = precision_recall_curve(y_test, prediction)
     pr_auc = auc(recall, precision)
 
-    auc_dict = {"fpr": fpr, "tpr": tpr, "roc_auc": roc_auc, "precision" : precision, "recall" : recall, "pr_auc" : pr_auc}
+    auc_dict = {"fpr": fpr, "tpr": tpr, "roc_auc": roc_auc, "precision": precision, "recall": recall, "pr_auc": pr_auc}
 
     # BO curve requires the interface score. Add it from the original csv.
     assert df_testdata_combined.shape[0] == df_test.shape[0]
@@ -383,7 +383,7 @@ def create_LOO_validation_fig(s, df_set, logging):
     # drop redundant proteins according to CD-HIT
     df_set = thoipapy.utils.drop_redundant_proteins_from_list(df_set, logging)
 
-    #plt.rcParams.update({'font.size': 7})
+    # plt.rcParams.update({'font.size': 7})
     LOO_crossvalidation_pkl = os.path.join(s["thoipapy_data_folder"], "results", s["setname"], "crossvalidation", "data", "{}_LOO_crossvalidation.pkl".format(s["setname"]))
     LOO_crossvalidation_ROC_png = os.path.join(s["thoipapy_data_folder"], "results", s["setname"], "crossvalidation", "{}_LOO_crossvalidation_ROC.png".format(s["setname"]))
     LOO_crossvalidation_AUC_bar_png = os.path.join(s["thoipapy_data_folder"], "results", s["setname"], "crossvalidation", "{}_LOO_crossvalidation_AUC_bar.png".format(s["setname"]))
@@ -401,7 +401,7 @@ def create_LOO_validation_fig(s, df_set, logging):
         xv_dict = pickle.load(f)
 
     # due to problems on Bo's computer, set the figsize to double what we should be using for the publication?
-    figsize = np.array([3.42, 3.42]) * 2 # DOUBLE the real size, due to problems on Bo computer with fontsizes
+    figsize = np.array([3.42, 3.42]) * 2  # DOUBLE the real size, due to problems on Bo computer with fontsizes
     fig, ax = plt.subplots(figsize=figsize)
     auc_dict = {}
 
@@ -424,18 +424,18 @@ def create_LOO_validation_fig(s, df_set, logging):
     ax.legend(loc="lower right")
     fig.tight_layout()
     fig.savefig(LOO_crossvalidation_ROC_png, dpi=240)
-    #fig.savefig(thoipapy.utils.pdf_subpath(LOO_crossvalidation_ROC_png))
+    # fig.savefig(thoipapy.utils.pdf_subpath(LOO_crossvalidation_ROC_png))
 
     AUC_ser = pd.Series(auc_dict)
     AUC_ser.to_csv(AUC_csv)
     plt.close("all")
-    figsize = np.array([3.42, 3.42]) * 2 # DOUBLE the real size, due to problems on Bo computer with fontsizes
+    figsize = np.array([3.42, 3.42]) * 2  # DOUBLE the real size, due to problems on Bo computer with fontsizes
     fig, ax = plt.subplots(figsize=figsize)
     AUC_ser.plot(ax=ax, kind="bar")
     ax.set_ylabel("performance (AUBOC)")
     fig.tight_layout()
     fig.savefig(LOO_crossvalidation_AUC_bar_png, dpi=240)
-    #fig.savefig(thoipapy.utils.pdf_subpath(LOO_crossvalidation_AUC_bar_png))
+    # fig.savefig(thoipapy.utils.pdf_subpath(LOO_crossvalidation_AUC_bar_png))
 
     AUBOC = thoipapy.figs.create_BOcurve_files.save_BO_linegraph_and_barchart(s, bocurve_data_xlsx, BO_linechart_png, BO_barchart_png, namedict, logging, AUC_ser)
 

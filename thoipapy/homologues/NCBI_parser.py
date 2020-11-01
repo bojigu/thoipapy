@@ -35,7 +35,7 @@ def parse_NCBI_xml_to_csv_mult_prot(s, df_set, logging):
 
     for i in df_set.index:
         acc = df_set.loc[i, "acc"]
-        #if acc == "Q99IB8":
+        # if acc == "Q99IB8":
         database = df_set.loc[i, "database"]
         TMD_start = df_set.loc[i, "TMD_start"]
         TMD_end = df_set.loc[i, "TMD_end"]
@@ -44,13 +44,13 @@ def parse_NCBI_xml_to_csv_mult_prot(s, df_set, logging):
             pass
         elif s["surres"] == "_surr5":
             # start 5 residues earlier
-            TMD_start = TMD_start - 5 ###for fullseq
+            TMD_start = TMD_start - 5  ###for fullseq
             if TMD_start <= 0:
                 TMD_start = 1
             # end 5 residues later
-            TMD_end = TMD_end  + 5  ###for fullseq
+            TMD_end = TMD_end + 5  ###for fullseq
             if TMD_end > seqlen:
-                TMD_end = seqlen # quals to the full sequence length
+                TMD_end = seqlen  # quals to the full sequence length
         else:
             raise ValueError('s["surres"] does not seem to be correct')
 
@@ -154,7 +154,7 @@ def parse_NCBI_xml_to_csv(acc, blast_xml_tar, BLAST_csv_tar, TMD_start, TMD_end,
                         hit_num += 1
                     else:
                         n_hsps_excluded_due_to_e_value_cutoff += 1
-                        #sys.stdout.write("|")
+                        # sys.stdout.write("|")
 
     if n_hsps_excluded_due_to_e_value_cutoff > 0:
         logging.info("n_hsps_excluded_due_to_e_value_cutoff = {}".format(n_hsps_excluded_due_to_e_value_cutoff))
@@ -217,7 +217,7 @@ def slice_match_TMD_seq(x):
 
 
 def slice_match_TMD_seq_surr5(x):
-    return x['subject_align_seq'][int(x["start_min_5"]) : int(x["end"]) + 5]
+    return x['subject_align_seq'][int(x["start_min_5"]): int(x["end"]) + 5]
 
 
 def save_fasta(df, col_with_seqs, filepath, acc, query_TMD_seq):
@@ -262,7 +262,6 @@ def save_seqs(array_of_seqs, filepath, query_TMD_seq):
 
 
 def extract_filtered_csv_homologues_to_alignments_mult_prot(s, df_set, logging):
-
     logging.info('start extract filtered csv homologues to alignments')
     out_dict = {}
 

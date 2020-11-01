@@ -94,7 +94,6 @@ if __name__ == "__main__":
             if s["create_identity_matrix_from_set_seqs"]:
                 create_identity_matrix_from_protein_set(s, logging)
 
-
         ###################################################################################################
         #                                                                                                 #
         #                  calculate closedistance from NMR and crystal structures                        #
@@ -111,10 +110,10 @@ if __name__ == "__main__":
         #     pass
 
         if s["retrospective_coevolution"]:
-            #thoipapy.figs.retrospective.calc_retrospective_coev_from_list_interf_res(s, dfset, logging)
+            # thoipapy.figs.retrospective.calc_retrospective_coev_from_list_interf_res(s, dfset, logging)
             thoipapy.figs.retrospective.calc_retrospective_coev_from_struct_contacts(s, dfset, logging)
 
-        #if s["calc_NMR_closedist"] :
+        # if s["calc_NMR_closedist"] :
         #    thoipapy.structures.deprecated.NMR_data.calc_closedist_from_NMR_best_model(s)
 
         if s["Atom_Close_Dist"]:
@@ -135,7 +134,6 @@ if __name__ == "__main__":
 
         if s["parse_csv_homologues_to_alignment"]:
             thoipapy.homologues.NCBI_parser.extract_filtered_csv_homologues_to_alignments_mult_prot(s, df_set, logging)
-
 
         ###################################################################################################
         #                                                                                                 #
@@ -221,9 +219,9 @@ if __name__ == "__main__":
 
         Fontsize = s["Fontsize"]
         Filter = s["Filter"]
-        Width= s["Width"]
-        Size= s["Size"]
-        Linewidth= s["Linewidth"]
+        Width = s["Width"]
+        Size = s["Size"]
+        Linewidth = s["Linewidth"]
 
         if s["compare_selected_predictors"] == True:
             thoipapy.figs.combine_BOcurve_files.compare_selected_predictors(s, logging)
@@ -260,7 +258,6 @@ if __name__ == "__main__":
 
             thoipapy.validation.gather.gather_validation_data_for_figs(s, df_set, logging)
             sys.stdout.write("\n--------------- finished run_validation ---------------\n")
-
 
         if s["create_merged_heatmap_for_trainset_and_testset"] == True:
             thoipapy.figs.create_heatmap_from_merge_file.create_merged_heatmap_for_trainset_and_testset(s, df_set, logging)

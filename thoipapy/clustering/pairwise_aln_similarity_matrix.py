@@ -24,7 +24,8 @@ def create_identity_matrix_from_protein_set(s, logging):
     create_identity_matrix_using_pairwise_alignments(protein_set_full_seq_fasta, output_align, sim_matrix_xlsx, gap_open, gap_extend, logging, aln_cutoff=aln_cutoff)
 
 
-def create_identity_matrix_using_pairwise_alignments(protein_set_full_seq_fasta: Union[Path, str], output_align: Union[Path, str], ident_matrix_xlsx: Union[Path, str], gap_open: float, gap_extend: float, logging, matrix: str = "BLOSUM62", aln_cutoff: float= 15.0):
+def create_identity_matrix_using_pairwise_alignments(protein_set_full_seq_fasta: Union[Path, str], output_align: Union[Path, str], ident_matrix_xlsx: Union[Path, str], gap_open: float, gap_extend: float, logging, matrix: str = "BLOSUM62",
+                                                     aln_cutoff: float = 15.0):
     """Create identity matrix using pairwise alignments.
 
     This is a clustering method used to complement cd-hit, which is not designed for clustering at very low levels of identity.
@@ -179,6 +180,7 @@ def reduce_clusters_based_on_common_elements(all_clusters: List[List], TMD_name_
     assert pd.Series(flattened_names_in_all_clusters).value_counts().iloc[0] == 1
 
     return output_list
+
 
 def conduct_one_round_of_cluster_reduction(input_clusters):
     output_list: List[Set] = []

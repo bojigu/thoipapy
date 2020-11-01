@@ -131,8 +131,8 @@ def rate4site_calculation(TMD_seq: str, acc: str, fasta_uniq_TMD_seqs_surr5_for_
                 rate4site_orig_output.parent.mkdir(parents=True)
 
             exect_str = f"rate4site -s {rate4site_input} -o {rate4site_orig_output}"
-            #sys.stdout.write(exect_str)
-            #sys.stdout.flush()
+            # sys.stdout.write(exect_str)
+            # sys.stdout.flush()
             logging.info("starting rate4site")
             start = time.time()
             command = utils.Command(exect_str)

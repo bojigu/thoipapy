@@ -35,7 +35,7 @@ def tune_ensemble_parameters(s, train_data_csv, tuned_ensemble_parameters_csv, l
         raise ValueError(f"unnamed column found when reading {train_data_csv}")
     y = df_data[s["bind_column"]]
     X = drop_cols_not_used_in_ML(logging, df_data, s["excel_file_with_settings"])
-    #del X[s["bind_column"]]
+    # del X[s["bind_column"]]
     assert "interface" not in X.columns
     if X.isnull().values.any():
         raise Exception("Dataset for training contains nan values.")
@@ -112,4 +112,3 @@ def get_optimised_ensemble_parameters_using_quick_randomizedsearchcv_method(X, c
     best_params_rs["best_score"] = cls_random.best_score_
     logging.info('finished tune_ensemble_parameters')
     return best_params_rs
-

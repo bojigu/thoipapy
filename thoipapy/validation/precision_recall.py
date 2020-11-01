@@ -41,7 +41,7 @@ def create_precision_recall_all_residues(s, df_set, logging):
 
     # output file with all predictions
     pred_all_res_csv: Union[Path, str] = Path(s["thoipapy_data_folder"]) / f"results/{s['setname']}/crossvalidation/precision_recall/{s['setname']}_pred_all_res.csv"
-    #all_res_precision_recall_data_dict_pkl = os.path.join(s["thoipapy_data_folder"], "results", s["setname"], "precision_recall", "{}_all_res_precision_recall_data_dict.pickle".format(s["setname"]))
+    # all_res_precision_recall_data_dict_pkl = os.path.join(s["thoipapy_data_folder"], "results", s["setname"], "precision_recall", "{}_all_res_precision_recall_data_dict.pickle".format(s["setname"]))
     all_res_precision_recall_data_csv: Path = Path(s["thoipapy_data_folder"]) / f"results/{s['setname']}/crossvalidation/precision_recall/{s['setname']}_all_res_precision_recall_data.csv"
     all_res_precision_recall_png: Path = Path(s["thoipapy_data_folder"]) / f"results/{s['setname']}/crossvalidation/precision_recall/{s['setname']}_all_res_precision_recall.png"
 
@@ -75,8 +75,8 @@ def save_fig_precision_recall_all_residues(s, df, all_res_precision_recall_png, 
     Code is directly copied and modified from save_fig_ROC_all_residues
 
     """
-    fontsize=8
-    fig, ax = plt.subplots(figsize=(5,5))
+    fontsize = 8
+    fig, ax = plt.subplots(figsize=(5, 5))
     THOIPA_predictor = "THOIPA_{}_LOO".format(s["set_number"])
     predictors = [THOIPA_predictor, "TMDOCK", "LIPS_surface_ranked", "PREDDIMER", "random"]
 
@@ -100,11 +100,11 @@ def save_fig_precision_recall_all_residues(s, df, all_res_precision_recall_png, 
         precision, recall, thresholds_PRC = precision_recall_curve(df_sel.interface, pred)
 
         pred_auc = auc(recall, precision)
-        #sys.stdout.write("{} AUC : {:.03f}\n".format(predictor, pred_auc))
+        # sys.stdout.write("{} AUC : {:.03f}\n".format(predictor, pred_auc))
         label = "{}. AUC : {:.03f}".format(predictor, pred_auc)
         ax.plot(recall, precision, label=label, linewidth=1)
 
-        output_dict[predictor] = {"precision" : list(precision), "recall" : list(recall), "pred_auc" : pred_auc}
+        output_dict[predictor] = {"precision": list(precision), "recall": list(recall), "pred_auc": pred_auc}
     ax.grid(False)
 
     ax.set_xlabel("recall", fontsize=fontsize)
@@ -118,5 +118,3 @@ def save_fig_precision_recall_all_residues(s, df, all_res_precision_recall_png, 
     df_precision_recall_data.to_csv(all_res_precision_recall_data_csv)
 
     logging.info("save_fig_precision_recall_all_residues finished ({})".format(all_res_precision_recall_data_csv))
-
-

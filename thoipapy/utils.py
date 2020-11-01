@@ -33,22 +33,23 @@ class Command(object):
     This will run commands from python as if it was a normal windows console or linux terminal.
     taken from http://stackoverflow.com/questions/17257694/running-jar-files-from-python)'
     '''
+
     def __init__(self, cmd):
         self.cmd = cmd
         self.process = None
 
     def run(self, timeout, log_stderr=True):
         def target():
-            #logging.info('Thread started')
+            # logging.info('Thread started')
             self.process = subprocess.Popen(self.cmd, shell=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
-            #self.process.communicate()
-            stdout, stderr = self.process.communicate() # from http://stackoverflow.com/questions/14366352/how-to-capture-information-from-executable-jar-in-python
+            # self.process.communicate()
+            stdout, stderr = self.process.communicate()  # from http://stackoverflow.com/questions/14366352/how-to-capture-information-from-executable-jar-in-python
             # Thus far, SIMAP has only ever given java faults, never java output. Don't bother showing.
             # if the console prints anything longer than 5 characters, log it
             if len(stderr.decode("utf-8")) > 5:
                 if log_stderr:
                     logging.warning('FAULTS: %s' % stderr.decode("utf-8"))
-            #logging.info('Thread finished')
+            # logging.info('Thread finished')
 
         thread = threading.Thread(target=target)
         thread.start()
@@ -59,13 +60,14 @@ class Command(object):
             self.process.terminate()
             thread.join()
         # simply returns 0 every time it works. Waste of logging space! :)
-        #logging.info(self.process.returncode)
+        # logging.info(self.process.returncode)
+
 
 def run_command(command):
-    #this stopped working for some reason. Did I mess up a path variable?
+    # this stopped working for some reason. Did I mess up a path variable?
     p = subprocess.Popen(command,
-        stdout=subprocess.PIPE,
-        stderr=subprocess.STDOUT)
+                         stdout=subprocess.PIPE,
+                         stderr=subprocess.STDOUT)
     return iter(p.stdout.readline, b'')
 
 
@@ -73,14 +75,14 @@ def aaa(df_or_series):
     """ Function for use in debugging.
     Saves pandas Series or Dataframes to a user-defined csv file.
     """
-     # convert any series to dataframe
+    # convert any series to dataframe
     if isinstance(df_or_series, pd.Series):
         df_or_series = df_or_series.to_frame()
     csv_out = r"D:\data\000_aaa_temp_df_out.csv"
     df_or_series.to_csv(csv_out, sep=",", quoting=csv.QUOTE_NONNUMERIC)
 
 
-def make_sure_path_exists(input_path: Union[Path, str], isfile: bool=False):
+def make_sure_path_exists(input_path: Union[Path, str], isfile: bool = False):
     """ If path to directory or folder doesn't exist, creates the necessary directory.
     Set isfile=True to indicate a filepath, where the parent directory needs to be created.
     """
@@ -95,6 +97,7 @@ def make_sure_path_exists(input_path: Union[Path, str], isfile: bool=False):
         return
     else:
         directory.mkdir(parents=True)
+
 
 def reorder_dataframe_columns(dataframe, cols, front=True):
     '''Takes a dataframe and a subsequence of its columns,
@@ -118,18 +121,19 @@ def reorder_dataframe_columns(dataframe, cols, front=True):
     for col in cols:
         if col not in dataframe.columns:
             cols.remove(col)
-    cols_to_place_first = cols[:] # copy so we don't mutate seq
+    cols_to_place_first = cols[:]  # copy so we don't mutate seq
     for existing_col in dataframe.columns:
         if existing_col not in cols_to_place_first:
-            if front: #we want "seq" to be in the front
-                #so append current column to the end of the list
+            if front:  # we want "seq" to be in the front
+                # so append current column to the end of the list
                 cols_to_place_first.append(existing_col)
             else:
-                #we want "seq" to be last, so insert this
-                #column in the front of the new column list
-                #"cols" we are building:
+                # we want "seq" to be last, so insert this
+                # column in the front of the new column list
+                # "cols" we are building:
                 cols_to_place_first.insert(0, existing_col)
     return dataframe[cols_to_place_first]
+
 
 def create_tarballs_from_xml_files_in_folder(xml_dir, download_date="2017.11.02"):
     """script to create .tar.gz compressed files from a folder of xml files
@@ -149,7 +153,7 @@ def create_tarballs_from_xml_files_in_folder(xml_dir, download_date="2017.11.02"
         xml_renamed = xml[:-4] + ".BLAST.xml"
         xml_tar_gz = xml[:-4] + ".BLAST.xml.tar.gz"
         xml_txt = xml[:-4] + "_details.txt"
-        #xml_txt = xml[:-4] + ".BLAST_details.txt"
+        # xml_txt = xml[:-4] + ".BLAST_details.txt"
 
         if not os.path.isfile(xml_tar_gz):
             copyfile(xml, xml_renamed)
@@ -173,6 +177,7 @@ def create_tarballs_from_xml_files_in_folder(xml_dir, download_date="2017.11.02"
             except:
                 sys.stdout.write("{} could not be deleted".format(xml_renamed))
 
+
 def delete_BLAST_xml(blast_xml_file):
     """Small function to remove files that are already compressed in a tarball.
 
@@ -195,10 +200,12 @@ def delete_BLAST_xml(blast_xml_file):
     except:
         sys.stdout.write("{} could not be deleted".format(xml_txt))
 
+
 def setup_biopol_plotly(username, api_key):
     import plotly
     plotly.tools.set_config_file(world_readable=False, sharing='private')
     plotly.tools.set_credentials_file(username=username, api_key=api_key)
+
 
 def get_n_of_gaps_at_start_and_end_of_seq(seq):
     start = 0
@@ -254,16 +261,18 @@ def get_list_residues_in_motif(seq, motif_ss, motif_len):
 
     return list_residues_in_motif
 
+
 def slice_TMD_seq_pl_surr(df_set):
     # note that due to uniprot-like indexing, the start index = start-1
     return df_set['full_seq'][int(df_set['TMD_start_pl_surr'] - 1):int(df_set['TMD_end_pl_surr'])]
+
 
 def create_column_with_TMD_plus_surround_seq(df_set, num_of_sur_residues):
     df_set["TMD_start_pl_surr"] = df_set.TMD_start - num_of_sur_residues
     df_set.loc[df_set["TMD_start_pl_surr"] < 1, "TMD_start_pl_surr"] = 1
     df_set["TMD_end_pl_surr"] = df_set.TMD_end + num_of_sur_residues
     for i in df_set.index:
-        #acc = df_set.loc[i, "acc"]
+        # acc = df_set.loc[i, "acc"]
         if df_set.loc[i, "TMD_end_pl_surr"] > df_set.loc[i, "seqlen"]:
             df_set.loc[i, "TMD_end_pl_surr"] = df_set.loc[i, "seqlen"]
     TMD_seq_pl_surr_series = df_set.apply(slice_TMD_seq_pl_surr, axis=1)
@@ -299,7 +308,7 @@ def create_namedict(names_excel_path, style="shortname [acc-db]"):
     df_names.set_index("acc_db", inplace=True, drop=False)
     df_names.index.name = "acc_db_index"
 
-    #df_names.acc_db_for_figs = df_names.acc_db.replace("crystal", "X-ray")
+    # df_names.acc_db_for_figs = df_names.acc_db.replace("crystal", "X-ray")
 
     # add old names in index "e.g. Q13563-crystal", so that they are replaced with new "X-ray" names in figs
     xray_row_bool_ser = df_names.acc_db.str.contains("X-ray")
@@ -308,7 +317,7 @@ def create_namedict(names_excel_path, style="shortname [acc-db]"):
     df_xray["acc_db"] = df_xray["PDB acc"] + "-" + df_xray.database
     df_names = pd.concat([df_names.loc[xray_row_bool_ser == False], df_xray])
 
-    #df_names = df_names.loc[df_names.database == database]
+    # df_names = df_names.loc[df_names.database == database]
     if style == "shortname [acc-db]":
         df_names["label"] = df_names.shortname + " [" + df_names.acc_db + "]"
     elif style == "shortname [acc]":
@@ -318,6 +327,7 @@ def create_namedict(names_excel_path, style="shortname [acc-db]"):
 
     namedict = df_names["label"].to_dict()
     return namedict
+
 
 def pdf_subpath(png_path):
     """Create a subfolder "pdf" where the png is saved.
@@ -336,6 +346,7 @@ def pdf_subpath(png_path):
     pdf_path = os.path.join(os.path.dirname(png_path), "pdf", os.path.basename(png_path)[:-4] + ".pdf")
     make_sure_path_exists(pdf_path, isfile=True)
     return pdf_path
+
 
 def drop_redundant_proteins_from_list(df_set, logging):
     """Simply drops the proteins labeled "False" as CD-HIT cluster representatives.
@@ -366,6 +377,7 @@ def drop_redundant_proteins_from_list(df_set, logging):
     logging.info("CDHIT redundancy reduction : n_prot_initial = {}, n_prot_final = {}, n_prot_dropped = {}".format(n_prot_initial, n_prot_final, n_prot_initial - n_prot_final))
     return df_set_nonred
 
+
 def add_res_num_full_seq_to_df(acc, df, TMD_seq, full_seq, prediction_name, file):
     """
 
@@ -392,6 +404,7 @@ def add_res_num_full_seq_to_df(acc, df, TMD_seq, full_seq, prediction_name, file
                          "prediction_name={},file={}".format(acc, TMD_seq, full_seq, prediction_name, file))
     return df
 
+
 def calculate_identity(sequenceA, sequenceB):
     """
     Returns the percentage of identical characters between two sequences.
@@ -410,6 +423,7 @@ def calculate_identity(sequenceA, sequenceB):
         gap_id = 0
     return (seq_id, gap_id, gap_num)
 
+
 def join_two_algined_seqences(aligned_A, aligned_B):
     '''
     combine two aligned sequences, take the non-gap residue for the combined seqence
@@ -426,7 +440,7 @@ def join_two_algined_seqences(aligned_A, aligned_B):
     for j in range(len(aligned_A)):
         if aligned_A[j] == '-' and aligned_B[j] == '-':
             sys.stdout.write(
-                "this homo pair should be considered removed:\n check {},{}".format(aligned_A,aligned_B))
+                "this homo pair should be considered removed:\n check {},{}".format(aligned_A, aligned_B))
         if aligned_A[j] != '-':
             aligned_AB = aligned_AB + aligned_A[j]
             continue
@@ -434,6 +448,7 @@ def join_two_algined_seqences(aligned_A, aligned_B):
             aligned_AB = aligned_AB + aligned_B[j]
             continue
     return aligned_AB
+
 
 def shorten(x):
     '''
@@ -451,14 +466,15 @@ def shorten(x):
          'ILE': 'I', 'PRO': 'P', 'THR': 'T', 'PHE': 'F', 'ASN': 'N',
          'GLY': 'G', 'HIS': 'H', 'LEU': 'L', 'ARG': 'R', 'TRP': 'W',
          'ALA': 'A', 'VAL': 'V', 'GLU': 'E', 'TYR': 'Y', 'MET': 'M',
-         'UNK' : 'U'}
+         'UNK': 'U'}
     if len(x) % 3 != 0:
         raise ValueError('Input length should be a multiple of three')
 
     y = ''
-    for i in range(int(len(x)/3)):
-            y += d[x[3*i:3*i+3]]
+    for i in range(int(len(x) / 3)):
+        y += d[x[3 * i:3 * i + 3]]
     return y
+
 
 def Get_Closedist_between_ChianA_ChainB(hashclosedist):
     i = 0
@@ -474,17 +490,19 @@ def Get_Closedist_between_ChianA_ChainB(hashclosedist):
         k = k.split(':')
         k1 = '_'.join(k)
         k2 = '_'.join([k1, str(v)])
-        jk = '+'.join([jk,  k2])
+        jk = '+'.join([jk, k2])
     return jk
 
-def add_mutation_missed_residues_with_na(s,acc,database,df):
-    acc_combind_feature_file = os.path.join(s['features_folder'],"combined",database,"{}.surr{}.gaps{}.combined_features.csv".format(acc,s["num_of_sur_residues"],s["max_n_gaps_in_TMD_subject_seq"]))
-    df_feature = pd.read_csv(acc_combind_feature_file,engine="python",index_col=0)
-    not_df_index = [element for element in df_feature["residue_num"].values if element not in df.index.values ]
+
+def add_mutation_missed_residues_with_na(s, acc, database, df):
+    acc_combind_feature_file = os.path.join(s['features_folder'], "combined", database, "{}.surr{}.gaps{}.combined_features.csv".format(acc, s["num_of_sur_residues"], s["max_n_gaps_in_TMD_subject_seq"]))
+    df_feature = pd.read_csv(acc_combind_feature_file, engine="python", index_col=0)
+    not_df_index = [element for element in df_feature["residue_num"].values if element not in df.index.values]
     for element in not_df_index:
-        df.loc[element] = [df_feature.loc[element -1,"residue_name"], np.nan]
+        df.loc[element] = [df_feature.loc[element - 1, "residue_name"], np.nan]
     df = df.sort_index()
     return df
+
 
 def normalise_0_1(arraylike):
     """ Normalise an array to values between 0 and 1.
@@ -520,10 +538,11 @@ def normalise_0_1(arraylike):
     """
     array_min = np.min(arraylike)
     array_max = np.max(arraylike)
-    normalised = (arraylike - array_min)/(array_max - array_min)
+    normalised = (arraylike - array_min) / (array_max - array_min)
     # convert to float
     normalised = np.array(normalised).astype(float)
     return normalised, array_min, array_max
+
 
 def denormalise_0_1(value_or_array, array_min, array_max):
     """ Denormalise a value or array to orig values.
@@ -577,15 +596,15 @@ def denormalise_0_1(value_or_array, array_min, array_max):
         raise ValueError('this function accepts arraylike data, not a list. '
                          'Please check data or convert list to numpy array')
     elif isinstance(value_or_array, float):
-        denormalised = value_or_array*(array_max - array_min) + array_min
+        denormalised = value_or_array * (array_max - array_min) + array_min
     elif isinstance(value_or_array, np.ndarray):
-        denormalised = value_or_array*(array_max - array_min) + array_min
+        denormalised = value_or_array * (array_max - array_min) + array_min
     elif isinstance(value_or_array, pd.Series):
-        denormalised = value_or_array*(array_max - array_min) + array_min
+        denormalised = value_or_array * (array_max - array_min) + array_min
     else:
         sys.stdout.write("Unknown datatype. denormalise_0_1 has been given an input that does not appear to be "
-              "an int, float, np.ndarray or pandas Series\n"
-              "Attempting to process as if it is arraylike.....")
+                         "an int, float, np.ndarray or pandas Series\n"
+                         "Attempting to process as if it is arraylike.....")
     return denormalised
 
 
@@ -623,7 +642,7 @@ def normalise_between_2_values(arraylike, min_value, max_value, invert=False):
     df["norm_data"] = normalise_between_2_values(df["orig_data"], 3, 10)
     """
     # normalise array between min and max values
-    normalised = (arraylike - min_value)/(max_value - min_value)
+    normalised = (arraylike - min_value) / (max_value - min_value)
     # replace anything above 1 with 1
     normalised[normalised > 1] = 1
     # replace anything below 0 with 0
@@ -632,6 +651,7 @@ def normalise_between_2_values(arraylike, min_value, max_value, invert=False):
     if invert:
         normalised = abs(normalised - 1)
     return normalised
+
 
 def create_colour_lists():
     '''
@@ -645,64 +665,64 @@ def create_colour_lists():
     matplotlib_150 = list(colors.cnames.values())
     output_dict['matplotlib_150'] = matplotlib_150
 
-    #define colour dictionaries. TUM colours are based on the style guide.
+    # define colour dictionaries. TUM colours are based on the style guide.
     colour_dicts = {
-                    'TUM_colours' : {
-                                    'TUMBlue':(34,99,169),
-                                    'TUM1':(100,160,200),
-                                    'TUM2':(1,51,89),
-                                    'TUM3':(42,110,177),
-                                    'TUM4':(153,198,231),
-                                    'TUM5':(0,82,147)
-                                    },
-                    'TUM_oranges': {
-                        'TUM0': (202, 101, 10),
-                        'TUM1': (213, 148, 96),
-                        'TUM2': (102, 49, 5),
-                        'TUM3': (220, 108, 11),
-                        'TUM4': (247, 194, 148),
-                        'TUM5': (160, 78, 8)
-                    },
-                    'TUM_accents' : {
-                                    'green':(162,183,0),
-                                    'orange':(227,114,34),
-                                    'ivory':(218,215,203),
-                                    }
-                    }
+        'TUM_colours': {
+            'TUMBlue': (34, 99, 169),
+            'TUM1': (100, 160, 200),
+            'TUM2': (1, 51, 89),
+            'TUM3': (42, 110, 177),
+            'TUM4': (153, 198, 231),
+            'TUM5': (0, 82, 147)
+        },
+        'TUM_oranges': {
+            'TUM0': (202, 101, 10),
+            'TUM1': (213, 148, 96),
+            'TUM2': (102, 49, 5),
+            'TUM3': (220, 108, 11),
+            'TUM4': (247, 194, 148),
+            'TUM5': (160, 78, 8)
+        },
+        'TUM_accents': {
+            'green': (162, 183, 0),
+            'orange': (227, 114, 34),
+            'ivory': (218, 215, 203),
+        }
+    }
 
-    #convert the nested dicts to python 0 to 1 format
+    # convert the nested dicts to python 0 to 1 format
     for c_dict in colour_dicts:
         for c in colour_dicts[c_dict]:
-            #define r, g, b as ints
+            # define r, g, b as ints
             r, g, b = colour_dicts[c_dict][c]
-            #normalise r, g, b and add to dict
+            # normalise r, g, b and add to dict
             colour_dicts[c_dict][c] = (r / 255., g / 255., b / 255.)
-        #add normalised colours to output dictionary
+        # add normalised colours to output dictionary
         output_dict[c_dict] = colour_dicts[c_dict]
 
-    #define colour lists
+    # define colour lists
     colour_lists = {
-                    'tableau20' : [
-                                 (31, 119, 180), (174, 199, 232), (255, 127, 14), (255, 187, 120),
-                                 (44, 160, 44), (152, 223, 138), (214, 39, 40), (255, 152, 150),
-                                 (148, 103, 189), (197, 176, 213), (140, 86, 75), (196, 156, 148),
-                                 (227, 119, 194), (247, 182, 210), (127, 127, 127), (199, 199, 199),
-                                 (188, 189, 34), (219, 219, 141), (23, 190, 207), (158, 218, 229)
-                                    ],
-                    'tableau20blind' : [
-                                         (0, 107, 164), (255, 128, 14), (171, 171, 171), (89, 89, 89),
-                                         (95, 158, 209), (200, 82, 0), (137, 137, 137), (163, 200, 236),
-                                         (255, 188, 121), (207, 207, 207)
-                                          ]
-                    }
-    #normalise the colours for the colour lists
+        'tableau20': [
+            (31, 119, 180), (174, 199, 232), (255, 127, 14), (255, 187, 120),
+            (44, 160, 44), (152, 223, 138), (214, 39, 40), (255, 152, 150),
+            (148, 103, 189), (197, 176, 213), (140, 86, 75), (196, 156, 148),
+            (227, 119, 194), (247, 182, 210), (127, 127, 127), (199, 199, 199),
+            (188, 189, 34), (219, 219, 141), (23, 190, 207), (158, 218, 229)
+        ],
+        'tableau20blind': [
+            (0, 107, 164), (255, 128, 14), (171, 171, 171), (89, 89, 89),
+            (95, 158, 209), (200, 82, 0), (137, 137, 137), (163, 200, 236),
+            (255, 188, 121), (207, 207, 207)
+        ]
+    }
+    # normalise the colours for the colour lists
     for rgb_list in colour_lists:
-        colour_array = np.array(colour_lists[rgb_list])/255.
-        colour_array_tup = tuple(map(tuple,colour_array))
+        colour_array = np.array(colour_lists[rgb_list]) / 255.
+        colour_array_tup = tuple(map(tuple, colour_array))
         colour_lists[rgb_list] = colour_array_tup
-        #add normalised colours to output dictionary
+        # add normalised colours to output dictionary
         output_dict[rgb_list] = colour_lists[rgb_list]
-    #create a mixed blue/grey colour list, with greys in decreasing darkness
+    # create a mixed blue/grey colour list, with greys in decreasing darkness
     TUM_colours_list_with_greys = []
     grey = 0.7
     for c in colour_dicts['TUM_colours'].values():
@@ -713,6 +733,7 @@ def create_colour_lists():
 
     output_dict['HTML_list01'] = ['#808080', '#D59460', '#005293', '#A1B11A', '#9ECEEC', '#0076B8', '#454545', "#7b3294", "#c2a5cf", "#008837", "#a6dba0"]
     return output_dict
+
 
 def get_free_space(folder, format="MB"):
     """
@@ -726,9 +747,10 @@ def get_free_space(folder, format="MB"):
     if platform.system() == 'Windows':
         free_bytes = ctypes.c_ulonglong(0)
         ctypes.windll.kernel32.GetDiskFreeSpaceExW(ctypes.c_wchar_p(folder), None, None, ctypes.pointer(free_bytes))
-        return (int(free_bytes.value/fConstants[format.upper()]), format)
+        return (int(free_bytes.value / fConstants[format.upper()]), format)
     else:
-        return (int(os.statvfs(folder).f_bfree*os.statvfs(folder).f_bsize/fConstants[format.upper()]), format)
+        return (int(os.statvfs(folder).f_bfree * os.statvfs(folder).f_bsize / fConstants[format.upper()]), format)
+
 
 def create_regex_string(inputseq):
     ''' adds '-*' between each aa or nt/aa in a DNA or protein sequence, so that a particular
@@ -741,6 +763,7 @@ def create_regex_string(inputseq):
         letter_with_underscore = letter + '-*'
         search_string += letter_with_underscore
     return search_string[:-2]
+
 
 def convert_truelike_to_bool(input_item, convert_int=False, convert_float=False, convert_nontrue=False):
     """Converts true-like values ("true", 1, True", "WAHR", etc) to python boolean True.
@@ -770,10 +793,10 @@ def convert_truelike_to_bool(input_item, convert_int=False, convert_float=False,
     # convert a column in a pandas DataFrame
     df["column_name"] = df["column_name"].apply(convert_truelike_to_bool)
     """
-    list_True_items = [True, 'True', "true","TRUE","T","t",'wahr', 'WAHR', 'prawdziwy', 'verdadeiro', 'sann', 'istinit',
+    list_True_items = [True, 'True', "true", "TRUE", "T", "t", 'wahr', 'WAHR', 'prawdziwy', 'verdadeiro', 'sann', 'istinit',
                        'veritable', 'Pravda', 'sandt', 'vrai', 'igaz', 'veru', 'verdadero', 'sant', 'gwir', 'PRAWDZIWY',
                        'VERDADEIRO', 'SANN', 'ISTINIT', 'VERITABLE', 'PRAVDA', 'SANDT', 'VRAI', 'IGAZ', 'VERU',
-                       'VERDADERO', 'SANT', 'GWIR', 'bloody oath', 'BLOODY OATH', 'nu', 'NU','damn right','DAMN RIGHT']
+                       'VERDADERO', 'SANT', 'GWIR', 'bloody oath', 'BLOODY OATH', 'nu', 'NU', 'damn right', 'DAMN RIGHT']
 
     # if you want to accept 1 or 1.0 as a true value, add it to the list
     if convert_int:
@@ -797,6 +820,7 @@ def convert_truelike_to_bool(input_item, convert_int=False, convert_float=False,
         else:
             return_value = 1
     return return_value
+
 
 def convert_falselike_to_bool(input_item, convert_int=False, convert_float=False):
     """Converts false-like values ("false", 0, FALSE", "FALSCH", etc) to python boolean False.
@@ -834,30 +858,35 @@ def convert_falselike_to_bool(input_item, convert_int=False, convert_float=False
     if convert_int:
         list_False_items += [0, "0"]
     if convert_float:
-        list_False_items += [0.0,"0.0"]
+        list_False_items += [0.0, "0.0"]
     # return boolean False if the input item is in the list. If not, return the original input_item
     return_value = False if input_item in list_False_items else input_item
 
     return return_value
 
+
 class HardDriveSpaceException(Exception):
     def __init__(self, value):
         self.parameter = value
+
     def __str__(self):
         # name changed to allow p-r( to be unique to the print function
         canonical_string_representation = repr
         return canonical_string_representation(self.parameter)
 
+
 class LogOnlyToConsole(object):
     def __init__(self):
         pass
+
     def info(self, message):
         sys.stdout.write("\n{}".format(message))
+
     def warning(self, message):
         sys.stdout.write("\n{}".format(message))
+
     def critical(self, message):
         sys.stdout.write("\n{}".format(message))
-
 
 
 def calc_rand_overlap_DEPRECATED_METHOD(sequence_length, sample_size):
@@ -940,7 +969,7 @@ def open_csv_as_series(input_csv):
 
 
 def intersect(a, b):
-     return list(set(a) & set(b))
+    return list(set(a) & set(b))
 
 
 def get_testsetname_trainsetname_from_run_settings(s):
@@ -953,7 +982,6 @@ def get_testsetname_trainsetname_from_run_settings(s):
 
 
 def get_test_and_train_set_lists(s):
-
     if s["test_datasets"] == True:
         test_set_list = ["1"]
     elif s["test_datasets"] == False:

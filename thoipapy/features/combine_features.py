@@ -14,11 +14,13 @@ import matplotlib as mpl
 # set matplotlib backend to Agg when run on a server
 from thoipapy.utils import make_sure_path_exists
 
-if os.environ.get('DISPLAY','') == '':
+if os.environ.get('DISPLAY', '') == '':
     sys.stdout.write('no display found. Using non-interactive Agg backend')
     mpl.use('Agg')
 
-def combine_all_features(s, full_seq, acc, database, TMD_seq, TMD_start, feature_combined_file, entropy_file, rate4site_csv, pssm_csv, lipo_csv, freecontact_parsed_csv, relative_position_file, LIPS_parsed_csv, motifs_file, alignment_summary_csv,full_seq_fasta_file,phobius_outfile, logging):
+
+def combine_all_features(s, full_seq, acc, database, TMD_seq, TMD_start, feature_combined_file, entropy_file, rate4site_csv, pssm_csv, lipo_csv, freecontact_parsed_csv, relative_position_file, LIPS_parsed_csv, motifs_file,
+                         alignment_summary_csv, full_seq_fasta_file, phobius_outfile, logging):
     """Combine all the training features for a particular protein.
 
     Parameters
@@ -73,28 +75,28 @@ def combine_all_features(s, full_seq, acc, database, TMD_seq, TMD_start, feature
     motifs_df = pd.read_csv(motifs_file)
     rate4site_df = pd.read_csv(rate4site_csv)
 
-    list_of_dfs = [entropy_file_df, pssm_csv_df, lipophilicity_file_df, freecontact_parsed_csv_df,  relative_position_file_df, LIPS_parsed_csv_df, motifs_df]
+    list_of_dfs = [entropy_file_df, pssm_csv_df, lipophilicity_file_df, freecontact_parsed_csv_df, relative_position_file_df, LIPS_parsed_csv_df, motifs_df]
     for n, df in enumerate(list_of_dfs):
         if True in df.columns.str.contains("Unnamed").tolist():
             raise ValueError("unnamed column found in dataframe number {}".format(n))
 
-    merge1 = entropy_file_df.merge(pssm_csv_df, on=['residue_num','residue_name'])
-    merge2 = merge1.merge(lipophilicity_file_df, on=['residue_num','residue_name'])
-    merge3 = merge2.merge(freecontact_parsed_csv_df, on=["residue_num","residue_name"])
-    merge4 = merge3.merge(relative_position_file_df, on=["residue_num","residue_name"])
+    merge1 = entropy_file_df.merge(pssm_csv_df, on=['residue_num', 'residue_name'])
+    merge2 = merge1.merge(lipophilicity_file_df, on=['residue_num', 'residue_name'])
+    merge3 = merge2.merge(freecontact_parsed_csv_df, on=["residue_num", "residue_name"])
+    merge4 = merge3.merge(relative_position_file_df, on=["residue_num", "residue_name"])
     merge5 = merge4.merge(LIPS_parsed_csv_df, on=["residue_num", "residue_name"])
     merge6 = merge5.merge(rate4site_df, on=["residue_num", "residue_name"])
-    df_features_single_protein = merge6.merge(motifs_df, on=["residue_num","residue_name"])
+    df_features_single_protein = merge6.merge(motifs_df, on=["residue_num", "residue_name"])
 
     test_indexing = False
     if test_indexing:
         file_list = ["entropy_file", "pssm_csv", "lipo_csv", "freecontact_parsed_csv", "relative_position_file", "LIPS_parsed_csv", "rate4site_csv"]
         df_list = ["entropy_file_df", "pssm_csv_df", "lipophilicity_file_df", "freecontact_parsed_csv_df", "relative_position_file_df", "LIPS_parsed_csv_df", "rate4site_df"]
         sys.stdout.write("{}".format(entropy_file_df))
-        #entropy_file_df.loc[0, "residue_name"] = "X"
-        #entropy_file_df.loc[0, "entropy"] = 9999
-        #entropy_file_df.loc[10, "entropy"] = 7777
-        #entropy_file_df["residue_num"] = range(3, entropy_file_df.shape[0] + 3)
+        # entropy_file_df.loc[0, "residue_name"] = "X"
+        # entropy_file_df.loc[0, "entropy"] = 9999
+        # entropy_file_df.loc[10, "entropy"] = 7777
+        # entropy_file_df["residue_num"] = range(3, entropy_file_df.shape[0] + 3)
         for df in [merge1, merge2, merge3, merge4, merge5, merge6, df_features_single_protein]:
             sys.stdout.write(df.shape)
         for n, df in enumerate([entropy_file_df, pssm_csv_df, lipophilicity_file_df, freecontact_parsed_csv_df, relative_position_file_df, LIPS_parsed_csv_df, rate4site_df]):
@@ -177,7 +179,8 @@ def combine_all_features_mult_prot(s, df_set, logging):
         alignment_summary_csv = os.path.join(alignments_dir, "{}.surr{}.gaps{}.alignment_summary.csv".format(acc, s["num_of_sur_residues"], s["max_n_gaps_in_TMD_subject_seq"]))
         full_seq_fasta_file = os.path.join(s["thoipapy_data_folder"], "Proteins", database, "{}.fasta".format(acc))
         phobius_outfile = os.path.join(s["thoipapy_data_folder"], "Proteins", database, "{}.phobius".format(acc))
-        combine_all_features(s, full_seq, acc, database, TMD_seq, TMD_start, feature_combined_file, entropy_file, rate4site_csv, pssm_csv, lipo_csv, freecontact_parsed_csv, relative_position_file, LIPS_parsed_csv, motifs_file, alignment_summary_csv, full_seq_fasta_file, phobius_outfile, logging)
+        combine_all_features(s, full_seq, acc, database, TMD_seq, TMD_start, feature_combined_file, entropy_file, rate4site_csv, pssm_csv, lipo_csv, freecontact_parsed_csv, relative_position_file, LIPS_parsed_csv, motifs_file,
+                             alignment_summary_csv, full_seq_fasta_file, phobius_outfile, logging)
 
 
 def combine_all_train_data_for_machine_learning(s, df_set, logging):
@@ -228,7 +231,7 @@ def combine_all_train_data_for_machine_learning(s, df_set, logging):
                                                      "num_of_sur_residues"], s["max_n_gaps_in_TMD_subject_seq"]))
         df_features_new_protein = pd.read_csv(feature_combined_file, index_col=0)
         df_features_new_protein["acc_db"] = "{}-{}".format(acc, database)
-#
+        #
         # for the first protein, replace the empty dataframe
         if df_all.empty:
             df_all = df_features_new_protein

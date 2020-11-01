@@ -75,20 +75,20 @@ def calc_feat_import_from_mean_decrease_accuracy(s, logging):
     feature_types: list = list(df_feat.feature_type.unique())
 
     ## DEPRECATED HARD-CODED LIST: use feature_type in settings file, instead
-    #polarity_features = ["test_dropping_of_features_not_included", "polarity", "relative_polarity", "polarity4mean", "polarity3Nmean", "polarity3Cmean", "polarity1mean"]
-    #pssm_features = ["A", "C", "D", "E", "F", "G", "H", "I", "K", "L", "M", "N", "P", "Q", "R", "S", "T", "V", "W", "Y", "CS", "DE", "KR", "QN", "LIV"]
-    #coev_features = ["DImax", "MImax", "DItop4mean", "MItop4mean", "DItop8mean", "MItop8mean", "DI4max", "MI4max", "DI1mean", "MI1mean", "DI3mean", "MI3mean", "DI4mean", "MI4mean", "DI4cum"]
-    #DI_features = ["DImax", "DItop4mean", "DItop8mean", "DI4max", "DI1mean", "DI3mean", "DI4mean", "DI4cum"]
-    #MI_features = ["MImax", "MItop4mean", "MItop8mean", "MI4max", "MI1mean", "MI3mean", "MI4mean"]
-    #cons_features = ["entropy", "cons4mean", "conservation"]
-    #motif_features =  ["GxxxG", "SmxxxSm"]
-    #physical_features = ["branched", "mass"]
-    #TMD_features = ["residue_depth", "n_TMDs", "n_homologues"]
-    #polarity_and_pssm_features = polarity_features + pssm_features
-    #features_nested_list = [polarity_and_pssm_features, coev_features, DI_features, MI_features, cons_features, motif_features, physical_features, TMD_features]
-    #features_nested_namelist = ["polarity_and_pssm_features", "coev_features",  "DI_features", "MI_features", "cons_features", "motif_features", "physical_features", "TMD_features"]
+    # polarity_features = ["test_dropping_of_features_not_included", "polarity", "relative_polarity", "polarity4mean", "polarity3Nmean", "polarity3Cmean", "polarity1mean"]
+    # pssm_features = ["A", "C", "D", "E", "F", "G", "H", "I", "K", "L", "M", "N", "P", "Q", "R", "S", "T", "V", "W", "Y", "CS", "DE", "KR", "QN", "LIV"]
+    # coev_features = ["DImax", "MImax", "DItop4mean", "MItop4mean", "DItop8mean", "MItop8mean", "DI4max", "MI4max", "DI1mean", "MI1mean", "DI3mean", "MI3mean", "DI4mean", "MI4mean", "DI4cum"]
+    # DI_features = ["DImax", "DItop4mean", "DItop8mean", "DI4max", "DI1mean", "DI3mean", "DI4mean", "DI4cum"]
+    # MI_features = ["MImax", "MItop4mean", "MItop8mean", "MI4max", "MI1mean", "MI3mean", "MI4mean"]
+    # cons_features = ["entropy", "cons4mean", "conservation"]
+    # motif_features =  ["GxxxG", "SmxxxSm"]
+    # physical_features = ["branched", "mass"]
+    # TMD_features = ["residue_depth", "n_TMDs", "n_homologues"]
+    # polarity_and_pssm_features = polarity_features + pssm_features
+    # features_nested_list = [polarity_and_pssm_features, coev_features, DI_features, MI_features, cons_features, motif_features, physical_features, TMD_features]
+    # features_nested_namelist = ["polarity_and_pssm_features", "coev_features",  "DI_features", "MI_features", "cons_features", "motif_features", "physical_features", "TMD_features"]
 
-    #for i in range(len(features_nested_list)):
+    # for i in range(len(features_nested_list)):
     #    sys.stdout.write("\n{} : {}".format(features_nested_namelist[i], features_nested_list[i]))
 
     forest = return_classifier_with_loaded_ensemble_parameters(s, tuned_ensemble_parameters_csv)
@@ -132,7 +132,6 @@ def calc_feat_import_from_mean_decrease_accuracy(s, logging):
 
         logging.info(f"{feature_type} : decrease AUBOC ({decrease_auboc:.03f}), decrease PR-AUC ({decrease_PR_AUC:.03f}), "
                      f"decrease ROC-AUC ({decrease_ROC_AUC:.03f}), included features ({feature_list})")
-
 
     # remove temp bocurve output files
     feat_imp_temp_THOIPA_BO_curve_data_csv.unlink()

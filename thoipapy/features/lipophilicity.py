@@ -9,7 +9,7 @@ from Bio.SeqUtils.ProtParam import ProteinAnalysis
 from weighslide import calculate_weighted_windows
 
 
-def calc_lipophilicity(seq, method = "mean"):
+def calc_lipophilicity(seq, method="mean"):
     """ Calculates the average hydrophobicity of a sequence according to the Hessa biological scale.
 
     Hessa T, Kim H, Bihlmaier K, Lundin C, Boekel J, Andersson H, Nilsson I, White SH, von Heijne G. Nature. 2005 Jan 27;433(7024):377-81
@@ -258,7 +258,7 @@ def lipo_from_pssm(acc, pssm_csv_surr5, lipo_csv, tm_surr_left, tm_surr_right, s
     # if re-implementing flexible scale, use the csv instead, or hard-code the various array values into python
     # "FAULTS: error: can't copy 'setting\hydrophobicity_scales.xlsx': doesn't exist or not a regular file"
     assert scalename == "Engelman(GES)"
-    hs_arr = np.array([1.6,2.,-9.2,-8.2,3.7,1.,-3.,3.1,-8.8,2.8,3.4,-4.8,-0.2,-4.1,-12.3,0.6,1.2,2.6,1.9,-0.7])
+    hs_arr = np.array([1.6, 2., -9.2, -8.2, 3.7, 1., -3., 3.1, -8.8, 2.8, 3.4, -4.8, -0.2, -4.1, -12.3, 0.6, 1.2, 2.6, 1.9, -0.7])
 
     """The series should look like this for the Hessa scale. 
     For speed, this is typically converted to a numpy array, sorted alphabetically according to the residue.
@@ -315,7 +315,7 @@ def lipo_from_pssm(acc, pssm_csv_surr5, lipo_csv, tm_surr_left, tm_surr_right, s
     if scalename in list_scales_polar_high_values:
         # everything is good in the world. Polar stuff is high.
         pass
-    elif scalename in list_scales_polar_low_values :
+    elif scalename in list_scales_polar_low_values:
         # reverse all values so that polar = high
         df_lipo: pd.DataFrame = - df_lipo
     else:
@@ -323,8 +323,8 @@ def lipo_from_pssm(acc, pssm_csv_surr5, lipo_csv, tm_surr_left, tm_surr_right, s
 
     # add the lowest value, so polarity starts at zero and gets larger
     # e.g. lowest value in Hessa scale is -0.6 for Ile
-    min_value_dict = {"Hessa" : 0.6, "Elazar" : 1.92, "Hopp - Woods" : 3.4, "KyteDoolittle" : 4.5, "Wimley" : 1.85,
-                      "Cornette" : 5.7, "Eisenberg" : 1.38, "Rose" : 0.91, "Janin" : 0.9, "Engelman(GES)" : 3.7}
+    min_value_dict = {"Hessa": 0.6, "Elazar": 1.92, "Hopp - Woods": 3.4, "KyteDoolittle": 4.5, "Wimley": 1.85,
+                      "Cornette": 5.7, "Eisenberg": 1.38, "Rose": 0.91, "Janin": 0.9, "Engelman(GES)": 3.7}
     lowest_polarity_value = min_value_dict[scalename]
 
     # normalise the data by adding the lowes polarity value, so that all values are at least zero
@@ -332,9 +332,9 @@ def lipo_from_pssm(acc, pssm_csv_surr5, lipo_csv, tm_surr_left, tm_surr_right, s
 
     # normalise the data by applying a square root (usually to power of 1/4). Values must be positive.
     assert df_lipo.min().min() >= 0
-    df_lipo: pd.DataFrame = df_lipo.applymap(lambda x: math.pow(x, 1/4))
+    df_lipo: pd.DataFrame = df_lipo.applymap(lambda x: math.pow(x, 1 / 4))
 
-# lowest_polarity_value = 0.6
+    # lowest_polarity_value = 0.6
     # columns = ["polarity", "polarity3Nmean", "polarity3Cmean", "polarity1mean"]
     # for col in columns:
     #     df_lipo[col] = df_lipo[col] + lowest_polarity_value
@@ -376,17 +376,17 @@ def lipo_from_pssm(acc, pssm_csv_surr5, lipo_csv, tm_surr_left, tm_surr_right, s
 
     df_lipo["residue_num"] = df["aa_pos"].values
     df_lipo["residue_name"] = df["residue_name"].values
-    #df_lipo.index = range(df_lipo.shape[0])
-    #df_lipo.index=[int(i) -tm_surr_left for i in df_lipo.index]
+    # df_lipo.index = range(df_lipo.shape[0])
+    # df_lipo.index=[int(i) -tm_surr_left for i in df_lipo.index]
     df_lipo["residue_num"] = [int(i) - tm_surr_left for i in df_lipo["residue_num"]]
     df_lipo.index = df_lipo["residue_num"]
 
     df_lipo = df_lipo[["residue_name", "polarity", "polarity3Nmean", "polarity3Cmean", "polarity1mean", "relative_polarity"]]
-    #df_lipo.set_index("IND", inplace=True)
-    if tm_surr_right ==0 :
+    # df_lipo.set_index("IND", inplace=True)
+    if tm_surr_right == 0:
         df_lipo = df_lipo[tm_surr_left:]
     else:
-        df_lipo=df_lipo[tm_surr_left:-tm_surr_right]
+        df_lipo = df_lipo[tm_surr_left:-tm_surr_right]
 
     df_lipo.to_csv(lipo_csv)
 

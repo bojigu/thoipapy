@@ -61,9 +61,8 @@ def download_homologues_from_ncbi_mult_prot(s, df_set, logging):
     for i in df_set.index:
         acc = df_set.loc[i, "acc"]
         TMD_seq_pl_surr = df_set.loc[i, "TMD_seq_pl_surr"]
-        #TMD_seq_pl_surr = df_set.loc[i, "full_seq"]
+        # TMD_seq_pl_surr = df_set.loc[i, "full_seq"]
         database = df_set.loc[i, "database"]
-
 
         # run online server NCBI blastp with biopython module
         blast_xml_file = os.path.join(s["thoipapy_data_folder"], "homologues", "xml", database, "{}.surr{}.BLAST.xml".format(acc, s["num_of_sur_residues"]))

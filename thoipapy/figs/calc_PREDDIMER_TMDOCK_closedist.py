@@ -7,6 +7,7 @@ from pathlib import Path
 import pandas as pd
 import thoipapy
 
+
 def calc_closedist_from_PREDDIMER_TMDOCK_best_model(s, df_set, logging):
     """Calculate the closest heavy atom distances from PREDDIMER or TMDOCK structures for list of TMDs.
 
@@ -29,12 +30,12 @@ def calc_closedist_from_PREDDIMER_TMDOCK_best_model(s, df_set, logging):
         database = df_set.loc[i, "database"]
         protein = acc
         other_predictors_dir = Path(s["thoipapy_data_folder"]) / "Predictions/other_predictors"
-        pdb_file_preddimer = os.path.join(other_predictors_dir,database,"{}.preddimer.pdb".format(protein))
+        pdb_file_preddimer = os.path.join(other_predictors_dir, database, "{}.preddimer.pdb".format(protein))
         pdb_file_tmdock = os.path.join(other_predictors_dir, database, "{}.tmdock.pdb".format(protein))
-        preddimer_closedist_file = os.path.join(other_predictors_dir, database,"{}.preddimer.closedist.csv".format(protein))
-        tmdock_closedist_file = os.path.join(other_predictors_dir, database,"{}.tmdock.closedist.csv".format(protein))
+        preddimer_closedist_file = os.path.join(other_predictors_dir, database, "{}.preddimer.closedist.csv".format(protein))
+        tmdock_closedist_file = os.path.join(other_predictors_dir, database, "{}.tmdock.closedist.csv".format(protein))
 
-        #closedist_calculate_from_dimer(s,pdb_file_preddimer,preddimer_closedist_file)
+        # closedist_calculate_from_dimer(s,pdb_file_preddimer,preddimer_closedist_file)
         if os.path.isfile(pdb_file_tmdock):
             closedist_calculate_from_dimer(acc, s, logging, pdb_file_tmdock, tmdock_closedist_file)
         else:
@@ -51,6 +52,7 @@ def calc_closedist_from_PREDDIMER_TMDOCK_best_model(s, df_set, logging):
             sys.stdout.write("\n")
 
     sys.stdout.write("\n")
+
 
 def closedist_calculate_from_dimer(acc, s, logging, pdb_file, closedist_out_csv):
     """Calculate the closest heavy atom distance between TMD residues from top-ranked PREDDIMER or TMDOCK structure.
@@ -75,7 +77,7 @@ def closedist_calculate_from_dimer(acc, s, logging, pdb_file, closedist_out_csv)
     """
     if not os.path.isfile(pdb_file):
         logging.warning("the pdb file: {} is not existed, and skipped\n, this could be the tmdock prediction for this protein didn't exists, please try to run TMDOCK"
-                         " server again with different sequence TMD length input".format(pdb_file))
+                        " server again with different sequence TMD length input".format(pdb_file))
         return None
     hash1arrayx = {}
     hash1arrayy = {}
@@ -95,7 +97,7 @@ def closedist_calculate_from_dimer(acc, s, logging, pdb_file, closedist_out_csv)
                 break
             if re.search(r"^ATOM", line):
                 atom = line[12:16]
-                #sys.stdout.write("{},".format(atom))
+                # sys.stdout.write("{},".format(atom))
                 # skip any hydrogens
                 if re.search(r"^\s*H", atom):  # non-H atom distance
                     continue
@@ -149,8 +151,8 @@ def closedist_calculate_from_dimer(acc, s, logging, pdb_file, closedist_out_csv)
                 size2 = len(arr_xvalue2)
                 for j in range(0, size2):
                     dist = math.sqrt((float(arr_xvalue1[i]) - float(arr_xvalue2[j])) ** 2 + (
-                    float(arr_yvalue1[i]) - float(arr_yvalue2[j])) ** 2 + (
-                                     float(arr_zvalue1[i]) - float(arr_zvalue2[j])) ** 2)
+                            float(arr_yvalue1[i]) - float(arr_yvalue2[j])) ** 2 + (
+                                             float(arr_zvalue1[i]) - float(arr_zvalue2[j])) ** 2)
                     if key1 not in hashclosedist:
                         hashclosedist[key1] = dist
                     else:
@@ -163,11 +165,12 @@ def closedist_calculate_from_dimer(acc, s, logging, pdb_file, closedist_out_csv)
                         if dist < hashclosedist[key2]:
                             hashclosedist[key2] = dist
     closest_dist_arr = get_closedist_between_chainA_and_chainB(hashclosedist)
-    closest_dist_df = pd.DataFrame.from_records(closest_dist_arr, columns = ["residue_num","residue_name","closedist"])
+    closest_dist_df = pd.DataFrame.from_records(closest_dist_arr, columns=["residue_num", "residue_name", "closedist"])
     closest_dist_df.residue_num = closest_dist_df.residue_num.astype(int)
-    closest_dist_df=closest_dist_df.sort_values(by=["residue_num"])
-    closest_dist_df.reset_index(inplace=True,drop=True)
+    closest_dist_df = closest_dist_df.sort_values(by=["residue_num"])
+    closest_dist_df.reset_index(inplace=True, drop=True)
     closest_dist_df.to_csv(closedist_out_csv)
+
 
 def get_closedist_between_chainA_and_chainB(hashclosedist):
     i = 0
@@ -214,6 +217,6 @@ def shorten(x):
         raise ValueError('Input length should be a multiple of three')
 
     y = ''
-    for i in range(int(len(x)/3)):
-            y += d[x[3*i:3*i+3]]
+    for i in range(int(len(x) / 3)):
+        y += d[x[3 * i:3 * i + 3]]
     return y

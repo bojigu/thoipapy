@@ -44,7 +44,7 @@ def remove_crystal_hetero_contact_residues_mult_prot(s, df_set, logging):
     logging.info("n_hetero_contact_residues: {}  ".format(n_hetero_contact_residues))
 
 
-def remove_crystal_hetero_contact_residues(acc, feature_combined_file, homo_hetero_contact_file,no_hetero_feature_combined_file, logging):
+def remove_crystal_hetero_contact_residues(acc, feature_combined_file, homo_hetero_contact_file, no_hetero_feature_combined_file, logging):
     """remove the hetero contact residues from the combined csv file with features.
 
     The "homo_hetero" csv file should contain and mark both the homo and hetero contact residues
@@ -81,7 +81,7 @@ def remove_crystal_hetero_contact_residues(acc, feature_combined_file, homo_hete
             if hetero_inter[i] == 1:
                 hetero_inter_index.append(i)
         df_combined = df_combined.drop(df_combined.index[hetero_inter_index])
-        #df_combined["interface"] = hetero_inter
+        # df_combined["interface"] = hetero_inter
         df_combined.to_csv(no_hetero_feature_combined_file)
 
         logging.info("{} add_hetero_contact_to_crystal_combined_files finished ({})".format(acc, no_hetero_feature_combined_file))
@@ -91,9 +91,8 @@ def remove_crystal_hetero_contact_residues(acc, feature_combined_file, homo_hete
             "{} add_hetero_contact_to_crystal_combined_file failed, {} not found".format(acc, feature_combined_file))
     return hetero_contact_num
 
-
-             ###################################################################################################
-             #                                                                                                 #
-             #            combining test data and add physical parameters                                      #
-             #                                                                                                 #
-             ###################################################################################################
+    ###################################################################################################
+    #                                                                                                 #
+    #            combining test data and add physical parameters                                      #
+    #                                                                                                 #
+    ###################################################################################################

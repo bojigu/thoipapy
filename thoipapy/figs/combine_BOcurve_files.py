@@ -36,7 +36,7 @@ def fig_plot_BOcurve_mult_train_datasets(s):
 
     """
 
-    #plt.rcParams.update({'font.size': 7})
+    # plt.rcParams.update({'font.size': 7})
 
     test_set_list, train_set_list = thoipapy.utils.get_test_and_train_set_lists(s)
 
@@ -83,7 +83,7 @@ def plot_BOcurve(s, train_set_list, test_set_list, mult_THOIPA_dir, mult_testnam
 
     BO_curve_png = os.path.join(mult_THOIPA_dir, "{}{}.png".format(mult_testname, suffix))
 
-    figsize = np.array([3.42, 3.42]) * 2 # DOUBLE the real size, due to problems on Bo computer with fontsizes
+    figsize = np.array([3.42, 3.42]) * 2  # DOUBLE the real size, due to problems on Bo computer with fontsizes
     fig, ax = plt.subplots(figsize=figsize)
 
     for train_set in train_set_list:
@@ -91,7 +91,7 @@ def plot_BOcurve(s, train_set_list, test_set_list, mult_THOIPA_dir, mult_testnam
 
         for test_set in test_set_list:
             testsetname = "set{:02d}".format(int(test_set))
-            #/media/mark/sindy/m_data/THOIPA_data/results/Bo_Curve/Testset03_Trainset01.THOIPA.validation/bocurve_data.xlsx
+            # /media/mark/sindy/m_data/THOIPA_data/results/Bo_Curve/Testset03_Trainset01.THOIPA.validation/bocurve_data.xlsx
             bocurve_data_xlsx = os.path.join(s["thoipapy_data_folder"], "results", "compare_testset_trainset", "data", "Test{}_Train{}.THOIPA".format(testsetname, trainsetname), "data", "bocurve_data.xlsx")
 
             df = pd.read_excel(bocurve_data_xlsx, sheet_name=sheet_name, index_col=0)
@@ -115,7 +115,7 @@ def plot_BOcurve(s, train_set_list, test_set_list, mult_THOIPA_dir, mult_testnam
     ax.legend()
     fig.tight_layout()
     fig.savefig(BO_curve_png, dpi=240)
-    #fig.savefig(thoipapy.utils.pdf_subpath(BO_curve_png))
+    # fig.savefig(thoipapy.utils.pdf_subpath(BO_curve_png))
     sys.stdout.write("\nfig_plot_BO_curve_mult_train_datasets finished ({})".format(BO_curve_png))
 
 
@@ -139,10 +139,10 @@ def compare_selected_predictors(s, logging):
         Settings dictionary for figures.
 
     """
-    #if s["set_number"] != s["test_datasets"]:
+    # if s["set_number"] != s["test_datasets"]:
     #    raise Exception("set_number and test_datasets are not identical in settings file. This is recommended for test/train validation.")
 
-    #plt.rcParams.update({'font.size': 7})
+    # plt.rcParams.update({'font.size': 7})
     logging.info("\n--------------- starting compare_selected_predictors ---------------\n")
     BO_curve_png: Union[Path, str] = Path(s["thoipapy_data_folder"]) / f"results/{s['setname']}/blindvalidation/compare_selected_predictors_BO_curve.png"
     AUBOC_bar_png: Union[Path, str] = Path(s["thoipapy_data_folder"]) / f"results/{s['setname']}/blindvalidation/compare_selected_predictors_AUBOC_barchart.png"
@@ -150,7 +150,7 @@ def compare_selected_predictors(s, logging):
 
     thoipapy.utils.make_sure_path_exists(BO_curve_png, isfile=True)
 
-    figsize = np.array([3.42, 3.42]) * 2 # DOUBLE the real size, due to problems on Bo computer with fontsizes
+    figsize = np.array([3.42, 3.42]) * 2  # DOUBLE the real size, due to problems on Bo computer with fontsizes
     fig, ax = plt.subplots(figsize=figsize)
 
     predictors_df = pd.read_excel(s["excel_file_with_settings"], sheet_name="selected_predictors")
@@ -191,26 +191,26 @@ def compare_selected_predictors(s, logging):
     ax.legend()
     fig.tight_layout()
     fig.savefig(BO_curve_png, dpi=240)
-    #fig.savefig(thoipapy.utils.pdf_subpath(BO_curve_png))
+    # fig.savefig(thoipapy.utils.pdf_subpath(BO_curve_png))
 
     plt.close("all")
     AUBOC_ser = pd.Series(area_under_curve_dict).sort_index()
-    figsize = np.array([3.42, 3.42]) * 2 # DOUBLE the real size, due to problems on Bo computer with fontsizes
+    figsize = np.array([3.42, 3.42]) * 2  # DOUBLE the real size, due to problems on Bo computer with fontsizes
     fig, ax = plt.subplots(figsize=figsize)
     AUBOC_ser.plot(ax=ax, kind="bar")
     ax.set_ylabel("performance (AUBOC)")
     fig.tight_layout()
     fig.savefig(AUBOC_bar_png, dpi=240)
-    #fig.savefig(thoipapy.utils.pdf_subpath(AUBOC_bar_png))
+    # fig.savefig(thoipapy.utils.pdf_subpath(AUBOC_bar_png))
 
     plt.close("all")
 
-    figsize = np.array([3.42, 3.42]) * 2 # DOUBLE the real size, due to problems on Bo computer with fontsizes
+    figsize = np.array([3.42, 3.42]) * 2  # DOUBLE the real size, due to problems on Bo computer with fontsizes
     fig, ax = plt.subplots(figsize=figsize)
 
     for predictor_name in predictor_list:
-        #"D:\data_thoipapy\results\compare_testset_trainset\data\Testset03_Trainset04.THOIPA\Testset03_Trainset04.THOIPA.ROC_data.pkl"
-        #ROC_pkl = os.path.join(s["thoipapy_data_folder"], "results", "compare_testset_trainset", "data", predictor_name, "data", "{}.ROC_data.pkl".format(predictor_name))
+        # "D:\data_thoipapy\results\compare_testset_trainset\data\Testset03_Trainset04.THOIPA\Testset03_Trainset04.THOIPA.ROC_data.pkl"
+        # ROC_pkl = os.path.join(s["thoipapy_data_folder"], "results", "compare_testset_trainset", "data", predictor_name, "data", "{}.ROC_data.pkl".format(predictor_name))
         testsetname = "set{:02d}".format(int(s['test_datasets']))
         ROC_pkl = Path(s["thoipapy_data_folder"]) / "results" / testsetname / f"blindvalidation/{predictor_name}/ROC_data.pkl"
 
@@ -230,57 +230,54 @@ def compare_selected_predictors(s, logging):
     ax.legend(loc="lower right")
     fig.tight_layout()
     fig.savefig(ROC_png, dpi=240)
-    #fig.savefig(thoipapy.utils.pdf_subpath(ROC_png))
+    # fig.savefig(thoipapy.utils.pdf_subpath(ROC_png))
 
     sys.stdout.write("\nBO_curve_png ({})\n".format(BO_curve_png))
     logging.info("\n--------------- finished compare_selected_predictors ---------------\n")
 
-def combine_BOcurve_files_hardlinked(s):
 
+def combine_BOcurve_files_hardlinked(s):
     Train04_Test01_BoCurve_file = r"D:\THOIPA_data\results\Bo_Curve\Trainset04_Testset01.bocurve.csv"
-    df41 = pd.read_csv(Train04_Test01_BoCurve_file,index_col=0)
-    df41_ratio = df41[df41.parameters=="observed_overlap"].drop("parameters",axis=1).mean(axis=1)/df41[df41.parameters=="random_overlap"].drop("parameters",axis=1).mean(axis=1)
+    df41 = pd.read_csv(Train04_Test01_BoCurve_file, index_col=0)
+    df41_ratio = df41[df41.parameters == "observed_overlap"].drop("parameters", axis=1).mean(axis=1) / df41[df41.parameters == "random_overlap"].drop("parameters", axis=1).mean(axis=1)
     df41_ratio_df = df41_ratio.to_frame(name="Tr4Te1Ratio")
-    df41_LIPS_ratio = df41[df41.parameters=="LIPS_observed_overlap"].drop("parameters",axis=1).mean(axis=1)/df41[df41.parameters=="random_overlap"].drop("parameters",axis=1).mean(axis=1)
+    df41_LIPS_ratio = df41[df41.parameters == "LIPS_observed_overlap"].drop("parameters", axis=1).mean(axis=1) / df41[df41.parameters == "random_overlap"].drop("parameters", axis=1).mean(axis=1)
     df41_LIPS_ratio_df = df41_LIPS_ratio.to_frame(name="Tr4Te1LIPSRatio")
 
-
     Train04_Test02_BoCurve_file = r"D:\THOIPA_data\results\Bo_Curve\Trainset04_Testset02.bocurve.csv"
-    df42 = pd.read_csv(Train04_Test02_BoCurve_file,index_col=0)
-    df42_ratio = df42[df42.parameters=="observed_overlap"].drop("parameters",axis=1).mean(axis=1)/df42[df42.parameters=="random_overlap"].drop("parameters",axis=1).mean(axis=1)
+    df42 = pd.read_csv(Train04_Test02_BoCurve_file, index_col=0)
+    df42_ratio = df42[df42.parameters == "observed_overlap"].drop("parameters", axis=1).mean(axis=1) / df42[df42.parameters == "random_overlap"].drop("parameters", axis=1).mean(axis=1)
     df42_ratio_df = df42_ratio.to_frame(name="Tra4Tes2Ratio")
-    df42_LIPS_ratio = df42[df42.parameters=="LIPS_observed_overlap"].drop("parameters",axis=1).mean(axis=1)/df42[df42.parameters=="random_overlap"].drop("parameters",axis=1).mean(axis=1)
+    df42_LIPS_ratio = df42[df42.parameters == "LIPS_observed_overlap"].drop("parameters", axis=1).mean(axis=1) / df42[df42.parameters == "random_overlap"].drop("parameters", axis=1).mean(axis=1)
     df42_LIPS_ratio_df = df42_LIPS_ratio.to_frame(name="Tr4Te2LIPSRatio")
 
-
     Train04_Test03_BoCurve_file = r"D:\THOIPA_data\results\Bo_Curve\Trainset04_Testset03.bocurve.csv"
-    df43 = pd.read_csv(Train04_Test03_BoCurve_file,index_col=0)
-    df43_ratio = df43[df43.parameters=="observed_overlap"].drop("parameters",axis=1).mean(axis=1)/df43[df43.parameters=="random_overlap"].drop("parameters",axis=1).mean(axis=1)
+    df43 = pd.read_csv(Train04_Test03_BoCurve_file, index_col=0)
+    df43_ratio = df43[df43.parameters == "observed_overlap"].drop("parameters", axis=1).mean(axis=1) / df43[df43.parameters == "random_overlap"].drop("parameters", axis=1).mean(axis=1)
     df43_ratio_df = df43_ratio.to_frame(name="Tra4Tes3Ratio")
-    df43_LIPS_ratio = df43[df43.parameters=="LIPS_observed_overlap"].drop("parameters",axis=1).mean(axis=1)/df43[df43.parameters=="random_overlap"].drop("parameters",axis=1).mean(axis=1)
+    df43_LIPS_ratio = df43[df43.parameters == "LIPS_observed_overlap"].drop("parameters", axis=1).mean(axis=1) / df43[df43.parameters == "random_overlap"].drop("parameters", axis=1).mean(axis=1)
     df43_LIPS_ratio_df = df43_LIPS_ratio.to_frame(name="Tr4Te3LIPSRatio")
 
-
     Train02_Test01_BoCurve_file = r"D:\THOIPA_data\results\Bo_Curve\Trainset02_Testset01.bocurve.csv"
-    df21 = pd.read_csv(Train02_Test01_BoCurve_file,index_col=0)
-    df21_ratio = df21[df21.parameters=="observed_overlap"].drop("parameters",axis=1).mean(axis=1)/df21[df21.parameters=="random_overlap"].drop("parameters",axis=1).mean(axis=1)
+    df21 = pd.read_csv(Train02_Test01_BoCurve_file, index_col=0)
+    df21_ratio = df21[df21.parameters == "observed_overlap"].drop("parameters", axis=1).mean(axis=1) / df21[df21.parameters == "random_overlap"].drop("parameters", axis=1).mean(axis=1)
     df21_ratio_df = df21_ratio.to_frame(name="Tra2Te1Ratio")
 
     Train02_Test02_BoCurve_file = r"D:\THOIPA_data\results\Bo_Curve\Trainset02_Testset02.bocurve.csv"
-    df22 = pd.read_csv(Train02_Test02_BoCurve_file,index_col=0)
-    df22_ratio = df22[df22.parameters=="observed_overlap"].drop("parameters",axis=1).mean(axis=1)/df22[df22.parameters=="random_overlap"].drop("parameters",axis=1).mean(axis=1)
+    df22 = pd.read_csv(Train02_Test02_BoCurve_file, index_col=0)
+    df22_ratio = df22[df22.parameters == "observed_overlap"].drop("parameters", axis=1).mean(axis=1) / df22[df22.parameters == "random_overlap"].drop("parameters", axis=1).mean(axis=1)
     df22_ratio_df = df22_ratio.to_frame(name="Tra2Tes2Ratio")
 
     Train02_Test03_BoCurve_file = r"D:\THOIPA_data\results\Bo_Curve\Trainset02_Testset03.bocurve.csv"
-    df23 = pd.read_csv(Train02_Test03_BoCurve_file,index_col=0)
-    df23_ratio = df23[df23.parameters=="observed_overlap"].drop("parameters",axis=1).mean(axis=1)/df23[df23.parameters=="random_overlap"].drop("parameters",axis=1).mean(axis=1)
+    df23 = pd.read_csv(Train02_Test03_BoCurve_file, index_col=0)
+    df23_ratio = df23[df23.parameters == "observed_overlap"].drop("parameters", axis=1).mean(axis=1) / df23[df23.parameters == "random_overlap"].drop("parameters", axis=1).mean(axis=1)
     df23_ratio_df = df23_ratio.to_frame(name="Tra2Te3Ratio")
 
-    dfc=pd.DataFrame()
+    dfc = pd.DataFrame()
 
-    Combined_BoCurve_file= r"D:/THOIPA_data/results/Bo_Curve/Combined_Bo_Curve_ratio_file.csv"
-    dfc = pd.concat([df41_ratio_df, df42_ratio_df,df43_ratio_df,df21_ratio_df,df22_ratio_df,df23_ratio_df,df41_LIPS_ratio_df,df42_LIPS_ratio_df,df43_LIPS_ratio_df], axis=1, join="outer")
-    dfc.index = range(1,11)
+    Combined_BoCurve_file = r"D:/THOIPA_data/results/Bo_Curve/Combined_Bo_Curve_ratio_file.csv"
+    dfc = pd.concat([df41_ratio_df, df42_ratio_df, df43_ratio_df, df21_ratio_df, df22_ratio_df, df23_ratio_df, df41_LIPS_ratio_df, df42_LIPS_ratio_df, df43_LIPS_ratio_df], axis=1, join="outer")
+    dfc.index = range(1, 11)
     dfc.index.name = "sample_size"
     dfc
     dfc.to_csv(Combined_BoCurve_file)

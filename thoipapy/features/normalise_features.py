@@ -27,11 +27,11 @@ def normalise_features(df_features_single_protein):
     df_features_single_protein["LIPS_surface_ranked_norm"] = normalise_0_1(df_features_single_protein["LIPS_surface_ranked"])[0]
 
     # create our own conservation + polarity and conservation*polarity
-    #df_features_single_protein["cons+polarity"] = df_features_single_protein["conservation"] + df_features_single_protein["polarity"]
+    # df_features_single_protein["cons+polarity"] = df_features_single_protein["conservation"] + df_features_single_protein["polarity"]
     df_features_single_protein["cons*polarity"] = df_features_single_protein["conservation"] * df_features_single_protein["polarity"]
 
     # add the mean polarity or conservation of positions i, i+4 and i-4
-    window = [1,0,0,0,1,0,0,0,1]
+    window = [1, 0, 0, 0, 1, 0, 0, 0, 1]
     df_features_single_protein["cons4mean"] = calculate_weighted_windows(df_features_single_protein["conservation"], window, statistic="mean", full_output=False)
     df_features_single_protein["rate4site4mean"] = calculate_weighted_windows(df_features_single_protein["rate4site"], window, statistic="mean", full_output=False)
     df_features_single_protein["polarity4mean"] = calculate_weighted_windows(df_features_single_protein["polarity"], window, statistic="mean", full_output=False)

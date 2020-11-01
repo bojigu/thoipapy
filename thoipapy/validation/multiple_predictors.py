@@ -13,10 +13,9 @@ from thoipapy.utils import make_sure_path_exists
 
 
 def validate_multiple_predictors_and_subsets_auboc(s, df_set, logging):
-
     logging.info("start create_AUBOC_43databases_figs")
 
-    predictors = ["THOIPA_{}_LOO".format(s["set_number"]),"PREDDIMER", "TMDOCK", "LIPS_surface_ranked", "random"] #"LIPS_L*E",
+    predictors = ["THOIPA_{}_LOO".format(s["set_number"]), "PREDDIMER", "TMDOCK", "LIPS_surface_ranked", "random"]  # "LIPS_L*E",
     subsets = ["crystal", "NMR", "ETRA"]
     for subset in subsets:
         df_o_minus_r_mean_df = pd.DataFrame()
@@ -51,10 +50,10 @@ def validate_multiple_predictors_and_subsets_auboc(s, df_set, logging):
         figsize = np.array([3.42, 3.42]) * 2  # DOUBLE the real size, due to problems on Bo computer with fontsizes
         color_list = ["r", "g", "b", "k", "0.5", "0.25"]
         fig, ax = plt.subplots(figsize=figsize)
-        for i,column in enumerate(df_o_minus_r_mean_df.columns):
+        for i, column in enumerate(df_o_minus_r_mean_df.columns):
             # df_o_minus_r_mean_df.plot(ax=ax, color="#0f7d9b", linestyle="-", label="prediction (AUBOC : {:0.2f}".format(AUBOC))
-            label_name = "{}(AUBOC:{:.2f})".format(predictors[i] ,AUBOC_list[i])
-            df_o_minus_r_mean_df[column].plot(ax=ax,  linestyle="-",label=label_name, color = color_list[i])
+            label_name = "{}(AUBOC:{:.2f})".format(predictors[i], AUBOC_list[i])
+            df_o_minus_r_mean_df[column].plot(ax=ax, linestyle="-", label=label_name, color=color_list[i])
         ax.plot([1, 10], [0, 0], color="#0f7d9b", linestyle="--", label="random", alpha=0.5)
         ax.grid(False)
         ax.set_ylabel("performance value\n(observed - random)", color="#0f7d9b")
@@ -83,13 +82,12 @@ def validate_multiple_predictors_and_subsets_auboc(s, df_set, logging):
 
 
 def validate_multiple_predictors_and_subsets_auc(s, df_set, logging):
-
     logging.info("start create_AUC_4predictors_3databases_figs")
-    predictors = ["THOIPA_{}_LOO".format(s["set_number"]),"PREDDIMER", "TMDOCK", "LIPS_surface_ranked"] #"LIPS_L*E",
+    predictors = ["THOIPA_{}_LOO".format(s["set_number"]), "PREDDIMER", "TMDOCK", "LIPS_surface_ranked"]  # "LIPS_L*E",
     subsets = ["crystal", "NMR", "ETRA"]
     for subset in subsets:
         mean_roc_auc_list = []
-        mean_tpr_list= []
+        mean_tpr_list = []
         # outputs
         mean_AUC_file = Path(s["thoipapy_data_folder"]) / f"results/{s['setname']}/crossvalidation/compare_selected_predictors/data/{s['setname']}.{subset}.4predictors_mean_AUC.csv"
         mean_AUC_barplot_png = Path(s["thoipapy_data_folder"]) / f"results/{s['setname']}/crossvalidation/compare_selected_predictors/figs/{s['setname']}.{subset}.4predictors_mean_AUC.png"
@@ -106,21 +104,21 @@ def validate_multiple_predictors_and_subsets_auc(s, df_set, logging):
             mean_tpr = 0.0
             big_list_of_tprs = []
             mean_fpr = np.linspace(0, 1, 100)
-            n=0
+            n = 0
             # input
             auc_pkl = Path(s["thoipapy_data_folder"]) / f"results/{s['setname']}/crossvalidation/indiv_validation/roc_auc/{predictor_name}/ROC_AUC_data.pkl"
             # open pickle file
             with open(auc_pkl, "rb") as f:
                 xv_dict = pickle.load(f)
-                for k,v in xv_dict.items():
-                    if re.search(subset,k):
+                for k, v in xv_dict.items():
+                    if re.search(subset, k):
                         mean_roc_auc.append(v['roc_auc'])
-                        #mean_roc_auc.append(v['auc'])
+                        # mean_roc_auc.append(v['auc'])
                         fpr = v['fpr']
                         tpr = v['tpr']
                         mean_tpr += interp(mean_fpr, fpr, tpr)
                         mean_tpr[0] = 0.0
-                        n = n+1
+                        n = n + 1
 
                         big_list_of_tprs.append(tpr)
             mean_tpr /= n
@@ -143,7 +141,7 @@ def validate_multiple_predictors_and_subsets_auc(s, df_set, logging):
         # fig.savefig(thoipapy.utils.pdf_subpath(AUC_ROC_png))
 
         df_tpr = pd.DataFrame.from_records(list(map(list, zip(*mean_tpr_list))),
-                                                    columns=predictors)
+                                           columns=predictors)
         df_tpr.to_csv(ROC_curve_csv)
 
         auc_mean_df = pd.DataFrame.from_records([mean_roc_auc_list], columns=predictors)
