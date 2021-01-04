@@ -277,7 +277,7 @@ def extract_filtered_csv_homologues_to_alignments_mult_prot(s, df_set, logging):
         TMD_len = df_set.loc[i, "TMD_len"]
         query_TMD_seq_surr5 = df_set.loc[i, "TMD_seq_pl_surr5"]
 
-        homo_out_dir: Path = Path(s["thoipapy_data_folder"]) / "homologues/ncbi/{database}"
+        homo_out_dir: Path = Path(s["thoipapy_data_folder"]) / f"homologues/ncbi/{database}"
         BLAST_csv_tar: Path = homo_out_dir / f"{acc}.surr{num_of_sur_residues}.BLAST.csv.tar.gz"
 
         alignments_dir: Path = Path(s["thoipapy_data_folder"]) / f"homologues/alignments/{database}"
