@@ -26,7 +26,7 @@ import joblib
 import thoipapy
 from thoipapy.homologues.NCBI_download import download_homologues_from_ncbi
 from thoipapy.homologues.NCBI_parser import parse_NCBI_xml_to_csv, extract_filtered_csv_homologues_to_alignments
-from thoipapy.utils import normalise_between_2_values, open_csv_as_series
+from thoipapy.utils import normalise_between_2_values, open_csv_as_series, SurroundingSequence
 
 # set matplotlib backend to Agg when run on a server
 if os.environ.get('DISPLAY', '') == '':
@@ -101,7 +101,7 @@ def run_THOIPA_prediction(protein_name: str, md5: str, TMD_seq: str, full_seq: s
 
     logging.info("md5 checksum of TMD and full sequence = {}".format(md5))
 
-    seqlen = len(full_seq)
+    full_seq_len = len(full_seq)
     hitlist = re.findall(TMD_seq, full_seq)
     if len(hitlist) > 1:
         logging.warning("TMD sequence is found multiple times in the full sequence.")
@@ -122,32 +122,19 @@ def run_THOIPA_prediction(protein_name: str, md5: str, TMD_seq: str, full_seq: s
     #                                                                                                 #
     ###################################################################################################
 
-    surr = s["num_of_sur_residues"]
-    TMD_start_pl_surr, TMD_end_pl_surr = get_start_end_pl_surr(TMD_start, TMD_end, seqlen, surr=surr)
-    TMD_start_pl_5, TMD_end_pl_5 = get_start_end_pl_surr(TMD_start, TMD_end, seqlen, surr=5)
+    num_of_sur_residues = s["num_of_sur_residues"]
+    surrounding_sequence = SurroundingSequence(TMD_start, TMD_end, full_seq_len, num_of_sur_residues=num_of_sur_residues)
+    surrounding_sequence_5 = SurroundingSequence(TMD_start, TMD_end, full_seq_len, num_of_sur_residues=5)
 
-    logging.info("TMD_start_pl_surr = {}, TMD_end_pl_surr = {}".format(TMD_start_pl_surr, TMD_end_pl_surr))
+    logging.info(f"TMD_start_pl_surr = {surrounding_sequence.tmd_start_pl_surr}, TMD_end_pl_surr = {surrounding_sequence.tmd_end_pl_surr}")
 
     # due to uniprot indexing, the TMD seq starts 1 residue earlier in the python index
-    TMD_seq_pl_surr = full_seq[TMD_start_pl_surr: TMD_end_pl_surr]
+    TMD_seq_pl_surr = full_seq[surrounding_sequence.tmd_start_pl_surr: surrounding_sequence.tmd_end_pl_surr]
     # currently I don't know why this should not be TMD_start_pl_5 - 1
-    query_TMD_seq_surr5 = full_seq[TMD_start_pl_5: TMD_end_pl_5]
+    query_TMD_seq_surr5 = full_seq[surrounding_sequence_5.tmd_start_pl_surr: surrounding_sequence_5.tmd_end_pl_surr]
     logging.info("TMD_seq : {}".format(TMD_seq))
     logging.info("query_TMD_seq_surr5 : {}".format(query_TMD_seq_surr5))
     logging.info("TMD_seq_pl_surr : {}".format(TMD_seq_pl_surr))
-
-    tm_surr_left = TMD_start - TMD_start_pl_surr
-    tm_surr_right = TMD_end_pl_surr - TMD_end
-
-    # reset to 5. AM NOT SURE WHY.
-    if tm_surr_left >= 5:
-        tm_surr_left_lipo = 5
-    else:
-        tm_surr_left_lipo = tm_surr_left
-    if tm_surr_right >= 5:
-        tm_surr_right_lipo = 5
-    else:
-        tm_surr_right_lipo = tm_surr_right
 
     ###################################################################################################
     #                                                                                                 #
@@ -187,7 +174,7 @@ def run_THOIPA_prediction(protein_name: str, md5: str, TMD_seq: str, full_seq: s
     #                                                                                                 #
     ###################################################################################################
 
-    tf.lipophilicity.lipo_from_pssm(acc, pssm_surr5_csv, lipo_csv, tm_surr_left_lipo, tm_surr_right_lipo, s["lipophilicity_scale"], logging, plot_linechart=True)
+    tf.lipophilicity.lipo_from_pssm(acc, pssm_surr5_csv, lipo_csv, surrounding_sequence_5.n_term_offset, surrounding_sequence_5.c_term_offset, s["lipophilicity_scale"], logging, plot_linechart=True)
 
     tf.entropy.entropy_calculation(acc, path_uniq_TMD_seqs_for_PSSM_FREECONTACT, TMD_seq, entropy_file, logging)
 
@@ -196,16 +183,16 @@ def run_THOIPA_prediction(protein_name: str, md5: str, TMD_seq: str, full_seq: s
                         f"For testing, copy output files from Linux and rename to {freecontact_file} and {rate4site_csv}")
     else:
         tf.freecontact.coevolution_calculation_with_freecontact(path_uniq_TMD_seqs_for_PSSM_FREECONTACT, freecontact_file, logging)
-        tf.rate4site.rate4site_calculation(TMD_seq, acc, fasta_uniq_TMD_seqs_surr5_for_LIPO, rate4site_csv, logging, rerun_rate4site=False)
+        tf.rate4site.rate4site_calculation(TMD_seq, acc, fasta_uniq_TMD_seqs_surr5_for_LIPO, rate4site_csv, surrounding_sequence_5, logging, rerun_rate4site=False)
 
     tf.freecontact.parse_freecontact_coevolution(acc, freecontact_file, freecontact_parsed_csv, TMD_start, TMD_end, logging)
 
-    tf.relative_position.calc_relative_position(acc, path_uniq_TMD_seqs_for_PSSM_FREECONTACT, relative_position_file, TMD_start, seqlen, logging)
+    tf.relative_position.calc_relative_position(acc, path_uniq_TMD_seqs_for_PSSM_FREECONTACT, relative_position_file, TMD_start, full_seq_len, logging)
 
     tf.lips.LIPS_score_calculation(path_uniq_TMD_seqs_no_gaps_for_LIPS, LIPS_output_file)
 
     tf.lips.parse_LIPS_score(acc, LIPS_output_file, LIPS_parsed_csv, logging)
-    tf.motifs.motifs_from_seq(TMD_seq, TMD_seq_pl_surr, tm_surr_left, tm_surr_right, motifs_file, logging)
+    tf.motifs.motifs_from_seq(TMD_seq, TMD_seq_pl_surr, surrounding_sequence.n_term_offset, surrounding_sequence.c_term_offset, motifs_file, logging)
 
     database = "standalone_prediction"
     tf.combine_features.combine_all_features(s, full_seq, acc, database, TMD_seq, TMD_start, feature_combined_file, entropy_file, rate4site_csv, pssm_csv,
@@ -324,17 +311,6 @@ def run_THOIPA_prediction(protein_name: str, md5: str, TMD_seq: str, full_seq: s
 
     logging.info("Output file : {}\n"
                  "THOIPA standalone completed successfully for {}.\n\n".format(THOIPA_pretty_out_xlsx, protein_name))
-
-
-def get_start_end_pl_surr(TMD_start: int, TMD_end: int, seqlen: int, surr: int):
-    """Get start and end of TMD plus surrounding sequence"""
-    TMD_start_pl_surr = TMD_start - surr
-    if TMD_start_pl_surr < 1:
-        TMD_start_pl_surr = 1
-    TMD_end_pl_surr = TMD_end + surr
-    if TMD_end_pl_surr > seqlen:
-        TMD_end_pl_surr = seqlen
-    return TMD_start_pl_surr, TMD_end_pl_surr
 
 
 def get_md5_checksum(TMD_seq: str, full_seq: str) -> str:

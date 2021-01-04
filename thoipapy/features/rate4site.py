@@ -8,6 +8,7 @@ from typing import Union
 import pandas as pd
 
 from thoipapy import utils as utils
+from thoipapy.utils import SurroundingSequence
 
 
 def rate4site_calculation_mult_prot(s, df_set, logging):
@@ -27,7 +28,7 @@ def rate4site_calculation_mult_prot(s, df_set, logging):
     logging : logging.Logger
         Python object with settings for logging to console and file.
     """
-    if not "Linux" in platform.system():
+    if "Linux" not in platform.system():
         logging.warning("Aborting rate4site calculation, ao is only implemented on linux.")
         return False
 
@@ -43,15 +44,20 @@ def rate4site_calculation_mult_prot(s, df_set, logging):
         fasta_uniq_TMD_seqs_surr5_for_LIPO = alignments_dir / f"{acc}.surr5.gaps{max_n_gaps_in_TMD_subject_seq}.uniq.for_LIPO.fas"
 
         # output
-        rate4site_orig_output: Path = Path(s["thoipapy_data_folder"]).joinpath("features", "rate4site", database, f"{acc}.rate4site_orig_output.txt")
         rate4site_csv: Path = Path(s["thoipapy_data_folder"]).joinpath("features", "rate4site", database, f"{acc}_rate4site.csv")
 
-        rate4site_calculation(TMD_seq, acc, fasta_uniq_TMD_seqs_surr5_for_LIPO, rate4site_csv, logging)
+        full_seq_len = len(df_set.at[i, "full_seq"])
+        # number of residues surrounding the TMD on the left in alignment
+        # (in alignments for lipo and rate4site, this is hard-coded to 5 residues)
+        n_residues_surrounding_tmd_in_alignment = 5
+        surrounding_sequence_5 = SurroundingSequence(df_set.at[i, "TMD_start"], df_set.at[i, "TMD_end"], full_seq_len, n_residues_surrounding_tmd_in_alignment)
+        surrounding_seq_len_n_term_offset = surrounding_sequence_5.n_term_offset
+        rate4site_calculation(TMD_seq, acc, fasta_uniq_TMD_seqs_surr5_for_LIPO, rate4site_csv, surrounding_seq_len_n_term_offset, logging)
 
     logging.info("rate4site_calculation finished")
 
 
-def rate4site_calculation(TMD_seq: str, acc: str, fasta_uniq_TMD_seqs_surr5_for_LIPO: Union[Path, str], rate4site_csv: Path, logging, rerun_rate4site: bool = False):
+def rate4site_calculation(TMD_seq: str, acc: str, fasta_uniq_TMD_seqs_surr5_for_LIPO: Union[Path, str], rate4site_csv: Path, surrounding_seq_len_n_term_offset: int, logging, rerun_rate4site: bool = False):
     output_dir: Union[Path, str] = rate4site_csv.parent
     assert output_dir.is_dir()
     # temp output files
@@ -167,22 +173,13 @@ def rate4site_calculation(TMD_seq: str, acc: str, fasta_uniq_TMD_seqs_surr5_for_
     df_rate4site = df.reindex(["seq", "score"], axis=1)
     df_rate4site.columns = ["residue_name", "rate4site"]
     df_rate4site.index.name = "residue_num"
-    # since the lipophilicity alignment was padded by 5 residues on each side, the index doesn't match the TMD residue number.
-    # first get the offset
-    alignment_TMD_plus_offset = "".join(df_rate4site["residue_name"].to_list())
+    # since the lipophilicity alignment was padded by 5 residues on each side,
+    # the index doesn't match the TMD residue number.
     TMD_seq_len = len(TMD_seq)
-    offset = None
-    for offset in range(0, (len(alignment_TMD_plus_offset) - TMD_seq_len)):
-        TMD_seq_slice = alignment_TMD_plus_offset[offset: offset + TMD_seq_len]
-        if TMD_seq_slice == TMD_seq:
-            break
-    logging.info(f"alignment offset found ({offset})")
-    # minus all indices by the number of residues surrounding the TMD on the left
-    df_rate4site.index = df_rate4site.index.to_series() - offset
+    # minus all indices by the number of residues surrounding the TMD on the left (for lipo/rate4site, this is usually 5)
+    df_rate4site.index = df_rate4site.index.to_series() - surrounding_seq_len_n_term_offset
     residue_num_to_keep = range(1, TMD_seq_len + 1)
     df_rate4site = df_rate4site.reindex(residue_num_to_keep)
-    saved_TMD_seq = "".join(df_rate4site["residue_name"].to_list())
-    assert saved_TMD_seq == TMD_seq
     df_rate4site.to_csv(rate4site_csv)
     logging.info(f"{rate4site_csv} saved")
 

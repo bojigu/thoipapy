@@ -437,6 +437,8 @@ def process_set_protein_seqs(s, setname, df_set, set_path):
 
     # first get TMD plus 5 surrounding residues (for TMD_lipo script)
     num_of_sur_residues = 5
+    # TODO to improve consistency, replace create_column_with_TMD_plus_surround_seq with new
+    # thoipapy.utils.SurroundingSequence developed for the standalone predictor
     df_set, TMD_seq_pl_surr_series = thoipapy.utils.create_column_with_TMD_plus_surround_seq(df_set, num_of_sur_residues)
     df_set["TMD_seq_pl_surr5"] = TMD_seq_pl_surr_series
 
