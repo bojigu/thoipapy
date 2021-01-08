@@ -16,8 +16,8 @@ def parse_a3m_alignment(s, logging):
     for row in tmp_file_handle:
         acc = row.strip().split(",")[0]
 
-        output_oa3m_homologues_file = os.path.join(s["thoipapy_data_folder"], "Proteins", "%s.fasta.surr20.a3m") % acc
-        output_oa3m_homologues_processed_file = os.path.join(s["thoipapy_data_folder"], "homologues", "a3m","%s.surr20.parse.a3m") % acc
+        output_oa3m_homologues_file = os.path.join(s["data_dir"], "Proteins", "%s.fasta.surr20.a3m") % acc
+        output_oa3m_homologues_processed_file = os.path.join(s["data_dir"], "homologues", "a3m","%s.surr20.parse.a3m") % acc
         exect_str1 = "grep -v '^>' {a3m_file} |sed 's/[a-z]//g' >{a3m_processed_file}".format(a3m_file=output_oa3m_homologues_file,
                                                                                               a3m_processed_file=output_oa3m_homologues_processed_file)
 

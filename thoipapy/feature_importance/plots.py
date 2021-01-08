@@ -22,14 +22,14 @@ def plot_feature_importance(s, logging):
     trainset = "set08"
 
     # input
-    mean_decrease_impurity_all_features_csv = Path(s["thoipapy_data_folder"]) / f"results/{s['setname']}/train_data/01_feat_imp_MDI_before_feature_seln.csv"
-    feat_imp_mean_decrease_accuracy_xlsx = Path(s["thoipapy_data_folder"]) / f"results/{trainset}/feat_imp/feat_imp_mean_decrease_accuracy.xlsx"
-    tuned_ensemble_parameters_csv = Path(s["thoipapy_data_folder"]) / f"results/{s['setname']}/train_data/04_tuned_ensemble_parameters.csv"
+    mean_decrease_impurity_all_features_csv = Path(s["data_dir"]) / f"results/{s['setname']}/train_data/01_feat_imp_MDI_before_feature_seln.csv"
+    feat_imp_mean_decrease_accuracy_xlsx = Path(s["data_dir"]) / f"results/{trainset}/feat_imp/feat_imp_mean_decrease_accuracy.xlsx"
+    tuned_ensemble_parameters_csv = Path(s["data_dir"]) / f"results/{s['setname']}/train_data/04_tuned_ensemble_parameters.csv"
     # output
-    variable_importance_png = Path(s["thoipapy_data_folder"]) / "results" / s["setname"] / "feat_imp/FigS17_BZ13_feature_importance.png"
-    variable_importance_xlsx = Path(s["thoipapy_data_folder"]) / "results" / s["setname"] / "feat_imp/FigS17_BZ13_feature_importance.xlsx"
+    variable_importance_png = Path(s["data_dir"]) / "results" / s["setname"] / "feat_imp/FigS17_BZ13_feature_importance.png"
+    variable_importance_xlsx = Path(s["data_dir"]) / "results" / s["setname"] / "feat_imp/FigS17_BZ13_feature_importance.xlsx"
 
-    train_data_after_first_feature_seln_csv = Path(s["thoipapy_data_folder"]) / f"results/{s['setname']}/train_data/03_train_data_after_first_feature_seln.csv"
+    train_data_after_first_feature_seln_csv = Path(s["data_dir"]) / f"results/{s['setname']}/train_data/03_train_data_after_first_feature_seln.csv"
     df_data = pd.read_csv(train_data_after_first_feature_seln_csv, index_col=0)
     y = df_data[s["bind_column"]]
     X = df_data[[c for c in df_data.columns if c != s["bind_column"]]]

@@ -29,7 +29,7 @@ def calc_closedist_from_PREDDIMER_TMDOCK_best_model(s, df_set, logging):
         sys.stdout.write("{}, ".format(acc)), sys.stdout.flush()
         database = df_set.loc[i, "database"]
         protein = acc
-        other_predictors_dir = Path(s["thoipapy_data_folder"]) / "Predictions/other_predictors"
+        other_predictors_dir = Path(s["data_dir"]) / "Predictions/other_predictors"
         pdb_file_preddimer = os.path.join(other_predictors_dir, database, "{}.preddimer.pdb".format(protein))
         pdb_file_tmdock = os.path.join(other_predictors_dir, database, "{}.tmdock.pdb".format(protein))
         preddimer_closedist_file = os.path.join(other_predictors_dir, database, "{}.preddimer.closedist.csv".format(protein))

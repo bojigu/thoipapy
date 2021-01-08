@@ -65,20 +65,20 @@ def validate_THOIPA_for_testset_trainset_combination(s, test_set_list, train_set
 
     for n, train_set in enumerate(train_set_list):
         trainsetname = "set{:02d}".format(int(train_set))
-        model_pkl = Path(s["thoipapy_data_folder"]) / f"results/{trainsetname}/{trainsetname}_ML_model.lpkl"
+        model_pkl = Path(s["data_dir"]) / f"results/{trainsetname}/{trainsetname}_ML_model.lpkl"
 
         for test_set in test_set_list:
             testsetname = "set{:02d}".format(int(test_set))
 
-            # BO_curve_folder = Path(s["thoipapy_data_folder"]) / f"results{testsetname}/blindvalidation/thoipa.train{trainsetname}"
-            # THOIPA_BO_curve_data_csv = os.path.join(s["thoipapy_data_folder"], "results", "compare_testset_trainset", "data", "Test{}_Train{}.THOIPA".format(testsetname, trainsetname), "data", "Test{}_Train{}.THOIPA.best_overlap_data.csv".format(testsetname, trainsetname))
-            THOIPA_BO_curve_data_csv = Path(s["thoipapy_data_folder"]) / f"results/{testsetname}/blindvalidation/thoipa.train{trainsetname}/THOIPA.best_overlap_data.csv"
-            # THOIPA_ROC_pkl = os.path.join(s["thoipapy_data_folder"], "results", "compare_testset_trainset", "data", "Test{}_Train{}.THOIPA".format(testsetname, trainsetname), "data", "Test{}_Train{}.THOIPA.ROC_data.pkl".format(testsetname, trainsetname))
-            THOIPA_ROC_pkl = Path(s["thoipapy_data_folder"]) / f"results/{testsetname}/blindvalidation/thoipa.train{trainsetname}/ROC_data.pkl"
+            # BO_curve_folder = Path(s["data_dir"]) / f"results{testsetname}/blindvalidation/thoipa.train{trainsetname}"
+            # THOIPA_BO_curve_data_csv = os.path.join(s["data_dir"], "results", "compare_testset_trainset", "data", "Test{}_Train{}.THOIPA".format(testsetname, trainsetname), "data", "Test{}_Train{}.THOIPA.best_overlap_data.csv".format(testsetname, trainsetname))
+            THOIPA_BO_curve_data_csv = Path(s["data_dir"]) / f"results/{testsetname}/blindvalidation/thoipa.train{trainsetname}/THOIPA.best_overlap_data.csv"
+            # THOIPA_ROC_pkl = os.path.join(s["data_dir"], "results", "compare_testset_trainset", "data", "Test{}_Train{}.THOIPA".format(testsetname, trainsetname), "data", "Test{}_Train{}.THOIPA.ROC_data.pkl".format(testsetname, trainsetname))
+            THOIPA_ROC_pkl = Path(s["data_dir"]) / f"results/{testsetname}/blindvalidation/thoipa.train{trainsetname}/ROC_data.pkl"
 
-            bocurve_data_xlsx = Path(s["thoipapy_data_folder"]) / f"results/{testsetname}/blindvalidation/thoipa.train{trainsetname}/bocurve_data.xlsx"
-            BO_linechart_png = Path(s["thoipapy_data_folder"]) / f"results/{testsetname}/blindvalidation/thoipa.train{trainsetname}/BO_linechart.png"
-            BO_barchart_png = Path(s["thoipapy_data_folder"]) / f"results/{testsetname}/blindvalidation/thoipa.train{trainsetname}/AUBOC_barchart.png"
+            bocurve_data_xlsx = Path(s["data_dir"]) / f"results/{testsetname}/blindvalidation/thoipa.train{trainsetname}/bocurve_data.xlsx"
+            BO_linechart_png = Path(s["data_dir"]) / f"results/{testsetname}/blindvalidation/thoipa.train{trainsetname}/BO_linechart.png"
+            BO_barchart_png = Path(s["data_dir"]) / f"results/{testsetname}/blindvalidation/thoipa.train{trainsetname}/AUBOC_barchart.png"
 
             thoipapy.utils.make_sure_path_exists(bocurve_data_xlsx, isfile=True)
 
@@ -97,10 +97,10 @@ def validate_THOIPA_for_testset_trainset_combination(s, test_set_list, train_set
                 acc = testdataset_df.loc[i, "acc"]
                 database = testdataset_df.loc[i, "database"]
                 acc_db = acc + "-" + database
-                testdata_combined_file = os.path.join(s["thoipapy_data_folder"], "features", "combined", database,
+                testdata_combined_file = os.path.join(s["data_dir"], "features", "combined", database,
                                                       "{}.surr20.gaps5.combined_features.csv".format(acc))
-                THOIPA_pred_csv = Path(s["thoipapy_data_folder"]) / f"results/{testsetname}/predictions/thoipa.train{trainsetname}/{database}.{acc}.thoipa.train{trainsetname}.csv"
-                combined_incl_THOIPA_csv = Path(s["thoipapy_data_folder"]) / f"results/{testsetname}/predictions/thoipa.train{trainsetname}/{database}.{acc}.thoipa.train{trainsetname}_incl_combined.csv"
+                THOIPA_pred_csv = Path(s["data_dir"]) / f"results/{testsetname}/predictions/thoipa.train{trainsetname}/{database}.{acc}.thoipa.train{trainsetname}.csv"
+                combined_incl_THOIPA_csv = Path(s["data_dir"]) / f"results/{testsetname}/predictions/thoipa.train{trainsetname}/{database}.{acc}.thoipa.train{trainsetname}_incl_combined.csv"
 
                 thoipapy.utils.make_sure_path_exists(combined_incl_THOIPA_csv, isfile=True)
 
@@ -156,7 +156,7 @@ def validate_THOIPA_for_testset_trainset_combination(s, test_set_list, train_set
             AUBOC = save_BO_linegraph_and_barchart(s, bocurve_data_xlsx, BO_linechart_png, BO_barchart_png, namedict, logging, AUC_ser)
 
             if "you_want_more_details" == "TRUE":
-                other_figs_path: Union[Path, str] = Path(s["thoipapy_data_folder"]) / f"results/{s['setname']}/crossvalidation/other_figs"
+                other_figs_path: Union[Path, str] = Path(s["data_dir"]) / f"results/{s['setname']}/crossvalidation/other_figs"
                 save_extra_BO_figs(bocurve_data_xlsx, other_figs_path)
 
             #######################################################################################################
@@ -193,12 +193,12 @@ def validate_LIPS_for_testset(s, logging, LIPS_name="LIPS_LE", pred_col="LIPS_L*
 
     for test_set in test_set_list:
         testsetname = "set{:02d}".format(int(test_set))
-        LIPS_BO_curve_data_csv = Path(s["thoipapy_data_folder"]) / "results" / testsetname / f"blindvalidation/{LIPS_name}/{LIPS_name}.best_overlap_data.csv.csv"
-        # LIPS_BO_curve_data_csv = os.path.join(s["thoipapy_data_folder"], "results", "compare_testset_trainset", "data", "Test{}.{}".format(testsetname, LIPS_name), "Test{}.{}.best_overlap_data.csv".format(testsetname, LIPS_name))
-        # BO_curve_folder = os.path.join(s["thoipapy_data_folder"], "results", "compare_testset_trainset", "data", "Test{}.{}".format(testsetname, LIPS_name))
-        BO_curve_folder = Path(s["thoipapy_data_folder"]) / "results" / testsetname / f"blindvalidation/{LIPS_name}"
-        LIPS_ROC_pkl = Path(s["thoipapy_data_folder"]) / "results" / testsetname / f"blindvalidation/{LIPS_name}/ROC_data.pkl"
-        # LIPS_ROC_pkl = os.path.join(s["thoipapy_data_folder"], "results", "compare_testset_trainset", "data", "Test{}.{}".format(testsetname, LIPS_name), "data", "Test{}.{}.ROC_data.pkl".format(testsetname, LIPS_name))
+        LIPS_BO_curve_data_csv = Path(s["data_dir"]) / "results" / testsetname / f"blindvalidation/{LIPS_name}/{LIPS_name}.best_overlap_data.csv.csv"
+        # LIPS_BO_curve_data_csv = os.path.join(s["data_dir"], "results", "compare_testset_trainset", "data", "Test{}.{}".format(testsetname, LIPS_name), "Test{}.{}.best_overlap_data.csv".format(testsetname, LIPS_name))
+        # BO_curve_folder = os.path.join(s["data_dir"], "results", "compare_testset_trainset", "data", "Test{}.{}".format(testsetname, LIPS_name))
+        BO_curve_folder = Path(s["data_dir"]) / "results" / testsetname / f"blindvalidation/{LIPS_name}"
+        LIPS_ROC_pkl = Path(s["data_dir"]) / "results" / testsetname / f"blindvalidation/{LIPS_name}/ROC_data.pkl"
+        # LIPS_ROC_pkl = os.path.join(s["data_dir"], "results", "compare_testset_trainset", "data", "Test{}.{}".format(testsetname, LIPS_name), "data", "Test{}.{}.ROC_data.pkl".format(testsetname, LIPS_name))
         thoipapy.utils.make_sure_path_exists(LIPS_BO_curve_data_csv, isfile=True)
         bocurve_data_xlsx = os.path.join(BO_curve_folder, "data", "bocurve_data.xlsx")
         BO_linechart_png = os.path.join(BO_curve_folder, "BO_linechart.png")
@@ -220,7 +220,7 @@ def validate_LIPS_for_testset(s, logging, LIPS_name="LIPS_LE", pred_col="LIPS_L*
             database = testdataset_df.loc[i, "database"]
             acc_db = acc + "-" + database
 
-            testdata_combined_file = os.path.join(s["thoipapy_data_folder"], "features", "combined", database,
+            testdata_combined_file = os.path.join(s["data_dir"], "features", "combined", database,
                                                   "{}.surr20.gaps5.combined_features.csv".format(acc))
 
             combined_df = pd.read_csv(testdata_combined_file, index_col=0)
@@ -232,8 +232,8 @@ def validate_LIPS_for_testset(s, logging, LIPS_name="LIPS_LE", pred_col="LIPS_L*
             #######################################################################################################
             # SAVE LIPS PREDICTION DATA
             # this is somewhat inefficient, as it is conducted for every test dataset
-            # LIPS_pred_csv = os.path.join(os.path.dirname(s["thoipapy_data_folder"]), "features", "Predictions", "testset_trainset", database, "{}.LIPS_pred.csv".format(acc, testsetname))
-            LIPS_pred_csv = Path(s["thoipapy_data_folder"]) / f"results/{testsetname}/predictions/{LIPS_name}/{database}.{acc}.{LIPS_name}.csv"
+            # LIPS_pred_csv = os.path.join(os.path.dirname(s["data_dir"]), "features", "Predictions", "testset_trainset", database, "{}.LIPS_pred.csv".format(acc, testsetname))
+            LIPS_pred_csv = Path(s["data_dir"]) / f"results/{testsetname}/predictions/{LIPS_name}/{database}.{acc}.{LIPS_name}.csv"
             LIPS_pred_df = combined_df[["residue_name", "residue_num", "LIPS_polarity", "LIPS_entropy", "LIPS_L*E", "LIPS_surface", "LIPS_surface_ranked"]]
             thoipapy.utils.make_sure_path_exists(LIPS_pred_csv, isfile=True)
             LIPS_pred_df.to_csv(LIPS_pred_csv)
@@ -284,7 +284,7 @@ def validate_LIPS_for_testset(s, logging, LIPS_name="LIPS_LE", pred_col="LIPS_L*
         AUBOC = save_BO_linegraph_and_barchart(s, bocurve_data_xlsx, BO_linechart_png, BO_barchart_png, namedict, logging, AUC_ser)
 
         if "you_want_more_details" == "TRUE":
-            other_figs_path: Union[Path, str] = Path(s["thoipapy_data_folder"]) / f"results/{s['setname']}/crossvalidation/other_figs"
+            other_figs_path: Union[Path, str] = Path(s["data_dir"]) / f"results/{s['setname']}/crossvalidation/other_figs"
             save_extra_BO_figs(bocurve_data_xlsx, other_figs_path)
 
         #######################################################################################################
@@ -353,7 +353,7 @@ def save_THOIPA_pred_indiv_prot(s, model_pkl, testdata_combined_file, THOIPA_pre
     test_set_list, train_set_list = get_test_and_train_set_lists(s)
     trainsetname = "set{:02d}".format(int(train_set_list[0]))
 
-    trainset_data_filtered = Path(s["thoipapy_data_folder"]) / f"results/{trainsetname}/train_data/03_train_data_after_first_feature_seln.csv"
+    trainset_data_filtered = Path(s["data_dir"]) / f"results/{trainsetname}/train_data/03_train_data_after_first_feature_seln.csv"
 
     fit = joblib.load(model_pkl)
 

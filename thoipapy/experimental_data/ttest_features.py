@@ -47,13 +47,13 @@ def conduct_ttest_for_all_features(s, logging):
     logging.info('starting conduct_ttest_for_selected_features_used_in_model')
     testsetname, trainsetname = get_testsetname_trainsetname_from_run_settings(s)
     # inputs
-    train_data_csv = Path(s["thoipapy_data_folder"]) / f"results/{s['setname']}/train_data/01_train_data_orig.csv"
+    train_data_csv = Path(s["data_dir"]) / f"results/{s['setname']}/train_data/01_train_data_orig.csv"
     # IMPORTANT: the features used in the model are taken from the trainset as defined in "train_datasets" in the excel file, not from the actual set being investigated
-    # feat_imp_MDA_xlsx = os.path.join(s["thoipapy_data_folder"], "results", trainsetname, "feat_imp", "feat_imp_mean_decrease_accuracy.xlsx")
+    # feat_imp_MDA_xlsx = os.path.join(s["data_dir"], "results", trainsetname, "feat_imp", "feat_imp_mean_decrease_accuracy.xlsx")
 
     # outputs
-    ttest_pvalues_bootstrapped_data_using_traindata_selected_features_xlsx = Path(s["thoipapy_data_folder"]) / f"results/{s['setname']}/ttest/ttest_pvalues_bootstrapped_data_using_traindata_selected_features(train{trainsetname}).xlsx"
-    correlated_features_xlsx = Path(s["thoipapy_data_folder"]) / f"results/{s['setname']}/ttest/correlated_features.xlsx"
+    ttest_pvalues_bootstrapped_data_using_traindata_selected_features_xlsx = Path(s["data_dir"]) / f"results/{s['setname']}/ttest/ttest_pvalues_bootstrapped_data_using_traindata_selected_features(train{trainsetname}).xlsx"
+    correlated_features_xlsx = Path(s["data_dir"]) / f"results/{s['setname']}/ttest/correlated_features.xlsx"
 
     make_sure_path_exists(ttest_pvalues_bootstrapped_data_using_traindata_selected_features_xlsx, isfile=True)
 

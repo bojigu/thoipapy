@@ -239,7 +239,7 @@ def create_settingdict(excel_file_with_settings):
         # join dictionaries together
         s.update(sheet_as_dict)
 
-    list_paths_to_normalise = ['MiRMAK_data_folder', 'base_dir', 'sets_dir', 'thoipapy_data_folder',
+    list_paths_to_normalise = ['MiRMAK_data_folder', 'base_dir', 'sets_dir', 'data_dir',
                                'Rcode', 'hhblits_dir', 'uniprot_database_dir', 'Rscript_dir']
     # normalise the paths for selected columns, so that they are appropriate for the operating system
     for path in list_paths_to_normalise:
@@ -265,7 +265,7 @@ def setup_keyboard_interrupt_and_error_logging(s, setname):
     date_string = strftime("%Y%m%d_%H_%M_%S")
 
     # designate the output logfile
-    logfile = os.path.join(s["thoipapy_data_folder"], "Logging", '%s_%s_logfile.log' % (setname, date_string))
+    logfile = os.path.join(s["data_dir"], "Logging", '%s_%s_logfile.log' % (setname, date_string))
 
     # # if multiprocessing is used, disable logging except for critical messages.
     # if s["use_multiprocessing"]:
@@ -454,20 +454,20 @@ def process_set_protein_seqs(s, setname, df_set, set_path):
     df_set["tm_surr_right"] = df_set.TMD_end_pl_surr - df_set.TMD_end
 
     # save the full sequences in fasta format for CD-HIT, etc.
-    protein_set_full_seq_fasta = Path(s["thoipapy_data_folder"]) / f"results/{s['setname']}/clusters/{setname}_full_seqs.fas"
+    protein_set_full_seq_fasta = Path(s["data_dir"]) / f"results/{s['setname']}/clusters/{setname}_full_seqs.fas"
     thoipapy.utils.make_sure_path_exists(protein_set_full_seq_fasta, isfile=True)
     with open(protein_set_full_seq_fasta, "w") as f:
         for n, acc in enumerate(df_set.index):
             f.write(">{}-{}\n{}\n".format(n, df_set.loc[acc, "acc_db"], df_set.loc[acc, "full_seq"]))
 
-    protein_set_tmd_seq_fasta = Path(s["thoipapy_data_folder"]) / f"results/{s['setname']}/clusters/{setname}_tmd_seqs.fas"
+    protein_set_tmd_seq_fasta = Path(s["data_dir"]) / f"results/{s['setname']}/clusters/{setname}_tmd_seqs.fas"
     thoipapy.utils.make_sure_path_exists(protein_set_tmd_seq_fasta, isfile=True)
     with open(protein_set_tmd_seq_fasta, "w") as f:
         for n, acc in enumerate(df_set.index):
             f.write(">{}-{}\n{}\n".format(n, df_set.loc[acc, "acc_db"], df_set.loc[acc, "TMD_seq"]))
 
     # open previously saved CD-hit results
-    cdhit_cluster_txt = Path(s["thoipapy_data_folder"]) / f"results/{s['setname']}/clusters/{setname}.fas.1.clstr.sorted.txt"
+    cdhit_cluster_txt = Path(s["data_dir"]) / f"results/{s['setname']}/clusters/{setname}.fas.1.clstr.sorted.txt"
     if os.path.isfile(cdhit_cluster_txt):
         lines_with_ref_seq = []
         with open(cdhit_cluster_txt, "r") as f:
@@ -497,7 +497,7 @@ def process_set_protein_seqs(s, setname, df_set, set_path):
     df_set.iloc[:, 1:5] = df_set.iloc[:, 1:5].astype(int)
 
     # save to csv, which is opened by other functions
-    list_of_tmd_start_end = os.path.join(s["thoipapy_data_folder"], "Input_data", os.path.basename(set_path)[:-5] + "_processed.csv")
+    list_of_tmd_start_end = os.path.join(s["data_dir"], "Input_data", os.path.basename(set_path)[:-5] + "_processed.csv")
     s["list_of_tmd_start_end"] = list_of_tmd_start_end
     thoipapy.utils.make_sure_path_exists(list_of_tmd_start_end, isfile=True)
     df_set.set_index("acc").to_csv(list_of_tmd_start_end)

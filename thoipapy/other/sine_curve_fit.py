@@ -12,8 +12,8 @@ import os
 from thoipapy.utils import create_colour_lists
 colour_lists = create_colour_lists()
 fontsize = 12
-data_dir = 'TMD16/'   #set the data_dir where you save all the data
-file_dir_extension = os.path.join(data_dir, '*.xlsx')
+tmd_data_dir = 'TMD16/'   #set the data_dir where you save all the data
+file_dir_extension = os.path.join(tmd_data_dir, '*.xlsx')
 
 def make_interpolater(left_min, left_max, right_min, right_max):
     # Figure out how 'wide' each range is
@@ -32,7 +32,7 @@ def make_interpolater(left_min, left_max, right_min, right_max):
 
 def save_sine_vurve_result(s, output_file_loc, output_png_loc):
     uniprot_acc=s["tm_protein_name"]
-    #Pred_disruption=os.path.join(s["thoipapy_data_folder"], "Sine_Curve","TMD16/%s_prediction.xls") %uniprot_acc
+    #Pred_disruption=os.path.join(s["data_dir"], "Sine_Curve","TMD16/%s_prediction.xls") %uniprot_acc
     #Pred_disruption=r"/home/students/zeng/workspace/test2/out/58f795953dc45/output.csv"
     #Pred_disruption = r"sine_curve/TMD16/%s_prediction.xls" %uniprot_acc
     #prd_disruption = pd.read_csv(Pred_disruption)

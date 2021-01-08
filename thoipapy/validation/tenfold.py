@@ -40,10 +40,10 @@ def run_10fold_cross_validation(s, logging):
         Also contains the mean ROC curve, and the mean AUC.
     """
     sys.stdout.write("\n--------------- starting run_10fold_cross_validation ---------------\n")
-    train_data_after_first_feature_seln_csv = Path(s["thoipapy_data_folder"]) / f"results/{s['setname']}/train_data/03_train_data_after_first_feature_seln.csv"
-    tuned_ensemble_parameters_csv = Path(s["thoipapy_data_folder"]) / f"results/{s['setname']}/train_data/04_tuned_ensemble_parameters.csv"
-    crossvalidation_pkl = os.path.join(s["thoipapy_data_folder"], "results", s["setname"], "crossvalidation", "data", "{}_10F_data.pkl".format(s["setname"]))
-    features_csv = Path(s["thoipapy_data_folder"]) / f"results/{s['setname']}/feat_imp/test_features.csv"
+    train_data_after_first_feature_seln_csv = Path(s["data_dir"]) / f"results/{s['setname']}/train_data/03_train_data_after_first_feature_seln.csv"
+    tuned_ensemble_parameters_csv = Path(s["data_dir"]) / f"results/{s['setname']}/train_data/04_tuned_ensemble_parameters.csv"
+    crossvalidation_pkl = os.path.join(s["data_dir"], "results", s["setname"], "crossvalidation", "data", "{}_10F_data.pkl".format(s["setname"]))
+    features_csv = Path(s["data_dir"]) / f"results/{s['setname']}/feat_imp/test_features.csv"
 
     thoipapy.utils.make_sure_path_exists(crossvalidation_pkl, isfile=True)
     thoipapy.utils.make_sure_path_exists(features_csv, isfile=True)
@@ -120,8 +120,8 @@ def create_10fold_cross_validation_fig(s, logging):
     """
     sys.stdout.write("\n--------------- starting create_10fold_cross_validation_fig ---------------\n")
     # plt.rcParams.update({'font.size': 7})
-    crossvalidation_png = os.path.join(s["thoipapy_data_folder"], "results", s["setname"], "crossvalidation", "{}_10F_ROC.png".format(s["setname"]))
-    crossvalidation_pkl = os.path.join(s["thoipapy_data_folder"], "results", s["setname"], "crossvalidation", "data", "{}_10F_data.pkl".format(s["setname"]))
+    crossvalidation_png = os.path.join(s["data_dir"], "results", s["setname"], "crossvalidation", "{}_10F_ROC.png".format(s["setname"]))
+    crossvalidation_pkl = os.path.join(s["data_dir"], "results", s["setname"], "crossvalidation", "data", "{}_10F_data.pkl".format(s["setname"]))
 
     # open pickle file
     with open(crossvalidation_pkl, "rb") as f:

@@ -97,13 +97,13 @@ def create_merged_heatmap_for_trainset_and_testset(s, df_set, logging):
 
 
 def create_single_merged_heatmap(setname, s, acc, database, savename, fig_label, dfh_cols, THOIPA_column, LIPS_col, coev_col):
-    merged_data_csv_path: Union[Path, str] = Path(s["thoipapy_data_folder"]) / f"results/{setname}/predictions/merged/{database}.{acc}.merged.csv"
+    merged_data_csv_path: Union[Path, str] = Path(s["data_dir"]) / f"results/{setname}/predictions/merged/{database}.{acc}.merged.csv"
     dfm = pd.read_csv(merged_data_csv_path, index_col=None)
 
-    heatmap_path = os.path.join(s["thoipapy_data_folder"], "heatmap", database, "{}.png".format(acc))
-    heatmap_pdf_path = os.path.join(s["thoipapy_data_folder"], "heatmap", database, "pdf", "{}.pdf".format(acc))
-    heatmap_data_xlsx_path = os.path.join(s["thoipapy_data_folder"], "heatmap", database, "xlsx", "{}_merged.xlsx".format(acc))
-    hetero_bind_file = os.path.join(s["thoipapy_data_folder"], "features", "structure", database, "{}.hetero.bind.csv").format(acc)
+    heatmap_path = os.path.join(s["data_dir"], "heatmap", database, "{}.png".format(acc))
+    heatmap_pdf_path = os.path.join(s["data_dir"], "heatmap", database, "pdf", "{}.pdf".format(acc))
+    heatmap_data_xlsx_path = os.path.join(s["data_dir"], "heatmap", database, "xlsx", "{}_merged.xlsx".format(acc))
+    hetero_bind_file = os.path.join(s["data_dir"], "features", "structure", database, "{}.hetero.bind.csv").format(acc)
     thoipapy.utils.make_sure_path_exists(heatmap_pdf_path, isfile=True)
     thoipapy.utils.make_sure_path_exists(heatmap_data_xlsx_path, isfile=True)
 

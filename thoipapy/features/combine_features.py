@@ -166,19 +166,19 @@ def combine_all_features_mult_prot(s, df_set, logging):
         TMD_start = df_set.loc[i, "TMD_start"]
         full_seq = df_set.loc[i, "full_seq"]
         scalename = s["lipophilicity_scale"]
-        lipo_csv = os.path.join(s["thoipapy_data_folder"], "features", "lipophilicity", database, "{}_{}_lipo.csv".format(acc, scalename))
-        relative_position_file = os.path.join(s["thoipapy_data_folder"], "features", "relative_position", database, "%s.relative_position%s.csv") % (acc, s["surres"])
-        LIPS_parsed_csv = os.path.join(s["thoipapy_data_folder"], "features", "lips_score", database, "{}.surr{}.LIPS_score_parsed.csv".format(acc, s["num_of_sur_residues"]))
-        pssm_csv = os.path.join(s["thoipapy_data_folder"], "features", "pssm", database, "{}.surr{}.gaps{}.pssm.csv".format(acc, s["num_of_sur_residues"], s["max_n_gaps_in_TMD_subject_seq"]))
-        entropy_file = os.path.join(s["thoipapy_data_folder"], "features", "entropy", database, "{}.surr{}.gaps{}.uniq.entropy.csv".format(acc, s["num_of_sur_residues"], s["max_n_gaps_in_TMD_subject_seq"]))
-        rate4site_csv: Path = Path(s["thoipapy_data_folder"]).joinpath("features", "rate4site", database, f"{acc}_rate4site.csv")
-        freecontact_parsed_csv = os.path.join(s["thoipapy_data_folder"], "features", "coevolution", database, "{}.surr{}.gaps{}.freecontact_parsed.csv".format(acc, s["num_of_sur_residues"], s["max_n_gaps_in_TMD_subject_seq"]))
-        motifs_file = os.path.join(s["thoipapy_data_folder"], "features", "motifs", database, "{}.motifs.csv".format(acc))
-        feature_combined_file = os.path.join(s["thoipapy_data_folder"], "features", "combined", database, "{}.surr{}.gaps{}.combined_features.csv".format(acc, s["num_of_sur_residues"], s["max_n_gaps_in_TMD_subject_seq"]))
-        alignments_dir = os.path.join(s["thoipapy_data_folder"], "homologues", "alignments", database)
+        lipo_csv = os.path.join(s["data_dir"], "features", "lipophilicity", database, "{}_{}_lipo.csv".format(acc, scalename))
+        relative_position_file = os.path.join(s["data_dir"], "features", "relative_position", database, "%s.relative_position%s.csv") % (acc, s["surres"])
+        LIPS_parsed_csv = os.path.join(s["data_dir"], "features", "lips_score", database, "{}.surr{}.LIPS_score_parsed.csv".format(acc, s["num_of_sur_residues"]))
+        pssm_csv = os.path.join(s["data_dir"], "features", "pssm", database, "{}.surr{}.gaps{}.pssm.csv".format(acc, s["num_of_sur_residues"], s["max_n_gaps_in_TMD_subject_seq"]))
+        entropy_file = os.path.join(s["data_dir"], "features", "entropy", database, "{}.surr{}.gaps{}.uniq.entropy.csv".format(acc, s["num_of_sur_residues"], s["max_n_gaps_in_TMD_subject_seq"]))
+        rate4site_csv: Path = Path(s["data_dir"]).joinpath("features", "rate4site", database, f"{acc}_rate4site.csv")
+        freecontact_parsed_csv = os.path.join(s["data_dir"], "features", "coevolution", database, "{}.surr{}.gaps{}.freecontact_parsed.csv".format(acc, s["num_of_sur_residues"], s["max_n_gaps_in_TMD_subject_seq"]))
+        motifs_file = os.path.join(s["data_dir"], "features", "motifs", database, "{}.motifs.csv".format(acc))
+        feature_combined_file = os.path.join(s["data_dir"], "features", "combined", database, "{}.surr{}.gaps{}.combined_features.csv".format(acc, s["num_of_sur_residues"], s["max_n_gaps_in_TMD_subject_seq"]))
+        alignments_dir = os.path.join(s["data_dir"], "homologues", "alignments", database)
         alignment_summary_csv = os.path.join(alignments_dir, "{}.surr{}.gaps{}.alignment_summary.csv".format(acc, s["num_of_sur_residues"], s["max_n_gaps_in_TMD_subject_seq"]))
-        full_seq_fasta_file = os.path.join(s["thoipapy_data_folder"], "Proteins", database, "{}.fasta".format(acc))
-        phobius_outfile = os.path.join(s["thoipapy_data_folder"], "Proteins", database, "{}.phobius".format(acc))
+        full_seq_fasta_file = os.path.join(s["data_dir"], "Proteins", database, "{}.fasta".format(acc))
+        phobius_outfile = os.path.join(s["data_dir"], "Proteins", database, "{}.phobius".format(acc))
         combine_all_features(s, full_seq, acc, database, TMD_seq, TMD_start, feature_combined_file, entropy_file, rate4site_csv, pssm_csv, lipo_csv, freecontact_parsed_csv, relative_position_file, LIPS_parsed_csv, motifs_file,
                              alignment_summary_csv, full_seq_fasta_file, phobius_outfile, logging)
 
@@ -208,7 +208,7 @@ def combine_all_train_data_for_machine_learning(s, df_set, logging):
     """
     logging.info('creating train or test data for machine learning')
 
-    train_data_csv = Path(s["thoipapy_data_folder"]) / f"results/{s['setname']}/train_data/01_train_data_orig.csv"
+    train_data_csv = Path(s["data_dir"]) / f"results/{s['setname']}/train_data/01_train_data_orig.csv"
     make_sure_path_exists(train_data_csv, isfile=True)
 
     df_set_nonred = thoipapy.utils.drop_redundant_proteins_from_list(df_set, logging)
@@ -220,13 +220,13 @@ def combine_all_train_data_for_machine_learning(s, df_set, logging):
         database = df_set_nonred.loc[i, "database"]
         if s["remove_crystal_hetero"]:
             if database == "crystal":
-                feature_combined_file = os.path.join(s["thoipapy_data_folder"], "features", "combined", database,
+                feature_combined_file = os.path.join(s["data_dir"], "features", "combined", database,
                                                      "{}.nohetero.surr{}.gaps{}.combined_features.csv".format(acc, s[
                                                          "num_of_sur_residues"], s["max_n_gaps_in_TMD_subject_seq"]))
             else:
-                feature_combined_file = os.path.join(s["thoipapy_data_folder"], "features", "combined", database, "{}.surr{}.gaps{}.combined_features.csv".format(acc, s["num_of_sur_residues"], s["max_n_gaps_in_TMD_subject_seq"]))
+                feature_combined_file = os.path.join(s["data_dir"], "features", "combined", database, "{}.surr{}.gaps{}.combined_features.csv".format(acc, s["num_of_sur_residues"], s["max_n_gaps_in_TMD_subject_seq"]))
         else:
-            feature_combined_file = os.path.join(s["thoipapy_data_folder"], "features", "combined", database,
+            feature_combined_file = os.path.join(s["data_dir"], "features", "combined", database,
                                                  "{}.surr{}.gaps{}.combined_features.csv".format(acc, s[
                                                      "num_of_sur_residues"], s["max_n_gaps_in_TMD_subject_seq"]))
         df_features_new_protein = pd.read_csv(feature_combined_file, index_col=0)

@@ -54,8 +54,8 @@ def parse_NCBI_xml_to_csv_mult_prot(s, df_set, logging):
         else:
             raise ValueError('s["surres"] does not seem to be correct')
 
-        BLAST_xml_tar = os.path.join(s["thoipapy_data_folder"], "homologues", "xml", database, "{}.surr{}.BLAST.xml.tar.gz".format(acc, s["num_of_sur_residues"]))
-        homo_out_dir = os.path.join(s["thoipapy_data_folder"], "homologues", "ncbi", database)
+        BLAST_xml_tar = os.path.join(s["data_dir"], "homologues", "xml", database, "{}.surr{}.BLAST.xml.tar.gz".format(acc, s["num_of_sur_residues"]))
+        homo_out_dir = os.path.join(s["data_dir"], "homologues", "ncbi", database)
         if not os.path.isdir(homo_out_dir):
             os.makedirs(homo_out_dir)
         BLAST_csv_tar = os.path.join(homo_out_dir, "{}.surr{}.BLAST.csv.tar.gz".format(acc, s["num_of_sur_residues"]))
@@ -277,10 +277,10 @@ def extract_filtered_csv_homologues_to_alignments_mult_prot(s, df_set, logging):
         TMD_len = df_set.loc[i, "TMD_len"]
         query_TMD_seq_surr5 = df_set.loc[i, "TMD_seq_pl_surr5"]
 
-        homo_out_dir: Path = Path(s["thoipapy_data_folder"]) / f"homologues/ncbi/{database}"
+        homo_out_dir: Path = Path(s["data_dir"]) / f"homologues/ncbi/{database}"
         BLAST_csv_tar: Path = homo_out_dir / f"{acc}.surr{num_of_sur_residues}.BLAST.csv.tar.gz"
 
-        alignments_dir: Path = Path(s["thoipapy_data_folder"]) / f"homologues/alignments/{database}"
+        alignments_dir: Path = Path(s["data_dir"]) / f"homologues/alignments/{database}"
         if not alignments_dir.is_dir():
             alignments_dir.mkdir(parents=True)
 
@@ -296,7 +296,7 @@ def extract_filtered_csv_homologues_to_alignments_mult_prot(s, df_set, logging):
 
     df_align_results = pd.DataFrame(out_dict).T
     df_align_results.index.name = "acc"
-    align_results_csv = os.path.join(s["thoipapy_data_folder"], "results", s["setname"], "{}_alignment_summary.csv".format(s["setname"]))
+    align_results_csv = os.path.join(s["data_dir"], "results", s["setname"], "{}_alignment_summary.csv".format(s["setname"]))
     df_align_results.to_csv(align_results_csv)
 
     logging.info('finished extract filtered csv homologues to alignments for {} proteins. Output = {}'.format(df_align_results.shape[0], align_results_csv))

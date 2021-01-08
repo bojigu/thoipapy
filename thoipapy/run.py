@@ -52,8 +52,8 @@ def run(s: dict):
         # add to the dictionary itself
         s["setname"] = setname
         # create a results folder for that set
-        if not os.path.isdir(os.path.join(s["thoipapy_data_folder"], "results", setname)):
-            os.makedirs(os.path.join(s["thoipapy_data_folder"], "results", setname))
+        if not os.path.isdir(os.path.join(s["data_dir"], "results", setname)):
+            os.makedirs(os.path.join(s["data_dir"], "results", setname))
 
         logging = thoipapy.common.setup_keyboard_interrupt_and_error_logging(s, setname)
         logging.info("STARTING PROCESSING OF {}.".format(setname))

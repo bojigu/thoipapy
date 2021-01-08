@@ -38,13 +38,13 @@ def rate4site_calculation_mult_prot(s, df_set, logging):
         acc = df_set.at[i, "acc"]
         database = df_set.at[i, "database"]
         TMD_seq = df_set.at[i, "TMD_seq"]
-        alignments_dir = Path(s["thoipapy_data_folder"]) / f"homologues/alignments/{database}"
+        alignments_dir = Path(s["data_dir"]) / f"homologues/alignments/{database}"
 
         # input
         fasta_uniq_TMD_seqs_surr5_for_LIPO = alignments_dir / f"{acc}.surr5.gaps{max_n_gaps_in_TMD_subject_seq}.uniq.for_LIPO.fas"
 
         # output
-        rate4site_csv: Path = Path(s["thoipapy_data_folder"]).joinpath("features", "rate4site", database, f"{acc}_rate4site.csv")
+        rate4site_csv: Path = Path(s["data_dir"]).joinpath("features", "rate4site", database, f"{acc}_rate4site.csv")
 
         full_seq_len = len(df_set.at[i, "full_seq"])
         # number of residues surrounding the TMD on the left in alignment
