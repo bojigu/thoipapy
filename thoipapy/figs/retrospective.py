@@ -602,7 +602,7 @@ def calc_retrospective_coev_from_struct_contacts(s, dfset, logging):
      - this is named as "last TMD" because the randomisation takes took? the positions of first TMD and applied them to the last
 
     Takes pairwise coevolution values from FreeContact output file.
-    E.g. D:\Dropbox\tm_homodimer_dropbox\THOIPA_data\Features\coevolution\ NMR\O15455.surr20.gaps5.freecontact.csv
+    E.g. D:\thoipa_base_dir\THOIPA_data\Features\coevolution\ NMR\O15455.surr20.gaps5.freecontact.csv
     Data looks like this:
     1 F 2 F 0.195863 0.552187
     1 F 3 M 0.172853 -0.530669

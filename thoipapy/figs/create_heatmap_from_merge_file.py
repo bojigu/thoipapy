@@ -50,7 +50,7 @@ def create_merged_heatmap_for_trainset_and_testset(s, df_set, logging):
 
     for setname, THOIPA_column in zip(set_list, THOIPA_column_list):
 
-        set_path = thoipapy.common.get_path_of_protein_set(setname, Path(s["dropbox_dir"]) / "sets")
+        set_path = thoipapy.common.get_path_of_protein_set(setname, Path(s["base_dir"]) / "sets")
         df_set = pd.read_excel(set_path, sheet_name='proteins')
 
         LIPS_col = "LIPS_surface"  # "LIPS_surface_ranked"
@@ -58,7 +58,7 @@ def create_merged_heatmap_for_trainset_and_testset(s, df_set, logging):
 
         dfh_cols = ["res_num_full_seq", "residue_name", "interface", "interface_score", THOIPA_column, "PREDDIMER", "TMDOCK", LIPS_col, "conservation", "relative_polarity", coev_col]
 
-        names_excel_path = os.path.join(s["dropbox_dir"], "protein_names.xlsx")
+        names_excel_path = os.path.join(s["base_dir"], "protein_names.xlsx")
         df_names = pd.read_excel(names_excel_path, index_col=0)
         df_names["acc_db"] = df_names.index + "_" + df_names["database"]
         df_names["acc"] = df_names.index

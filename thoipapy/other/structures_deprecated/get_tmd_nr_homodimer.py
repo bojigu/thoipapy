@@ -164,7 +164,7 @@ def extract_crystal_resolv035_interact_pairs_and_create_fasta_file(s,logging):
     cdhit60_nr_represent228_pair_handle.close()
 
     ##create set228 file used for thoipapy , the inter pair with non-self intor rr pair number bigger than 1
-    set_file = os.path.join(s["dropbox_dir"], "sets",'set228_crystal.xlsx')
+    set_file = os.path.join(s["base_dir"], "sets",'set228_crystal.xlsx')
     create_inter_rr_number_bt1_set228_file(df_new, set_file)
 
 def create_multiple_bind_closedist_file(s,df_set, logging):

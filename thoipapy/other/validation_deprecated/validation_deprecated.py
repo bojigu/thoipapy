@@ -55,7 +55,7 @@ def run_LOO_validation_od_non_multiprocessing(s, df_set, logging):
         Also contains the mean ROC curve, and the mean AUC.
     """
     logging.info('Leave-One-Out cross validation is running')
-    names_excel_path = os.path.join(s["dropbox_dir"], "protein_names.xlsx")
+    names_excel_path = os.path.join(s["base_dir"], "protein_names.xlsx")
 
     # drop redundant proteins according to CD-HIT
     df_set = thoipapy.utils.drop_redundant_proteins_from_list(df_set, logging)
@@ -185,7 +185,7 @@ def run_LOO_validation_od_non_multiprocessing(s, df_set, logging):
     #######################################################################################################
 
     BO_all_df.to_csv(bocurve_data_raw_csv)
-    names_excel_path = os.path.join(s["dropbox_dir"], "protein_names.xlsx")
+    names_excel_path = os.path.join(s["base_dir"], "protein_names.xlsx")
 
     #linechart_mean_obs_and_rand = thoipapy.figs.Create_Bo_Curve_files.analyse_bo_curve_underlying_data(bocurve_data_raw_csv, crossvalidation_folder, names_excel_path)
     thoipapy.validation.bocurve.parse_BO_data_csv_to_excel(bocurve_data_raw_csv, bocurve_data_xlsx, s["n_residues_AUBOC_validation"], logging)

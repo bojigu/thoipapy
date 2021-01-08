@@ -223,7 +223,7 @@ def run(s: dict):
 
         if s["run_validation"] == True:
             sys.stdout.write("\n--------------- starting run_validation ---------------\n")
-            namedict = thoipapy.utils.create_namedict(os.path.join(s["dropbox_dir"], "protein_names.xlsx"))
+            namedict = thoipapy.utils.create_namedict(os.path.join(s["base_dir"], "protein_names.xlsx"))
             THOIPA_predictor_name = "THOIPA_{}_LOO".format(s["set_number"])
             predictors = [THOIPA_predictor_name, "PREDDIMER", "TMDOCK", "LIPS_surface_ranked", "random"]
             testsetname, trainsetname = get_testsetname_trainsetname_from_run_settings(s)

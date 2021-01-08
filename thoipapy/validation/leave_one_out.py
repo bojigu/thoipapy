@@ -79,7 +79,7 @@ def run_LOO_validation(s: dict, df_set: pd.DataFrame, logging):
     """
     logging.info("\n--------------- starting run_LOO_validation ---------------\n")
     setname = s["setname"]
-    names_excel_path = os.path.join(s["dropbox_dir"], "protein_names.xlsx")
+    names_excel_path = os.path.join(s["base_dir"], "protein_names.xlsx")
 
     # drop redundant proteins according to CD-HIT
     df_set = thoipapy.utils.drop_redundant_proteins_from_list(df_set, logging)
@@ -253,7 +253,7 @@ def run_LOO_validation(s: dict, df_set: pd.DataFrame, logging):
     #######################################################################################################
 
     BO_all_df.to_csv(bocurve_data_raw_csv)
-    # names_excel_path = os.path.join(s["dropbox_dir"], "protein_names.xlsx")
+    # names_excel_path = os.path.join(s["base_dir"], "protein_names.xlsx")
 
     # linechart_mean_obs_and_rand = thoipapy.figs.Create_Bo_Curve_files.analyse_bo_curve_underlying_data(bocurve_data_raw_csv, crossvalidation_folder, names_excel_path)
     thoipapy.validation.bocurve.parse_BO_data_csv_to_excel(bocurve_data_raw_csv, bocurve_data_xlsx, s["n_residues_AUBOC_validation"], logging)
@@ -393,7 +393,7 @@ def create_LOO_validation_fig(s, df_set, logging):
     BO_barchart_png: Union[Path, str] = Path(s["thoipapy_data_folder"]) / f"results/{s['setname']}/crossvalidation/data/{s['setname']}_LOO_AUBOC_barchart.png"
     other_figs_path: Union[Path, str] = Path(s["thoipapy_data_folder"]) / f"results/{s['setname']}/crossvalidation/other_figs"
 
-    names_excel_path = os.path.join(s["dropbox_dir"], "protein_names.xlsx")
+    names_excel_path = os.path.join(s["base_dir"], "protein_names.xlsx")
     namedict = thoipapy.utils.create_namedict(names_excel_path)
 
     # open pickle file

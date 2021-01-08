@@ -60,7 +60,7 @@ def validate_THOIPA_for_testset_trainset_combination(s, test_set_list, train_set
         Could not be saved easily as a dataframe, because the number of residues is different for each protein
 
     """
-    names_excel_path = os.path.join(s["dropbox_dir"], "protein_names.xlsx")
+    names_excel_path = os.path.join(s["base_dir"], "protein_names.xlsx")
     namedict = thoipapy.utils.create_namedict(names_excel_path)
 
     for n, train_set in enumerate(train_set_list):
@@ -184,7 +184,7 @@ def validate_THOIPA_for_testset_trainset_combination(s, test_set_list, train_set
 
 
 def validate_LIPS_for_testset(s, logging, LIPS_name="LIPS_LE", pred_col="LIPS_L*E"):
-    names_excel_path = os.path.join(s["dropbox_dir"], "protein_names.xlsx")
+    names_excel_path = os.path.join(s["base_dir"], "protein_names.xlsx")
     namedict = thoipapy.utils.create_namedict(names_excel_path)
 
     # create list of test and train datasets
@@ -274,7 +274,7 @@ def validate_LIPS_for_testset(s, logging, LIPS_name="LIPS_LE", pred_col="LIPS_L*
         #######################################################################################################
 
         LIPS_BO_data_df.to_csv(LIPS_BO_curve_data_csv)
-        names_excel_path = os.path.join(s["dropbox_dir"], "protein_names.xlsx")
+        names_excel_path = os.path.join(s["base_dir"], "protein_names.xlsx")
 
         # LIPS_linechart_mean_obs_and_rand = analyse_bo_curve_underlying_data(LIPS_BO_curve_data_csv, BO_curve_folder, names_excel_path)
 
