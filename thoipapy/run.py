@@ -32,14 +32,8 @@ parser.add_argument("-s",  # "-settingsfile",
                     help=r'Full path to your excel settings file.'
                          r'E.g. "\Path\to\your\settingsfile.xlsx"')
 
-if __name__ == "__main__":
-    sys.stdout.write('\nRun thoipapy as follows:')
-    sys.stdout.write(r'python \Path\to\run.py -s \Path\to\your\settingsfile.xlsx')
-    # get the command-line arguments
-    args = parser.parse_args()
-    # args.s is the excel_settings_file input by the user
-    s = thoipapy.common.create_settingdict(args.s)
 
+def run(s: dict):
     ##############################################################################################
     #                                                                                            #
     #                               setname, logging, results folder                             #
@@ -52,7 +46,6 @@ if __name__ == "__main__":
         list_protein_sets = [int(n) for n in s["set_number"].split(",")]
     else:
         list_protein_sets = [s["set_number"]]
-
     for set_number in list_protein_sets:
         s["set_number"] = set_number
         # define set name, which should be in the excel file name
@@ -276,3 +269,14 @@ if __name__ == "__main__":
         # close the logger. A new one will be made for the next protein list.
         logging.info("FINISHED PROCESSING OF {}.".format(setname))
         logging.shutdown()
+
+
+if __name__ == "__main__":
+    sys.stdout.write('\nRun thoipapy as follows:')
+    sys.stdout.write(r'python \Path\to\run.py -s \Path\to\your\settingsfile.xlsx')
+    # get the command-line arguments
+    args = parser.parse_args()
+    # args.s is the excel_settings_file input by the user
+    settings_dict = thoipapy.common.create_settingdict(args.s)
+
+    run(settings_dict)
