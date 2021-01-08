@@ -239,7 +239,7 @@ def create_settingdict(excel_file_with_settings):
         # join dictionaries together
         s.update(sheet_as_dict)
 
-    list_paths_to_normalise = ['MiRMAK_data_folder', 'dropbox_dir', 'sets_folder', 'thoipapy_data_folder',
+    list_paths_to_normalise = ['MiRMAK_data_folder', 'dropbox_dir', 'sets_dir', 'thoipapy_data_folder',
                                'Rcode', 'hhblits_dir', 'uniprot_database_dir', 'Rscript_dir']
     # normalise the paths for selected columns, so that they are appropriate for the operating system
     for path in list_paths_to_normalise:
@@ -384,7 +384,7 @@ def setup_error_logging(logfile, level_console="DEBUG", level_logfile="DEBUG", p
     return logging
 
 
-def get_path_of_protein_set(setname, sets_folder):
+def get_path_of_protein_set(setname, sets_dir):
     """Get path of protein set, using glob to search for "set03"
     for example within all excel files in the sets folder.
 
@@ -392,7 +392,7 @@ def get_path_of_protein_set(setname, sets_folder):
     ----------
     setname : str
         Name of the protein set. E.g. set03
-    sets_folder : str
+    sets_dir : str
         Path to protein set folder
 
     Returns
@@ -400,7 +400,7 @@ def get_path_of_protein_set(setname, sets_folder):
     set_path : str
         Path to particular protein set.
     """
-    xlsx_list = glob.glob(os.path.join(sets_folder, "*.xlsx"))
+    xlsx_list = glob.glob(os.path.join(sets_dir, "*.xlsx"))
 
     # remove temporary open excel files from the list (hidden files that start with ~$)
     xlsx_list = [path for path in xlsx_list if r"~$" not in path]

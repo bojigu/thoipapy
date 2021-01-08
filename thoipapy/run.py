@@ -39,8 +39,7 @@ def run(s: dict):
     #                               setname, logging, results folder                             #
     #                                                                                            #
     ##############################################################################################
-    sets_folder = os.path.join(s["dropbox_dir"], "sets")
-
+    sets_dir = os.path.join(s["sets_dir"])
     # if multiple sets need to be run, split them by comma
     if isinstance(s["set_number"], str) and "," in s["set_number"]:
         list_protein_sets = [int(n) for n in s["set_number"].split(",")]
@@ -59,7 +58,7 @@ def run(s: dict):
         logging = thoipapy.common.setup_keyboard_interrupt_and_error_logging(s, setname)
         logging.info("STARTING PROCESSING OF {}.".format(setname))
 
-        set_path = thoipapy.common.get_path_of_protein_set(setname, sets_folder)
+        set_path = thoipapy.common.get_path_of_protein_set(setname, sets_dir)
 
         ##############################################################################################
         #                                                                                            #

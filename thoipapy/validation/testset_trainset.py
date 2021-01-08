@@ -82,7 +82,7 @@ def validate_THOIPA_for_testset_trainset_combination(s, test_set_list, train_set
 
             thoipapy.utils.make_sure_path_exists(bocurve_data_xlsx, isfile=True)
 
-            testset_path = thoipapy.common.get_path_of_protein_set(testsetname, s["sets_folder"])
+            testset_path = thoipapy.common.get_path_of_protein_set(testsetname, s["sets_dir"])
 
             testdataset_df = pd.read_excel(testset_path)
             THOIPA_BO_data_df = pd.DataFrame()
@@ -205,7 +205,7 @@ def validate_LIPS_for_testset(s, logging, LIPS_name="LIPS_LE", pred_col="LIPS_L*
         BO_barchart_png = os.path.join(BO_curve_folder, "AUBOC_barchart.png")
         thoipapy.utils.make_sure_path_exists(bocurve_data_xlsx, isfile=True)
 
-        testset_path = thoipapy.common.get_path_of_protein_set(testsetname, s["sets_folder"])
+        testset_path = thoipapy.common.get_path_of_protein_set(testsetname, s["sets_dir"])
 
         testdataset_df = pd.read_excel(testset_path)
         LIPS_BO_data_df = pd.DataFrame()
