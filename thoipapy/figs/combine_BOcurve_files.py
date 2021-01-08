@@ -153,7 +153,7 @@ def compare_selected_predictors(s, logging):
     figsize = np.array([3.42, 3.42]) * 2  # DOUBLE the real size, due to problems on Bo computer with fontsizes
     fig, ax = plt.subplots(figsize=figsize)
 
-    predictors_df = pd.read_excel(s["excel_file_with_settings"], sheet_name="selected_predictors")
+    predictors_df = pd.read_excel(s["settings_path"], sheet_name="selected_predictors")
     predictors_df["include"] = predictors_df["include"].apply(convert_truelike_to_bool, convert_nontrue=False)
     predictors_df["include"] = predictors_df["include"].apply(convert_falselike_to_bool)
     predictors_df = predictors_df.loc[predictors_df.include == True]

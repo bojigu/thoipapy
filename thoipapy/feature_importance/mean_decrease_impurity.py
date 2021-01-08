@@ -47,7 +47,7 @@ def calc_feat_import_using_MDI_before_feature_seln(s, logging):
     df_data = pd.read_csv(train_data_csv, index_col=0)
     df_data = df_data.dropna()
 
-    X = drop_cols_not_used_in_ML(logging, df_data, s["excel_file_with_settings"])
+    X = drop_cols_not_used_in_ML(logging, df_data, s["settings_path"])
     y = df_data["interface"]
     n_features = X.shape[1]
 

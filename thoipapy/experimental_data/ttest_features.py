@@ -62,7 +62,7 @@ def conduct_ttest_for_all_features(s, logging):
     # df_feat_imp_MDA_trainset = pd.read_excel(feat_imp_MDA_xlsx, sheet_name="single_feat", index_col=0)
     # cols = list(df_feat_imp_MDA_trainset.index)
 
-    df = drop_cols_not_used_in_ML(logging, df_orig, s["excel_file_with_settings"])
+    df = drop_cols_not_used_in_ML(logging, df_orig, s["settings_path"])
     feature_columns = list(df.columns)
 
     # add back the interface "bind" column

@@ -85,7 +85,7 @@ def run_LOO_validation_od_non_multiprocessing(s, df_set, logging):
     BO_all_df = pd.DataFrame()
     pred_colname = "THOIPA_{}_LOO".format(s["set_number"])
 
-    n_features = thoipapy.validation.feature_selection.drop_cols_not_used_in_ML(logging, df_data, s["excel_file_with_settings"]).shape[1]
+    n_features = thoipapy.validation.feature_selection.drop_cols_not_used_in_ML(logging, df_data, s["settings_path"]).shape[1]
     forest = thoipapy.ML_model.train_model.return_classifier_with_loaded_ensemble_parameters(s, tuned_ensemble_parameters_csv)
 
     for i in df_set.index:
@@ -106,7 +106,7 @@ def run_LOO_validation_od_non_multiprocessing(s, df_set, logging):
             # skip protein
             continue
         df_train = df_data.loc[df_data.acc_db != acc_db]
-        X_train = thoipapy.validation.feature_selection.drop_cols_not_used_in_ML(logging, df_train, s["excel_file_with_settings"], i)
+        X_train = thoipapy.validation.feature_selection.drop_cols_not_used_in_ML(logging, df_train, s["settings_path"], i)
         y_train = df_train[s["bind_column"]]
 
         #######################################################################################################
@@ -119,7 +119,7 @@ def run_LOO_validation_od_non_multiprocessing(s, df_set, logging):
         testdata_combined_file = os.path.join(s["data_dir"], "features", "combined", database, "{}.surr20.gaps5.combined_features.csv".format(acc))
         df_test = pd.read_csv(testdata_combined_file)
 
-        X_test = thoipapy.validation.feature_selection.drop_cols_not_used_in_ML(logging, df_test, s["excel_file_with_settings"])
+        X_test = thoipapy.validation.feature_selection.drop_cols_not_used_in_ML(logging, df_test, s["settings_path"])
         y_test = df_test["interface"].fillna(0).astype(int)
 
         #######################################################################################################
@@ -280,7 +280,7 @@ def predict_test_dataset_with_THOIPA_DEPRECATED(train_setname, test_setname, s, 
     fit = joblib.load(model_pkl)
 
     df_data = pd.read_csv(test_data_csv, index_col=0)
-    df_testdata = drop_cols_not_used_in_ML(logging, df_data, s["excel_file_with_settings"])
+    df_testdata = drop_cols_not_used_in_ML(logging, df_data, s["settings_path"])
     tX = df_testdata
 
     tp = fit.predict_proba(tX)

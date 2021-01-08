@@ -26,7 +26,7 @@ class LooValidationData:
         self.testdata_combined_file = None
         self.THOIPA_LOO_prediction_csv = None
         self.df_train = None
-        self.excel_file_with_settings = None
+        self.settings_path = None
         self.forest = None
         self.pred_colname = None
         self.i = None
@@ -34,7 +34,6 @@ class LooValidationData:
         self.database = None
         self.bind_column = None
         self.logger = None
-        self.excel_file_with_settings = None
 
 
 def run_LOO_validation(s: dict, df_set: pd.DataFrame, logging):
@@ -115,7 +114,7 @@ def run_LOO_validation(s: dict, df_set: pd.DataFrame, logging):
     start = time.clock()
     pred_colname = "THOIPA_{}_LOO".format(s["set_number"])
 
-    n_features = thoipapy.validation.feature_selection.drop_cols_not_used_in_ML(logging, df_data, s["excel_file_with_settings"]).shape[1]
+    n_features = thoipapy.validation.feature_selection.drop_cols_not_used_in_ML(logging, df_data, s["settings_path"]).shape[1]
     forest = thoipapy.ML_model.train_model.return_classifier_with_loaded_ensemble_parameters(s, tuned_ensemble_parameters_csv)
 
     if s["use_multiprocessing"]:
@@ -156,7 +155,7 @@ def run_LOO_validation(s: dict, df_set: pd.DataFrame, logging):
         loo_validation_data.bind_column = s["bind_column"]
         loo_validation_data.database = database
         loo_validation_data.df_train = df_train
-        loo_validation_data.excel_file_with_settings = s["excel_file_with_settings"]
+        loo_validation_data.settings_path = s["settings_path"]
         loo_validation_data.forest = forest
         loo_validation_data.i = i
         loo_validation_data.logger = logger
@@ -289,7 +288,7 @@ def LOO_single_prot(d: LooValidationData):
     #                                                                                                     #
     #######################################################################################################
 
-    # X_train = thoipapy.validation.feature_selection.drop_cols_not_used_in_ML(d.logger, d.df_train, d.excel_file_with_settings, d.i)
+    # X_train = thoipapy.validation.feature_selection.drop_cols_not_used_in_ML(d.logger, d.df_train, d.settings_path, d.i)
     X_train = d.df_train.drop(d.bind_column, axis=1)
     y_train = d.df_train[d.bind_column]
 
@@ -305,7 +304,7 @@ def LOO_single_prot(d: LooValidationData):
     assert d.bind_column in df_testdata_combined.columns
     df_test = df_testdata_combined.reindex(columns=d.df_train.columns, index=df_testdata_combined.index)
 
-    # X_test = thoipapy.validation.feature_selection.drop_cols_not_used_in_ML(logger, df_test, d.excel_file_with_settings, d.i)
+    # X_test = thoipapy.validation.feature_selection.drop_cols_not_used_in_ML(logger, df_test, d.settings_path, d.i)
     # y_test = df_test["interface"].fillna(0).astype(int)
 
     X_test = df_test.drop(d.bind_column, axis=1)

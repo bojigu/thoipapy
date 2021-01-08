@@ -70,7 +70,7 @@ def run(s: dict):
 
         # create list of uniprot accessions to run
         acc_list = df_set.acc.tolist()
-        sys.stdout.write("settings file : {}\nsettings : {}\nprotein set number {}, acc_list : {}\n".format(os.path.basename(args.s), s, s["set_number"], acc_list))
+        sys.stdout.write("settings file : {}\nsettings : {}\nprotein set number {}, acc_list : {}\n".format(os.path.basename(s["settings_path"]), s, s["set_number"], acc_list))
         sys.stdout.flush()
 
         dfset = thoipapy.common.process_set_protein_seqs(s, setname, df_set, set_path)

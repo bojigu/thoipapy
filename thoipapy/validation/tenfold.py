@@ -55,7 +55,7 @@ def run_10fold_cross_validation(s, logging):
     if s["min_n_homol_training"] != 0:
         df_data = df_data.loc[df_data.n_homologues >= s["min_n_homol_training"]]
 
-    X = drop_cols_not_used_in_ML(logging, df_data, s["excel_file_with_settings"])
+    X = drop_cols_not_used_in_ML(logging, df_data, s["settings_path"])
     y = df_data["interface"]
 
     skf = StratifiedKFold(n_splits=s["cross_validation_number_of_splits"])

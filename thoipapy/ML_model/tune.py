@@ -34,7 +34,7 @@ def tune_ensemble_parameters(s, train_data_csv, tuned_ensemble_parameters_csv, l
     if True in df_data.columns.str.contains("Unnamed").tolist():
         raise ValueError(f"unnamed column found when reading {train_data_csv}")
     y = df_data[s["bind_column"]]
-    X = drop_cols_not_used_in_ML(logging, df_data, s["excel_file_with_settings"])
+    X = drop_cols_not_used_in_ML(logging, df_data, s["settings_path"])
     # del X[s["bind_column"]]
     assert "interface" not in X.columns
     if X.isnull().values.any():

@@ -220,12 +220,12 @@ def calc_lipophilicity(seq, method="mean"):
         return sum_of_multiplied
 
 
-def create_settingdict(excel_file_with_settings):
+def create_settingdict(settings_path):
     sheetnames = ["run_settings", "file_locations", "variables"]
-    s = {"excel_file_with_settings": excel_file_with_settings}
+    s = {"settings_path": settings_path}
     for sheet_name in sheetnames:
         # open excel file as pandas dataframe
-        dfset = pd.read_excel(excel_file_with_settings, sheet_name=sheet_name)
+        dfset = pd.read_excel(settings_path, sheet_name=sheet_name)
         # exclude row with notes, set parameter as index
         dfset = dfset.dropna(subset=["parameter", "value"])
         dfset.set_index("parameter", inplace=True)

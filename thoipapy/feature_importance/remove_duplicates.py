@@ -25,7 +25,7 @@ def remove_duplicate_features_with_lower_MDI(s, logging):
 
     if True in df_data.columns.str.contains("Unnamed").tolist():
         raise ValueError(f"unnamed column found when reading {train_data_csv}")
-    df_X = drop_cols_not_used_in_ML(logging, df_data, s["excel_file_with_settings"])
+    df_X = drop_cols_not_used_in_ML(logging, df_data, s["settings_path"])
 
     correlated_feature_pairs = set()
     correlation_matrix = df_X.corr()

@@ -69,7 +69,7 @@ def calc_feat_import_from_mean_decrease_accuracy(s, logging):
     X = df_data[cols_excluding_y]
     y = df_data["interface"]
 
-    settings_path = s["excel_file_with_settings"]
+    settings_path = s["settings_path"]
     df_feat = pd.read_excel(settings_path, sheet_name="features")
     df_feat = df_feat.loc[df_feat.include == 1]
     feature_types: list = list(df_feat.feature_type.unique())
