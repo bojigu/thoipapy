@@ -23,7 +23,7 @@ def plot_feature_importance(s, logging):
 
     # input
     mean_decrease_impurity_all_features_csv = Path(s["data_dir"]) / f"results/{s['setname']}/train_data/01_feat_imp_MDI_before_feature_seln.csv"
-    feat_imp_mean_decrease_accuracy_xlsx = Path(s["data_dir"]) / f"results/{trainset}/feat_imp/feat_imp_mean_decrease_accuracy.xlsx"
+    feat_imp_mean_decrease_accuracy_xlsx = Path(s["data_dir"]) / f"results/{s['setname']}/feat_imp/feat_imp_mean_decrease_accuracy.xlsx"
     tuned_ensemble_parameters_csv = Path(s["data_dir"]) / f"results/{s['setname']}/train_data/04_tuned_ensemble_parameters.csv"
     # output
     variable_importance_png = Path(s["data_dir"]) / "results" / s["setname"] / "feat_imp/FigS17_BZ13_feature_importance.png"
