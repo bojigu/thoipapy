@@ -107,8 +107,8 @@ def conduct_ttest_for_all_features(s, logging):
 
     for col in feature_columns:
         correlated_features = dfcorr[col].loc[dfcorr[col] > cutoff_R2_correlated].index.tolist()
-        correlated_features.remove(col)
         if len(correlated_features) > 0:
+            correlated_features.remove(col)
             dft.loc[col, "correlated features (R2 > 0.6)"] = ", ".join(correlated_features)
         else:
             dft.loc[col, "correlated features (R2 > 0.6)"] = ""

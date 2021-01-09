@@ -59,7 +59,8 @@ def rate4site_calculation_mult_prot(s, df_set, logging):
 
 def rate4site_calculation(TMD_seq: str, acc: str, fasta_uniq_TMD_seqs_surr5_for_LIPO: Union[Path, str], rate4site_csv: Path, surrounding_seq_len_n_term_offset: int, logging, rerun_rate4site: bool = False):
     output_dir: Union[Path, str] = rate4site_csv.parent
-    assert output_dir.is_dir()
+    if not output_dir.is_dir():
+        output_dir.mkdir(parents=True)
     # temp output files
     rate4site_orig_output: Union[Path, str] = output_dir / f"{acc}.rate4site_orig_output.txt"
     cons_cdhit_input_fasta: Union[Path, str] = output_dir / f"{acc}.lipo_seqs_cdhit_input.fas"
