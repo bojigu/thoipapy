@@ -14,7 +14,7 @@ def get_pivot_table_coev_data(s, i, XI, df_set):
     database = df_set.loc[i, "database"]
     TMD_start = int(df_set.loc[i, "TMD_start"])
     TMD_end = int(df_set.loc[i, "TMD_end"])
-    freecontact_file = os.path.join(s["thoipapy_data_folder"], "features", "coevolution", database, "{}.surr{}.gaps{}.freecontact.csv".format(acc, s["num_of_sur_residues"], s["max_n_gaps_in_TMD_subject_seq"]))
+    freecontact_file = os.path.join(s["data_dir"], "features", "coevolution", database, "{}.surr{}.gaps{}.freecontact.csv".format(acc, s["num_of_sur_residues"], s["max_n_gaps_in_TMD_subject_seq"]))
 
     df = pd.read_csv(freecontact_file, sep=" ", header=None)
     df.columns = ["n1", "res1", "n2", "res2", "MI", "DI"]
@@ -76,7 +76,7 @@ def calc_coev_vs_res_dist(s, df_set, logging):
     """
 
     logging.info('calc_coev_vs_res_dist starting')
-    coev_vs_res_dist_xlsx = os.path.join(s["thoipapy_data_folder"], "results", s["setname"], "{}_coev_vs_res_dist.xlsx".format(s["setname"]))
+    coev_vs_res_dist_xlsx = os.path.join(s["data_dir"], "results", s["setname"], "{}_coev_vs_res_dist.xlsx".format(s["setname"]))
     writer = pd.ExcelWriter(coev_vs_res_dist_xlsx)
 
     for XI in ["MI", "DI"]:
@@ -204,7 +204,7 @@ def plot_coev_vs_res_dist(s, logging):
     TUMblue = colour_dict["TUM_colours"]['TUMBlue']
 
     fontsize = 9
-    coev_vs_res_dist_xlsx = os.path.join(s["thoipapy_data_folder"], "results", s["setname"], "{}_coev_vs_res_dist.xlsx".format(s["setname"]))
+    coev_vs_res_dist_xlsx = os.path.join(s["data_dir"], "results", s["setname"], "{}_coev_vs_res_dist.xlsx".format(s["setname"]))
 
     fig, ax = plt.subplots(figsize=(4.5, 3.42))
 
@@ -296,12 +296,12 @@ def calc_retrospective_coev_from_list_interf_res(s, df_set, logging):
     for randomise_int_res in [False, True]:
 
         if randomise_int_res == True:
-            retrospective_coev_from_list_interf_res_xlsx = os.path.join(s["thoipapy_data_folder"], "results", s["setname"], "retrospective", "{}_retrospective_coev_from_list_interf_res_random.xlsx".format(s["setname"]))
+            retrospective_coev_from_list_interf_res_xlsx = os.path.join(s["data_dir"], "results", s["setname"], "retrospective", "{}_retrospective_coev_from_list_interf_res_random.xlsx".format(s["setname"]))
         else:
-            retrospective_coev_from_list_interf_res_xlsx = os.path.join(s["thoipapy_data_folder"], "results", s["setname"], "retrospective", "{}_retrospective_coev_from_list_interf_res.xlsx".format(s["setname"]))
+            retrospective_coev_from_list_interf_res_xlsx = os.path.join(s["data_dir"], "results", s["setname"], "retrospective", "{}_retrospective_coev_from_list_interf_res.xlsx".format(s["setname"]))
 
-        if not os.path.exists(os.path.join(s["thoipapy_data_folder"], "results", s["setname"], "retrospective")):
-            os.makedirs(os.path.join(s["thoipapy_data_folder"], "results", s["setname"], "retrospective"))
+        if not os.path.exists(os.path.join(s["data_dir"], "results", s["setname"], "retrospective")):
+            os.makedirs(os.path.join(s["data_dir"], "results", s["setname"], "retrospective"))
         writer = pd.ExcelWriter(retrospective_coev_from_list_interf_res_xlsx)
 
         # randomise_int_res = False
@@ -431,8 +431,8 @@ def calc_retrospective_coev_from_list_interf_res_single_prot(sub_dict, s, loggin
     TMD_start = int(df_set.loc[i, "TMD_start"])
     TMD_end = int(df_set.loc[i, "TMD_end"])
     TMD_len = TMD_end - TMD_start
-    freecontact_file = os.path.join(s["thoipapy_data_folder"], "features", "coevolution", database, "{}.surr{}.gaps{}.freecontact.csv".format(acc, s["num_of_sur_residues"], s["max_n_gaps_in_TMD_subject_seq"]))
-    feature_combined_file = os.path.join(s["thoipapy_data_folder"], "features", "combined", database, "{}.surr{}.gaps{}.combined_features.csv".format(acc, s["num_of_sur_residues"], s["max_n_gaps_in_TMD_subject_seq"]))
+    freecontact_file = os.path.join(s["data_dir"], "features", "coevolution", database, "{}.surr{}.gaps{}.freecontact.csv".format(acc, s["num_of_sur_residues"], s["max_n_gaps_in_TMD_subject_seq"]))
+    feature_combined_file = os.path.join(s["data_dir"], "features", "combined", database, "{}.surr{}.gaps{}.combined_features.csv".format(acc, s["num_of_sur_residues"], s["max_n_gaps_in_TMD_subject_seq"]))
 
     df = pd.read_csv(freecontact_file, sep=" ", header=None)
     df.columns = ["n1", "res1", "n2", "res2", "MI", "DI"]
@@ -602,7 +602,7 @@ def calc_retrospective_coev_from_struct_contacts(s, dfset, logging):
      - this is named as "last TMD" because the randomisation takes took? the positions of first TMD and applied them to the last
 
     Takes pairwise coevolution values from FreeContact output file.
-    E.g. D:\Dropbox\tm_homodimer_dropbox\THOIPA_data\Features\coevolution\ NMR\O15455.surr20.gaps5.freecontact.csv
+    E.g. D:\thoipa_base_dir\THOIPA_data\Features\coevolution\ NMR\O15455.surr20.gaps5.freecontact.csv
     Data looks like this:
     1 F 2 F 0.195863 0.552187
     1 F 3 M 0.172853 -0.530669
@@ -644,11 +644,11 @@ def calc_retrospective_coev_from_struct_contacts(s, dfset, logging):
     logging.info('calc_retrospective_coev_from_struct_contacts starting')
 
     # if randomise_int_res == True:
-    #     retrospective_coev_xlsx = os.path.join(s["thoipapy_data_folder"], "results", s["setname"], "retrospective", "{}_retrospective_coev_from_struct_contact_random.xlsx".format(s["setname"]))
+    #     retrospective_coev_xlsx = os.path.join(s["data_dir"], "results", s["setname"], "retrospective", "{}_retrospective_coev_from_struct_contact_random.xlsx".format(s["setname"]))
     # else:
-    #     retrospective_coev_xlsx = os.path.join(s["thoipapy_data_folder"], "results", s["setname"], "retrospective", "{}_retrospective_coev_from_struct_contact.xlsx".format(s["setname"]))
+    #     retrospective_coev_xlsx = os.path.join(s["data_dir"], "results", s["setname"], "retrospective", "{}_retrospective_coev_from_struct_contact.xlsx".format(s["setname"]))
 
-    retrospective_coev_xlsx = os.path.join(s["thoipapy_data_folder"], "results", s["setname"], "retrospective", "{}_retrospective_coev_from_struct_contact.xlsx".format(s["setname"]))
+    retrospective_coev_xlsx = os.path.join(s["data_dir"], "results", s["setname"], "retrospective", "{}_retrospective_coev_from_struct_contact.xlsx".format(s["setname"]))
     make_sure_path_exists(retrospective_coev_xlsx, isfile=True)
     writer = pd.ExcelWriter(retrospective_coev_xlsx)
 
@@ -663,7 +663,7 @@ def calc_retrospective_coev_from_struct_contacts(s, dfset, logging):
         InterPairList_of_last_TMD = None
         NonInterPairList_of_last_TMD = None
         TMD_start_of_last_TMD = None
-        crystal_NMR_interpair_file = os.path.join(s["thoipapy_data_folder"], "results", "Average_Fraction_DI", "Crystal_NMR_interpair.csv")
+        crystal_NMR_interpair_file = os.path.join(s["data_dir"], "results", "Average_Fraction_DI", "Crystal_NMR_interpair.csv")
         pd_int = pd.read_csv(crystal_NMR_interpair_file, engine="python", index_col=0)
         """pd_int looks like this    
         acc	    inter1	inter2
@@ -821,7 +821,7 @@ def calc_retrospective_coev_from_struct_contacts_single_prot(sub_dict, s, pd_int
     lowest_interface_res = min(interlist)
     highest_interface_res = max(interlist)
     NoninterPairList = []
-    freecontact_file = os.path.join(s["thoipapy_data_folder"], "features", "coevolution", database, "{}.surr20.gaps5.freecontact.csv".format(acc))
+    freecontact_file = os.path.join(s["data_dir"], "features", "coevolution", database, "{}.surr20.gaps5.freecontact.csv".format(acc))
     inter_within8_dict = {}
     DI_dict = {}
 

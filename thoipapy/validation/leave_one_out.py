@@ -26,7 +26,7 @@ class LooValidationData:
         self.testdata_combined_file = None
         self.THOIPA_LOO_prediction_csv = None
         self.df_train = None
-        self.excel_file_with_settings = None
+        self.settings_path = None
         self.forest = None
         self.pred_colname = None
         self.i = None
@@ -34,7 +34,6 @@ class LooValidationData:
         self.database = None
         self.bind_column = None
         self.logger = None
-        self.excel_file_with_settings = None
 
 
 def run_LOO_validation(s: dict, df_set: pd.DataFrame, logging):
@@ -79,19 +78,19 @@ def run_LOO_validation(s: dict, df_set: pd.DataFrame, logging):
     """
     logging.info("\n--------------- starting run_LOO_validation ---------------\n")
     setname = s["setname"]
-    names_excel_path = os.path.join(s["dropbox_dir"], "protein_names.xlsx")
+    names_excel_path = os.path.join(s["base_dir"], "protein_names.xlsx")
 
     # drop redundant proteins according to CD-HIT
     df_set = thoipapy.utils.drop_redundant_proteins_from_list(df_set, logging)
 
     # input
-    train_data_after_first_feature_seln_csv = Path(s["thoipapy_data_folder"]) / f"results/{s['setname']}/train_data/03_train_data_after_first_feature_seln.csv"
-    tuned_ensemble_parameters_csv = Path(s["thoipapy_data_folder"]) / f"results/{s['setname']}/train_data/04_tuned_ensemble_parameters.csv"
+    train_data_after_first_feature_seln_csv = Path(s["data_dir"]) / f"results/{s['setname']}/train_data/03_train_data_after_first_feature_seln.csv"
+    tuned_ensemble_parameters_csv = Path(s["data_dir"]) / f"results/{s['setname']}/train_data/04_tuned_ensemble_parameters.csv"
     # output
-    LOO_crossvalidation_pkl = os.path.join(s["thoipapy_data_folder"], "results", s["setname"], "crossvalidation", "data", "{}_LOO_crossvalidation.pkl".format(s["setname"]))
-    bocurve_data_raw_csv = os.path.join(s["thoipapy_data_folder"], "results", s["setname"], "crossvalidation", "data", "{}_loo_bocurve_data_raw.csv".format(s["setname"]))
-    bocurve_data_xlsx: Union[Path, str] = Path(s["thoipapy_data_folder"]) / f"results/{s['setname']}/crossvalidation/data/{s['setname']}_thoipa_loo_bo_curve_data.xlsx"
-    sim_matrix_xlsx = Path(s["thoipapy_data_folder"]) / f"results/{s['setname']}/clusters/{setname}_sim_matrix.xlsx"
+    LOO_crossvalidation_pkl = os.path.join(s["data_dir"], "results", s["setname"], "crossvalidation", "data", "{}_LOO_crossvalidation.pkl".format(s["setname"]))
+    bocurve_data_raw_csv = os.path.join(s["data_dir"], "results", s["setname"], "crossvalidation", "data", "{}_loo_bocurve_data_raw.csv".format(s["setname"]))
+    bocurve_data_xlsx: Union[Path, str] = Path(s["data_dir"]) / f"results/{s['setname']}/crossvalidation/data/{s['setname']}_thoipa_loo_bo_curve_data.xlsx"
+    sim_matrix_xlsx = Path(s["data_dir"]) / f"results/{s['setname']}/clusters/{setname}_sim_matrix.xlsx"
 
     if not sim_matrix_xlsx.is_file():
         raise FileNotFoundError(f"The similarity matrix with clusters of putative homologues could not be found ({sim_matrix_xlsx})")
@@ -115,7 +114,7 @@ def run_LOO_validation(s: dict, df_set: pd.DataFrame, logging):
     start = time.clock()
     pred_colname = "THOIPA_{}_LOO".format(s["set_number"])
 
-    n_features = thoipapy.validation.feature_selection.drop_cols_not_used_in_ML(logging, df_data, s["excel_file_with_settings"]).shape[1]
+    n_features = thoipapy.validation.feature_selection.drop_cols_not_used_in_ML(logging, df_data, s["settings_path"]).shape[1]
     forest = thoipapy.ML_model.train_model.return_classifier_with_loaded_ensemble_parameters(s, tuned_ensemble_parameters_csv)
 
     if s["use_multiprocessing"]:
@@ -156,13 +155,13 @@ def run_LOO_validation(s: dict, df_set: pd.DataFrame, logging):
         loo_validation_data.bind_column = s["bind_column"]
         loo_validation_data.database = database
         loo_validation_data.df_train = df_train
-        loo_validation_data.excel_file_with_settings = s["excel_file_with_settings"]
+        loo_validation_data.settings_path = s["settings_path"]
         loo_validation_data.forest = forest
         loo_validation_data.i = i
         loo_validation_data.logger = logger
         loo_validation_data.pred_colname = pred_colname
-        loo_validation_data.testdata_combined_file = os.path.join(s["thoipapy_data_folder"], "features", "combined", database, "{}.surr20.gaps5.combined_features.csv".format(acc))
-        loo_validation_data.THOIPA_LOO_prediction_csv = Path(s["thoipapy_data_folder"]) / f"results/{s['setname']}/predictions/THOIPA_LOO/{database}.{acc}.LOO.prediction.csv"
+        loo_validation_data.testdata_combined_file = os.path.join(s["data_dir"], "features", "combined", database, "{}.surr20.gaps5.combined_features.csv".format(acc))
+        loo_validation_data.THOIPA_LOO_prediction_csv = Path(s["data_dir"]) / f"results/{s['setname']}/predictions/THOIPA_LOO/{database}.{acc}.LOO.prediction.csv"
 
         thoipapy.utils.make_sure_path_exists(loo_validation_data.THOIPA_LOO_prediction_csv, isfile=True)
 
@@ -253,7 +252,7 @@ def run_LOO_validation(s: dict, df_set: pd.DataFrame, logging):
     #######################################################################################################
 
     BO_all_df.to_csv(bocurve_data_raw_csv)
-    # names_excel_path = os.path.join(s["dropbox_dir"], "protein_names.xlsx")
+    # names_excel_path = os.path.join(s["base_dir"], "protein_names.xlsx")
 
     # linechart_mean_obs_and_rand = thoipapy.figs.Create_Bo_Curve_files.analyse_bo_curve_underlying_data(bocurve_data_raw_csv, crossvalidation_folder, names_excel_path)
     thoipapy.validation.bocurve.parse_BO_data_csv_to_excel(bocurve_data_raw_csv, bocurve_data_xlsx, s["n_residues_AUBOC_validation"], logging)
@@ -289,7 +288,7 @@ def LOO_single_prot(d: LooValidationData):
     #                                                                                                     #
     #######################################################################################################
 
-    # X_train = thoipapy.validation.feature_selection.drop_cols_not_used_in_ML(d.logger, d.df_train, d.excel_file_with_settings, d.i)
+    # X_train = thoipapy.validation.feature_selection.drop_cols_not_used_in_ML(d.logger, d.df_train, d.settings_path, d.i)
     X_train = d.df_train.drop(d.bind_column, axis=1)
     y_train = d.df_train[d.bind_column]
 
@@ -305,7 +304,7 @@ def LOO_single_prot(d: LooValidationData):
     assert d.bind_column in df_testdata_combined.columns
     df_test = df_testdata_combined.reindex(columns=d.df_train.columns, index=df_testdata_combined.index)
 
-    # X_test = thoipapy.validation.feature_selection.drop_cols_not_used_in_ML(logger, df_test, d.excel_file_with_settings, d.i)
+    # X_test = thoipapy.validation.feature_selection.drop_cols_not_used_in_ML(logger, df_test, d.settings_path, d.i)
     # y_test = df_test["interface"].fillna(0).astype(int)
 
     X_test = df_test.drop(d.bind_column, axis=1)
@@ -384,16 +383,16 @@ def create_LOO_validation_fig(s, df_set, logging):
     df_set = thoipapy.utils.drop_redundant_proteins_from_list(df_set, logging)
 
     # plt.rcParams.update({'font.size': 7})
-    LOO_crossvalidation_pkl = os.path.join(s["thoipapy_data_folder"], "results", s["setname"], "crossvalidation", "data", "{}_LOO_crossvalidation.pkl".format(s["setname"]))
-    LOO_crossvalidation_ROC_png = os.path.join(s["thoipapy_data_folder"], "results", s["setname"], "crossvalidation", "{}_LOO_crossvalidation_ROC.png".format(s["setname"]))
-    LOO_crossvalidation_AUC_bar_png = os.path.join(s["thoipapy_data_folder"], "results", s["setname"], "crossvalidation", "{}_LOO_crossvalidation_AUC_bar.png".format(s["setname"]))
-    AUC_csv = os.path.join(s["thoipapy_data_folder"], "results", s["setname"], "crossvalidation", "data", "{}_LOO_AUC.csv".format(s["setname"]))
-    bocurve_data_xlsx: Union[Path, str] = Path(s["thoipapy_data_folder"]) / f"results/{s['setname']}/crossvalidation/data/{s['setname']}_thoipa_loo_bo_curve_data.xlsx"
-    BO_linechart_png: Union[Path, str] = Path(s["thoipapy_data_folder"]) / f"results/{s['setname']}/crossvalidation/data/{s['setname']}_BO_linechart.png"
-    BO_barchart_png: Union[Path, str] = Path(s["thoipapy_data_folder"]) / f"results/{s['setname']}/crossvalidation/data/{s['setname']}_LOO_AUBOC_barchart.png"
-    other_figs_path: Union[Path, str] = Path(s["thoipapy_data_folder"]) / f"results/{s['setname']}/crossvalidation/other_figs"
+    LOO_crossvalidation_pkl = os.path.join(s["data_dir"], "results", s["setname"], "crossvalidation", "data", "{}_LOO_crossvalidation.pkl".format(s["setname"]))
+    LOO_crossvalidation_ROC_png = os.path.join(s["data_dir"], "results", s["setname"], "crossvalidation", "{}_LOO_crossvalidation_ROC.png".format(s["setname"]))
+    LOO_crossvalidation_AUC_bar_png = os.path.join(s["data_dir"], "results", s["setname"], "crossvalidation", "{}_LOO_crossvalidation_AUC_bar.png".format(s["setname"]))
+    AUC_csv = os.path.join(s["data_dir"], "results", s["setname"], "crossvalidation", "data", "{}_LOO_AUC.csv".format(s["setname"]))
+    bocurve_data_xlsx: Union[Path, str] = Path(s["data_dir"]) / f"results/{s['setname']}/crossvalidation/data/{s['setname']}_thoipa_loo_bo_curve_data.xlsx"
+    BO_linechart_png: Union[Path, str] = Path(s["data_dir"]) / f"results/{s['setname']}/crossvalidation/data/{s['setname']}_BO_linechart.png"
+    BO_barchart_png: Union[Path, str] = Path(s["data_dir"]) / f"results/{s['setname']}/crossvalidation/data/{s['setname']}_LOO_AUBOC_barchart.png"
+    other_figs_path: Union[Path, str] = Path(s["data_dir"]) / f"results/{s['setname']}/crossvalidation/other_figs"
 
-    names_excel_path = os.path.join(s["dropbox_dir"], "protein_names.xlsx")
+    names_excel_path = os.path.join(s["base_dir"], "protein_names.xlsx")
     namedict = thoipapy.utils.create_namedict(names_excel_path)
 
     # open pickle file

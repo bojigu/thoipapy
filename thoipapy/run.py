@@ -32,27 +32,19 @@ parser.add_argument("-s",  # "-settingsfile",
                     help=r'Full path to your excel settings file.'
                          r'E.g. "\Path\to\your\settingsfile.xlsx"')
 
-if __name__ == "__main__":
-    sys.stdout.write('\nRun thoipapy as follows:')
-    sys.stdout.write(r'python \Path\to\run.py -s \Path\to\your\settingsfile.xlsx')
-    # get the command-line arguments
-    args = parser.parse_args()
-    # args.s is the excel_settings_file input by the user
-    s = thoipapy.common.create_settingdict(args.s)
 
+def run(s: dict):
     ##############################################################################################
     #                                                                                            #
     #                               setname, logging, results folder                             #
     #                                                                                            #
     ##############################################################################################
-    sets_folder = os.path.join(s["dropbox_dir"], "sets")
-
+    sets_dir = os.path.join(s["sets_dir"])
     # if multiple sets need to be run, split them by comma
     if isinstance(s["set_number"], str) and "," in s["set_number"]:
         list_protein_sets = [int(n) for n in s["set_number"].split(",")]
     else:
         list_protein_sets = [s["set_number"]]
-
     for set_number in list_protein_sets:
         s["set_number"] = set_number
         # define set name, which should be in the excel file name
@@ -60,13 +52,13 @@ if __name__ == "__main__":
         # add to the dictionary itself
         s["setname"] = setname
         # create a results folder for that set
-        if not os.path.isdir(os.path.join(s["thoipapy_data_folder"], "results", setname)):
-            os.makedirs(os.path.join(s["thoipapy_data_folder"], "results", setname))
+        if not os.path.isdir(os.path.join(s["data_dir"], "results", setname)):
+            os.makedirs(os.path.join(s["data_dir"], "results", setname))
 
         logging = thoipapy.common.setup_keyboard_interrupt_and_error_logging(s, setname)
         logging.info("STARTING PROCESSING OF {}.".format(setname))
 
-        set_path = thoipapy.common.get_path_of_protein_set(setname, sets_folder)
+        set_path = thoipapy.common.get_path_of_protein_set(setname, sets_dir)
 
         ##############################################################################################
         #                                                                                            #
@@ -78,7 +70,7 @@ if __name__ == "__main__":
 
         # create list of uniprot accessions to run
         acc_list = df_set.acc.tolist()
-        sys.stdout.write("settings file : {}\nsettings : {}\nprotein set number {}, acc_list : {}\n".format(os.path.basename(args.s), s, s["set_number"], acc_list))
+        sys.stdout.write("settings file : {}\nsettings : {}\nprotein set number {}, acc_list : {}\n".format(os.path.basename(s["settings_path"]), s, s["set_number"], acc_list))
         sys.stdout.flush()
 
         dfset = thoipapy.common.process_set_protein_seqs(s, setname, df_set, set_path)
@@ -231,7 +223,7 @@ if __name__ == "__main__":
 
         if s["run_validation"] == True:
             sys.stdout.write("\n--------------- starting run_validation ---------------\n")
-            namedict = thoipapy.utils.create_namedict(os.path.join(s["dropbox_dir"], "protein_names.xlsx"))
+            namedict = thoipapy.utils.create_namedict(os.path.join(s["base_dir"], "protein_names.xlsx"))
             THOIPA_predictor_name = "THOIPA_{}_LOO".format(s["set_number"])
             predictors = [THOIPA_predictor_name, "PREDDIMER", "TMDOCK", "LIPS_surface_ranked", "random"]
             testsetname, trainsetname = get_testsetname_trainsetname_from_run_settings(s)
@@ -276,3 +268,14 @@ if __name__ == "__main__":
         # close the logger. A new one will be made for the next protein list.
         logging.info("FINISHED PROCESSING OF {}.".format(setname))
         logging.shutdown()
+
+
+if __name__ == "__main__":
+    sys.stdout.write('\nRun thoipapy as follows:')
+    sys.stdout.write(r'python \Path\to\run.py -s \Path\to\your\settingsfile.xlsx')
+    # get the command-line arguments
+    args = parser.parse_args()
+    # args.s is the excel_settings_file input by the user
+    settings_dict = thoipapy.common.create_settingdict(args.s)
+
+    run(settings_dict)

@@ -10,11 +10,11 @@ from thoipapy.utils import reorder_dataframe_columns, make_sure_path_exists
 def merge_top_features_anova_ensemble(s, logging):
     logging.info('starting merge_top_features_anova_ensemble')
     # inputs
-    train_data_excl_duplicates_csv = Path(s["thoipapy_data_folder"]) / f"results/{s['setname']}/train_data/02_train_data_excl_duplicates.csv"
-    top_features_anova_csv = Path(s["thoipapy_data_folder"]) / f"results/{s['setname']}/feat_imp/top_features_anova.csv"
-    top_features_rfe_csv = Path(s["thoipapy_data_folder"]) / f"results/{s['setname']}/feat_imp/top_features_rfe.csv"
+    train_data_excl_duplicates_csv = Path(s["data_dir"]) / f"results/{s['setname']}/train_data/02_train_data_excl_duplicates.csv"
+    top_features_anova_csv = Path(s["data_dir"]) / f"results/{s['setname']}/feat_imp/top_features_anova.csv"
+    top_features_rfe_csv = Path(s["data_dir"]) / f"results/{s['setname']}/feat_imp/top_features_rfe.csv"
     # outputs
-    train_data_after_first_feature_seln_csv = Path(s["thoipapy_data_folder"]) / f"results/{s['setname']}/train_data/03_train_data_after_first_feature_seln.csv"
+    train_data_after_first_feature_seln_csv = Path(s["data_dir"]) / f"results/{s['setname']}/train_data/03_train_data_after_first_feature_seln.csv"
 
     make_sure_path_exists(train_data_after_first_feature_seln_csv, isfile=True)
 

@@ -3,7 +3,7 @@ import pandas as pd
 from thoipapy.utils import convert_truelike_to_bool, convert_falselike_to_bool
 
 
-def drop_cols_not_used_in_ML(logging, df_data, excel_file_with_settings, i=0):
+def drop_cols_not_used_in_ML(logging, df_data, settings_path, i=0):
     """Remove columns not used in machine learning training or testing.
 
     This includes
@@ -19,7 +19,7 @@ def drop_cols_not_used_in_ML(logging, df_data, excel_file_with_settings, i=0):
         Dataframe with either the training or test dataset
         columns = 'acc_db', "residue_num", "residue_name", etc
         rows = range of number of residues
-    excel_file_with_settings : str
+    settings_path : str
         Path to excel file with all settings.
         Necessary for getting the list of features included in the THOIPA algorithm.
 
@@ -31,7 +31,7 @@ def drop_cols_not_used_in_ML(logging, df_data, excel_file_with_settings, i=0):
         columns :
     """
     # read the features tab of the excel settings file
-    features_df = pd.read_excel(excel_file_with_settings, sheet_name="features", index_col=0)
+    features_df = pd.read_excel(settings_path, sheet_name="features", index_col=0)
     # convert "WAHR" etc to true and false
     features_df["include"] = features_df["include"].apply(convert_truelike_to_bool, convert_nontrue=False)
     features_df["include"] = features_df["include"].apply(convert_falselike_to_bool)

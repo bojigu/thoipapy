@@ -55,18 +55,18 @@ def run_LOO_validation_od_non_multiprocessing(s, df_set, logging):
         Also contains the mean ROC curve, and the mean AUC.
     """
     logging.info('Leave-One-Out cross validation is running')
-    names_excel_path = os.path.join(s["dropbox_dir"], "protein_names.xlsx")
+    names_excel_path = os.path.join(s["base_dir"], "protein_names.xlsx")
 
     # drop redundant proteins according to CD-HIT
     df_set = thoipapy.utils.drop_redundant_proteins_from_list(df_set, logging)
 
     # input
-    train_data_csv = Path(s["thoipapy_data_folder"]) / f"results/{s['setname']}/train_data/01_train_data_orig.csv"
-    tuned_ensemble_parameters_csv = Path(s["thoipapy_data_folder"]) / f"results/{s['setname']}/train_data/04_tuned_ensemble_parameters.csv"
+    train_data_csv = Path(s["data_dir"]) / f"results/{s['setname']}/train_data/01_train_data_orig.csv"
+    tuned_ensemble_parameters_csv = Path(s["data_dir"]) / f"results/{s['setname']}/train_data/04_tuned_ensemble_parameters.csv"
     # output
-    LOO_crossvalidation_pkl = os.path.join(s["thoipapy_data_folder"], "results", s["setname"], "crossvalidation", "data", "{}_LOO_crossvalidation.pkl".format(s["setname"]))
-    bocurve_data_raw_csv = os.path.join(s["thoipapy_data_folder"], "results", s["setname"], "crossvalidation", "data", "{}_loo_bocurve_data_raw.csv".format(s["setname"]))
-    bocurve_data_xlsx: Union[Path, str] = Path(s["thoipapy_data_folder"]) / f"results/{s['setname']}/crossvalidation/data/{s['setname']}_thoipa_loo_bo_curve_data.xlsx"
+    LOO_crossvalidation_pkl = os.path.join(s["data_dir"], "results", s["setname"], "crossvalidation", "data", "{}_LOO_crossvalidation.pkl".format(s["setname"]))
+    bocurve_data_raw_csv = os.path.join(s["data_dir"], "results", s["setname"], "crossvalidation", "data", "{}_loo_bocurve_data_raw.csv".format(s["setname"]))
+    bocurve_data_xlsx: Union[Path, str] = Path(s["data_dir"]) / f"results/{s['setname']}/crossvalidation/data/{s['setname']}_thoipa_loo_bo_curve_data.xlsx"
 
     thoipapy.utils.make_sure_path_exists(bocurve_data_xlsx, isfile=True)
 
@@ -85,13 +85,13 @@ def run_LOO_validation_od_non_multiprocessing(s, df_set, logging):
     BO_all_df = pd.DataFrame()
     pred_colname = "THOIPA_{}_LOO".format(s["set_number"])
 
-    n_features = thoipapy.validation.feature_selection.drop_cols_not_used_in_ML(logging, df_data, s["excel_file_with_settings"]).shape[1]
+    n_features = thoipapy.validation.feature_selection.drop_cols_not_used_in_ML(logging, df_data, s["settings_path"]).shape[1]
     forest = thoipapy.ML_model.train_model.return_classifier_with_loaded_ensemble_parameters(s, tuned_ensemble_parameters_csv)
 
     for i in df_set.index:
 
         acc, acc_db, database  = df_set.loc[i, "acc"], df_set.loc[i, "acc_db"], df_set.loc[i, "database"]
-        THOIPA_LOO_prediction_csv = Path(s["thoipapy_data_folder"]) / f"results/{s['setname']}/predictions/THOIPA_LOO/{database}.{acc}.LOO.prediction.csv"
+        THOIPA_LOO_prediction_csv = Path(s["data_dir"]) / f"results/{s['setname']}/predictions/THOIPA_LOO/{database}.{acc}.LOO.prediction.csv"
         thoipapy.utils.make_sure_path_exists(THOIPA_LOO_prediction_csv, isfile=True)
 
         #######################################################################################################
@@ -106,7 +106,7 @@ def run_LOO_validation_od_non_multiprocessing(s, df_set, logging):
             # skip protein
             continue
         df_train = df_data.loc[df_data.acc_db != acc_db]
-        X_train = thoipapy.validation.feature_selection.drop_cols_not_used_in_ML(logging, df_train, s["excel_file_with_settings"], i)
+        X_train = thoipapy.validation.feature_selection.drop_cols_not_used_in_ML(logging, df_train, s["settings_path"], i)
         y_train = df_train[s["bind_column"]]
 
         #######################################################################################################
@@ -116,10 +116,10 @@ def run_LOO_validation_od_non_multiprocessing(s, df_set, logging):
         #                                                                                                     #
         #######################################################################################################
         #df_test = df_data.loc[df_data.acc_db == acc_db]
-        testdata_combined_file = os.path.join(s["thoipapy_data_folder"], "features", "combined", database, "{}.surr20.gaps5.combined_features.csv".format(acc))
+        testdata_combined_file = os.path.join(s["data_dir"], "features", "combined", database, "{}.surr20.gaps5.combined_features.csv".format(acc))
         df_test = pd.read_csv(testdata_combined_file)
 
-        X_test = thoipapy.validation.feature_selection.drop_cols_not_used_in_ML(logging, df_test, s["excel_file_with_settings"])
+        X_test = thoipapy.validation.feature_selection.drop_cols_not_used_in_ML(logging, df_test, s["settings_path"])
         y_test = df_test["interface"].fillna(0).astype(int)
 
         #######################################################################################################
@@ -185,7 +185,7 @@ def run_LOO_validation_od_non_multiprocessing(s, df_set, logging):
     #######################################################################################################
 
     BO_all_df.to_csv(bocurve_data_raw_csv)
-    names_excel_path = os.path.join(s["dropbox_dir"], "protein_names.xlsx")
+    names_excel_path = os.path.join(s["base_dir"], "protein_names.xlsx")
 
     #linechart_mean_obs_and_rand = thoipapy.figs.Create_Bo_Curve_files.analyse_bo_curve_underlying_data(bocurve_data_raw_csv, crossvalidation_folder, names_excel_path)
     thoipapy.validation.bocurve.parse_BO_data_csv_to_excel(bocurve_data_raw_csv, bocurve_data_xlsx, s["n_residues_AUBOC_validation"], logging)
@@ -198,12 +198,12 @@ def run_Rscipt_random_forest(s, output_file_loc, logging, Random_Forest_R_code_f
     logging.info('begining to run machine learning R code')
     Rscript_loc = s["Rscript_dir"]
     #Random_Forest_R_code_file=s["Rcode"]
-    train_data_file=os.path.join(s["thoipapy_data_folder"], "RandomForest","NoRedundPro/TRAINDATA68.csv")
+    train_data_file=os.path.join(s["data_dir"], "RandomForest","NoRedundPro/TRAINDATA68.csv")
     acc = s["tm_protein_name"]
-    tmp_protein_test_data = os.path.join(s["thoipapy_data_folder"], "RandomForest", "TestData/%s/%s.mem.2gap.physipara.testdata.csv") % (s["Datatype"],acc)
+    tmp_protein_test_data = os.path.join(s["data_dir"], "RandomForest", "TestData/%s/%s.mem.2gap.physipara.testdata.csv") % (s["Datatype"],acc)
     #out_put_file_loc_handle=open(output_file_loc,"w")
     if os.path.isfile(tmp_protein_test_data):
-        prediction_output_file = os.path.join(s["thoipapy_data_folder"], "RandomForest","%s.pred.out") % acc
+        prediction_output_file = os.path.join(s["data_dir"], "RandomForest","%s.pred.out") % acc
         prediction_output_file = os.path.join("/home/students/zeng/workspace/test2/out", "%s.pred.out") % acc
         prediction_output_file_handle=open(prediction_output_file,"w")
         exect_str = "{Rscript} {Random_Forest_R_code} {train_data} {test_data} {output}".format(Rscript=Rscript_loc, Random_Forest_R_code=Random_Forest_R_code_file,train_data=train_data_file,test_data=tmp_protein_test_data,output=output_file_loc)
@@ -273,14 +273,14 @@ def predict_test_dataset_with_THOIPA_DEPRECATED(train_setname, test_setname, s, 
         rows = range(0, number of AA in test set)
     """
 
-    model_pkl = os.path.join(s["thoipapy_data_folder"], "results", s["setname"], "{}_ML_model.lpkl".format(train_setname))
-    test_data_csv = os.path.join(s["thoipapy_data_folder"], "results", test_setname, "{}_train_data.csv".format(test_setname))
-    THOIPA_pred_csv = os.path.join(s["thoipapy_data_folder"], "results", s["setname"], "trainset{}_testset{}_predictions.csv".format(train_setname[-2:], test_setname[-2:]))
+    model_pkl = os.path.join(s["data_dir"], "results", s["setname"], "{}_ML_model.lpkl".format(train_setname))
+    test_data_csv = os.path.join(s["data_dir"], "results", test_setname, "{}_train_data.csv".format(test_setname))
+    THOIPA_pred_csv = os.path.join(s["data_dir"], "results", s["setname"], "trainset{}_testset{}_predictions.csv".format(train_setname[-2:], test_setname[-2:]))
 
     fit = joblib.load(model_pkl)
 
     df_data = pd.read_csv(test_data_csv, index_col=0)
-    df_testdata = drop_cols_not_used_in_ML(logging, df_data, s["excel_file_with_settings"])
+    df_testdata = drop_cols_not_used_in_ML(logging, df_data, s["settings_path"])
     tX = df_testdata
 
     tp = fit.predict_proba(tX)
@@ -303,7 +303,7 @@ def create_one_out_train_data(acc_db,set_path,s):
         acc1 = df_set04.loc[j, "acc_db"]
         if not acc1 == acc_db:
             database = df_set04.loc[j, "database"]
-            feature_combined_file = os.path.join(s["thoipapy_data_folder"], "features", "combined", database,
+            feature_combined_file = os.path.join(s["data_dir"], "features", "combined", database,
                                                  "{}.surr20.gaps5.combined_features.csv".format(acc1))
 
             df_features_new_protein1 = pd.read_csv(feature_combined_file, index_col=0)
@@ -335,8 +335,8 @@ def calc_roc_each_tmd_separately_deprecated(s, df_set, logging):
     if s["setname"] == testsetname:
         prediction_name_list.append(f"thoipa.train{trainsetname}")
 
-    roc_each_tmd_separate_deprecated_csv = Path(s["thoipapy_data_folder"]) / f"results/{s['setname']}/crossvalidation/{s['setname']}_roc_each_tmd_separate_deprecated.csv"
-    roc_each_tmd_separate_deprecated_png = Path(s["thoipapy_data_folder"]) / f"results/{s['setname']}/crossvalidation/{s['setname']}_roc_each_tmd_separate_deprecated.png"
+    roc_each_tmd_separate_deprecated_csv = Path(s["data_dir"]) / f"results/{s['setname']}/crossvalidation/{s['setname']}_roc_each_tmd_separate_deprecated.csv"
+    roc_each_tmd_separate_deprecated_png = Path(s["data_dir"]) / f"results/{s['setname']}/crossvalidation/{s['setname']}_roc_each_tmd_separate_deprecated.png"
 
     figsize = np.array([3.42, 3.42]) * 2  # DOUBLE the real size, due to problems on Bo computer with fontsizes
     fig, ax = plt.subplots(figsize=figsize)
@@ -347,7 +347,7 @@ def calc_roc_each_tmd_separately_deprecated(s, df_set, logging):
         for i in df_set.index:
             acc = df_set.loc[i, "acc"]
             database = df_set.loc[i, "database"]
-            merged_data_csv_path: Union[Path, str] = Path(s["thoipapy_data_folder"]) / f"results/{s['setname']}/predictions/merged/{database}.{acc}.merged.csv"
+            merged_data_csv_path: Union[Path, str] = Path(s["data_dir"]) / f"results/{s['setname']}/predictions/merged/{database}.{acc}.merged.csv"
             dfm = pd.read_csv(merged_data_csv_path, engine="python", index_col=0)
             dfm.dropna(inplace=True)
             interface = dfm["interface"].values

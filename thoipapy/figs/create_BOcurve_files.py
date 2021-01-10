@@ -76,8 +76,8 @@ def save_BO_linegraph_and_barchart(s, bocurve_data_xlsx, BO_linechart_png, BO_ba
     for col in df_valid_indiv.columns:
         df_valid_indiv[col] = normalise_0_1(df_valid_indiv[col])[0] + 0.01
 
-    bocurve_data_xlsx: Union[Path, str] = Path(s["thoipapy_data_folder"]) / f"results/{s['setname']}/crossvalidation/data/{s['setname']}_thoipa_loo_bo_curve_data.xlsx"
-    BO_data_valid_indiv_csv: Union[Path, str] = Path(s["thoipapy_data_folder"]) / f"results/{s['setname']}/crossvalidation/data/{s['setname']}_BO_curve_data_valid_indiv.csv"
+    bocurve_data_xlsx: Union[Path, str] = Path(s["data_dir"]) / f"results/{s['setname']}/crossvalidation/data/{s['setname']}_thoipa_loo_bo_curve_data.xlsx"
+    BO_data_valid_indiv_csv: Union[Path, str] = Path(s["data_dir"]) / f"results/{s['setname']}/crossvalidation/data/{s['setname']}_BO_curve_data_valid_indiv.csv"
     make_sure_path_exists(bocurve_data_xlsx, isfile=True)
 
     df_valid_indiv = df_valid_indiv.reindex(columns=["AUBOC", 5, 10, "ROC AUC"])

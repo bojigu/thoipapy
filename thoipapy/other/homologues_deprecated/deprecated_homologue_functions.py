@@ -25,19 +25,19 @@ def extract_filtered_csv_homologues_to_alignments_orig_handle_method(s,logging):
         alignment_dict={}
         alignment_dict1 = {}
         alignment_dict2 = {}
-        #homo_csv_file_loc = os.path.join(s["thoipapy_data_folder"], "homologues", "NoRedundPro/%s_homo.csv") % acc
-        homo_csv_file_loc = os.path.join(s["thoipapy_data_folder"], "homologues","a3m",database, "%s_homo%s.csv") % (acc,s["surres"])
+        #homo_csv_file_loc = os.path.join(s["data_dir"], "homologues", "NoRedundPro/%s_homo.csv") % acc
+        homo_csv_file_loc = os.path.join(s["data_dir"], "homologues","a3m",database, "%s_homo%s.csv") % (acc,s["surres"])
         if (os.path.isfile(homo_csv_file_loc) and os.path.getsize(homo_csv_file_loc) > 0):  # whether protein homologues csv file exists
             df = pd.read_csv(homo_csv_file_loc)
-            #homo_filtered_out_csv_file = os.path.join(s["thoipapy_data_folder"], "homologues", "NoRedundPro/%s_homo_filtered_aln.fasta") % acc
-            homo_filtered_out_csv_file = os.path.join(s["thoipapy_data_folder"], "homologues","a3m",database,
+            #homo_filtered_out_csv_file = os.path.join(s["data_dir"], "homologues", "NoRedundPro/%s_homo_filtered_aln.fasta") % acc
+            homo_filtered_out_csv_file = os.path.join(s["data_dir"], "homologues","a3m",database,
                                                       "%s_homo_filtered_aln%s.fasta") % (acc,s["surres"])
             homo_filtered_out_csv_file_handle=open(homo_filtered_out_csv_file, 'w')
-            #homo_filter_file = os.path.join(s["thoipapy_data_folder"], "homologues", "a3m/NoRedundPro/%s.a3m.mem.uniq.2gaps") % acc
-            homo_filter_file = os.path.join(s["thoipapy_data_folder"], "homologues","a3m",database, "%s.a3m.mem.uniq.2gaps%s") % (acc,s["surres"])
+            #homo_filter_file = os.path.join(s["data_dir"], "homologues", "a3m/NoRedundPro/%s.a3m.mem.uniq.2gaps") % acc
+            homo_filter_file = os.path.join(s["data_dir"], "homologues","a3m",database, "%s.a3m.mem.uniq.2gaps%s") % (acc,s["surres"])
             homo_filter_file_handle = open(homo_filter_file, "w")
-            #homo_mem_lips_input_file = os.path.join(s["thoipapy_data_folder"], "homologues","a3m/NoRedundPro/%s.mem.lips.input") % acc
-            homo_mem_lips_input_file = os.path.join(s["thoipapy_data_folder"], "homologues","a3m",database,"%s.mem.lips.input%s") % (acc,s["surres"])
+            #homo_mem_lips_input_file = os.path.join(s["data_dir"], "homologues","a3m/NoRedundPro/%s.mem.lips.input") % acc
+            homo_mem_lips_input_file = os.path.join(s["data_dir"], "homologues","a3m",database,"%s.mem.lips.input%s") % (acc,s["surres"])
             homo_mem_lips_input_file_handle = open(homo_mem_lips_input_file, "w")
             #with open(homo_filtered_out_csv_file, 'w') as homo_filtered_out_csv_file_handle:
 

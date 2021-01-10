@@ -25,8 +25,8 @@ def add_physical_parameters_to_features_mult_prot(s, df_set, logging):
     for i in df_set.index:
         acc = df_set.loc[i, "acc"]
         database = df_set.loc[i, "database"]
-        feature_combined_file = os.path.join(s["thoipapy_data_folder"], "features", "combined", database, "{}.surr{}.gaps{}.combined_features.csv".format(acc, s["num_of_sur_residues"], s["max_n_gaps_in_TMD_subject_seq"]))
-        # feature_combined_file_incl_phys_param = os.path.join(s["thoipapy_data_folder"], "features", "combined", database,
+        feature_combined_file = os.path.join(s["data_dir"], "features", "combined", database, "{}.surr{}.gaps{}.combined_features.csv".format(acc, s["num_of_sur_residues"], s["max_n_gaps_in_TMD_subject_seq"]))
+        # feature_combined_file_incl_phys_param = os.path.join(s["data_dir"], "features", "combined", database,
         #                                                     "{}.surr{}.gaps{}.combined_features_incl_phys_param.csv".format(acc, s["num_of_sur_residues"], s["max_n_gaps_in_TMD_subject_seq"]))
         add_physical_parameters_to_features(acc, feature_combined_file, logging)
 

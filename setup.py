@@ -58,5 +58,5 @@ setup(
                   'ML_model': ['*.lpkl', '*.txt'],
                   'setting': ['*.txt', '*.xlsx', '*.csv', '*.lpkl']},
     include_package_data=True,
-    version="1.1.3",
+    version="1.2.0",
 )

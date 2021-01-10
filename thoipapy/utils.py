@@ -1005,3 +1005,27 @@ def get_test_and_train_set_lists(s):
         raise ValueError("train_datasets type is not correct {} ({})".format(s["train_datasets"], type(s["train_datasets"])))
 
     return test_set_list, train_set_list
+
+
+class SurroundingSequence:
+    def __init__(self, tmd_start: int, tmd_end: int, full_seq_len: int, num_of_sur_residues: int):
+        self.tmd_start: int = tmd_start
+        self.tmd_end: int = tmd_end
+        self.full_seq_len: int = full_seq_len
+        self.num_of_sur_residues: int = num_of_sur_residues
+        self.tmd_start_pl_surr: int = self.get_tmd_start_pl_surr()
+        self.tmd_end_pl_surr: int = self.get_tmd_end_pl_surr()
+        self.n_term_offset: int = self.tmd_start - self.tmd_start_pl_surr
+        self.c_term_offset: int = self.tmd_end_pl_surr - self.tmd_end
+
+    def get_tmd_end_pl_surr(self):
+        tmd_end_pl_surr = self.tmd_end + self.num_of_sur_residues
+        if tmd_end_pl_surr > self.full_seq_len:
+            tmd_end_pl_surr = self.full_seq_len
+        return tmd_end_pl_surr
+
+    def get_tmd_start_pl_surr(self):
+        tmd_start_pl_surr = self.tmd_start - self.num_of_sur_residues
+        if tmd_start_pl_surr < 1:
+            tmd_start_pl_surr = 1
+        return tmd_start_pl_surr

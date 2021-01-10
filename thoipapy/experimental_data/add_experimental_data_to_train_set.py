@@ -25,11 +25,11 @@ def add_experimental_data_to_combined_features_mult_prot(s, df_set, logging):
         acc = df_set.loc[i, "acc"]
         database = df_set.loc[i, "database"]
         TMD_seq = df_set.loc[i, "TMD_seq"]
-        feature_combined_file = os.path.join(s["thoipapy_data_folder"], "features", "combined", database, "{}.surr{}.gaps{}.combined_features.csv".format(acc, s["num_of_sur_residues"], s["max_n_gaps_in_TMD_subject_seq"]))
+        feature_combined_file = os.path.join(s["data_dir"], "features", "combined", database, "{}.surr{}.gaps{}.combined_features.csv".format(acc, s["num_of_sur_residues"], s["max_n_gaps_in_TMD_subject_seq"]))
         if database == "ETRA":
-            experimental_data_file = os.path.join(s["dropbox_dir"], "ETRA_data", "Average_with_interface", "{}_mul_scan_average_data.xlsx".format(acc))
+            experimental_data_file = os.path.join(s["base_dir"], "ETRA_data", "Average_with_interface", "{}_mul_scan_average_data.xlsx".format(acc))
         else:
-            experimental_data_file = os.path.join(s["thoipapy_data_folder"], "features", 'structure', database, '{}.{}pairmax.bind.closedist.csv'.format(acc, s['inter_pair_max']))
+            experimental_data_file = os.path.join(s["data_dir"], "features", 'structure', database, '{}.{}pairmax.bind.closedist.csv'.format(acc, s['inter_pair_max']))
 
         add_experimental_data_to_combined_features(acc, database, TMD_seq, feature_combined_file, experimental_data_file, logging)
 

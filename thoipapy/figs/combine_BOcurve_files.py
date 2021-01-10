@@ -45,7 +45,7 @@ def fig_plot_BOcurve_mult_train_datasets(s):
 
     mult_testname = "testsets({})_trainsets({})".format(test_dataset_str, train_dataset_str)
     sys.stdout.write(mult_testname)
-    mult_THOIPA_dir = os.path.join(s["thoipapy_data_folder"], "results", "compare_testset_trainset", "summaries", mult_testname)
+    mult_THOIPA_dir = os.path.join(s["data_dir"], "results", "compare_testset_trainset", "summaries", mult_testname)
     thoipapy.utils.make_sure_path_exists(mult_THOIPA_dir)
 
     plot_BOcurve(s, train_set_list, test_set_list, mult_THOIPA_dir, mult_testname)
@@ -92,7 +92,7 @@ def plot_BOcurve(s, train_set_list, test_set_list, mult_THOIPA_dir, mult_testnam
         for test_set in test_set_list:
             testsetname = "set{:02d}".format(int(test_set))
             # /media/mark/sindy/m_data/THOIPA_data/results/Bo_Curve/Testset03_Trainset01.THOIPA.validation/bocurve_data.xlsx
-            bocurve_data_xlsx = os.path.join(s["thoipapy_data_folder"], "results", "compare_testset_trainset", "data", "Test{}_Train{}.THOIPA".format(testsetname, trainsetname), "data", "bocurve_data.xlsx")
+            bocurve_data_xlsx = os.path.join(s["data_dir"], "results", "compare_testset_trainset", "data", "Test{}_Train{}.THOIPA".format(testsetname, trainsetname), "data", "bocurve_data.xlsx")
 
             df = pd.read_excel(bocurve_data_xlsx, sheet_name=sheet_name, index_col=0)
 
@@ -144,16 +144,16 @@ def compare_selected_predictors(s, logging):
 
     # plt.rcParams.update({'font.size': 7})
     logging.info("\n--------------- starting compare_selected_predictors ---------------\n")
-    BO_curve_png: Union[Path, str] = Path(s["thoipapy_data_folder"]) / f"results/{s['setname']}/blindvalidation/compare_selected_predictors_BO_curve.png"
-    AUBOC_bar_png: Union[Path, str] = Path(s["thoipapy_data_folder"]) / f"results/{s['setname']}/blindvalidation/compare_selected_predictors_AUBOC_barchart.png"
-    ROC_png: Union[Path, str] = Path(s["thoipapy_data_folder"]) / f"results/{s['setname']}/blindvalidation/compare_selected_predictors_ROC.png"
+    BO_curve_png: Union[Path, str] = Path(s["data_dir"]) / f"results/{s['setname']}/blindvalidation/compare_selected_predictors_BO_curve.png"
+    AUBOC_bar_png: Union[Path, str] = Path(s["data_dir"]) / f"results/{s['setname']}/blindvalidation/compare_selected_predictors_AUBOC_barchart.png"
+    ROC_png: Union[Path, str] = Path(s["data_dir"]) / f"results/{s['setname']}/blindvalidation/compare_selected_predictors_ROC.png"
 
     thoipapy.utils.make_sure_path_exists(BO_curve_png, isfile=True)
 
     figsize = np.array([3.42, 3.42]) * 2  # DOUBLE the real size, due to problems on Bo computer with fontsizes
     fig, ax = plt.subplots(figsize=figsize)
 
-    predictors_df = pd.read_excel(s["excel_file_with_settings"], sheet_name="selected_predictors")
+    predictors_df = pd.read_excel(s["settings_path"], sheet_name="selected_predictors")
     predictors_df["include"] = predictors_df["include"].apply(convert_truelike_to_bool, convert_nontrue=False)
     predictors_df["include"] = predictors_df["include"].apply(convert_falselike_to_bool)
     predictors_df = predictors_df.loc[predictors_df.include == True]
@@ -164,7 +164,7 @@ def compare_selected_predictors(s, logging):
     df = pd.DataFrame()
 
     for predictor_name in predictor_list:
-        bocurve_data_xlsx: Union[Path, str] = Path(s["thoipapy_data_folder"]) / f"results/{s['setname']}/crossvalidation/data/{s['setname']}_thoipa_loo_bo_curve_data.xlsx"
+        bocurve_data_xlsx: Union[Path, str] = Path(s["data_dir"]) / f"results/{s['setname']}/crossvalidation/data/{s['setname']}_thoipa_loo_bo_curve_data.xlsx"
 
         if not os.path.isfile(bocurve_data_xlsx):
             raise FileNotFoundError("bocurve_data_xlsx does not exist ({}). Try running run_testset_trainset_validation".format(bocurve_data_xlsx))
@@ -210,9 +210,9 @@ def compare_selected_predictors(s, logging):
 
     for predictor_name in predictor_list:
         # "D:\data_thoipapy\results\compare_testset_trainset\data\Testset03_Trainset04.THOIPA\Testset03_Trainset04.THOIPA.ROC_data.pkl"
-        # ROC_pkl = os.path.join(s["thoipapy_data_folder"], "results", "compare_testset_trainset", "data", predictor_name, "data", "{}.ROC_data.pkl".format(predictor_name))
+        # ROC_pkl = os.path.join(s["data_dir"], "results", "compare_testset_trainset", "data", predictor_name, "data", "{}.ROC_data.pkl".format(predictor_name))
         testsetname = "set{:02d}".format(int(s['test_datasets']))
-        ROC_pkl = Path(s["thoipapy_data_folder"]) / "results" / testsetname / f"blindvalidation/{predictor_name}/ROC_data.pkl"
+        ROC_pkl = Path(s["data_dir"]) / "results" / testsetname / f"blindvalidation/{predictor_name}/ROC_data.pkl"
 
         if os.path.isfile(ROC_pkl):
             with open(ROC_pkl, "rb") as f:
