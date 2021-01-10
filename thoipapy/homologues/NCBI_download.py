@@ -35,9 +35,9 @@ def download_homologues_from_ncbi_mult_prot(s, df_set, logging):
     if "Linux" in OS_description or "Windows" in OS_description:
         try:
             byteformat = "GB"
-            thoipapy_data_folder = s["thoipapy_data_folder"]
+            data_dir = s["data_dir"]
 
-            size = get_free_space(thoipapy_data_folder, byteformat)
+            size = get_free_space(data_dir, byteformat)
             # logging.info('Hard disk remaining space = {}'.format(size))
 
             if size[0] < 5:
@@ -65,7 +65,7 @@ def download_homologues_from_ncbi_mult_prot(s, df_set, logging):
         database = df_set.loc[i, "database"]
 
         # run online server NCBI blastp with biopython module
-        blast_xml_file = os.path.join(s["thoipapy_data_folder"], "homologues", "xml", database, "{}.surr{}.BLAST.xml".format(acc, s["num_of_sur_residues"]))
+        blast_xml_file = os.path.join(s["data_dir"], "homologues", "xml", database, "{}.surr{}.BLAST.xml".format(acc, s["num_of_sur_residues"]))
         xml_tar_gz = blast_xml_file[:-4] + ".xml.tar.gz"
         xml_txt = blast_xml_file[:-4] + "_details.txt"
 
@@ -181,7 +181,7 @@ def download_10_homologues_from_ncbi(s, df_set, logging):
         database = df_set.loc[i, "database"]
 
         # run online server NCBI blastp with biopython module
-        blast_xml_file = os.path.join(s["thoipapy_data_folder"], "homologues", "xml", "10_hits", database, "{}.surr{}.BLAST.xml".format(acc, s["num_of_sur_residues"]))
+        blast_xml_file = os.path.join(s["data_dir"], "homologues", "xml", "10_hits", database, "{}.surr{}.BLAST.xml".format(acc, s["num_of_sur_residues"]))
         xml_tar_gz = blast_xml_file[:-4] + ".xml.tar.gz"
         xml_txt = blast_xml_file[:-4] + "_details.txt"
 

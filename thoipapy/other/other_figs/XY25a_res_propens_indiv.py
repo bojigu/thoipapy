@@ -18,13 +18,13 @@ Size = 10
 Fontsize = 8
 Width = 0.4
 
-dropbox_dir = r"D:\Dropbox\tm_homodimer_dropbox"
+base_dir = r"D:\Dropbox\tm_homodimer_dropbox"
 drive_dir = r"D:\drive\TMD_homodimer"
 thoipa_dir = r"D:\data_thoipapy"
 
 out_dir = os.path.join(drive_dir, "figs\\FigXY25_residues_composition")
 # excel ="I:\sets\set05_ETRA_NMR_crystal_nr.xlsx"
-excel = os.path.join(dropbox_dir, "sets\\set05_ETRA_NMR_crystal_nr.xlsx")
+excel = os.path.join(base_dir, "sets\\set05_ETRA_NMR_crystal_nr.xlsx")
 
 df_set = pd.read_excel(excel, index_col=0)
 

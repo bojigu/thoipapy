@@ -2,6 +2,12 @@
 THOIPApy releases
 =================
 
+1.2.0
+-----
+* bugfix: prevent error when (highly random) sequence in rate4site output did not match initial TMD
+* feature: add test for feature extraction and machine-learning model creation for a protein list
+* feature: rename several inputs in settings file, including base_dir & data_dir. This affects the creation of new ML models, but not standalone predictions.
+
 1.1.3
 -----
 * fix bug where cd-hit not found when installed using apt-get

@@ -33,7 +33,7 @@ def merge_predictions(s, df_set, logging):
     # add the THOIPA prediction name to the list of columns to keep
     THOIPA_pred_colname = "THOIPA_{}_LOO".format(s["set_number"])
 
-    other_predictors_dir = Path(s["thoipapy_data_folder"]) / "Predictions/other_predictors"
+    other_predictors_dir = Path(s["data_dir"]) / "Predictions/other_predictors"
 
     testsetname, trainsetname = get_testsetname_trainsetname_from_run_settings(s)
     thoipa_trainsetname = f"thoipa.train{trainsetname}"
@@ -47,12 +47,12 @@ def merge_predictions(s, df_set, logging):
         full_seq = df_set.loc[i, "full_seq"]
         database = df_set.loc[i, "database"]
         # inputs
-        train_data_file = os.path.join(s["thoipapy_data_folder"], "features", "combined", database, "{}.surr20.gaps5.combined_features.csv".format(acc))
-        THOIPA_LOO_prediction_csv = Path(s["thoipapy_data_folder"]) / f"results/{s['setname']}/predictions/THOIPA_LOO/{database}.{acc}.LOO.prediction.csv"
+        train_data_file = os.path.join(s["data_dir"], "features", "combined", database, "{}.surr20.gaps5.combined_features.csv".format(acc))
+        THOIPA_LOO_prediction_csv = Path(s["data_dir"]) / f"results/{s['setname']}/predictions/THOIPA_LOO/{database}.{acc}.LOO.prediction.csv"
         PREDDIMER_prediction_file = os.path.join(other_predictors_dir, database, "{}.preddimer.closedist.csv".format(acc))
         TMDOCK_prediction_file = os.path.join(other_predictors_dir, database, "{}.tmdock.closedist.csv".format(acc))
         # output
-        merged_data_csv_path: Union[Path, str] = Path(s["thoipapy_data_folder"]) / f"results/{s['setname']}/predictions/merged/{database}.{acc}.merged.csv"
+        merged_data_csv_path: Union[Path, str] = Path(s["data_dir"]) / f"results/{s['setname']}/predictions/merged/{database}.{acc}.merged.csv"
         thoipapy.utils.make_sure_path_exists(merged_data_csv_path, isfile=True)
 
         # load the full feature file as the start of dfm
@@ -64,7 +64,7 @@ def merge_predictions(s, df_set, logging):
         file_list = [THOIPA_LOO_prediction_csv, PREDDIMER_prediction_file, TMDOCK_prediction_file]
         prediction_name_list = [THOIPA_pred_colname, "PREDDIMER", "TMDOCK"]
         if s["setname"] == testsetname:
-            THOIPA_testset_trainset_csv = Path(s["thoipapy_data_folder"]) / f"results/{s['setname']}/predictions/thoipa.train{trainsetname}/{database}.{acc}.thoipa.train{trainsetname}.csv"
+            THOIPA_testset_trainset_csv = Path(s["data_dir"]) / f"results/{s['setname']}/predictions/thoipa.train{trainsetname}/{database}.{acc}.thoipa.train{trainsetname}.csv"
             file_list.append(THOIPA_testset_trainset_csv)
             prediction_name_list.append(thoipa_trainsetname)
         n_files_merged = 0

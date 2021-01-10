@@ -43,12 +43,12 @@ def calc_feat_import_from_mean_decrease_accuracy(s, logging):
     """
     logging.info('------------ starting calc_feat_import_from_mean_decrease_accuracy ------------')
     # input
-    train_data_csv = Path(s["thoipapy_data_folder"]) / f"results/{s['setname']}/train_data/03_train_data_after_first_feature_seln.csv"
-    tuned_ensemble_parameters_csv = Path(s["thoipapy_data_folder"]) / f"results/{s['setname']}/train_data/04_tuned_ensemble_parameters.csv"
+    train_data_csv = Path(s["data_dir"]) / f"results/{s['setname']}/train_data/03_train_data_after_first_feature_seln.csv"
+    tuned_ensemble_parameters_csv = Path(s["data_dir"]) / f"results/{s['setname']}/train_data/04_tuned_ensemble_parameters.csv"
     # output
-    feat_imp_MDA_xlsx = os.path.join(s["thoipapy_data_folder"], "results", s["setname"], "feat_imp", "feat_imp_mean_decrease_accuracy.xlsx")
-    feat_imp_temp_THOIPA_BO_curve_data_csv = Path(s["thoipapy_data_folder"]) / f"results/{s['setname']}/feat_imp/feat_imp_temp_THOIPA.best_overlap_data.csv"
-    feat_imp_temp_bocurve_data_xlsx = Path(s["thoipapy_data_folder"]) / f"results/{s['setname']}/feat_imp/feat_imp_temp_bocurve_data.xlsx"
+    feat_imp_MDA_xlsx = os.path.join(s["data_dir"], "results", s["setname"], "feat_imp", "feat_imp_mean_decrease_accuracy.xlsx")
+    feat_imp_temp_THOIPA_BO_curve_data_csv = Path(s["data_dir"]) / f"results/{s['setname']}/feat_imp/feat_imp_temp_THOIPA.best_overlap_data.csv"
+    feat_imp_temp_bocurve_data_xlsx = Path(s["data_dir"]) / f"results/{s['setname']}/feat_imp/feat_imp_temp_bocurve_data.xlsx"
 
     thoipapy.utils.make_sure_path_exists(feat_imp_MDA_xlsx, isfile=True)
 
@@ -69,7 +69,7 @@ def calc_feat_import_from_mean_decrease_accuracy(s, logging):
     X = df_data[cols_excluding_y]
     y = df_data["interface"]
 
-    settings_path = s["excel_file_with_settings"]
+    settings_path = s["settings_path"]
     df_feat = pd.read_excel(settings_path, sheet_name="features")
     df_feat = df_feat.loc[df_feat.include == 1]
     feature_types: list = list(df_feat.feature_type.unique())
@@ -205,7 +205,7 @@ def calc_feat_import_from_mean_decrease_accuracy(s, logging):
 def calc_AUBOC_for_feat_imp(y, X_t, forest, feat_imp_temp_THOIPA_BO_curve_data_csv, feat_imp_temp_bocurve_data_xlsx, s, logging):
     THOIPA_BO_data_df = pd.DataFrame()
     acc_db_list = pd.Series(X_t.index).str.split("_").str[0].unique().tolist()
-    sim_matrix_xlsx = Path(s["thoipapy_data_folder"]) / f"results/{s['setname']}/clusters/{s['setname']}_sim_matrix.xlsx"
+    sim_matrix_xlsx = Path(s["data_dir"]) / f"results/{s['setname']}/clusters/{s['setname']}_sim_matrix.xlsx"
     putative_homologue_clusters = get_clusters_putative_homologues_in_protein_set(sim_matrix_xlsx)
 
     for acc_db in acc_db_list:

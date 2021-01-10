@@ -16,13 +16,13 @@ def mem_a3m_homologues_filter(s,logging):
         TMD_start = int(row.strip().split(",")[4]) + 1
         TMD_end = int(row.strip().split(",")[4]) + (int(row.strip().split(",")[3]) - int(row.strip().split(",")[2]) + 1)
         #return TMD_end
-        homo_a3m_file = os.path.join(s["thoipapy_data_folder"], "homologues", "a3m", "SinglePassTmd/%s.surr20.parse.a3m") % acc
+        homo_a3m_file = os.path.join(s["data_dir"], "homologues", "a3m", "SinglePassTmd/%s.surr20.parse.a3m") % acc
         if os.path.isfile(homo_a3m_file):
 
             homo_a3m_file_handle=open(homo_a3m_file,"r")
-            homo_filter_file=os.path.join(s["thoipapy_data_folder"], "homologues", "a3m", "SinglePassTmd/%s.surr20.a3m.mem.uniq.2gaps") %acc
+            homo_filter_file=os.path.join(s["data_dir"], "homologues", "a3m", "SinglePassTmd/%s.surr20.a3m.mem.uniq.2gaps") %acc
             homo_filter_file_handle = open(homo_filter_file,"w")
-            homo_mem_lips_input_file = os.path.join(s["thoipapy_data_folder"], "homologues", "a3m", "SinglePassTmd/%s.surr20.mem.lips.input") %acc
+            homo_mem_lips_input_file = os.path.join(s["data_dir"], "homologues", "a3m", "SinglePassTmd/%s.surr20.mem.lips.input") %acc
             homo_mem_lips_input_file_handle = open(homo_mem_lips_input_file, "w")
             logging.info("starting parsing a3m file: %s\n" %homo_filter_file)
             i = 0
