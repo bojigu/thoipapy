@@ -137,7 +137,8 @@ def download_homologues_from_ncbi(acc: str, TMD_seq_pl_surr: str, blast_xml_file
         tmp_protein_homologues_xml_handle.close()
 
     except:
-        logging.warning(f"{acc} query string not found in the CGI context in qblast")
+        logging.warning(f"{acc} Biopython qblast failed. "
+                        f"A typical error message is 'query string not found in the CGI context in qblast'")
 
     duration = time.time() - start
 
@@ -148,6 +149,8 @@ def download_homologues_from_ncbi(acc: str, TMD_seq_pl_surr: str, blast_xml_file
             tar.add(xml_txt, arcname=os.path.basename(xml_txt))
 
         delete_BLAST_xml(blast_xml_file)
+    else:
+        raise Exception(f"{acc} download_homologues_from_ncbi failed, blast_xml_file not found ({blast_xml_file})")
 
     logging.info("Output file: {}. (time taken = {:0.3f} min)".format(xml_tar_gz, duration / 60))
 

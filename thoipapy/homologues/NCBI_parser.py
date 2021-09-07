@@ -72,13 +72,13 @@ def parse_NCBI_xml_to_csv(acc, blast_xml_tar, BLAST_csv_tar, TMD_start, TMD_end,
     match_details_dict = {}
 
     if not os.path.isfile(blast_xml_tar):
-        warning = "{} parse_NCBI_xml_to_csv_mult_prot failed, blast_xml_tar not found = {}".format(acc, blast_xml_tar)
+        warning = "{} parse_NCBI_xml_to_csv failed, blast_xml_tar not found = {}".format(acc, blast_xml_tar)
         logging.warning(warning)
         return acc, False, warning
 
     tar_size = os.path.getsize(blast_xml_tar)
     if tar_size < 100:
-        warning = "{} parse_NCBI_xml_to_csv_mult_prot failed, blast_xml_tar seems to be empty, and will be removed".format(acc)
+        warning = "{} parse_NCBI_xml_to_csv failed, blast_xml_tar seems to be empty, and will be removed".format(acc)
         logging.warning(warning)
         os.remove(blast_xml_tar)
         return acc, False, warning
