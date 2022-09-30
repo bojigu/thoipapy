@@ -9,7 +9,7 @@ et-xmlfile==1.0.1
 iniconfig==1.1.1
 jdcal==1.4.1
 jeepney==0.4.3
-joblib==0.17.0
+joblib==1.2.0
 keyring==21.4.0
 kiwisolver==1.2.0
 matplotlib==3.3.2
