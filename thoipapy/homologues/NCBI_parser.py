@@ -86,7 +86,26 @@ def parse_NCBI_xml_to_csv(acc, blast_xml_tar, BLAST_csv_tar, TMD_start, TMD_end,
     # unpack all files in the tarball to the same folder
     # opening as a handle currently doesn't work, as not recognised by NCBIXML.read
     with tarfile.open(blast_xml_tar, 'r:gz') as tar:
-        tar.extractall(os.path.dirname(blast_xml_tar))
+        def is_within_directory(directory, target):
+            
+            abs_directory = os.path.abspath(directory)
+            abs_target = os.path.abspath(target)
+        
+            prefix = os.path.commonprefix([abs_directory, abs_target])
+            
+            return prefix == abs_directory
+        
+        def safe_extract(tar, path=".", members=None, *, numeric_owner=False):
+        
+            for member in tar.getmembers():
+                member_path = os.path.join(path, member.name)
+                if not is_within_directory(path, member_path):
+                    raise Exception("Attempted Path Traversal in Tar File")
+        
+            tar.extractall(path, members, numeric_owner=numeric_owner) 
+            
+        
+        safe_extract(tar, os.path.dirname(blast_xml_tar))
 
     remove_undesired_text_from_xml(BLAST_xml_file)
 
