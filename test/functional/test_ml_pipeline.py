@@ -66,7 +66,26 @@ def test_feature_extraction_and_ml_pipeline_for_small_set_of_proteins():
         target_path.parent.mkdir(parents=True, exist_ok=True)
         copyfile(pre_downloaded_homologue_xml_tar_gz, target_path)
         with tarfile.open(target_path, 'r:gz') as tar:
-            tar.extractall(os.path.dirname(target_path))
+            def is_within_directory(directory, target):
+                
+                abs_directory = os.path.abspath(directory)
+                abs_target = os.path.abspath(target)
+            
+                prefix = os.path.commonprefix([abs_directory, abs_target])
+                
+                return prefix == abs_directory
+            
+            def safe_extract(tar, path=".", members=None, *, numeric_owner=False):
+            
+                for member in tar.getmembers():
+                    member_path = os.path.join(path, member.name)
+                    if not is_within_directory(path, member_path):
+                        raise Exception("Attempted Path Traversal in Tar File")
+            
+                tar.extractall(path, members, numeric_owner=numeric_owner) 
+                
+            
+            safe_extract(tar, os.path.dirname(target_path))
         blast_details_path_orig: Path = xml_dir / f"BLAST_details.txt"
         blast_details_path: Path = xml_dir / f"{acc}.surr20.BLAST_details.txt"
         os.rename(blast_details_path_orig, blast_details_path)

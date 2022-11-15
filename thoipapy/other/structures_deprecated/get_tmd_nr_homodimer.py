@@ -114,7 +114,26 @@ def extract_crystal_resolv035_interact_pairs_and_create_fasta_file(s,logging):
     cdhit60_nr_represent228_pair_handle = open(cdhit60_nr_represent228_pair, 'w')
     crystal0_35_redundant_interact_homodimer_fasta_file_handle = open(crystal0_35_redundant_interact_homodimer_fasta_file,'w')
     with tarfile.open(redundant_interact_homodimer_targz_file, 'r:gz') as tar:
-        tar.extractall(os.path.dirname(redundant_interact_homodimer_targz_file))
+        def is_within_directory(directory, target):
+            
+            abs_directory = os.path.abspath(directory)
+            abs_target = os.path.abspath(target)
+        
+            prefix = os.path.commonprefix([abs_directory, abs_target])
+            
+            return prefix == abs_directory
+        
+        def safe_extract(tar, path=".", members=None, *, numeric_owner=False):
+        
+            for member in tar.getmembers():
+                member_path = os.path.join(path, member.name)
+                if not is_within_directory(path, member_path):
+                    raise Exception("Attempted Path Traversal in Tar File")
+        
+            tar.extractall(path, members, numeric_owner=numeric_owner) 
+            
+        
+        safe_extract(tar, os.path.dirname(redundant_interact_homodimer_targz_file))
     df_rd = pd.read_csv(redundant_interact_homodimer_file)
     resolve_list = []
     for i in range(df_rd.shape[0]):
