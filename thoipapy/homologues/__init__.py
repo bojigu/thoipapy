@@ -1,2 +1,0 @@
-import thoipapy.homologues.NCBI_download
-import thoipapy.homologues.NCBI_parser
