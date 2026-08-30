@@ -26,7 +26,7 @@ import thoipapy.paper_figures.create_BOcurve_files
 from thoipapy.artefacts import ArtefactPaths
 
 
-def collect_indiv_validation_data(paths: ArtefactPaths, df_set, n_residues_AUBOC_validation: int, THOIPA_better_PREDDIMER, THOIPA_better_TMDOCK, THOIPA_better_both, logging, namedict, predictors, THOIPA_predictor_name, subsets):
+def collect_indiv_validation_data(paths: ArtefactPaths, df_set, n_residues_AUBOC_validation: int, logging, namedict, predictors, THOIPA_predictor_name, subsets):
     """
 
     Parameters
@@ -205,10 +205,10 @@ def collect_indiv_validation_data(paths: ArtefactPaths, df_set, n_residues_AUBOC
 
         if "TMDOCK" in PR_AUC_df.columns and "PREDDIMER" in PR_AUC_df.columns:
             df_THOIPA_vs_others = pd.DataFrame()
-            df_THOIPA_vs_otherTHOIPA_better_TMDOCK = PR_AUC_df[THOIPA_predictor_name] > PR_AUC_df.TMDOCK
-            df_THOIPA_vs_otherTHOIPA_better_PREDDIMER = PR_AUC_df[THOIPA_predictor_name] > PR_AUC_df.PREDDIMER
-            df_THOIPA_vs_otherTHOIPA_better_both = df_THOIPA_vs_others[["THOIPA_better_TMDOCK", "THOIPA_better_PREDDIMER"]].sum(axis=1) == 2
-            n_THOIPA_better_both = df_THOIPA_vs_otherTHOIPA_better_both.sum()
+            df_THOIPA_vs_others["THOIPA_better_TMDOCK"] = PR_AUC_df[THOIPA_predictor_name] > PR_AUC_df.TMDOCK
+            df_THOIPA_vs_others["THOIPA_better_PREDDIMER"] = PR_AUC_df[THOIPA_predictor_name] > PR_AUC_df.PREDDIMER
+            df_THOIPA_vs_others["THOIPA_better_both"] = df_THOIPA_vs_others[["THOIPA_better_TMDOCK", "THOIPA_better_PREDDIMER"]].sum(axis=1) == 2
+            n_THOIPA_better_both = df_THOIPA_vs_others["THOIPA_better_both"].sum()
             logging.info("THOIPA has higher precision-recall AUC than both TMDOCK and PREDDIMER for {}/{} proteins in {}".format(n_THOIPA_better_both, PR_AUC_df.shape[0], paths.setname))
             df_THOIPA_vs_others.to_excel(writer, sheet_name="THOIPA_vs_others")
 

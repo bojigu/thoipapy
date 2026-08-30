@@ -66,7 +66,7 @@ def download_homologues_from_ncbi_mult_prot(paths: ArtefactPaths, df_set, expect
         database = df_set.loc[i, "database"]
 
         # run online server NCBI blastp with biopython module
-        blast_xml_file = paths.blast_xml(database, acc)
+        blast_xml_file = str(paths.blast_xml(database, acc))
         xml_tar_gz = blast_xml_file[:-4] + ".xml.tar.gz"
         xml_txt = blast_xml_file[:-4] + "_details.txt"
 
@@ -129,11 +129,13 @@ def run_local_blastp(query_fasta_string: str, blast_xml_file: Union[Path, str], 
         "-out", str(blast_xml_file),
     ]
     logging.info(f"running local blastp against {db}")
-    result = subprocess.run(cmd, capture_output=True, text=True, timeout=LOCAL_BLAST_TIMEOUT_S)
-
-    if result.returncode != 0:
-        raise RuntimeError(f"local blastp failed (returncode={result.returncode}): {result.stderr.strip()}")
-    query_file.unlink(missing_ok=True)
+    try:
+        result = subprocess.run(cmd, capture_output=True, text=True, timeout=LOCAL_BLAST_TIMEOUT_S)
+        if result.returncode != 0:
+            raise RuntimeError(f"local blastp failed (returncode={result.returncode}): {result.stderr.strip()}")
+    finally:
+        # Ran only on success before, so every failed search left a stray .query.fasta behind.
+        query_file.unlink(missing_ok=True)
 
 
 def identify_to_ncbi() -> None:
@@ -204,11 +206,15 @@ def download_homologues_from_ncbi(acc: str, TMD_seq_pl_surr: str, blast_xml_file
 
     start = time.time()
 
+    if not local_db:
+        # Outside the try: a missing contact email is a configuration error, and reporting it as
+        # "blast_xml_file not found" further down sends the reader after the wrong problem.
+        identify_to_ncbi()
+
     try:
         if local_db:
             run_local_blastp(query_fasta_string, blast_xml_file, expect_value, hit_list_size, local_db, logging)
         else:
-            identify_to_ncbi()
             tmp_protein_homologues_xml_handle = NCBIWWW.qblast("blastp", db, query_fasta_string,
                                                                expect=expect_value,
                                                                hitlist_size=hit_list_size)
@@ -269,7 +275,7 @@ def download_10_homologues_from_ncbi(paths: ArtefactPaths, df_set, rerun_existin
         database = df_set.loc[i, "database"]
 
         # run online server NCBI blastp with biopython module
-        blast_xml_file = paths.data_dir / "homologues" / "xml" / "10_hits" / database / f"{acc}.{paths.surr_suffix}.BLAST.xml"
+        blast_xml_file = str(paths.data_dir / "homologues" / "xml" / "10_hits" / database / f"{acc}.{paths.surr_suffix}.BLAST.xml")
         xml_tar_gz = blast_xml_file[:-4] + ".xml.tar.gz"
         xml_txt = blast_xml_file[:-4] + "_details.txt"
 

@@ -20,7 +20,7 @@ from thoipapy.utils import make_sure_path_exists
 from thoipapy.artefacts import ArtefactPaths
 
 
-def validate_multiple_predictors_and_subsets_auboc(paths: ArtefactPaths, df_set, n_residues_AUBOC_validation: int, left, logging):
+def validate_multiple_predictors_and_subsets_auboc(paths: ArtefactPaths, df_set, n_residues_AUBOC_validation: int, logging):
     logging.info("start create_AUBOC_43databases_figs")
 
     predictors = ["THOIPA_{}_LOO".format(paths.set_number), "PREDDIMER", "TMDOCK", "LIPS_surface_ranked", "random"]  # "LIPS_L*E",
@@ -67,7 +67,7 @@ def validate_multiple_predictors_and_subsets_auboc(paths: ArtefactPaths, df_set,
         ax.set_ylabel("performance value\n(observed - random)", color="#0f7d9b")
         ax.tick_params('y', colors="#0f7d9b")
 
-        ax.spineleft.set_color("#0f7d9b")
+        ax.spines['left'].set_color("#0f7d9b")
         ax.legend()
         fig.tight_layout()
         fig.savefig(BOCURVE_linechart_png, dpi=140)

@@ -295,10 +295,10 @@ def run_one_set(s: dict, set_number: int):
 
         thoipapy.validation.combine_mult_predictors.merge_predictions(paths, df_set, logging, testsetname, trainsetname)
 
-        thoipapy.validation.indiv_validation.collect_indiv_validation_data(paths, df_set, s["n_residues_AUBOC_validation"], s["THOIPA_better_PREDDIMER"], s["THOIPA_better_TMDOCK"], s["THOIPA_better_both"], logging, namedict, predictors, THOIPA_predictor_name, subsets)
+        thoipapy.validation.indiv_validation.collect_indiv_validation_data(paths, df_set, s["n_residues_AUBOC_validation"], logging, namedict, predictors, THOIPA_predictor_name, subsets)
         thoipapy.validation.indiv_validation.create_indiv_validation_figs(paths, logging, namedict, predictors, THOIPA_predictor_name, subsets)
 
-        thoipapy.validation.multiple_predictors.validate_multiple_predictors_and_subsets_auboc(paths, df_set, s["n_residues_AUBOC_validation"], s["left"], logging)
+        thoipapy.validation.multiple_predictors.validate_multiple_predictors_and_subsets_auboc(paths, df_set, s["n_residues_AUBOC_validation"], logging)
         thoipapy.validation.multiple_predictors.validate_multiple_predictors_and_subsets_auc(paths, df_set, logging)
 
         thoipapy.validation.roc.create_ROC_all_residues(paths, df_set, testsetname, trainsetname, logging)
