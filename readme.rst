@@ -242,8 +242,8 @@ beyond the OSF versions; the shared columns are identical.
 These were Excel workbooks and are now CSV. They are single flat tables, so the workbook format
 bought nothing and made them undiffable in git and awkward to read without Excel. The same applies
 to ``data/protein_names.csv`` and the ETRA scanning-mutagenesis data in
-``data/ETRA_data/Average_with_interface/``. Pipeline outputs under ``data/results/`` remain Excel,
-because those genuinely hold several tables per file.
+``data/ETRA_data/Average_with_interface/``. Pipeline outputs under ``data/results/`` remain Excel
+where a file genuinely holds several tables; the ones that did not are CSV.
 
 
 Running BLAST locally instead of at NCBI

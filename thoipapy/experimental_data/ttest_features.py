@@ -53,7 +53,7 @@ def conduct_ttest_for_all_features(paths: ArtefactPaths, bind_column: str, train
 
     # outputs
     ttest_pvalues_bootstrapped_data_using_traindata_selected_features_xlsx = paths.ttest_dir() / f"ttest_pvalues_bootstrapped_data_using_traindata_selected_features(train{trainsetname}).xlsx"
-    correlated_features_xlsx = paths.ttest_dir() / "correlated_features.xlsx"
+    correlated_features_csv = paths.ttest_dir() / "correlated_features.csv"
 
     make_sure_path_exists(ttest_pvalues_bootstrapped_data_using_traindata_selected_features_xlsx, isfile=True)
 
@@ -101,7 +101,7 @@ def conduct_ttest_for_all_features(paths: ArtefactPaths, bind_column: str, train
     cutoff_R2_correlated = 0.6
     cutoff_R2_highly_correlated = 0.95
     dfcorr = df.corr()
-    dfcorr.to_excel(correlated_features_xlsx)
+    dfcorr.to_csv(correlated_features_csv)
 
     highly_correlated_feature_sets: List[set] = []
 
