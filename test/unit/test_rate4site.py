@@ -3,8 +3,10 @@ from pathlib import Path
 from test.helpers.helpers import TestProtein
 from thoipapy.features.rate4site import rate4site_calculation
 from thoipapy.utils import LogOnlyToConsole, SurroundingSequence
+import pytest
 
 
+@pytest.mark.requires_tool("rate4site", "cd-hit")
 def test_rate4site():
     fasta_uniq_TMD_seqs_surr5_for_LIPO = Path(__file__).parents[1] / "test_inputs/tm_homologues/homologues_uniq_for_pssm_freecontact.fas"
     rate4site_csv = Path(__file__).parents[1] / "test_outputs/test_rate4site/test_rate4site.csv"

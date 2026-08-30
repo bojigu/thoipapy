@@ -2,14 +2,18 @@ import os
 import tarfile
 
 import thoipapy
+from thoipapy.paths import STANDALONE_SETTINGS_CSV
 from pathlib import Path
 from shutil import rmtree, copyfile
+import pytest
+import thoipapy.common
+import thoipapy.run
 
 
+@pytest.mark.requires_tool("rate4site", "freecontact", "cd-hit")
 def test_feature_extraction_and_ml_pipeline_for_small_set_of_proteins():
     here: Path = Path(__file__)
-    settings_path: Path = here.parents[2] / "thoipapy/setting/thoipapy_standalone_run_settings.xlsx"
-    s = thoipapy.common.create_settingdict(settings_path)
+    s = thoipapy.common.create_settingdict(STANDALONE_SETTINGS_CSV)
     assert isinstance(s, dict)
     sets_dir: Path = here.parents[1] / "test_inputs/protein_sets"
     assert sets_dir.is_dir()
@@ -66,7 +70,7 @@ def test_feature_extraction_and_ml_pipeline_for_small_set_of_proteins():
         target_path.parent.mkdir(parents=True, exist_ok=True)
         copyfile(pre_downloaded_homologue_xml_tar_gz, target_path)
         with tarfile.open(target_path, 'r:gz') as tar:
-            tar.extractall(os.path.dirname(target_path))
+            tar.extractall(os.path.dirname(target_path), filter="data")
         blast_details_path_orig: Path = xml_dir / f"BLAST_details.txt"
         blast_details_path: Path = xml_dir / f"{acc}.surr20.BLAST_details.txt"
         os.rename(blast_details_path_orig, blast_details_path)

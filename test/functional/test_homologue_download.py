@@ -6,8 +6,10 @@ from test.helpers.helpers import TestProtein
 from thoipapy.homologues.NCBI_download import download_homologues_from_ncbi
 from thoipapy.homologues.NCBI_parser import parse_NCBI_xml_to_csv
 from thoipapy.utils import make_sure_path_exists, LogOnlyToConsole
+import pytest
 
 
+@pytest.mark.network
 def test_download_homologues_from_ncbi():
     tp: TestProtein = TestProtein()
     tp.with_1xioA4()

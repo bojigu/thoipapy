@@ -5,8 +5,10 @@ import thoipapy
 from test.helpers.helpers import TestProtein
 from thoipapy import run_THOIPA_prediction
 from thoipapy.utils import make_sure_path_exists
+import pytest
 
 
+@pytest.mark.requires_tool("rate4site", "freecontact", "cd-hit")
 def test_standalone_prediction_with_pre_downloaded_homologues_1xioA4():
     # tmd with few homologues, not requiring cd-hit
     tp: TestProtein = TestProtein()
@@ -27,6 +29,7 @@ def test_standalone_prediction_with_pre_downloaded_homologues_1xioA4():
     rmtree(out_dir)
 
 
+@pytest.mark.requires_tool("rate4site", "freecontact", "cd-hit")
 def test_standalone_prediction_with_pre_downloaded_homologues_4hksA1():
     # tmd with medium number of homologues, requiring cd-hit
     tp: TestProtein = TestProtein()
@@ -47,6 +50,8 @@ def test_standalone_prediction_with_pre_downloaded_homologues_4hksA1():
     rmtree(out_dir)
 
 
+@pytest.mark.network
+@pytest.mark.requires_tool("rate4site", "freecontact", "cd-hit")
 def test_standalone_prediction_for_tmd_with_few_homologues():
     tp: TestProtein = TestProtein()
     tp.with_1xioA4()
@@ -61,6 +66,8 @@ def test_standalone_prediction_for_tmd_with_few_homologues():
     rmtree(out_dir)
 
 
+@pytest.mark.network
+@pytest.mark.requires_tool("rate4site", "freecontact", "cd-hit")
 def test_standalone_prediction_for_tmd_with_many_homologues():
     # tmds with many homologues will require a functional cd-hit before rate4site
     tp: TestProtein = TestProtein()
