@@ -1,0 +1,57 @@
+index,uniprot,fullname,database,method,PDB acc,shortname,other_names,source,date,ref,ref_scanmut
+Q08345,Q08345,Epithelial discoidin domain-containing receptor 1,ETRA,ToxR,,DDR1,,this study,,"{Finger, 2009 #8137}",T.S.
+Q92729,Q92729,Receptor-type tyrosine-protein phosphatase U,ETRA,ToxR,,PTPRU,,this study,,"{Chin, 2005 #8216}",T.S.
+Q16832,Q16832,Discoidin domain-containing receptor 2,ETRA,ToxR,,DDR2,,this study,,"{Finger, 2009 #8137}",T.S.
+Q16827,Q16827,Receptor-type tyrosine-protein phosphatase O,ETRA,ToxR,,PTPRO,,this study,,"{Chin, 2005 #8216}",T.S.
+Q9Y286,Q9Y286,Sialic acid-binding Ig-like lectin 7,ETRA,ToxR,,Siglec7,,this study,,"{Kirrbach, 2013 #7918}",T.S.
+Q7L4S7,Q7L4S7,Protein ARMCX6,ETRA,ToxR,,Armcx6,,this study,,"{Kirrbach, 2013 #7918}",T.S.
+P35590,P35590,Tyrosine-protein kinase receptor Tie-1,ETRA,ToxR,,Tie1,,this study,,"{Finger, 2009 #8137}",T.S.
+P23470,P23470,Receptor-type tyrosine-protein phosphatase gamma,ETRA,ToxR,,PTPRG,,this study,,"{Chin, 2005 #8216}",T.S.
+P05026,P05026,Sodium/potassium-transporting ATPase subunit beta-1,ETRA,ToxR,,ATP1B1,,this study,,"{Barwe, 2007 #8192}",T.S.
+O75460,O75460,Inositol-requiring enzyme 1,ETRA,ToxR,,Ire1,ERN1,this study,,T.S.,T.S.
+P0A6S5,P0A6S5,Cell division protein FtsB,ETRA,TOXCAT,,FtsB,,LaPointe,2013,"{LaPointe, 2013} ","{LaPointe, 2013 #8491}"
+P05106,P05106,Integrin beta-3,ETRA,TOXCAT,,ITGB3,,Zhu,2010,"{Zhu, 2010 #8115}","{Zhu, 2010 #8115}"
+P08514,P08514,Integrin alpha-Iib,ETRA,TOXCAT,,ITGA2B,,Li,2004,"{Li, 2004 #8237}","{Li, 2004 #8237}"
+Q6ZRP7,Q6ZRP7,Sulfhydryl oxidase 2,ETRA,TOXCAT,,QSOX2,,Ried,2016,"{Ried, 2016 #9084}","{Ried, 2012 #7863}"
+Q8NI60,Q8NI60,"Atypical kinase COQ8A, mitochondrial",ETRA,TOXCAT,,ADCK3,,Khadria,2014,"{Khadria, 2014 #7971}","{Khadria, 2014 #7971}"
+Q12983,Q12983,BCL2/adenovirus E1B 19 kDa protein-interacting protein 3,ETRA,TOXCAT,,BNIP3,,Lawrie,2010,"{Lawrie, 2010 #8135}","{Lawrie, 2010 #8135}"
+P02724,P02724,Glycophorin A,ETRA,dsTBL,,GpA,,Elazar,2016,"{Elazar, 2016 #8912}","{Elazar, 2016 #8912}"
+P04626,P04626,Receptor tyrosine-protein kinase erbB-2,ETRA,dsTBL,,ErbB2,,Elazar,2016,"{Elazar, 2016 #8912;Gerber, 2004 #9098}","{Elazar, 2016 #8912}"
+P13224,P13224,Platelet glycoprotein Ib beta chain,ETRA,TOXCAT,,GP1BB,,Wei,2011,"{Wei, 2011 #8645}","{Wei, 2011 #8645}"
+P25189,P25189,Myelin protein P0,ETRA,TOXCAT,,MPZ,,Plotkowski,2007,"{Plotkowski, 2007 #8176}","{Plotkowski, 2007 #8176}"
+Q12913,Q12913,Receptor-type tyrosine-protein phosphatase eta,ETRA,TOXCAT,,PTPRJ,,Chin,2005,"{Chin, 2005 #8216}","{Chin, 2005 #8216}"
+Q99IB8,Q99IB8,NS4A,ETRA,GALLEX,,NS4A,,Kohlway,2014,"{Kohlway, 2014 #7906}","{Kohlway, 2014 #7906}"
+P20963,P20963,T-cell surface glycoprotein CD3 zeta chain,NMR,sol_NMR,2hac,CD3ζζ,,Call,2006,"{Call, 2006 #9112}",not_applicable
+P21709,P21709,Ephrin type-A receptor 1,NMR,sol_NMR,2k1k,EphA1,,Bocharov,2008,"{Bocharov, 2008 #8153}",not_applicable
+O43914,O43914,TYRO protein tyrosine kinase-binding protein,NMR,sol_NMR,2l34,TYROBP,,Call,2010,"{Call, 2010 #8368}",not_applicable
+P05067,P05067,Amyloid beta A4 protein,NMR,sol_NMR,2loh,APP,,Nadezhdin,2012,"{Nadezhdin, 2012 #8068}",not_applicable
+P09619,P09619,Platelet-derived growth factor receptor beta,NMR,sol_NMR,2l6w,PDGFRB,,Muhle-Goll,2012,"{Muhle-Goll, 2012 #8549}",not_applicable
+P22607,P22607,Fibroblast growth factor receptor 3,NMR,sol_NMR,2lzl,FGFR3,,Volynsky,2013,"{Volynsky, 2013 #8546}",not_applicable
+O15455,O15455,Toll-like receptor 3,NMR,sol_NMR,2mk9,TLR3,,Mineev,2014,"{Mineev, 2014 #8005}",not_applicable
+P04629,P04629,High affinity nerve growth factor receptor,NMR,sol_NMR,2n90,NTRK1,,Nadezhdin,unpub.,Nadezhdin et al. unpublished,not_applicable
+O14763,O14763,Death Receptor 5,NMR,sol_NMR,6nhwA1,DR5,,Chou,2018,na,not_applicable
+1orqC4,Q9YDF8,KvAP,X-ray,,1orqC4,KvAP,,,,,
+1xioA4,Q8YSC4,Bacteriorhodopsin,X-ray,,1xioA4,Bacteriorhodopsin,,,,,
+2axtM1,Q8DHA7,PSII-M,X-ray,,2axtM1,PSII-M,,,,,
+2h8aA2,P08011,Mgst1,X-ray,,2h8aA2,Mgst1,,,,,
+2j58A1,Q9X4B7,Wza,X-ray,,2j58A1,Wza,,,,,
+2wpdJ1,P61829,OLI1,X-ray,,2wpdJ1,OLI1,,,,,
+3dwwA2,O14684,MGST1-L1,X-ray,,3dwwA2,MGST1-L1,,,,,
+3h9vA2,Q6NYR1,p2X purinoceptor,X-ray,,3h9vA2,p2X purinoceptor,,,,,
+3rifA2,G5EBR3,GluCl α,X-ray,,3rifA2,GluCl α,,,,,
+3spcA2,F1NHE9,KCNJ12,X-ray,,3spcA2,KCNJ12,,,,,
+3zk1A1,Q8RGD7,fn ATPase F0 c-ring ,X-ray,,3zk1A1,fn ATPase F0 c-ring ,,,,,
+4ev6A1,Q58439,CorA,X-ray,,4ev6A1,CorA,,,,,
+4hksA1,Q9U6B8,CRCM1,X-ray,,4hksA1,CRCM1,,,,,
+4i0uA1,Q9WZ31,CorA,X-ray,,4i0uA1,CorA,,,,,
+4o9pC1,Q72GR9,NAD(P) transhydrogenase α2,X-ray,,4o9pC1,pntAB,,,,,
+4r0cA7,Q0VR69,AbgT,X-ray,,4r0cA7,AbgT,,,,,
+4ryiA2,Q81BL7,TspO,X-ray,,4ryiA2,TspO,,,,,
+4v1fA1,A0A2S9G8T0,mp ATPase F0 c-ring ,X-ray,,4v1fA1,mp ATPase F0 c-ring ,,,,,
+4wisA10,C7Z7K1,TMEM16,X-ray,,4wisA10,TMEM16,,,,,
+5irzD6,O35433,Trpv1,X-ray,,5irzD6,Trpv1,,,,,
+5nkqA1,Q7VYU0,CRCB TM1 ,X-ray,,5nkqA1,CRCB TM1 ,,,,,
+5nkqA3,Q7VYU0,CRCB TM3,X-ray,,5nkqA3,CRCB TM3,,,,,
+5t4dA6,Q13563,PC2,X-ray,,5t4dA6,PC2,,,,,
+5u6oA6,O60741,BCNG-1,X-ray,,5u6oA6,BCNG-1,,,,,
+5uldA9,Q9KNE0,NadC,X-ray,,5uldA9,NadC,,,,,

@@ -22,7 +22,7 @@ REPO_ROOT: Path = Path(__file__).parents[1]
 # DVC-tracked. Contents come from `dvc pull`, not from the wheel.
 DATA_DIR: Path = REPO_ROOT / "data"
 
-# Protein set definitions (setNN.xlsx) and protein_names.xlsx. Small, human-authored inputs, so
+# Protein set definitions (setNN.csv) and protein_names.csv. Small, human-authored inputs, so
 # these live in git rather than DVC. Named "sets" because thoipapy/figs/create_heatmap_from_
 # merge_file.py looks for protein sets at base_dir/"sets" while run.py uses sets_dir; with
 # base_dir == DATA_DIR, this single directory satisfies both conventions.

@@ -74,7 +74,7 @@ include = ["thoipapy*"]
 # predict.py loads on every prediction. Listing them explicitly here removes that trap.
 [tool.setuptools.package-data]
 "thoipapy.ML_model" = ["THOIPA_trained_ML_model.lpkl", "model_features.txt"]
-"thoipapy.setting" = ["*.csv", "*.txt", "*.xlsx"]
+"thoipapy.setting" = ["*.csv", "*.txt"]
 
 [tool.pytest.ini_options]
 testpaths = ["test"]

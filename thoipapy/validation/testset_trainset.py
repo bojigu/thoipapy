@@ -65,8 +65,8 @@ def validate_THOIPA_for_testset_trainset_combination(paths: ArtefactPaths, n_res
         Could not be saved easily as a dataframe, because the number of residues is different for each protein
 
     """
-    names_excel_path = paths.protein_names_xlsx
-    namedict = thoipapy.utils.create_namedict(names_excel_path)
+    names_csv_path = paths.protein_names_csv
+    namedict = thoipapy.utils.create_namedict(names_csv_path)
 
     for n, train_set in enumerate(train_set_list):
         trainsetname = "set{:02d}".format(int(train_set))
@@ -89,7 +89,7 @@ def validate_THOIPA_for_testset_trainset_combination(paths: ArtefactPaths, n_res
 
             testset_path = thoipapy.common.get_path_of_protein_set(testsetname, paths.sets_dir)
 
-            testdataset_df = pd.read_excel(testset_path)
+            testdataset_df = pd.read_csv(testset_path)
             THOIPA_BO_data_df = pd.DataFrame()
             # LIPS_BO_data_df = pd.DataFrame()
 
@@ -154,7 +154,7 @@ def validate_THOIPA_for_testset_trainset_combination(paths: ArtefactPaths, n_res
 
             THOIPA_BO_data_df.to_csv(THOIPA_BO_curve_data_csv)
 
-            # THOIPA_linechart_mean_obs_and_rand = analyse_bo_curve_underlying_data(THOIPA_BO_curve_data_csv, BO_curve_folder, names_excel_path)
+            # THOIPA_linechart_mean_obs_and_rand = analyse_bo_curve_underlying_data(THOIPA_BO_curve_data_csv, BO_curve_folder, names_csv_path)
             parse_BO_data_csv_to_excel(THOIPA_BO_curve_data_csv, bocurve_data_xlsx, n_residues_AUBOC_validation, logging)
             AUC_ser = pd.Series(xv_dict_THOIPA[acc_db]["roc_auc"])
             AUBOC = save_BO_linegraph_and_barchart(paths, n_residues_AUBOC_validation, bocurve_data_xlsx, BO_linechart_png, BO_barchart_png, namedict, logging, AUC_ser)
@@ -188,8 +188,8 @@ def validate_THOIPA_for_testset_trainset_combination(paths: ArtefactPaths, n_res
 
 
 def validate_LIPS_for_testset(paths: ArtefactPaths, n_residues_AUBOC_validation: int, test_set_list, logging, LIPS_name="LIPS_LE", pred_col="LIPS_L*E"):
-    names_excel_path = paths.protein_names_xlsx
-    namedict = thoipapy.utils.create_namedict(names_excel_path)
+    names_csv_path = paths.protein_names_csv
+    namedict = thoipapy.utils.create_namedict(names_csv_path)
 
 
     for test_set in test_set_list:
@@ -208,7 +208,7 @@ def validate_LIPS_for_testset(paths: ArtefactPaths, n_residues_AUBOC_validation:
 
         testset_path = thoipapy.common.get_path_of_protein_set(testsetname, paths.sets_dir)
 
-        testdataset_df = pd.read_excel(testset_path)
+        testdataset_df = pd.read_csv(testset_path)
         LIPS_BO_data_df = pd.DataFrame()
 
         # save all outputs to a cross-validation dictionary, to be saved as a pickle file
@@ -277,11 +277,11 @@ def validate_LIPS_for_testset(paths: ArtefactPaths, n_residues_AUBOC_validation:
         #######################################################################################################
 
         LIPS_BO_data_df.to_csv(LIPS_BO_curve_data_csv)
-        names_excel_path = paths.protein_names_xlsx
+        names_csv_path = paths.protein_names_csv
 
-        # LIPS_linechart_mean_obs_and_rand = analyse_bo_curve_underlying_data(LIPS_BO_curve_data_csv, BO_curve_folder, names_excel_path)
+        # LIPS_linechart_mean_obs_and_rand = analyse_bo_curve_underlying_data(LIPS_BO_curve_data_csv, BO_curve_folder, names_csv_path)
 
-        # parse_BO_data_csv_to_excel(LIPS_BO_curve_data_csv, BO_curve_folder, names_excel_path)
+        # parse_BO_data_csv_to_excel(LIPS_BO_curve_data_csv, BO_curve_folder, names_csv_path)
         parse_BO_data_csv_to_excel(LIPS_BO_curve_data_csv, bocurve_data_xlsx, n_residues_AUBOC_validation, logging)
         AUC_ser = pd.Series(xv_dict_LIPS[acc_db]["roc_auc"])
         AUBOC = save_BO_linegraph_and_barchart(paths, n_residues_AUBOC_validation, bocurve_data_xlsx, BO_linechart_png, BO_barchart_png, namedict, logging, AUC_ser)

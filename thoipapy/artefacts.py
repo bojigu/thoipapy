@@ -115,8 +115,8 @@ class ArtefactPaths:
         return BASE_DIR
 
     @property
-    def protein_names_xlsx(self) -> Path:
-        return BASE_DIR / "protein_names.xlsx"
+    def protein_names_csv(self) -> Path:
+        return BASE_DIR / "protein_names.csv"
 
     # ------------------------------------------------------- per-protein features
 
@@ -300,8 +300,8 @@ class ArtefactPaths:
     def experimental_interface_csv(self, database: str, acc: str, inter_pair_max: int) -> Path:
         return self.structure_dir(database) / f"{acc}.{inter_pair_max}pairmax.bind.closedist.csv"
 
-    def etra_experimental_xlsx(self, acc: str) -> Path:
-        return self.base_dir / "ETRA_data" / "Average_with_interface" / f"{acc}_mul_scan_average_data.xlsx"
+    def etra_experimental_csv(self, acc: str) -> Path:
+        return self.base_dir / "ETRA_data" / "Average_with_interface" / f"{acc}_mul_scan_average_data.csv"
 
     def logging_dir(self) -> Path:
         return self.data_dir / "Logging"

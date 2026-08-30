@@ -237,15 +237,15 @@ def create_column_with_TMD_plus_surround_seq(df_set, num_of_sur_residues):
     return df_set, TMD_seq_pl_surr_series
 
 
-def create_namedict(names_excel_path, style="shortname [acc-db]"):
-    """ Create protein name dictionary from an excel file with detailed protein info.
+def create_namedict(names_csv_path, style="shortname [acc-db]"):
+    """ Create protein name dictionary from the CSV of detailed protein info.
 
     e.g. namedict[P02724-NMR
 
     Parameters
     ----------
-    names_excel_path : str
-        Path to excel file with manually edited protein names
+    names_csv_path : str
+        Path to the CSV of manually edited protein names
     style : str
         Style of protein name in output dictionary. Current options are "shortname [acc-db]" or "shortname [acc]"
         "shortname [acc-db]" = 'Q9Y286-ETRA': 'Siglec7 [Q9Y286-ETRA]'
@@ -257,9 +257,9 @@ def create_namedict(names_excel_path, style="shortname [acc-db]"):
         Dictionary in format namedict[acc_db] = "formatted protein name"
     """
     #################################################################
-    #             EXTRACT NAMES FROM NAMES EXCEL FILE               #
+    #                EXTRACT NAMES FROM THE NAMES CSV               #
     #################################################################
-    df_names = pd.read_excel(names_excel_path, index_col=0)
+    df_names = pd.read_csv(names_csv_path, index_col=0)
     # restrict names dict to only that database
     df_names["acc"] = df_names.index
     df_names["acc_db"] = df_names.acc + "-" + df_names.database

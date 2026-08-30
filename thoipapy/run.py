@@ -125,8 +125,8 @@ def run_one_set(s: dict, set_number: int):
     #                     open and process a set of protein sequences                            #
     #                                                                                            #
     ##############################################################################################
-    # load the protein set (e.g. set01.xlsx) as a dataframe
-    df_set = pd.read_excel(set_path, sheet_name='proteins')
+    # load the protein set (e.g. set08_train.csv) as a dataframe
+    df_set = pd.read_csv(set_path)
 
     # create list of uniprot accessions to run
     acc_list = df_set.acc.tolist()
@@ -279,7 +279,7 @@ def run_one_set(s: dict, set_number: int):
 
     if stages.run_validation:
         sys.stdout.write("\n--------------- starting run_validation ---------------\n")
-        namedict = thoipapy.utils.create_namedict(paths.protein_names_xlsx)
+        namedict = thoipapy.utils.create_namedict(paths.protein_names_csv)
         THOIPA_predictor_name = "THOIPA_{}_LOO".format(s["set_number"])
         predictors = [THOIPA_predictor_name, "PREDDIMER", "TMDOCK", "LIPS_surface_ranked", "random"]
         testsetname, trainsetname = get_testsetname_trainsetname_from_run_settings(s)

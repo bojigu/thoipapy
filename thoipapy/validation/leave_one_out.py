@@ -81,7 +81,7 @@ def run_LOO_validation(paths: ArtefactPaths, df_set: pd.DataFrame, bind_column: 
     """
     logging.info("\n--------------- starting run_LOO_validation ---------------\n")
     setname = paths.setname
-    names_excel_path = paths.protein_names_xlsx
+    names_csv_path = paths.protein_names_csv
 
     # drop redundant proteins according to CD-HIT
     df_set = thoipapy.utils.drop_redundant_proteins_from_list(df_set, logging)
@@ -254,9 +254,9 @@ def run_LOO_validation(paths: ArtefactPaths, df_set: pd.DataFrame, bind_column: 
     #######################################################################################################
 
     BO_all_df.to_csv(bocurve_data_raw_csv)
-    # names_excel_path = paths.protein_names_xlsx
+    # names_csv_path = paths.protein_names_csv
 
-    # linechart_mean_obs_and_rand = thoipapy.paper_figures.Create_Bo_Curve_files.analyse_bo_curve_underlying_data(bocurve_data_raw_csv, crossvalidation_folder, names_excel_path)
+    # linechart_mean_obs_and_rand = thoipapy.paper_figures.Create_Bo_Curve_files.analyse_bo_curve_underlying_data(bocurve_data_raw_csv, crossvalidation_folder, names_csv_path)
     thoipapy.validation.bocurve.parse_BO_data_csv_to_excel(bocurve_data_raw_csv, bocurve_data_xlsx, n_residues_AUBOC_validation, logging)
 
     logging.info('{} LOO crossvalidation. Time taken = {:.2f}.'.format(paths.setname, duration))
@@ -394,8 +394,8 @@ def create_LOO_validation_fig(paths: ArtefactPaths, df_set, n_residues_AUBOC_val
     BO_barchart_png: Union[Path, str] = paths.crossvalidation_dir / f"data/{paths.setname}_LOO_AUBOC_barchart.png"
     other_figs_path: Union[Path, str] = paths.crossvalidation_dir / f"other_figs"
 
-    names_excel_path = paths.protein_names_xlsx
-    namedict = thoipapy.utils.create_namedict(names_excel_path)
+    names_csv_path = paths.protein_names_csv
+    namedict = thoipapy.utils.create_namedict(names_csv_path)
 
     # open pickle file
     with open(LOO_crossvalidation_pkl, "rb") as f:

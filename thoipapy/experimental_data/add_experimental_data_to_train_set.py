@@ -28,7 +28,7 @@ def add_experimental_data_to_combined_features_mult_prot(paths: ArtefactPaths, d
         TMD_seq = df_set.loc[i, "TMD_seq"]
         feature_combined_file = paths.combined_features_csv(database, acc)
         if database == "ETRA":
-            experimental_data_file = paths.etra_experimental_xlsx(acc)
+            experimental_data_file = paths.etra_experimental_csv(acc)
         else:
             experimental_data_file = paths.experimental_interface_csv(database, acc, inter_pair_max)
 
@@ -64,9 +64,11 @@ def add_experimental_data_to_combined_features(acc, database, TMD_seq, feature_c
     if os.path.isfile(experimental_data_file):
         if database == "ETRA":
             sys.stdout.write(experimental_data_file)
-            df_experiment_data = pd.read_excel(experimental_data_file, index_col=0)
-            # confirm that correct index_col is chosen
-            assert list(df_experiment_data.index) == list(range(1, df_experiment_data.shape[0] + 1))
+            df_experiment_data = pd.read_csv(experimental_data_file)
+            # The file previously carried an unnamed index column duplicating aa_position, which was
+            # read as the index and checked here. The column is gone; aa_position carries the same
+            # 1-based residue numbering, so assert on it directly.
+            assert list(df_experiment_data.aa_position) == list(range(1, df_experiment_data.shape[0] + 1))
             df_experiment_data = df_experiment_data.rename(columns={"aa_position": "residue_num", "orig_aa": "residue_name", "Interface": "interface", "Disruption": "interface_score"})
         else:
             df_experiment_data = pd.read_csv(experimental_data_file)

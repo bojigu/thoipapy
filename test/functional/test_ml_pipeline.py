@@ -25,9 +25,9 @@ def test_feature_extraction_and_ml_pipeline_for_small_set_of_proteins():
     if not base_dir.is_dir():
         base_dir.mkdir(parents=True)
     s["base_dir"] = base_dir
-    protein_names_xlsx_orig: Path = here.parents[1] / f"test_inputs/protein_sets/protein_names.xlsx"
-    protein_names_xlsx: Path = base_dir / "protein_names.xlsx"
-    copyfile(protein_names_xlsx_orig, protein_names_xlsx)
+    protein_names_csv_orig: Path = here.parents[1] / "test_inputs/protein_sets/protein_names.csv"
+    protein_names_csv: Path = base_dir / "protein_names.csv"
+    copyfile(protein_names_csv_orig, protein_names_csv)
 
     s["create_identity_matrix_from_set_seqs"] = True
     s["run_parse_homologues_xml_into_csv"] = True

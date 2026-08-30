@@ -368,13 +368,12 @@ def setup_error_logging(logfile, level_console="DEBUG", level_logfile="DEBUG", p
 
 
 def get_path_of_protein_set(setname, sets_dir):
-    """Get path of protein set, using glob to search for "set03"
-    for example within all excel files in the sets folder.
+    """Get the path of a protein set by searching the sets folder for its name.
 
     Parameters
     ----------
     setname : str
-        Name of the protein set. E.g. set03
+        Name of the protein set. E.g. set08
     sets_dir : str
         Path to protein set folder
 
@@ -383,20 +382,14 @@ def get_path_of_protein_set(setname, sets_dir):
     set_path : str
         Path to particular protein set.
     """
-    xlsx_list = glob.glob(os.path.join(sets_dir, "*.xlsx"))
+    set_file_list = glob.glob(os.path.join(sets_dir, "*.csv"))
 
-    # remove temporary open excel files from the list (hidden files that start with ~$)
-    xlsx_list = [path for path in xlsx_list if r"~$" not in path]
-    # get subset of excel files that contains e.g. "set01"
-    matching_xlsx_file_list = [set_path for set_path in xlsx_list if setname in set_path]
-    if len(matching_xlsx_file_list) == 1:
-        set_path = matching_xlsx_file_list[0]
-    elif len(matching_xlsx_file_list) == 0:
-        raise FileNotFoundError("Excel file with this set not found.\nsetname = {}\nexcel files in folder = {}".format(setname, xlsx_list))
-    elif len(matching_xlsx_file_list) > 1:
-        raise ValueError(f"More than one excel file in set folder contains '{setname}' in the filename.\nmatching file list = {matching_xlsx_file_list}")
-
-    return set_path
+    matching = [set_path for set_path in set_file_list if setname in os.path.basename(set_path)]
+    if len(matching) == 1:
+        return matching[0]
+    if len(matching) == 0:
+        raise FileNotFoundError(f"No protein set file found for setname '{setname}'.\nFiles in {sets_dir}: {[os.path.basename(p) for p in set_file_list]}")
+    raise ValueError(f"More than one file in the set folder contains '{setname}' in the filename.\nmatching = {matching}")
 
 
 def process_set_protein_seqs(s, setname, df_set, set_path):

@@ -231,13 +231,19 @@ The protein sets
 ========================================  ===  =========================================
 set                                       n    contents
 ========================================  ===  =========================================
-``set05_ETRA_NMR_crystal_nr.xlsx``        50   all proteins, redundancy-reduced
-``set07_test.xlsx``                       10   blind test set
-``set08_train.xlsx``                      40   training set
+``set05_ETRA_NMR_crystal_nr.csv``         50   all proteins, redundancy-reduced
+``set07_test.csv``                        10   blind test set
+``set08_train.csv``                       40   training set
 ========================================  ===  =========================================
 
 set05 is the union of set07 and set08. The copies here carry a few extra annotation columns
 beyond the OSF versions; the shared columns are identical.
+
+These were Excel workbooks and are now CSV. They are single flat tables, so the workbook format
+bought nothing and made them undiffable in git and awkward to read without Excel. The same applies
+to ``data/protein_names.csv`` and the ETRA scanning-mutagenesis data in
+``data/ETRA_data/Average_with_interface/``. Pipeline outputs under ``data/results/`` remain Excel,
+because those genuinely hold several tables per file.
 
 
 Running BLAST locally instead of at NCBI

@@ -239,7 +239,7 @@ def calc_AUBOC_for_feat_imp(paths: ArtefactPaths, y, X_t, forest, feat_imp_temp_
         else:
             THOIPA_BO_data_df = pd.concat([THOIPA_BO_data_df, THOIPA_BO_single_prot_df], axis=1, join="outer")
     THOIPA_BO_data_df.to_csv(feat_imp_temp_THOIPA_BO_curve_data_csv)
-    # THOIPA_linechart_mean_obs_and_rand = analyse_bo_curve_underlying_data(THOIPA_BO_curve_data_csv, BO_curve_folder, names_excel_path)
+    # THOIPA_linechart_mean_obs_and_rand = analyse_bo_curve_underlying_data(THOIPA_BO_curve_data_csv, BO_curve_folder, names_csv_path)
     parse_BO_data_csv_to_excel(feat_imp_temp_THOIPA_BO_curve_data_csv, feat_imp_temp_bocurve_data_xlsx, n_residues_AUBOC_validation, logging, log_auboc=False)
     df_bocurve = pd.read_excel(feat_imp_temp_bocurve_data_xlsx, sheet_name="mean_o_minus_r", index_col=0)
 

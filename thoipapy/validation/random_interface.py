@@ -60,7 +60,7 @@ def add_random_interface_to_combined_features_mult_prot(paths: ArtefactPaths, df
         thoipapy.utils.make_sure_path_exists(feature_combined_file_rand_int, isfile=True)
 
         if database == "ETRA":
-            experimental_data_file = paths.etra_experimental_xlsx(acc)
+            experimental_data_file = paths.etra_experimental_csv(acc)
         else:
             # experimental_data_file = paths.experimental_interface_csv(database, acc, inter_pair_max)
             experimental_data_file = paths.experimental_interface_csv(database, acc, inter_pair_max)
@@ -68,7 +68,7 @@ def add_random_interface_to_combined_features_mult_prot(paths: ArtefactPaths, df
         df_combined = pd.read_csv(feature_combined_file, index_col=0)
 
         if database == "ETRA":
-            df_experiment_data = pd.read_excel(experimental_data_file)
+            df_experiment_data = pd.read_csv(experimental_data_file)
             df_experiment_data = df_experiment_data.rename(columns={"aa_position": "residue_num", "orig_aa": "residue_name", "Interface": "interface", "Disruption": "interface_score"})
         else:
             df_experiment_data = pd.read_csv(experimental_data_file)
