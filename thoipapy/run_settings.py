@@ -11,7 +11,7 @@ the settings are loaded rather than an hour into a run, a missing flag has a doc
 instead of raising KeyError somewhere in the middle of the pipeline, and the set of stages is
 discoverable by reading one class instead of grepping for ``if s[``.
 
-The boolean coercion matters more than it looks. The ``type`` column in the settings spreadsheet
+The boolean coercion matters more than it looks. The ``type`` column in the settings CSV
 only exists on one of the three sheets and is blank on eight rows of that one, so values used to
 arrive as the string ``"TRUE"``. That worked by accident -- a non-empty string is truthy -- but so
 is ``"FALSE"``, which meant a stage switched off in the spreadsheet could still run.
@@ -44,7 +44,7 @@ def _as_bool(value: Any, name: str) -> bool:
             return False
     raise ValueError(
         f"settings flag {name!r} has the value {value!r}, which is not recognisably true or false. "
-        f"Use TRUE or FALSE in the settings spreadsheet."
+        f"Use TRUE or FALSE in the settings CSV."
     )
 
 

@@ -19,8 +19,8 @@ def calc_lipophilicity(seq, method="mean"):
     Negative values indicate hydrophobic amino acids with favourable membrane insertion.
 
     Other hydrophobicity scales are in the settings folder. They can be generated as follows.
-    hydrophob_scale_path = r"D:\korbinian\korbinian\settings\hydrophobicity_scales.xlsx"
-    df_hs = pd.read_excel(hydrophob_scale_path, skiprows=2)
+    hydrophob_scale_path = "thoipapy/setting/hydrophobicity_scales.csv"
+    df_hs = pd.read_csv(hydrophob_scale_path, skiprows=2)
     df_hs.set_index("1aa", inplace=True)
     dict_hs = df_hs.Hessa.to_dict()
     hessa_scale = np.array([value for (key, value) in sorted(dict_hs.items())])
@@ -247,17 +247,8 @@ def lipo_from_pssm(acc, pssm_csv_surr5, lipo_csv, tm_surr_left, tm_surr_right, s
 
     [3 rows x 26 columns]"""
 
-    # FLEXIBLE HYDROBICITY SCALE CURRENTLY NOT WORKING DUE TO PROBLEMS WITH LOCATING SETTINGS FILE IN DOCKER
-    # thoipapy_module_path = os.path.dirname(os.path.abspath(thoipapy.__file__))
-    # hydrophob_scale_path = os.path.join(thoipapy_module_path, "setting", "hydrophobicity_scales.xlsx")
-    # df_hs = pd.read_excel(hydrophob_scale_path, skiprows=2)
-    # df_hs.set_index("1aa", inplace=True)
-    # df_hs.sort_index(inplace=True)
-    # hs_arr = df_hs[scalename].to_numpy()
-
-    # hard-coded Engelman (GES) hydrophobicity scale
-    # if re-implementing flexible scale, use the csv instead, or hard-code the various array values into python
-    # "FAULTS: error: can't copy 'setting\hydrophobicity_scales.xlsx': doesn't exist or not a regular file"
+    # Only one scale is implemented. The others are tabulated in setting/hydrophobicity_scales.csv
+    # for reference but are not wired up; reading them would mean loading that file at runtime.
     assert scalename == "Engelman(GES)"
     hs_arr = np.array([1.6, 2., -9.2, -8.2, 3.7, 1., -3., 3.1, -8.8, 2.8, 3.4, -4.8, -0.2, -4.1, -12.3, 0.6, 1.2, 2.6, 1.9, -0.7])
 

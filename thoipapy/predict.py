@@ -48,7 +48,7 @@ import thoipapy.common
 def run_THOIPA_prediction(protein_name: str, md5: str, TMD_seq: str, full_seq: str, out_dir: Union[Path, str], create_heatmap: bool = True, rerun_blast: bool = False):
     """Function to run standalone THOIPA prediction for a protein transmembrane domain of interest.
     """
-    # create settings dict from xlsx file
+    # create settings dict from the standalone settings CSV
     thoipapy_module_path = Path(thoipapy.__file__).parent
     s = thoipapy.common.create_settingdict(STANDALONE_SETTINGS_CSV)
 

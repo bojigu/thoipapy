@@ -184,7 +184,7 @@ The full set is rarely needed. To fetch one directory, name its ``.dvc`` file::
     dvc pull -j 4 data/homologues.dvc       # re-extract features from alignments    60 MB
 
 The remaining directories are small: ``data/Proteins`` (420 KB), ``data/Input_data`` (272 KB) and
-``data/ETRA_data`` (200 KB). ``data/Predictions`` (26 MB) holds the published predictions and is
+``data/ETRA_data`` (112 KB). ``data/Predictions`` (26 MB) holds the published predictions and is
 needed only to compare against them.
 
 Common problems
@@ -282,7 +282,9 @@ UniRef90 clusters UniProt at 90% identity: 121 million clusters against ``nr``'s
 sequences, with little practical loss for this pipeline, which collapses exact-duplicate TMD
 sequences and runs CD-HIT anyway.
 
-Requirements: about **90 GB of free disk** (30 GB download, 60-80 GB built) and BLAST+.
+Requirements: about **160 GB of free disk** and BLAST+. The script keeps the 32 GB download, the
+decompressed FASTA and the built database side by side, and deletes none of them, so peak usage is
+all three at once.
 
 ::
 
@@ -312,8 +314,8 @@ builds in ten seconds and answers in under one. Use it for tests, CI and develop
 
 **Do not use Swiss-Prot for production.** It yields roughly a quarter of ``nr``'s alignment depth:
 26 hits against 76 unique TMD homologues for ``1xioA4``, 18 against 101 for ``4hksA1``, and only 10
-survived filtering for glycophorin A. Conservation, rate4site and coevolution are the 3rd, 4th and
-7th most important model features and all derive from that alignment.
+survived filtering for glycophorin A. Conservation, rate4site and coevolution rank 4th, 2nd and 6th
+by mean decrease in impurity, and all derive from that alignment.
 
 A note on database choice
 ~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -339,7 +341,7 @@ change the conclusions, but they are real.
 **To reproduce the results as published**, use the state of the repository at the time of
 publication rather than the current release:
 
-* thoipapy **v1.2.0**, git commit ``aca9692``
+* thoipapy **v1.2.0**, git tag ``1.2.0`` (commit ``67a1438``)
 * the dataset published via the `Open Science Foundation <https://osf.io/txjev/>`_
 
 Note that v1.2.0 requires python 3.8 and the dependency versions pinned in its ``requirements.txt``;
@@ -410,12 +412,13 @@ path                                          contents
 ``thoipapy/paths.py``                         resolves ``data/``, ``data/sets/`` and settings
 ``thoipapy/artefacts.py``                     ``ArtefactPaths``: the path of every pipeline file
 ``thoipapy/run_settings.py``                  ``RunSettings``: which pipeline stages run
-``thoipapy/paper_figures/``                   figure code for the 2020 paper, unmaintained
+``thoipapy/paper_figures/``                   2020 paper figures; ``create_BOcurve_files`` is live
 ============================================  ==========================================
 
 Settings are CSV. ``thoipapy/setting/run_settings_example.csv`` drives a training run,
 ``standalone_run_settings.csv`` a single prediction, and ``model_features.csv`` lists the features
-eligible for the model. Each row carries a ``type`` column and is converted on load.
+eligible for the model. Each row of the two run-settings files carries a ``type`` column and is
+converted on load.
 
 Pipeline functions take explicit named parameters rather than a settings dictionary, so a
 signature states what the function reads::

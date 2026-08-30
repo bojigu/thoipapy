@@ -37,8 +37,8 @@ def calc_lipophilicity(seq, method="mean"):
     Negative values indicate hydrophobic amino acids with favourable membrane insertion.
 
     Other hydrophobicity scales are in the settings folder. They can be generated as follows.
-    hydrophob_scale_path = r"D:\korbinian\korbinian\settings\hydrophobicity_scales.xlsx"
-    df_hs = pd.read_excel(hydrophob_scale_path, skiprows=2)
+    hydrophob_scale_path = "thoipapy/setting/hydrophobicity_scales.csv"
+    df_hs = pd.read_csv(hydrophob_scale_path, skiprows=2)
     df_hs.set_index("1aa", inplace=True)
     dict_hs = df_hs.Hessa.to_dict()
     hessa_scale = np.array([value for (key, value) in sorted(dict_hs.items())])
@@ -223,7 +223,7 @@ def create_settingdict(settings_path):
                 s[key] = as_bool
 
     # The data, sets and base directories are properties of this repository, not user settings.
-    # Neither settings spreadsheet has ever defined them, so before this they were simply absent
+    # Neither shipped settings file has ever defined them, so before this they were simply absent
     # unless a caller injected them, and the pipeline could not be run from a clean checkout.
     # Set after the loop above so they stay Path objects; os.path.normpath would return str.
     s["data_dir"] = DATA_DIR

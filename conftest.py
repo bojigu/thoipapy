@@ -5,9 +5,9 @@ Its presence at the repository root is also what puts the root on sys.path, so t
 
 Two kinds of test cannot run everywhere:
 
-* Parts of the feature pipeline shell out to rate4site, freecontact, cd-hit and phobius. These
+* Parts of the feature pipeline shell out to rate4site, freecontact and cd-hit. These
   are separate command-line programs, not Python packages (rate4site and freecontact are in the
-  Ubuntu universe repository; phobius needs an academic licence). A test that needs a tool which
+  Ubuntu universe repository). A test that needs a tool which
   is not installed is reported as skipped rather than failed, so a missing tool never looks like
   a code regression -- and, equally, never quietly looks like a pass.
 * Some tests query NCBI BLAST over the network. These are slow, depend on NCBI's queue, and have

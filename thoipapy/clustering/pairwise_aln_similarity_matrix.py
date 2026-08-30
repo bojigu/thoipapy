@@ -150,7 +150,7 @@ def create_identity_matrix_using_pairwise_alignments(protein_set_full_seq_fasta:
     df_settings = pd.DataFrame()
     df_settings.at["input_fasta", "value"] = protein_set_full_seq_fasta
     df_settings.at["alignment_file", "value"] = output_align
-    df_settings.at["sim_matrix_csv", "value"] = ident_matrix_xlsx
+    df_settings.at["sim_matrix_xlsx", "value"] = ident_matrix_xlsx
     df_settings.at["matrix", "value"] = matrix
     df_settings.at["gap_open", "value"] = gap_open
     df_settings.at["gap_extend", "value"] = gap_extend

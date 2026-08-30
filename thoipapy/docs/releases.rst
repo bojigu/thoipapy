@@ -2,9 +2,30 @@
 THOIPApy releases
 =================
 
+2.1.0
+-----
+* **the ``n_TMDs`` feature is removed and the model is retrained on 26 features. Predictions differ
+  from 2.0.0 and stored output should be regenerated.** Computing ``n_TMDs`` required Phobius, which
+  is licensed academic software that was never actually installed, and the feature was silently
+  constant on every prediction ever made. Removing it costs no accuracy. See
+  ``docs/n_TMDs_dropped.md``.
+* BLAST can search a local database instead of querying NCBI. Set ``THOIPA_LOCAL_BLAST_DB``; unset,
+  the NCBI path is unchanged. ``THOIPA_NCBI_CONTACT_EMAIL`` is now required for NCBI queries, as
+  their usage policy demands. ``scripts/build_local_blast_db.py`` builds the database.
+* every dependency is pinned to an exact version, in ``pyproject.toml``, ``requirements.txt`` and
+  ``environment.yml``. A version range resolves differently on every install, which for scientific
+  software means a silently different result rather than an error.
+* the training data, models and test data are tracked with DVC and served from a public store, so
+  ``dvc pull`` reproduces them without credentials.
+* the protein sets, ``protein_names`` and the ETRA scanning-mutagenesis data are CSV rather than
+  Excel. They are single flat tables, so the workbook format made them undiffable for no gain.
+* ``utils.Command`` records the subprocess return code and whether it timed out, and callers now
+  check it. Previously an external tool that was missing or that failed was indistinguishable from
+  one that succeeded.
+
 2.0.0
 -----
-* python 3.11-3.13, numpy 2, pandas 2/3, scikit-learn 1.9. Drops python 3.8 and Django.
+* python 3.12-3.13, numpy 2, pandas 3, scikit-learn 1.9. Drops python 3.8 and Django.
 * the shipped model was retrained: the 2020 scikit-learn 0.23 pickle cannot be loaded by any
   current version. Predictions are statistically indistinguishable from the published model.
 * bugfix: feature selection was not reproducible. Column order came from a python set, so it
@@ -21,7 +42,8 @@ THOIPApy releases
 * 10-fold cross-validation now groups by protein rather than splitting residues.
 * pipeline functions take explicit parameters instead of a settings dictionary; paths come from
   ``ArtefactPaths`` and stage flags from ``RunSettings``.
-* removes ~3,300 lines of unreachable code. ``import thoipapy`` now loads 9 modules, not 70.
+* removes ~3,300 lines of unreachable code. ``import thoipapy`` now loads 21 of the package's
+  modules rather than 70, and no longer pulls in scikit-learn or statsmodels.
 * publication figure code moved to ``thoipapy/paper_figures``, unmaintained.
 * packaging moved to pyproject.toml; fixes a bug where the settings file the predictor loads on
   every run was missing from the built wheel.

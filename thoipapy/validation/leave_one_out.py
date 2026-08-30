@@ -256,7 +256,6 @@ def run_LOO_validation(paths: ArtefactPaths, df_set: pd.DataFrame, bind_column: 
     BO_all_df.to_csv(bocurve_data_raw_csv)
     # names_csv_path = paths.protein_names_csv
 
-    # linechart_mean_obs_and_rand = thoipapy.paper_figures.Create_Bo_Curve_files.analyse_bo_curve_underlying_data(bocurve_data_raw_csv, crossvalidation_folder, names_csv_path)
     thoipapy.validation.bocurve.parse_BO_data_csv_to_excel(bocurve_data_raw_csv, bocurve_data_xlsx, n_residues_AUBOC_validation, logging)
 
     logging.info('{} LOO crossvalidation. Time taken = {:.2f}.'.format(paths.setname, duration))
@@ -319,7 +318,7 @@ def LOO_single_prot(d: LooValidationData):
     elif d.bind_column == "interface_score_norm":
         prediction = fitted.predict(X_test)  # [:, 1]
     else:
-        raise ValueError("bind_column in excel settings file is not recognised ({})".format(d.bind_column))
+        raise ValueError("bind_column in the settings CSV is not recognised ({})".format(d.bind_column))
     # add the prediction to the combined file
     df_test[d.pred_colname] = prediction
     # save just the prediction alone to csv

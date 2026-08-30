@@ -20,7 +20,7 @@ REPO_ROOT = Path(__file__).parents[2]
 # Deliberately unordered relative to the training data, so a set round-trip cannot accidentally
 # reproduce the input order and let a regression slip through.
 FEATURES = [
-    "polarity3Cmean", "DI3mean", "V", "conservation", "L", "GxxxG", "n_TMDs", "mass",
+    "polarity3Cmean", "DI3mean", "V", "conservation", "L", "GxxxG", "DI5mean", "mass",
     "relative_polarity", "H", "branched", "RelPos_TMD", "E", "residue_depth", "DImax",
 ]
 
@@ -85,7 +85,7 @@ def test_no_list_set_in_ml_column_paths():
     """
     offenders = []
     for py in (REPO_ROOT / "thoipapy").rglob("*.py"):
-        if "paper_figures" in py.parts or "other" in py.parts:
+        if "paper_figures" in py.parts:
             continue
         for lineno, line in enumerate(py.read_text().splitlines(), 1):
             if "list(set(" in line and not line.lstrip().startswith("#"):

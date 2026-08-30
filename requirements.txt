@@ -46,8 +46,10 @@ six==1.17.0
 threadpoolctl==3.6.0
 xlrd==2.0.2
 
-# --- test only ---
-# pytest==9.1.1
-# iniconfig==2.3.0
-# pluggy==1.6.0
-# pygments==2.21.0
+# --- pytest is a RUNTIME dependency here, not a test one ---
+# weighslide and eccpy both declare pytest in install_requires, so pip installs it (and its own
+# dependencies) on a plain `pip install thoipapy`. Pinned for the same reason as everything else.
+pytest==9.1.1
+iniconfig==2.3.0
+pluggy==1.6.0
+pygments==2.21.0
