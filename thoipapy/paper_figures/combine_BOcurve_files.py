@@ -104,7 +104,7 @@ def plot_BOcurve(s, train_set_list, test_set_list, mult_THOIPA_dir, mult_testnam
             # use the composite trapezoidal rule to get the area under the curve
             # https://docs.scipy.org/doc/numpy-1.13.0/reference/generated/numpy.trapz.html
 
-            AUBOC = np.trapz(y=auboc_ser, x=auboc_ser.index)
+            AUBOC = np.trapezoid(y=auboc_ser, x=auboc_ser.index)
 
             df["mean_"].plot(ax=ax, label="Test{}_Train{}(AUBOC={:0.1f})".format(testsetname, trainsetname, AUBOC))
 
@@ -178,7 +178,7 @@ def compare_selected_predictors(s, logging):
 
         # use the composite trapezoidal rule to get the area under the curve
         # https://docs.scipy.org/doc/numpy-1.13.0/reference/generated/numpy.trapz.html
-        AUBOC = np.trapz(y=auboc_ser, x=auboc_ser.index)
+        AUBOC = np.trapezoid(y=auboc_ser, x=auboc_ser.index)
 
         area_under_curve_dict[predictor_name] = AUBOC
 

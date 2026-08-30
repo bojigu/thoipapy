@@ -10,11 +10,12 @@ import matplotlib.pyplot as plt
 import warnings
 from scipy.stats import linregress
 from thoipapy.utils import normalise_0_1, make_sure_path_exists
+from thoipapy.artefacts import ArtefactPaths
 
 warnings.filterwarnings("ignore")
 
 
-def save_BO_linegraph_and_barchart(s, bocurve_data_xlsx, BO_linechart_png, BO_barchart_png, namedict, logging, AUC_ser, plot_o_over_r=False):
+def save_BO_linegraph_and_barchart(paths: ArtefactPaths, n_residues_AUBOC_validation, bocurve_data_xlsx, BO_linechart_png, BO_barchart_png, namedict, logging, AUC_ser, plot_o_over_r=False):
     df_o_minus_r = pd.read_excel(bocurve_data_xlsx, sheet_name="df_o_minus_r", index_col=0)
     BO_scatter_png = str(BO_barchart_png)[:-12] + "scatter.png"
 
@@ -76,8 +77,8 @@ def save_BO_linegraph_and_barchart(s, bocurve_data_xlsx, BO_linechart_png, BO_ba
     for col in df_valid_indiv.columns:
         df_valid_indiv[col] = normalise_0_1(df_valid_indiv[col])[0] + 0.01
 
-    bocurve_data_xlsx: Union[Path, str] = Path(s["data_dir"]) / f"results/{s['setname']}/crossvalidation/data/{s['setname']}_thoipa_loo_bo_curve_data.xlsx"
-    BO_data_valid_indiv_csv: Union[Path, str] = Path(s["data_dir"]) / f"results/{s['setname']}/crossvalidation/data/{s['setname']}_BO_curve_data_valid_indiv.csv"
+    bocurve_data_xlsx: Union[Path, str] = paths.crossvalidation_dir / f"data/{paths.setname}_thoipa_loo_bo_curve_data.xlsx"
+    BO_data_valid_indiv_csv: Union[Path, str] = paths.crossvalidation_dir / f"data/{paths.setname}_BO_curve_data_valid_indiv.csv"
     make_sure_path_exists(bocurve_data_xlsx, isfile=True)
 
     df_valid_indiv = df_valid_indiv.reindex(columns=["AUBOC", 5, 10, "ROC AUC"])
@@ -127,10 +128,10 @@ def save_BO_linegraph_and_barchart(s, bocurve_data_xlsx, BO_linechart_png, BO_ba
     df_o_minus_r_mean = df_o_minus_r.T.mean()
 
     # apply cutoff (e.g. 5 residues for AUBOC5)
-    auboc_ser = df_o_minus_r_mean.iloc[:s["n_residues_AUBOC_validation"]]
+    auboc_ser = df_o_minus_r_mean.iloc[:n_residues_AUBOC_validation]
 
     # get the area under the curve
-    AUBOC = np.trapz(y=auboc_ser, x=auboc_ser.index)
+    AUBOC = np.trapezoid(y=auboc_ser, x=auboc_ser.index)
 
     # BO_linechart_png
     plt.close("all")
