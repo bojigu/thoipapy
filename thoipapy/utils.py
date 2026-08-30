@@ -13,6 +13,7 @@ import re as re
 import subprocess
 import sys
 import tarfile
+import unicodedata
 import threading
 from pathlib import Path
 from typing import Union
@@ -26,6 +27,10 @@ import matplotlib.colors as colors
 import ctypes
 from scipy.special import comb
 
+# Above this fraction of residues lost to NaN, a dropna() is treated as a pipeline failure rather
+# than as data cleaning. See dropna_with_report.
+MAX_FRACTION_ROWS_DROPPED = 0.05
+
 
 class Command(object):
     '''
@@ -37,49 +42,51 @@ class Command(object):
     def __init__(self, cmd):
         self.cmd = cmd
         self.process = None
+        self.returncode = None
+        self.timed_out = False
+        self.stderr = ""
 
     def run(self, timeout, log_stderr=True):
+        """Run the command, recording its exit status in self.returncode and self.timed_out.
+
+        The exit status used to be discarded. Every caller here runs an external binary
+        (freecontact, rate4site, cd-hit) through a shell redirect, which creates the output
+        file before the binary is resolved -- so a missing tool left a 0-byte file behind and
+        looked exactly like success. Callers must check succeeded() rather than the mere
+        existence of an output file.
+        """
+
         def target():
-            # logging.info('Thread started')
             self.process = subprocess.Popen(self.cmd, shell=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
-            # self.process.communicate()
-            stdout, stderr = self.process.communicate()  # from http://stackoverflow.com/questions/14366352/how-to-capture-information-from-executable-jar-in-python
-            # Thus far, SIMAP has only ever given java faults, never java output. Don't bother showing.
+            stdout, stderr = self.process.communicate()
+            self.stderr = stderr.decode("utf-8", errors="replace")
             # if the console prints anything longer than 5 characters, log it
-            if len(stderr.decode("utf-8")) > 5:
+            if len(self.stderr) > 5:
                 if log_stderr:
-                    logging.warning('FAULTS: %s' % stderr.decode("utf-8"))
-            # logging.info('Thread finished')
+                    logging.warning('FAULTS: %s' % self.stderr)
 
         thread = threading.Thread(target=target)
         thread.start()
 
         thread.join(timeout)
         if thread.is_alive():
-            logging.info('Terminating process')
+            logging.warning(f"Terminating process after {timeout}s timeout: {self.cmd}")
+            self.timed_out = True
             self.process.terminate()
             thread.join()
-        # simply returns 0 every time it works. Waste of logging space! :)
-        # logging.info(self.process.returncode)
 
+        self.returncode = self.process.returncode if self.process is not None else None
 
-def run_command(command):
-    # this stopped working for some reason. Did I mess up a path variable?
-    p = subprocess.Popen(command,
-                         stdout=subprocess.PIPE,
-                         stderr=subprocess.STDOUT)
-    return iter(p.stdout.readline, b'')
+        # A nonzero exit is reported even when log_stderr is False. log_stderr suppresses the
+        # noisy stderr *content* of tools that chatter on success; it must not suppress failure.
+        if not self.succeeded():
+            logging.warning(f"Command failed (returncode={self.returncode}, timed_out={self.timed_out}): {self.cmd}")
 
+        return self.returncode
 
-def aaa(df_or_series):
-    """ Function for use in debugging.
-    Saves pandas Series or Dataframes to a user-defined csv file.
-    """
-    # convert any series to dataframe
-    if isinstance(df_or_series, pd.Series):
-        df_or_series = df_or_series.to_frame()
-    csv_out = r"D:\data\000_aaa_temp_df_out.csv"
-    df_or_series.to_csv(csv_out, sep=",", quoting=csv.QUOTE_NONNUMERIC)
+    def succeeded(self) -> bool:
+        """True only if the command ran to completion with a zero exit status."""
+        return self.returncode == 0 and not self.timed_out
 
 
 def make_sure_path_exists(input_path: Union[Path, str], isfile: bool = False):
@@ -135,49 +142,6 @@ def reorder_dataframe_columns(dataframe, cols, front=True):
     return dataframe[cols_to_place_first]
 
 
-def create_tarballs_from_xml_files_in_folder(xml_dir, download_date="2017.11.02"):
-    """script to create .tar.gz compressed files from a folder of xml files
-
-    COPY SECTIONS INTO JUPYTER NOTEBOOK AND MODIFY AS NEEDED
-
-    to add today's date
-    date = strftime("%Y.%m.%d")
-
-    THIS SCRIPT DOES NOT DELETE THE ORIGINAL XML FILES
-
-    """
-
-    xml_list = glob.glob(os.path.join(xml_dir, "*.xml"))
-
-    for xml in xml_list:
-        xml_renamed = xml[:-4] + ".BLAST.xml"
-        xml_tar_gz = xml[:-4] + ".BLAST.xml.tar.gz"
-        xml_txt = xml[:-4] + "_details.txt"
-        # xml_txt = xml[:-4] + ".BLAST_details.txt"
-
-        if not os.path.isfile(xml_tar_gz):
-            copyfile(xml, xml_renamed)
-            acc = os.path.basename(xml).split(".")[0]
-            sys.stdout.write("{}, ".format(acc))
-            sys.stdout.flush()
-            # create an empty text file with the download date
-            date = strftime("%Y%m%d")
-            with open(xml_txt, "w") as f:
-                f.write("acc\t{}\ndownload_date\t{}\ndatabase\tncbi_nr\ne_value\t1\n".format(acc, download_date))
-
-            with tarfile.open(xml_tar_gz, mode='w:gz') as tar:
-                # add the files to the compressed tarfile
-                tar.add(xml_renamed, arcname=os.path.basename(xml_renamed))
-                tar.add(xml_txt, arcname=os.path.basename(xml_txt))
-
-            # delete the original files
-            try:
-                os.remove(xml_renamed)
-                os.remove(xml_txt)
-            except:
-                sys.stdout.write("{} could not be deleted".format(xml_renamed))
-
-
 def delete_BLAST_xml(blast_xml_file):
     """Small function to remove files that are already compressed in a tarball.
 
@@ -199,12 +163,6 @@ def delete_BLAST_xml(blast_xml_file):
         os.remove(xml_txt)
     except:
         sys.stdout.write("{} could not be deleted".format(xml_txt))
-
-
-def setup_biopol_plotly(username, api_key):
-    import plotly
-    plotly.tools.set_config_file(world_readable=False, sharing='private')
-    plotly.tools.set_credentials_file(username=username, api_key=api_key)
 
 
 def get_n_of_gaps_at_start_and_end_of_seq(seq):
@@ -367,12 +325,25 @@ def drop_redundant_proteins_from_list(df_set, logging):
     df_set_nonred : pd.DataFrame
         df_set with only non-redundant proteins, based on redundancy settings
     """
-    if "no_cdhit_results" in df_set.cdhit_cluster_rep:
-        logging.warning("No CD-HIT results were used to remove redundant seq,  but model is being trained anyway.")
+    # `"x" in series` tests the INDEX, not the values, so this warning never fired: the index is
+    # a RangeIndex. Use .eq().any() to actually inspect the column.
+    no_cdhit_results = df_set.cdhit_cluster_rep.eq("no_cdhit_results").any()
+    if no_cdhit_results:
+        logging.warning(
+            "No CD-HIT results were found, so no redundancy reduction was applied. All proteins "
+            "are being used to train the model. To apply redundancy reduction, run CD-HIT and "
+            "ensure the .clstr.sorted.txt output is present in results/<setname>/clusters/."
+        )
 
     n_prot_initial = df_set.shape[0]
-    # create model only using CD-HIT cluster representatives
-    df_set_nonred = df_set.loc[df_set.cdhit_cluster_rep != False]
+    # create model only using CD-HIT cluster representatives.
+    # `!= False` was comparing against the string "no_cdhit_results", which is never equal to
+    # False, so nothing was ever dropped even when CD-HIT results were absent. Compare against
+    # the boolean explicitly, and only when there are real results to compare.
+    if no_cdhit_results:
+        df_set_nonred = df_set
+    else:
+        df_set_nonred = df_set.loc[df_set.cdhit_cluster_rep.astype(bool)]
     n_prot_final = df_set_nonred.shape[0]
     logging.info("CDHIT redundancy reduction : n_prot_initial = {}, n_prot_final = {}, n_prot_dropped = {}".format(n_prot_initial, n_prot_final, n_prot_initial - n_prot_final))
     return df_set_nonred
@@ -405,51 +376,6 @@ def add_res_num_full_seq_to_df(acc, df, TMD_seq, full_seq, prediction_name, file
     return df
 
 
-def calculate_identity(sequenceA, sequenceB):
-    """
-    Returns the percentage of identical characters between two sequences.
-    Assumes the sequences are aligned.
-    """
-
-    sa, sb, sl = sequenceA, sequenceB, len(sequenceA)
-    matches = [sa[i] == sb[i] for i in range(sl)]
-    seq_id = (100 * sum(matches)) / sl
-
-    gapless_sl = sum([1 for i in range(sl) if (sa[i] != '-' and sb[i] != '-')])
-    gap_num = sum([1 for i in range(sl) if (sa[i] == '-' or sb[i] == '-')])
-    if gapless_sl > 0:
-        gap_id = (100 * sum(matches)) / gapless_sl
-    else:
-        gap_id = 0
-    return (seq_id, gap_id, gap_num)
-
-
-def join_two_algined_seqences(aligned_A, aligned_B):
-    '''
-    combine two aligned sequences, take the non-gap residue for the combined seqence
-    Parameters
-    ----------
-    aligned_A
-    aligned_B
-
-    Returns
-    -------
-
-    '''
-    aligned_AB = ""
-    for j in range(len(aligned_A)):
-        if aligned_A[j] == '-' and aligned_B[j] == '-':
-            sys.stdout.write(
-                "this homo pair should be considered removed:\n check {},{}".format(aligned_A, aligned_B))
-        if aligned_A[j] != '-':
-            aligned_AB = aligned_AB + aligned_A[j]
-            continue
-        if aligned_B[j] != '-':
-            aligned_AB = aligned_AB + aligned_B[j]
-            continue
-    return aligned_AB
-
-
 def shorten(x):
     '''
     convert 3-letter amino acid name to 1-letter form
@@ -476,26 +402,8 @@ def shorten(x):
     return y
 
 
-def Get_Closedist_between_ChianA_ChainB(hashclosedist):
-    i = 0
-    j = 0
-    hashA = {}
-    hashB = {}
-    closest_dist_arr = []
-
-    jk = ""
-    for k, v in sorted(hashclosedist.items()):
-        if re.search(r'NEN', k) or re.search(r'CEN', k):
-            continue
-        k = k.split(':')
-        k1 = '_'.join(k)
-        k2 = '_'.join([k1, str(v)])
-        jk = '+'.join([jk, k2])
-    return jk
-
-
-def add_mutation_missed_residues_with_na(s, acc, database, df):
-    acc_combind_feature_file = os.path.join(s['features_folder'], "combined", database, "{}.surr{}.gaps{}.combined_features.csv".format(acc, s["num_of_sur_residues"], s["max_n_gaps_in_TMD_subject_seq"]))
+def add_mutation_missed_residues_with_na(combined_features_csv, acc, database, df):
+    acc_combind_feature_file = combined_features_csv
     df_feature = pd.read_csv(acc_combind_feature_file, engine="python", index_col=0)
     not_df_index = [element for element in df_feature["residue_num"].values if element not in df.index.values]
     for element in not_df_index:
@@ -889,87 +797,12 @@ class LogOnlyToConsole(object):
         sys.stdout.write("\n{}".format(message))
 
 
-def calc_rand_overlap_DEPRECATED_METHOD(sequence_length, sample_size):
-    """Calculate expected random overlap between two random selections from a sample.
-
-    You have a bowl of 20 balls, either blue or red.
-    sample_size = 1
-     - There is only one red ball. You only pick out one ball.
-     - you do this 1000 times
-     - the average number of red (correct) balls 0.05
-    sample_size = 2
-     - there are 2 red balls. You can pick out 2 balls.
-     - you do this 1000 times
-     - what is the average number of red (correct) balls?
-     [This function calculates the answer, which is 0.2, corresponding to a red ball 10% of the time (0.2/2))
-    sample_size = 10
-     - there are 10 red balls. You can pick out 10 balls.
-     - you do this 1000 times
-     - what is the average number of red (correct) balls?
-     [This function calculates the answer, which is 5, corresponding to a red ball 50% of the time (5/10))
-     The answer depends on the number of balls in the bowl. If there are 24 balls, the average number of red balls is 4.16,
-     corresponding to a red ball 41.6% of the time (4.16/10))
-
-    This is a mathematical question related to sampling without replacement.
-
-    Parameters
-    ----------
-    sequence_length : int
-        Number of samples in total, from which a subset is randomly selected.
-        E.g. a bowl with 20 numbered balls.
-        In our case, TMD_length.
-    sample_size : int
-        Size of the selected sample (e.g. 3, for 3 balls taken from the bowl)
-        In our case, number of interface residues considered.
-
-    Returns
-    -------
-    inter_num_random : float
-        Expected overlap seen by random chance.
-        E.g., when 5 balls from 20 are randomly selected without replacement.
-        The expected overlap between two random selections is 1.25
-
-    Usage
-    -----
-    from thoipapy.utils import calc_rand_overlap
-    # size of bowl (in our case, transmembrane domain length)
-    TMD_length = 22
-    # number of balls withdrawn from bowl (in our case, top 4 residues predicted)
-    sample_size = 4
-    # expected overlap is the number predicted to be correct, simply by random chance
-    expected_overlap = calc_rand_overlap(TMD_length, sample_size)
-    percentage_randomly_correct = expected_overlap / sample_size * 100
-    """
-    # start the [[write description]] at 0
-    inter_num_random = 0
-    # iterate through [[write description]]
-    for random_inter_num_ober in range(1, sample_size + 1):
-        # random_inter_num_ober = j
-
-        # write description
-        random_non_inter_num = sequence_length - sample_size
-        # write description
-        variable_1 = comb(sample_size, random_inter_num_ober)
-        # write description
-        variable_2 = comb(random_non_inter_num, sample_size - random_inter_num_ober)
-        # write description
-        variable_3 = comb(sequence_length, sample_size)
-        inter_num_random = inter_num_random + variable_1 * variable_2 / variable_3 * random_inter_num_ober
-        # inter_num_random = inter_num_random + comb(sample_size, random_inter_num_ober) * comb(random_non_inter_num, sample_size - random_inter_num_ober) / comb(tm_len, sample_size) * random_inter_num_ober
-
-    return inter_num_random
-
-
 def open_csv_as_series(input_csv):
     # extract name and sequences from input csv
     input_df = pd.read_csv(input_csv, header=None, index_col=0)
     input_df.columns = ["data"]
     input_ser = input_df["data"]
     return input_ser
-
-
-def intersect(a, b):
-    return list(set(a) & set(b))
 
 
 def get_testsetname_trainsetname_from_run_settings(s):
@@ -1029,3 +862,93 @@ class SurroundingSequence:
         if tmd_start_pl_surr < 1:
             tmd_start_pl_surr = 1
         return tmd_start_pl_surr
+
+
+def slugify(value: str) -> str:
+    """Convert a string to a filesystem- and URL-friendly slug.
+
+    Replaces the previous dependency on django.utils.text.slugify, which pulled the entire
+    Django framework in for this one call. The behaviour is deliberately identical to Django's
+    ASCII slugify, since it sanitises the user-supplied protein name that becomes a directory
+    name in the webserver.
+
+    Normalises unicode to ASCII, lowercases, drops anything that is not alphanumeric,
+    underscore, hyphen or whitespace, then collapses runs of whitespace and hyphens into a
+    single hyphen. Matches the behaviour of the previously pinned Django 3.1.2 exactly.
+
+    Parameters
+    ----------
+    value : str
+        Text to convert, e.g. a user-supplied protein name.
+
+    Returns
+    -------
+    str
+        The slugified text.
+    """
+    value = unicodedata.normalize("NFKD", str(value)).encode("ascii", "ignore").decode("ascii")
+    value = re.sub(r"[^\w\s-]", "", value.lower()).strip()
+    return re.sub(r"[-\s]+", "-", value)
+
+
+def dropna_with_report(df_data: pd.DataFrame, context: str, logging) -> pd.DataFrame:
+    """Drop rows containing NaN, reporting exactly what was lost.
+
+    An untargeted dropna() before training silently removed residues whenever a single feature
+    was missing, with no count and no indication of which feature was responsible. House rule for
+    ML pipelines is to fail on bad data rather than quietly shrink the dataset, so anything beyond
+    a small fraction is an error rather than a warning.
+
+    Parameters
+    ----------
+    df_data : pd.DataFrame
+        Training data, one row per residue.
+    context : str
+        Where this is being called from, used in the log and error messages.
+    logging : logging.Logger
+        Python object with settings for logging to console and file.
+
+    Returns
+    -------
+    pd.DataFrame
+        df_data with NaN-containing rows removed.
+
+    Raises
+    ------
+    ValueError
+        If more than MAX_FRACTION_ROWS_DROPPED of the rows would be discarded, or if every row
+        would be discarded.
+    """
+    n_before = len(df_data)
+    if n_before == 0:
+        raise ValueError(f"{context}: training data is empty before dropping NaN rows.")
+
+    n_nan_per_col = df_data.isna().sum()
+    cleaned = df_data.dropna()
+    n_dropped = n_before - len(cleaned)
+
+    if n_dropped == 0:
+        return cleaned
+
+    worst = n_nan_per_col[n_nan_per_col > 0].sort_values(ascending=False)
+    detail = ", ".join(f"{col}={int(n)}" for col, n in worst.items())
+    fraction = n_dropped / n_before
+
+    if len(cleaned) == 0:
+        raise ValueError(
+            f"{context}: every one of the {n_before} rows contains a NaN, so there is no "
+            f"training data left. NaN counts per feature: {detail}"
+        )
+    if fraction > MAX_FRACTION_ROWS_DROPPED:
+        raise ValueError(
+            f"{context}: dropping NaN rows would discard {n_dropped} of {n_before} residues "
+            f"({fraction:.1%}), above the {MAX_FRACTION_ROWS_DROPPED:.0%} limit. This usually "
+            f"means a feature failed to be calculated for some proteins rather than that the data "
+            f"is genuinely incomplete. NaN counts per feature: {detail}"
+        )
+
+    logging.warning(
+        f"{context}: dropped {n_dropped} of {n_before} residues ({fraction:.1%}) containing NaN. "
+        f"NaN counts per feature: {detail}"
+    )
+    return cleaned

@@ -1,7 +1,16 @@
 import warnings
 from typing import Union
 
-import thoipapy.features as tf
+from thoipapy.features.combine_features import combine_all_features
+from thoipapy.features.entropy import entropy_calculation
+from thoipapy.features.freecontact import coevolution_calculation_with_freecontact, parse_freecontact_coevolution
+from thoipapy.features.lipophilicity import lipo_from_pssm
+from thoipapy.features.lips import LIPS_score_calculation, parse_LIPS_score
+from thoipapy.features.motifs import motifs_from_seq
+from thoipapy.features.physical_parameters import add_physical_parameters_to_features
+from thoipapy.features.pssm import create_PSSM_from_MSA
+from thoipapy.features.rate4site import rate4site_calculation
+from thoipapy.features.relative_position import calc_relative_position
 
 warnings.filterwarnings("ignore")
 
@@ -20,19 +29,20 @@ import matplotlib as mpl
 import numpy as np
 import pandas as pd
 import seaborn as sns
-from django.utils.text import slugify
 import joblib
 
 import thoipapy
 from thoipapy.homologues.NCBI_download import download_homologues_from_ncbi
 from thoipapy.homologues.NCBI_parser import parse_NCBI_xml_to_csv, extract_filtered_csv_homologues_to_alignments
-from thoipapy.utils import normalise_between_2_values, open_csv_as_series, SurroundingSequence
+from thoipapy.paths import STANDALONE_SETTINGS_CSV
+from thoipapy.utils import normalise_between_2_values, open_csv_as_series, slugify, SurroundingSequence
 
 # set matplotlib backend to Agg when run on a server
 if os.environ.get('DISPLAY', '') == '':
     sys.stdout.write('no display found. Using non-interactive Agg backend')
     mpl.use('Agg')
 import matplotlib.pyplot as plt
+import thoipapy.common
 
 
 def run_THOIPA_prediction(protein_name: str, md5: str, TMD_seq: str, full_seq: str, out_dir: Union[Path, str], create_heatmap: bool = True, rerun_blast: bool = False):
@@ -40,8 +50,7 @@ def run_THOIPA_prediction(protein_name: str, md5: str, TMD_seq: str, full_seq: s
     """
     # create settings dict from xlsx file
     thoipapy_module_path = Path(thoipapy.__file__).parent
-    settings_path = thoipapy_module_path / "setting/thoipapy_standalone_run_settings.xlsx"
-    s = thoipapy.common.create_settingdict(settings_path)
+    s = thoipapy.common.create_settingdict(STANDALONE_SETTINGS_CSV)
 
     ###################################################################################################
     #                                                                                                 #
@@ -74,7 +83,6 @@ def run_THOIPA_prediction(protein_name: str, md5: str, TMD_seq: str, full_seq: s
     LIPS_parsed_csv = datafiles_dir / "LIPS_output_parsed.csv"
     motifs_file = datafiles_dir / "motifs.csv"
     full_seq_fasta_file = datafiles_dir / "protein.fasta"
-    full_seq_phobius_output_file = datafiles_dir / "protein.phobius"
     feature_combined_file = datafiles_dir / "features_combined.csv"
     alignment_summary_csv = datafiles_dir / "homologues.alignment_summary.csv"
     THOIPA_full_out_csv = datafiles_dir / "THOIPA_full_out.csv"
@@ -112,7 +120,15 @@ def run_THOIPA_prediction(protein_name: str, md5: str, TMD_seq: str, full_seq: s
         # the following code will only continue if the TMD seq is found ONCE in the full protein seq
 
     m = re.search(TMD_seq, full_seq)
-    TMD_start = m.start()
+    # 1-based, UniProt-style, matching thoipapy.common.process_set_protein_seqs. The standalone
+    # predictor previously used the raw 0-based python index here while the training pipeline used
+    # 1-based, and both feed the same downstream functions (parse_NCBI_xml_to_csv,
+    # parse_freecontact_coevolution, calc_relative_position, combine_all_features). The visible
+    # symptom was that every res_num_full_seq the predictor emitted was one lower than the true
+    # residue number; the subtler one was that n_term_offset differed by one whenever the TMD
+    # starts within num_of_sur_residues of the N-terminus, shifting the rate4site and
+    # lipophilicity features relative to how the model was trained.
+    TMD_start = m.start() + 1
     TMD_end = m.end()
     logging.info("TMD found in full sequence. start = {}, end = {}".format(TMD_start, TMD_end))
 
@@ -128,10 +144,10 @@ def run_THOIPA_prediction(protein_name: str, md5: str, TMD_seq: str, full_seq: s
 
     logging.info(f"TMD_start_pl_surr = {surrounding_sequence.tmd_start_pl_surr}, TMD_end_pl_surr = {surrounding_sequence.tmd_end_pl_surr}")
 
-    # due to uniprot indexing, the TMD seq starts 1 residue earlier in the python index
-    TMD_seq_pl_surr = full_seq[surrounding_sequence.tmd_start_pl_surr: surrounding_sequence.tmd_end_pl_surr]
-    # currently I don't know why this should not be TMD_start_pl_5 - 1
-    query_TMD_seq_surr5 = full_seq[surrounding_sequence_5.tmd_start_pl_surr: surrounding_sequence_5.tmd_end_pl_surr]
+    # TMD_start_pl_surr is 1-based, so the python slice starts one earlier. Same convention as
+    # thoipapy.utils.slice_TMD_seq_pl_surr, which the training pipeline uses.
+    TMD_seq_pl_surr = full_seq[surrounding_sequence.tmd_start_pl_surr - 1: surrounding_sequence.tmd_end_pl_surr]
+    query_TMD_seq_surr5 = full_seq[surrounding_sequence_5.tmd_start_pl_surr - 1: surrounding_sequence_5.tmd_end_pl_surr]
     logging.info("TMD_seq : {}".format(TMD_seq))
     logging.info("query_TMD_seq_surr5 : {}".format(query_TMD_seq_surr5))
     logging.info("TMD_seq_pl_surr : {}".format(TMD_seq_pl_surr))
@@ -143,7 +159,6 @@ def run_THOIPA_prediction(protein_name: str, md5: str, TMD_seq: str, full_seq: s
     ###################################################################################################
     # most scripts use uniprot accession as the protein name
     acc = protein_name
-    # n_TMDs = rp.return_num_tmd(s, acc, full_seq, full_seq_fasta_file, full_seq_phobius_output_file, logging)
 
     expect_value = s["expect_value"]
     hit_list_size = s["hit_list_size"]
@@ -161,12 +176,14 @@ def run_THOIPA_prediction(protein_name: str, md5: str, TMD_seq: str, full_seq: s
     ###################################################################################################
 
     # if not os.path.isfile(path_uniq_TMD_seqs_for_PSSM_FREECONTACT):
-    extract_filtered_csv_homologues_to_alignments(s, acc, len(TMD_seq), fasta_all_TMD_seqs, path_uniq_TMD_seqs_for_PSSM_FREECONTACT,
+    extract_filtered_csv_homologues_to_alignments(s["max_n_gaps_in_TMD_query_seq"], s["max_n_gaps_in_TMD_subject_seq"],
+                                                  s["min_identity_of_TMD_seq"], acc, len(TMD_seq), fasta_all_TMD_seqs,
+                                                  path_uniq_TMD_seqs_for_PSSM_FREECONTACT,
                                                   path_uniq_TMD_seqs_no_gaps_for_LIPS, path_uniq_TMD_seqs_surr5_for_LIPO, BLAST_csv_tar,
                                                   TMD_seq, query_TMD_seq_surr5, logging)
 
-    tf.pssm.create_PSSM_from_MSA(path_uniq_TMD_seqs_for_PSSM_FREECONTACT, pssm_csv, acc, TMD_seq, logging)
-    tf.pssm.create_PSSM_from_MSA(path_uniq_TMD_seqs_surr5_for_LIPO, pssm_surr5_csv, acc, query_TMD_seq_surr5, logging)
+    create_PSSM_from_MSA(path_uniq_TMD_seqs_for_PSSM_FREECONTACT, pssm_csv, acc, TMD_seq, logging)
+    create_PSSM_from_MSA(path_uniq_TMD_seqs_surr5_for_LIPO, pssm_surr5_csv, acc, query_TMD_seq_surr5, logging)
 
     ###################################################################################################
     #                                                                                                 #
@@ -174,31 +191,31 @@ def run_THOIPA_prediction(protein_name: str, md5: str, TMD_seq: str, full_seq: s
     #                                                                                                 #
     ###################################################################################################
 
-    tf.lipophilicity.lipo_from_pssm(acc, pssm_surr5_csv, lipo_csv, surrounding_sequence_5.n_term_offset, surrounding_sequence_5.c_term_offset, s["lipophilicity_scale"], logging, plot_linechart=True)
+    lipo_from_pssm(acc, pssm_surr5_csv, lipo_csv, surrounding_sequence_5.n_term_offset, surrounding_sequence_5.c_term_offset, s["lipophilicity_scale"], logging, plot_linechart=True)
 
-    tf.entropy.entropy_calculation(acc, path_uniq_TMD_seqs_for_PSSM_FREECONTACT, TMD_seq, entropy_file, logging)
+    entropy_calculation(acc, path_uniq_TMD_seqs_for_PSSM_FREECONTACT, TMD_seq, entropy_file, logging)
 
     if "Windows" in platform.system():
         logging.warning("\n Freecontact, CD-HIT and rate4site cannot be run in Windows! Skipping coevolution_calculation_with_freecontact and rate4site_calculation.\n"
                         f"For testing, copy output files from Linux and rename to {freecontact_file} and {rate4site_csv}")
     else:
-        tf.freecontact.coevolution_calculation_with_freecontact(path_uniq_TMD_seqs_for_PSSM_FREECONTACT, freecontact_file, logging)
-        tf.rate4site.rate4site_calculation(TMD_seq, acc, fasta_uniq_TMD_seqs_surr5_for_LIPO, rate4site_csv, surrounding_sequence_5.n_term_offset, logging, rerun_rate4site=False)
+        coevolution_calculation_with_freecontact(path_uniq_TMD_seqs_for_PSSM_FREECONTACT, freecontact_file, logging)
+        rate4site_calculation(TMD_seq, acc, fasta_uniq_TMD_seqs_surr5_for_LIPO, rate4site_csv, surrounding_sequence_5.n_term_offset, logging, rerun_rate4site=False)
 
-    tf.freecontact.parse_freecontact_coevolution(acc, freecontact_file, freecontact_parsed_csv, TMD_start, TMD_end, logging)
+    parse_freecontact_coevolution(acc, freecontact_file, freecontact_parsed_csv, TMD_start, TMD_end, logging)
 
-    tf.relative_position.calc_relative_position(acc, path_uniq_TMD_seqs_for_PSSM_FREECONTACT, relative_position_file, TMD_start, full_seq_len, logging)
+    calc_relative_position(acc, path_uniq_TMD_seqs_for_PSSM_FREECONTACT, relative_position_file, TMD_start, full_seq_len, logging)
 
-    tf.lips.LIPS_score_calculation(path_uniq_TMD_seqs_no_gaps_for_LIPS, LIPS_output_file)
+    LIPS_score_calculation(path_uniq_TMD_seqs_no_gaps_for_LIPS, LIPS_output_file)
 
-    tf.lips.parse_LIPS_score(acc, LIPS_output_file, LIPS_parsed_csv, logging)
-    tf.motifs.motifs_from_seq(TMD_seq, TMD_seq_pl_surr, surrounding_sequence.n_term_offset, surrounding_sequence.c_term_offset, motifs_file, logging)
+    parse_LIPS_score(acc, LIPS_output_file, LIPS_parsed_csv, logging)
+    motifs_from_seq(TMD_seq, TMD_seq_pl_surr, surrounding_sequence.n_term_offset, surrounding_sequence.c_term_offset, motifs_file, logging)
 
     database = "standalone_prediction"
-    tf.combine_features.combine_all_features(s, full_seq, acc, database, TMD_seq, TMD_start, feature_combined_file, entropy_file, rate4site_csv, pssm_csv,
+    combine_all_features(full_seq, acc, database, TMD_seq, TMD_start, feature_combined_file, entropy_file, rate4site_csv, pssm_csv,
                                              lipo_csv, freecontact_parsed_csv, relative_position_file, LIPS_parsed_csv, motifs_file,
-                                             alignment_summary_csv, full_seq_fasta_file, full_seq_phobius_output_file, logging)
-    tf.physical_parameters.add_physical_parameters_to_features(acc, feature_combined_file, logging)
+                                             alignment_summary_csv, full_seq_fasta_file, logging)
+    add_physical_parameters_to_features(acc, feature_combined_file, logging)
 
     ###################################################################################################
     #                                                                                                 #
@@ -322,17 +339,6 @@ def get_md5_checksum(TMD_seq: str, full_seq: str) -> str:
     hash_object = hashlib.md5(TMD_plus_full_seq)
     md5 = hash_object.hexdigest()
     return md5
-
-
-def print_help():
-    sys.stdout.write("\nUsage example:\n")
-    sys.stdout.write(r"python thoipa.py -i D:\data\Q12983.txt -f D:\data\predictions")
-    sys.stdout.write("\n\nOR process every input file in the -d input folder. "
-                     "You can specify the output folder. Otherwise, a default 'output' folder will be "
-                     "created in the same directory as the input folder. \n")
-    sys.stdout.write(r"python thoipa.py -d D:\your\directory\with\input_text_files")
-    sys.stdout.write("\n\n")
-    sys.stdout.flush()
 
 
 usage = "\nthoipa.py [-h] [-d D] [-i I] [-f F]\n\nexample: \npython thoipa.py -d /Path/to/your/input/csv/text/files"
