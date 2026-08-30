@@ -7,8 +7,9 @@ import scipy.stats as stats
 import os
 from pathlib import Path
 
-from thoipapy.utils import make_sure_path_exists, get_testsetname_trainsetname_from_run_settings
+from thoipapy.utils import make_sure_path_exists
 from thoipapy.validation.feature_selection import drop_cols_not_used_in_ML
+from thoipapy.artefacts import ArtefactPaths
 
 
 def generate_boot_matrix(z, B):
@@ -43,17 +44,16 @@ def calc_ttest_pvalue_from_bootstrapped_data(x, y, equal_var=False, B=100000, pl
     return 2 * min(p, 1 - p)
 
 
-def conduct_ttest_for_all_features(s, logging):
+def conduct_ttest_for_all_features(paths: ArtefactPaths, bind_column: str, trainsetname: str, logging):
     logging.info('starting conduct_ttest_for_selected_features_used_in_model')
-    testsetname, trainsetname = get_testsetname_trainsetname_from_run_settings(s)
     # inputs
-    train_data_csv = Path(s["data_dir"]) / f"results/{s['setname']}/train_data/01_train_data_orig.csv"
+    train_data_csv = paths.train_data_orig_csv()
     # IMPORTANT: the features used in the model are taken from the trainset as defined in "train_datasets" in the excel file, not from the actual set being investigated
     # feat_imp_MDA_xlsx = os.path.join(s["data_dir"], "results", trainsetname, "feat_imp", "feat_imp_mean_decrease_accuracy.xlsx")
 
     # outputs
-    ttest_pvalues_bootstrapped_data_using_traindata_selected_features_xlsx = Path(s["data_dir"]) / f"results/{s['setname']}/ttest/ttest_pvalues_bootstrapped_data_using_traindata_selected_features(train{trainsetname}).xlsx"
-    correlated_features_xlsx = Path(s["data_dir"]) / f"results/{s['setname']}/ttest/correlated_features.xlsx"
+    ttest_pvalues_bootstrapped_data_using_traindata_selected_features_xlsx = paths.ttest_dir() / f"ttest_pvalues_bootstrapped_data_using_traindata_selected_features(train{trainsetname}).xlsx"
+    correlated_features_xlsx = paths.ttest_dir() / "correlated_features.xlsx"
 
     make_sure_path_exists(ttest_pvalues_bootstrapped_data_using_traindata_selected_features_xlsx, isfile=True)
 
@@ -62,11 +62,11 @@ def conduct_ttest_for_all_features(s, logging):
     # df_feat_imp_MDA_trainset = pd.read_excel(feat_imp_MDA_xlsx, sheet_name="single_feat", index_col=0)
     # cols = list(df_feat_imp_MDA_trainset.index)
 
-    df = drop_cols_not_used_in_ML(logging, df_orig, s["settings_path"])
+    df = drop_cols_not_used_in_ML(logging, df_orig)
     feature_columns = list(df.columns)
 
     # add back the interface "bind" column
-    df["interface"] = df_orig[s["bind_column"]]
+    df["interface"] = df_orig[bind_column]
 
     dfs0 = df[df.interface == 0]
     dfs1 = df[df.interface == 1]

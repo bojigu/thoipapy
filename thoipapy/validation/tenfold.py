@@ -1,3 +1,10 @@
+"""10-fold cross-validation of the trained model.
+
+NOT MAINTAINED. Reachable only from the run_validation pipeline stage, which is switched off in both
+shipped settings files and disabled in the functional test. Last exercised for the 2020
+publication. Not covered by any test, and excluded from the refactoring applied to the maintained
+part of the package.
+"""
 import os
 import pickle
 import sys
@@ -9,14 +16,16 @@ import pandas as pd
 from matplotlib import pyplot as plt
 from numpy import interp
 from sklearn.metrics import roc_curve, auc
-from sklearn.model_selection import StratifiedKFold
+from sklearn.model_selection import StratifiedGroupKFold
 
 import thoipapy.utils
+from thoipapy.utils import dropna_with_report
 from thoipapy.validation.feature_selection import drop_cols_not_used_in_ML
 from thoipapy.ML_model.train_model import return_classifier_with_loaded_ensemble_parameters
+from thoipapy.artefacts import ArtefactPaths
 
 
-def run_10fold_cross_validation(s, logging):
+def run_10fold_cross_validation(paths: ArtefactPaths, min_n_homol_training: int, cross_validation_number_of_splits: int, bootstrap: bool, logging):
     """Run 10-fold cross-validation for a particular set of TMDs (e.g. set04).
 
     The SAME SET is used for both training and cross-validation.
@@ -40,36 +49,42 @@ def run_10fold_cross_validation(s, logging):
         Also contains the mean ROC curve, and the mean AUC.
     """
     sys.stdout.write("\n--------------- starting run_10fold_cross_validation ---------------\n")
-    train_data_after_first_feature_seln_csv = Path(s["data_dir"]) / f"results/{s['setname']}/train_data/03_train_data_after_first_feature_seln.csv"
-    tuned_ensemble_parameters_csv = Path(s["data_dir"]) / f"results/{s['setname']}/train_data/04_tuned_ensemble_parameters.csv"
-    crossvalidation_pkl = os.path.join(s["data_dir"], "results", s["setname"], "crossvalidation", "data", "{}_10F_data.pkl".format(s["setname"]))
-    features_csv = Path(s["data_dir"]) / f"results/{s['setname']}/feat_imp/test_features.csv"
+    train_data_after_first_feature_seln_csv = paths.results_dir / f"train_data/03_train_data_after_first_feature_seln.csv"
+    tuned_ensemble_parameters_csv = paths.results_dir / f"train_data/04_tuned_ensemble_parameters.csv"
+    crossvalidation_pkl = os.path.join(paths.crossvalidation_dir, "data", "{}_10F_data.pkl".format(paths.setname))
+    features_csv = paths.results_dir / f"feat_imp/test_features.csv"
 
     thoipapy.utils.make_sure_path_exists(crossvalidation_pkl, isfile=True)
     thoipapy.utils.make_sure_path_exists(features_csv, isfile=True)
 
     df_data = pd.read_csv(train_data_after_first_feature_seln_csv, index_col=0)
-    df_data = df_data.dropna()
+    df_data = dropna_with_report(df_data, "run_10fold_cross_validation", logging)
 
     # drop training data (full protein) that don't have enough homologues
-    if s["min_n_homol_training"] != 0:
-        df_data = df_data.loc[df_data.n_homologues >= s["min_n_homol_training"]]
+    if min_n_homol_training != 0:
+        df_data = df_data.loc[df_data.n_homologues >= min_n_homol_training]
 
-    X = drop_cols_not_used_in_ML(logging, df_data, s["settings_path"])
+    X = drop_cols_not_used_in_ML(logging, df_data)
     y = df_data["interface"]
 
-    skf = StratifiedKFold(n_splits=s["cross_validation_number_of_splits"])
-    cv = list(skf.split(X, y))
+    # Group by protein. StratifiedKFold splits residues, so residues of the same TMD landed in
+    # both train and test. The shipped rows happen to be ordered protein-by-protein, which made
+    # unshuffled folds roughly contiguous protein blocks and kept the published number honest --
+    # but adding shuffle=True, or simply reordering the rows, silently bought about +0.03 AUC.
+    # StratifiedGroupKFold makes the grouping explicit instead of accidental.
+    groups = df_data["acc_db"] if "acc_db" in df_data.columns else df_data.index.str.split("_").str[0]
+    sgkf = StratifiedGroupKFold(n_splits=cross_validation_number_of_splits)
+    cv = list(sgkf.split(X, y, groups=groups))
 
     n_features = X.shape[1]
-    forest = return_classifier_with_loaded_ensemble_parameters(s, tuned_ensemble_parameters_csv)
+    forest = return_classifier_with_loaded_ensemble_parameters(tuned_ensemble_parameters_csv, bootstrap)
 
     mean_tpr = 0.0
     mean_fpr = np.linspace(0, 1, 100)
     # save all outputs to a cross-validation dictionary, to be saved as a pickle file
     xv_dict = {}
 
-    start = time.clock()
+    start = time.perf_counter()
 
     for i, (train, test) in enumerate(cv):
         sys.stdout.write("f{}.".format(i + 1)), sys.stdout.flush()
@@ -84,7 +99,7 @@ def run_10fold_cross_validation(s, logging):
 
     logging.info("tree depths : {}".format([estimator.tree_.max_depth for estimator in forest.estimators_]))
 
-    duration = time.clock() - start
+    duration = time.perf_counter() - start
 
     mean_tpr /= len(cv)
     mean_tpr[-1] = 1.0
@@ -101,11 +116,11 @@ def run_10fold_cross_validation(s, logging):
 
     features_ser = pd.Series(X.columns)
     features_ser.to_csv(features_csv)
-    logging.info('{} 10-fold validation. AUC({:.3f}). Time taken = {:.2f}.\nFeatures: {}'.format(s["setname"], ROC_AUC, duration, X.columns.tolist()))
+    logging.info('{} 10-fold validation. AUC({:.3f}). Time taken = {:.2f}.\nFeatures: {}'.format(paths.setname, ROC_AUC, duration, X.columns.tolist()))
     sys.stdout.write("\n--------------- finished run_10fold_cross_validation ---------------\n")
 
 
-def create_10fold_cross_validation_fig(s, logging):
+def create_10fold_cross_validation_fig(paths: ArtefactPaths, cross_validation_number_of_splits: int, logging):
     """Create figure showing ROC curve for each fold in a 10-fold validation.
 
     The underlying data is created by run_10fold_cross_validation. If this has not been run,
@@ -120,8 +135,8 @@ def create_10fold_cross_validation_fig(s, logging):
     """
     sys.stdout.write("\n--------------- starting create_10fold_cross_validation_fig ---------------\n")
     # plt.rcParams.update({'font.size': 7})
-    crossvalidation_png = os.path.join(s["data_dir"], "results", s["setname"], "crossvalidation", "{}_10F_ROC.png".format(s["setname"]))
-    crossvalidation_pkl = os.path.join(s["data_dir"], "results", s["setname"], "crossvalidation", "data", "{}_10F_data.pkl".format(s["setname"]))
+    crossvalidation_png = os.path.join(paths.crossvalidation_dir, "{}_10F_ROC.png".format(paths.setname))
+    crossvalidation_pkl = os.path.join(paths.crossvalidation_dir, "data", "{}_10F_data.pkl".format(paths.setname))
 
     # open pickle file
     with open(crossvalidation_pkl, "rb") as f:
@@ -130,7 +145,7 @@ def create_10fold_cross_validation_fig(s, logging):
     figsize = np.array([3.42, 3.42]) * 2  # DOUBLE the real size, due to problems on Bo computer with fontsizes
     fig, ax = plt.subplots(figsize=figsize)
 
-    for i in range(s["cross_validation_number_of_splits"]):
+    for i in range(cross_validation_number_of_splits):
         roc_auc = auc(xv_dict["fpr{}".format(i)], xv_dict["tpr{}".format(i)])
         ax.plot(xv_dict["fpr{}".format(i)], xv_dict["tpr{}".format(i)], lw=1, label='fold %d (area = %0.2f)' % (i, roc_auc), alpha=0.8)
 

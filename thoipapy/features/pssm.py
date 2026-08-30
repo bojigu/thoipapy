@@ -2,15 +2,17 @@ import csv
 import os
 
 import thoipapy
+from thoipapy.artefacts import ArtefactPaths
+import thoipapy.utils
 
 
-def create_PSSM_from_MSA_mult_prot(s, df_set, logging):
+def create_PSSM_from_MSA_mult_prot(paths: ArtefactPaths, df_set, logging):
     """ Runs create_PSSM_from_MSA for each protein in a list.
 
     Parameters
     ----------
-    s : dict
-        Settings dictionary
+    paths : ArtefactPaths
+        Locations of the pipeline's input and output files.
     df_set : pd.DataFrame
         Dataframe containing the list of proteins to process, including their TMD sequences and full-length sequences
         index : range(0, ..)
@@ -28,15 +30,14 @@ def create_PSSM_from_MSA_mult_prot(s, df_set, logging):
         database = df_set.loc[i, "database"]
         TMD_seq = df_set.loc[i, "TMD_seq"]
         TMD_seq_pl_surr5 = df_set.loc[i, "TMD_seq_pl_surr5"]
-        alignments_dir = os.path.join(s["data_dir"], "homologues", "alignments", database)
-        path_uniq_TMD_seqs_for_PSSM_FREECONTACT = os.path.join(alignments_dir, "{}.surr{}.gaps{}.uniq.for_PSSM_FREECONTACT.txt".format(acc, s["num_of_sur_residues"], s["max_n_gaps_in_TMD_subject_seq"]))
-        pssm_csv = os.path.join(s["data_dir"], "features", "pssm", database, "{}.surr{}.gaps{}.pssm.csv".format(acc, s["num_of_sur_residues"], s["max_n_gaps_in_TMD_subject_seq"]))
+        path_uniq_TMD_seqs_for_PSSM_FREECONTACT = paths.uniq_tmd_seqs_for_pssm_freecontact_txt(database, acc)
+        pssm_csv = paths.pssm_csv(database, acc)
 
         create_PSSM_from_MSA(path_uniq_TMD_seqs_for_PSSM_FREECONTACT, pssm_csv, acc, TMD_seq, logging)
 
-        path_uniq_TMD_seqs_surr5_for_LIPO = os.path.join(alignments_dir, "{}.surr5.gaps{}.uniq.for_LIPO.txt".format(acc, s["max_n_gaps_in_TMD_subject_seq"]))
+        path_uniq_TMD_seqs_surr5_for_LIPO = paths.uniq_tmd_seqs_surr5_for_lipo_txt(database, acc)
 
-        pssm_csv_surr5 = os.path.join(s["data_dir"], "features", "pssm", database, "{}.surr5.gaps{}.pssm.csv".format(acc, s["max_n_gaps_in_TMD_subject_seq"]))
+        pssm_csv_surr5 = paths.pssm_surr5_csv(database, acc)
         create_PSSM_from_MSA(path_uniq_TMD_seqs_surr5_for_LIPO, pssm_csv_surr5, acc, TMD_seq_pl_surr5, logging)
 
 

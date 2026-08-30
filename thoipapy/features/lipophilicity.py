@@ -7,6 +7,7 @@ import numpy as np
 import pandas as pd
 from Bio.SeqUtils.ProtParam import ProteinAnalysis
 from weighslide import calculate_weighted_windows
+from thoipapy.artefacts import ArtefactPaths
 
 
 def calc_lipophilicity(seq, method="mean"):
@@ -82,7 +83,7 @@ def calc_lipophilicity(seq, method="mean"):
         return sum_of_multiplied
 
 
-def lipo_from_pssm_mult_prot(s, df_set, logging):
+def lipo_from_pssm_mult_prot(paths: ArtefactPaths, df_set, lipophilicity_scale: str, logging):
     """Calculates lipophilicity from a PSSM for a list of proteins.
 
     This function executes lipo_from_pssm for an input list of proteins.
@@ -102,7 +103,7 @@ def lipo_from_pssm_mult_prot(s, df_set, logging):
 
     # set name of hydrophobicity scale
     # current options are KyteDoolittle, Wimley, Hessa, Elazar, Hopp-Woods, Cornette, Eisenberg, Rose, Janin, Engelman(GES)
-    scalename = s["lipophilicity_scale"]
+    scalename = lipophilicity_scale
     failed_acc_list = []
     plot_linechart = True
 
@@ -119,8 +120,8 @@ def lipo_from_pssm_mult_prot(s, df_set, logging):
             tm_surr_right = 5
 
         # pssm_csv = os.path.join(s["data_dir"], "features", "pssm", database, "{}.mem.2gap.pssm_surr5.csv".format(acc))
-        pssm_csv_surr5 = os.path.join(s["data_dir"], "features", "pssm", database, "{}.surr5.gaps{}.pssm.csv".format(acc, s["max_n_gaps_in_TMD_subject_seq"]))
-        lipo_csv = os.path.join(s["data_dir"], "features", "lipophilicity", database, "{}_{}_lipo.csv".format(acc, scalename))
+        pssm_csv_surr5 = paths.pssm_surr5_csv(database, acc)
+        lipo_csv = paths.lipo_csv(database, acc, scalename)
 
         result_tuple = lipo_from_pssm(acc, pssm_csv_surr5, lipo_csv, tm_surr_left, tm_surr_right, scalename, logging, plot_linechart)
 
@@ -332,7 +333,7 @@ def lipo_from_pssm(acc, pssm_csv_surr5, lipo_csv, tm_surr_left, tm_surr_right, s
 
     # normalise the data by applying a square root (usually to power of 1/4). Values must be positive.
     assert df_lipo.min().min() >= 0
-    df_lipo: pd.DataFrame = df_lipo.applymap(lambda x: math.pow(x, 1 / 4))
+    df_lipo: pd.DataFrame = df_lipo.map(lambda x: math.pow(x, 1 / 4))
 
     # lowest_polarity_value = 0.6
     # columns = ["polarity", "polarity3Nmean", "polarity3Cmean", "polarity1mean"]

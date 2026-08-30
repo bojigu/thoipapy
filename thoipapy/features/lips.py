@@ -4,15 +4,17 @@ import os
 import re
 
 import thoipapy
+import thoipapy.utils
+from thoipapy.artefacts import ArtefactPaths
 
 
-def LIPS_score_calculation_mult_prot(s, df_set, logging):
+def LIPS_score_calculation_mult_prot(paths: ArtefactPaths, df_set, logging):
     """Run LIPS_score_calculation for a list of proteins.
 
     Parameters
     ----------
-    s : dict
-        Settings dictionary
+    paths : ArtefactPaths
+        Locations of the pipeline's input and output files.
     df_set : pd.DataFrame
         Dataframe containing the list of proteins to process, including their TMD sequences and full-length sequences
         index : range(0, ..)
@@ -29,8 +31,7 @@ def LIPS_score_calculation_mult_prot(s, df_set, logging):
         acc = df_set.loc[i, "acc"]
         database = df_set.loc[i, "database"]
         # LIPS_input_file = os.path.join(s["data_dir"], "homologues", "a3m",database, "%s.mem.lips.input%s") % (acc,s["surres"])
-        alignments_dir = os.path.join(s["data_dir"], "homologues", "alignments", database)
-        path_uniq_TMD_seqs_no_gaps_for_LIPS = os.path.join(alignments_dir, "{}.surr{}.gaps0.uniq.for_LIPS.txt".format(acc, s["num_of_sur_residues"]))
+        path_uniq_TMD_seqs_no_gaps_for_LIPS = paths.uniq_tmd_seqs_no_gaps_for_lips_txt(database, acc)
 
         if os.path.isfile(path_uniq_TMD_seqs_no_gaps_for_LIPS):
             # LIPS_output_file = os.path.join(s["data_dir"], "features", "lips_score", "zpro/NoRedundPro/%s.mem.lips.output") % acc
@@ -38,7 +39,7 @@ def LIPS_score_calculation_mult_prot(s, df_set, logging):
 
             # LIPS_output_file = os.path.join(s["data_dir"], "features", "lips_score", database, "%s.mem.lips.output%s") % (acc, s["surres"])
 
-            LIPS_output_file = os.path.join(alignments_dir, "{}.surr{}.LIPS_output.csv".format(acc, s["num_of_sur_residues"]))
+            LIPS_output_file = paths.lips_output_csv(database, acc)
 
             LIPS_score_calculation(path_uniq_TMD_seqs_no_gaps_for_LIPS, LIPS_output_file)
         else:
@@ -304,13 +305,13 @@ def LIPS_score_calculation(input_seq_file, LIPS_output_file):
             # LIPS_output_file_handle.write("%s" % i, "%10.3f" % avpim, "%8.3f" % ave, "%8.3f" % peim)
 
 
-def parse_LIPS_score_mult_prot(s, df_set, logging):
+def parse_LIPS_score_mult_prot(paths: ArtefactPaths, df_set, logging):
     """Runs parse_LIPS_score for a list of sequences.
 
     Parameters
     ----------
-    s : dict
-        Settings dictionary
+    paths : ArtefactPaths
+        Locations of the pipeline's input and output files.
     df_set : pd.DataFrame
         Dataframe containing the list of proteins to process, including their TMD sequences and full-length sequences
         index : range(0, ..)
@@ -323,9 +324,8 @@ def parse_LIPS_score_mult_prot(s, df_set, logging):
     for i in df_set.index:
         acc = df_set.loc[i, "acc"]
         database = df_set.loc[i, "database"]
-        alignments_dir = os.path.join(s["data_dir"], "homologues", "alignments", database)
-        LIPS_output_file = os.path.join(alignments_dir, "{}.surr{}.LIPS_output.csv".format(acc, s["num_of_sur_residues"]))
-        LIPS_parsed_csv = os.path.join(s["data_dir"], "features", "lips_score", database, "{}.surr{}.LIPS_score_parsed.csv".format(acc, s["num_of_sur_residues"]))
+        LIPS_output_file = paths.lips_output_csv(database, acc)
+        LIPS_parsed_csv = paths.lips_score_parsed_csv(database, acc)
         parse_LIPS_score(acc, LIPS_output_file, LIPS_parsed_csv, logging)
 
 

@@ -3,15 +3,16 @@ import os
 
 import scipy as sc
 from pandas import Series
+from thoipapy.artefacts import ArtefactPaths
 
 
-def entropy_calculation_mult_prot(s, df_set, logging):
+def entropy_calculation_mult_prot(paths: ArtefactPaths, df_set, surres: str, logging):
     """ Runs entropy_calculation for a set of proteins
 
     Parameters
     ----------
-    s : dict
-        Settings dictionary
+    paths : ArtefactPaths
+        Locations of the pipeline's input and output files.
     df_set : pd.DataFrame
         Dataframe containing the list of proteins to process, including their TMD sequences and full-length sequences
         index : range(0, ..)
@@ -25,10 +26,9 @@ def entropy_calculation_mult_prot(s, df_set, logging):
         acc = df_set.loc[i, "acc"]
         database = df_set.loc[i, "database"]
         TMD_seq = df_set.loc[i, "TMD_seq"]
-        # homo_filter_fasta_file = os.path.join(s["data_dir"], "homologues", "a3m",database,"%s.a3m.mem.uniq.2gaps%s") % (acc,s["surres"])
-        alignments_dir = os.path.join(s["data_dir"], "homologues", "alignments", database)
-        path_uniq_TMD_seqs_for_PSSM_FREECONTACT = os.path.join(alignments_dir, "{}.surr{}.gaps{}.uniq.for_PSSM_FREECONTACT.txt".format(acc, s["num_of_sur_residues"], s["max_n_gaps_in_TMD_subject_seq"]))
-        entropy_file = os.path.join(s["data_dir"], "features", "entropy", database, "{}.surr{}.gaps{}.uniq.entropy.csv".format(acc, s["num_of_sur_residues"], s["max_n_gaps_in_TMD_subject_seq"]))
+        # homo_filter_fasta_file = os.path.join(s["data_dir"], "homologues", "a3m",database,"%s.a3m.mem.uniq.2gaps%s") % (acc,surres)
+        path_uniq_TMD_seqs_for_PSSM_FREECONTACT = paths.uniq_tmd_seqs_for_pssm_freecontact_txt(database, acc)
+        entropy_file = paths.entropy_csv(database, acc)
 
         entropy_calculation(acc, path_uniq_TMD_seqs_for_PSSM_FREECONTACT, TMD_seq, entropy_file, logging)
 

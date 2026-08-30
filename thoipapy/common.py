@@ -15,6 +15,7 @@ import psutil
 from Bio import SeqIO
 from Bio.SeqUtils.ProtParam import ProteinAnalysis
 import thoipapy
+from thoipapy.paths import BASE_DIR, DATA_DIR, SETS_DIR
 from thoipapy.utils import convert_truelike_to_bool, convert_falselike_to_bool
 
 
@@ -22,127 +23,7 @@ from thoipapy.utils import convert_truelike_to_bool, convert_falselike_to_bool
 # from thoipapy.utils import convert_truelike_to_bool, convert_falselike_to_bool
 
 
-def calculate_fasta_file_length(s):
-    """calculate the protein sequence length
-
-    :param
-    s: dict
-    s["input_fasta_file"] : str
-        Path to the input fasta sequence file
-
-    :return:
-    SeqLen : int
-            protein sequence length
-    """
-    seqLen = int()
-    FastaFile = open(s["input_fasta_file"], 'r')
-    for rec in SeqIO.parse(FastaFile, 'fasta'):
-        seqLen = len(rec)
-    FastaFile.close()
-    return seqLen
-
-
-def create_TMD_surround20_fasta_file(s, database, protein_folder):
-    """create fasta file with tmd and surround 20 residues as new sequence for further blastp.
-    also the input protein list file will be updated by adding "TMD_Sur_Left" and "TMD_Sur_Right"
-
-    original s["list_of_tmd_start_end"] looks like this:
-    Protein,TMD_Length,TMD_Start,TMD_End
-    O15455,904,705,722
-    P07174,425,253,273
-
-    after, s["list_of_tmd_start_end"] will looks like this:
-    Protein,TMD_Length,TMD_Start,TMD_End,TMD_Sur_Left,TMD_Sur_Right
-    O15455,904,705,722,20,20
-    P07174,425,253,273,20,20
-    P04629,796,424,439,20,20
-
-    :param s:
-    :return: updated surr20.fasta files and the inputed protein list file.
-    """
-    tmp_list_loc = s["list_of_tmd_start_end"]
-
-    with open(tmp_list_loc, 'r+') as tmp_file_handle:
-        lines = tmp_file_handle.readlines()
-        tmp_file_handle.seek(0)
-        tmp_file_handle.truncate()
-        for row in lines:
-            if re.search(r"^Protein", row):
-                # make sure in the input protein list file only contain four columns as shown in the example file
-                if len(row.strip().split(",")) == 4:
-                    line = row.strip() + "," + "TMD_Sur_Left" + "," + "TMD_Sur_Right" + "\n"
-                    tmp_file_handle.write(line)
-                else:
-                    tmp_file_handle.write(row)
-                continue
-
-            acc = row.strip().split(",")[0]
-            tmp_length = int(row.strip().split(",")[1])
-            tmp_start = int(row.strip().split(",")[2])
-            tmp_end = int(row.strip().split(",")[3])
-            tmp_protein_fasta = os.path.join(protein_folder, database, "%s.fasta") % acc
-            line = ""
-            if os.path.isfile(tmp_protein_fasta):
-                fasta_text = ""
-                with open(tmp_protein_fasta) as f:
-                    for line in f.readlines():
-                        if re.search(r"^>", line):
-                            pass
-                        else:
-                            fasta_text = fasta_text + line.rstrip()
-                fasta_text = re.sub('[\s+]', '', fasta_text)
-                f.close()
-                if tmp_start > 20:
-                    s["tmp_surr_left"] = 20
-                else:
-                    s["tmp_surr_left"] = tmp_start - 1
-                if tmp_length - tmp_end > 20:
-                    s["tmp_surr_right"] = 20
-                else:
-                    s["tmp_surr_right"] = tmp_length - tmp_end
-                tmp_surr_string = fasta_text[(tmp_start - s["tmp_surr_left"] - 1):(tmp_end + s["tmp_surr_right"])]
-                tmp_surr_fasta_file = os.path.join(protein_folder, database, "%s.surr20.fasta") % acc
-                tmp_surr_fasta_file_handle = open(tmp_surr_fasta_file, "w")
-                tmp_surr_fasta_file_handle.write("> %s TMD add surround 20 residues\n" % acc)
-                tmp_surr_fasta_file_handle.write(tmp_surr_string)
-                tmp_surr_fasta_file_handle.close()
-            if len(row.strip().split(",")) == 4:
-                line = row.strip() + "," + str(s["tmp_surr_left"]) + "," + str(s["tmp_surr_right"]) + "\n"
-                tmp_file_handle.write(line)
-            else:
-                tmp_file_handle.write(row)
-    tmp_file_handle.close()
     # return s["tmp_surr_left"],s["tmp_surr_right"]
-
-
-def tmd_positions_match_fasta(s):
-    """ calculate the tmd start and end positions in the protein sequence,
-    the input tmd sequence will be matched with the full protein sequence.
-
-    :param s: set the input tm sequence, and the full protein sequence
-
-    :return: tmd start and end positions in the full sequence
-    """
-    fasta_file_loc = s["input_fasta_file"]
-    tmd_file_loc = s["input_tmd_file"]
-    fasta_text = ""
-    tmd_text = ""
-    with open(fasta_file_loc) as f:
-        for line in f.readlines():
-            if re.search(r"^>", line):
-                next
-            else:
-                fasta_text = fasta_text + line.rstrip()
-    with open(tmd_file_loc) as f1:
-        for line in f1.readlines():
-            if re.search(r"^>", line):
-                next
-            else:
-                tmd_text = tmd_text + line.rstrip()
-    tmd_length = len(tmd_text)
-    tmd_start = fasta_text.find(tmd_text) + 1
-    tmd_end = tmd_start + tmd_length - 1
-    return tmd_start, tmd_end
 
 
 def calc_lipophilicity(seq, method="mean"):
@@ -220,24 +101,106 @@ def calc_lipophilicity(seq, method="mean"):
         return sum_of_multiplied
 
 
+
+def _coerce_setting(value, declared_type, parameter: str):
+    """Convert a CSV settings value to the type the pipeline expects.
+
+    Everything in a CSV is a string, and the old Excel loader relied on Excel having already
+    typed the cells. Without this, "0" would arrive as a non-empty string and therefore be
+    truthy, so a setting of 0 would behave as if it were 1.
+
+    The `type` column is used when present, but is not trusted to be complete: it only ever
+    existed on one of the three original sheets and was blank on several rows there. Values
+    without a usable declared type are inferred.
+
+    Parameters
+    ----------
+    value : Any
+        Raw value from the CSV.
+    declared_type : str or None
+        Contents of the `type` column, e.g. "bool", "int", "float".
+    parameter : str
+        Parameter name, used in the error message.
+
+    Returns
+    -------
+    bool, int, float or str
+    """
+    if not isinstance(value, str):
+        return value
+    text = value.strip()
+    declared = (declared_type or "").strip().lower() if isinstance(declared_type, str) else ""
+
+    if declared == "bool":
+        # convert_int so that 0/1, which is how most of these flags are actually written, is read
+        # as a boolean rather than inferred as an integer
+        as_bool = convert_falselike_to_bool(
+            convert_truelike_to_bool(text, convert_int=True, convert_float=True),
+            convert_int=True, convert_float=True)
+        if not isinstance(as_bool, bool):
+            raise ValueError(f"setting {parameter!r} is declared bool but has the value {value!r}")
+        return as_bool
+    if declared == "int":
+        return int(float(text))
+    if declared == "float":
+        return float(text)
+
+    # no usable declared type: infer, most specific first
+    as_bool = convert_falselike_to_bool(convert_truelike_to_bool(text))
+    if isinstance(as_bool, bool):
+        return as_bool
+    try:
+        return int(text)
+    except ValueError:
+        pass
+    try:
+        return float(text)
+    except ValueError:
+        pass
+    return text
+
+
 def create_settingdict(settings_path):
-    sheetnames = ["run_settings", "file_locations", "variables"]
+    """Load the settings CSV into a dictionary.
+
+    The settings used to live in a multi-sheet Excel workbook. CSV replaces it because the
+    settings are the pipeline's most important input and were the hardest thing to inspect: a
+    workbook cannot be diffed in git, cannot be edited without Excel, and programmatic row
+    deletion silently shifted values against the wrong parameters. A flat CSV with a `section`
+    column carries exactly the same information and can be read by anything.
+
+    Parameters
+    ----------
+    settings_path : str or Path
+        Path to the settings CSV.
+
+    Returns
+    -------
+    dict
+        Settings, keyed by parameter name.
+
+    Raises
+    ------
+    FileNotFoundError
+        If the settings file does not exist.
+    ValueError
+        If a parameter appears more than once, which would silently make one value win.
+    """
+    settings_path = Path(settings_path)
+    if not settings_path.is_file():
+        raise FileNotFoundError(f"settings file not found: {settings_path}")
+
+    dfset = pd.read_csv(settings_path)
+    dfset = dfset.dropna(subset=["parameter", "value"])
+
+    duplicated = dfset["parameter"][dfset["parameter"].duplicated()].tolist()
+    if duplicated:
+        raise ValueError(f"{settings_path.name} defines these parameters more than once: {duplicated}")
+
     s = {"settings_path": settings_path}
-    for sheet_name in sheetnames:
-        # open excel file as pandas dataframe
-        dfset = pd.read_excel(settings_path, sheet_name=sheet_name)
-        # exclude row with notes, set parameter as index
-        dfset = dfset.dropna(subset=["parameter", "value"])
-        dfset.set_index("parameter", inplace=True)
-        if "type" in dfset.columns:
-            cols_with_bool = dfset.loc[dfset.type == "bool"].index
-            # convert true-like strings to True, and false-like strings to False
-            dfset.loc[cols_with_bool, "value"] = dfset.loc[cols_with_bool, "value"].apply(convert_truelike_to_bool, convert_nontrue=False)
-            dfset.loc[cols_with_bool, "value"] = dfset.loc[cols_with_bool, "value"].apply(convert_falselike_to_bool)
-        # convert to dictionary
-        sheet_as_dict = dfset.to_dict()["value"]
-        # join dictionaries together
-        s.update(sheet_as_dict)
+    types = dfset.set_index("parameter")["type"].to_dict() if "type" in dfset.columns else {}
+    for parameter, value in dfset.set_index("parameter")["value"].to_dict().items():
+        s[parameter] = _coerce_setting(value, types.get(parameter), parameter)
 
     list_paths_to_normalise = ['MiRMAK_data_folder', 'base_dir', 'sets_dir', 'data_dir',
                                'Rcode', 'hhblits_dir', 'uniprot_database_dir', 'Rscript_dir']
@@ -247,6 +210,26 @@ def create_settingdict(settings_path):
             s[path] = os.path.normpath(s[path])
             # if not os.path.exists(s[path]):
             #     os.makedirs(s[path])
+
+    # Convert every remaining true/false-like string, regardless of the sheet's "type" column.
+    # That column only exists on the run_settings sheet, and eight rows there leave it blank, so
+    # values like the string "TRUE" reached the pipeline unconverted. They happened to work
+    # because a non-empty string is truthy -- but so is "FALSE", which meant a flag switched off
+    # in the spreadsheet could silently behave as if it were on.
+    for key, value in s.items():
+        if isinstance(value, str):
+            as_bool = convert_falselike_to_bool(convert_truelike_to_bool(value))
+            if isinstance(as_bool, bool):
+                s[key] = as_bool
+
+    # The data, sets and base directories are properties of this repository, not user settings.
+    # Neither settings spreadsheet has ever defined them, so before this they were simply absent
+    # unless a caller injected them, and the pipeline could not be run from a clean checkout.
+    # Set after the loop above so they stay Path objects; os.path.normpath would return str.
+    s["data_dir"] = DATA_DIR
+    s["sets_dir"] = SETS_DIR
+    s["base_dir"] = BASE_DIR
+
     return s
 
 
@@ -493,8 +476,12 @@ def process_set_protein_seqs(s, setname, df_set, set_path):
     # reorder columns
     df_set = thoipapy.utils.reorder_dataframe_columns(df_set, ['acc', 'seqlen', 'TMD_start', 'TMD_end', "tm_surr_left", "tm_surr_right", "database"])
 
-    # convert the floats to integers
-    df_set.iloc[:, 1:5] = df_set.iloc[:, 1:5].astype(int)
+    # Residue positions are whole numbers and are written to the processed CSV, so they must not
+    # be serialised as "192.0". Assigning back through .iloc no longer changes the dtype under
+    # pandas copy-on-write, which silently made this a no-op; name the columns explicitly instead
+    # of relying on their position.
+    for column in ["seqlen", "TMD_start", "TMD_end", "tm_surr_left", "tm_surr_right"]:
+        df_set[column] = df_set[column].astype(int)
 
     # save to csv, which is opened by other functions
     list_of_tmd_start_end = os.path.join(s["data_dir"], "Input_data", os.path.basename(set_path)[:-5] + "_processed.csv")

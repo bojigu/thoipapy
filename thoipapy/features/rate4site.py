@@ -9,9 +9,10 @@ import pandas as pd
 
 from thoipapy import utils as utils
 from thoipapy.utils import SurroundingSequence
+from thoipapy.artefacts import ArtefactPaths
 
 
-def rate4site_calculation_mult_prot(s, df_set, logging):
+def rate4site_calculation_mult_prot(paths: ArtefactPaths, df_set, logging):
     """Calculates conservation of positions using rate4site.
 
     install rate4site for linux: sudo apt-get install rate4site
@@ -19,8 +20,8 @@ def rate4site_calculation_mult_prot(s, df_set, logging):
 
     Parameters
     ----------
-    s : dict
-        Settings dictionary
+    paths : ArtefactPaths
+        Locations of the pipeline's input and output files.
     df_set : pd.DataFrame
         Dataframe containing the list of proteins to process, including their TMD sequences and full-length sequences
         index : range(0, ..)
@@ -32,19 +33,19 @@ def rate4site_calculation_mult_prot(s, df_set, logging):
         logging.warning("Aborting rate4site calculation, ao is only implemented on linux.")
         return False
 
-    max_n_gaps_in_TMD_subject_seq = s["max_n_gaps_in_TMD_subject_seq"]
+    max_n_gaps_in_TMD_subject_seq = paths.max_n_gaps_in_TMD_subject_seq
 
     for i in df_set.index:
         acc = df_set.at[i, "acc"]
         database = df_set.at[i, "database"]
         TMD_seq = df_set.at[i, "TMD_seq"]
-        alignments_dir = Path(s["data_dir"]) / f"homologues/alignments/{database}"
+        alignments_dir = paths.alignment_dir(database)
 
         # input
         fasta_uniq_TMD_seqs_surr5_for_LIPO = alignments_dir / f"{acc}.surr5.gaps{max_n_gaps_in_TMD_subject_seq}.uniq.for_LIPO.fas"
 
         # output
-        rate4site_csv: Path = Path(s["data_dir"]).joinpath("features", "rate4site", database, f"{acc}_rate4site.csv")
+        rate4site_csv: Path = paths.rate4site_csv(database, acc)
 
         full_seq_len = len(df_set.at[i, "full_seq"])
         # number of residues surrounding the TMD on the left in alignment
@@ -167,7 +168,7 @@ def rate4site_calculation(TMD_seq: str, acc: str, fasta_uniq_TMD_seqs_surr5_for_
     else:
         logging.info(f"skipping rate4site algo for existing file {rate4site_orig_output}. Set 'rerun_rate4site' to True to rerun calculation.")
     # convert text output to standard csv
-    df = pd.read_csv(rate4site_orig_output, skiprows=range(13), index_col=0, header=None, delim_whitespace=True, error_bad_lines=False, comment="#")
+    df = pd.read_csv(rate4site_orig_output, skiprows=range(13), index_col=0, header=None, sep=r"\s+", on_bad_lines="skip", comment="#")
     df.columns = ["seq", "score", "qq-interval", "std", "msa-data"]
     df.to_csv(str(rate4site_orig_output)[:-4] + ".orig.csv")
     # convert standard csv to csv for thoipa features

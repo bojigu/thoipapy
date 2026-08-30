@@ -9,13 +9,14 @@ from Bio import SeqIO
 from ast import literal_eval as make_tuple
 from pathlib import Path
 from typing import List, Set, Union
+from thoipapy.artefacts import ArtefactPaths
 
 
-def create_identity_matrix_from_protein_set(s, logging):
-    setname = s["setname"]
-    protein_set_full_seq_fasta = Path(s["data_dir"]) / f"results/{s['setname']}/clusters/{setname}_full_seqs.fas"
-    output_align = Path(s["data_dir"]) / f"results/{s['setname']}/clusters/{setname}_sim_matrix_alignments.txt"
-    sim_matrix_xlsx = Path(s["data_dir"]) / f"results/{s['setname']}/clusters/{setname}_sim_matrix.xlsx"
+def create_identity_matrix_from_protein_set(paths: ArtefactPaths, logging):
+    setname = paths.setname
+    protein_set_full_seq_fasta = paths.protein_set_full_seq_fasta()
+    output_align = paths.sim_matrix_alignments_txt()
+    sim_matrix_xlsx = paths.sim_matrix_xlsx()
     if not sim_matrix_xlsx.parent.is_dir():
         sim_matrix_xlsx.parent.mkdir(parents=True)
     gap_open = -40.0
@@ -156,7 +157,6 @@ def create_identity_matrix_using_pairwise_alignments(protein_set_full_seq_fasta:
     df_settings.at["acc_pairs_analysed", "value"] = acc_pairs_analysed
     df_settings.to_excel(writer, sheet_name="settings")
 
-    writer.save()
     writer.close()
 
     logging.info('~~~~~~~~~~~~                 finished create_identity_matrix_using_pairwise_alignments              ~~~~~~~~~~~~')

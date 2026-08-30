@@ -5,21 +5,22 @@ import numpy as np
 import pandas as pd
 
 from thoipapy.ML_model.tune import tune_ensemble_parameters
-from thoipapy.utils import make_sure_path_exists
+from thoipapy.utils import dropna_with_report, make_sure_path_exists
 from thoipapy.validation.feature_selection import drop_cols_not_used_in_ML
 from thoipapy.ML_model.train_model import return_classifier_with_loaded_ensemble_parameters
+from thoipapy.artefacts import ArtefactPaths
 
 
-def get_initial_ensemble_parameters_before_feature_selection(s, logging):
+def get_initial_ensemble_parameters_before_feature_selection(paths: ArtefactPaths, bind_column: str, bootstrap: bool, logging):
     # logging.info('RF_variable_importance_calculate is running\n')
-    train_data_csv = Path(s["data_dir"]) / f"results/{s['setname']}/train_data/01_train_data_orig.csv"
+    train_data_csv = paths.train_data_orig_csv()
     # output
-    tuned_ensemble_parameters_before_feature_seln_csv = Path(s["data_dir"]) / f"results/{s['setname']}/train_data/01_tuned_ensemble_parameters_before_feature_seln.csv"
+    tuned_ensemble_parameters_before_feature_seln_csv = paths.tuned_ensemble_parameters_before_feature_seln_csv()
 
-    tune_ensemble_parameters(s, train_data_csv, tuned_ensemble_parameters_before_feature_seln_csv, logging)
+    tune_ensemble_parameters(train_data_csv, tuned_ensemble_parameters_before_feature_seln_csv, bind_column, logging)
 
 
-def calc_feat_import_using_MDI_before_feature_seln(s, logging):
+def calc_feat_import_using_MDI_before_feature_seln(paths: ArtefactPaths, bootstrap: bool, logging):
     """Calculate the variable importance (mean decrease gini) for all variables in THOIPA.
 
     Parameters
@@ -36,18 +37,18 @@ def calc_feat_import_using_MDI_before_feature_seln(s, logging):
         Also includes the standard deviation supplied by the machine learning algorithm
     """
     # logging.info('RF_variable_importance_calculate is running\n')
-    train_data_csv = Path(s["data_dir"]) / f"results/{s['setname']}/train_data/01_train_data_orig.csv"
-    tuned_ensemble_parameters_before_feature_seln_csv = Path(s["data_dir"]) / f"results/{s['setname']}/train_data/01_tuned_ensemble_parameters_before_feature_seln.csv"
+    train_data_csv = paths.train_data_orig_csv()
+    tuned_ensemble_parameters_before_feature_seln_csv = paths.tuned_ensemble_parameters_before_feature_seln_csv()
 
     # mean_decrease_impurity_all_features_csv = Path(s["data_dir"]) / "results" / s["setname"] / "feat_imp/mean_decrease_impurity_all_features.csv"
-    mean_decrease_impurity_all_features_csv = Path(s["data_dir"]) / f"results/{s['setname']}/train_data/01_feat_imp_MDI_before_feature_seln.csv"
+    mean_decrease_impurity_all_features_csv = paths.feat_imp_MDI_before_feature_seln_csv()
 
     make_sure_path_exists(mean_decrease_impurity_all_features_csv, isfile=True)
 
     df_data = pd.read_csv(train_data_csv, index_col=0)
-    df_data = df_data.dropna()
+    df_data = dropna_with_report(df_data, "calc_feat_import_using_MDI", logging)
 
-    X = drop_cols_not_used_in_ML(logging, df_data, s["settings_path"])
+    X = drop_cols_not_used_in_ML(logging, df_data)
     y = df_data["interface"]
     n_features = X.shape[1]
 
@@ -57,10 +58,10 @@ def calc_feat_import_using_MDI_before_feature_seln(s, logging):
 
     for model_type in model_types:
         if model_type == "_TRT":
-            forest = return_classifier_with_loaded_ensemble_parameters(s, tuned_ensemble_parameters_before_feature_seln_csv, totally_randomized_trees=True)
+            forest = return_classifier_with_loaded_ensemble_parameters(tuned_ensemble_parameters_before_feature_seln_csv, bootstrap, totally_randomized_trees=True)
             logging.info("IMPORTANCES FOR TOTALLY RANDOMIZED TREES (max_features=1, max_depth=None, min_samples_leaf=1)")
         elif model_type == "":
-            forest = return_classifier_with_loaded_ensemble_parameters(s, tuned_ensemble_parameters_before_feature_seln_csv)
+            forest = return_classifier_with_loaded_ensemble_parameters(tuned_ensemble_parameters_before_feature_seln_csv, bootstrap)
             logging.info("Feature ranking:")
         else:
             raise ValueError("model type unknown")

@@ -3,15 +3,17 @@ import os
 import pandas as pd
 
 import thoipapy
+from thoipapy.artefacts import ArtefactPaths
+import thoipapy.utils
 
 
-def motifs_from_seq_mult_protein(s, df_set, logging):
+def motifs_from_seq_mult_protein(paths: ArtefactPaths, df_set, logging):
     """Runs motifs_from_seq for multiple proteins
 
     Parameters
     ----------
-    s : dict
-        Settings dictionary
+    paths : ArtefactPaths
+        Locations of the pipeline's input and output files.
     df_set : pd.DataFrame
         Dataframe containing the list of proteins to process, including their TMD sequences and full-length sequences
         index : range(0, ..)
@@ -26,7 +28,7 @@ def motifs_from_seq_mult_protein(s, df_set, logging):
         database = df_set.loc[i, "database"]
         TMD_seq = df_set.loc[i, "TMD_seq"]
         TMD_seq_pl_surr = df_set.loc[i, "TMD_seq_pl_surr"]
-        motifs_file = os.path.join(s["data_dir"], "features", "motifs", database, "{}.motifs.csv".format(acc))
+        motifs_file = paths.motifs_csv(database, acc)
         thoipapy.utils.make_sure_path_exists(motifs_file, isfile=True)
         tm_surr_left = int(df_set.loc[i, "tm_surr_left"])
         tm_surr_right = int(df_set.loc[i, "tm_surr_right"])

@@ -8,15 +8,16 @@ import pandas as pd
 import thoipapy
 from thoipapy import utils as utils
 from thoipapy.utils import normalise_0_1
+from thoipapy.artefacts import ArtefactPaths
 
 
-def coevolution_calculation_with_freecontact_mult_prot(s, df_set, logging):
+def coevolution_calculation_with_freecontact_mult_prot(paths: ArtefactPaths, df_set, logging):
     """Runs coevolution_calculation_with_freecontact for a set of protein sequences.
 
     Parameters
     ----------
-    s : dict
-        Settings dictionary
+    paths : ArtefactPaths
+        Locations of the pipeline's input and output files.
     df_set : pd.DataFrame
         Dataframe containing the list of proteins to process, including their TMD sequences and full-length sequences
         index : range(0, ..)
@@ -29,9 +30,8 @@ def coevolution_calculation_with_freecontact_mult_prot(s, df_set, logging):
     for i in df_set.index:
         acc = df_set.loc[i, "acc"]
         database = df_set.loc[i, "database"]
-        alignments_dir = alignments_dir = os.path.join(s["data_dir"], "homologues", "alignments", database)
-        path_uniq_TMD_seqs_for_PSSM_FREECONTACT = os.path.join(alignments_dir, "{}.surr{}.gaps{}.uniq.for_PSSM_FREECONTACT.txt".format(acc, s["num_of_sur_residues"], s["max_n_gaps_in_TMD_subject_seq"]))
-        freecontact_file = os.path.join(s["data_dir"], "features", "coevolution", database, "{}.surr{}.gaps{}.freecontact.csv".format(acc, s["num_of_sur_residues"], s["max_n_gaps_in_TMD_subject_seq"]))
+        path_uniq_TMD_seqs_for_PSSM_FREECONTACT = paths.uniq_tmd_seqs_for_pssm_freecontact_txt(database, acc)
+        freecontact_file = paths.freecontact_csv(database, acc)
         coevolution_calculation_with_freecontact(path_uniq_TMD_seqs_for_PSSM_FREECONTACT, freecontact_file, logging)
 
 
@@ -63,13 +63,13 @@ def coevolution_calculation_with_freecontact(path_uniq_TMD_seqs_for_PSSM_FREECON
         logging.warning("{} does not exist".format(path_uniq_TMD_seqs_for_PSSM_FREECONTACT))
 
 
-def parse_freecontact_coevolution_mult_prot(s, df_set, logging):
+def parse_freecontact_coevolution_mult_prot(paths: ArtefactPaths, df_set, logging):
     """Runs parse_freecontact_coevolution on a set of proteins.
 
     Parameters
     ----------
-    s : dict
-        Settings dictionary
+    paths : ArtefactPaths
+        Locations of the pipeline's input and output files.
     df_set : pd.DataFrame
         Dataframe containing the list of proteins to process, including their TMD sequences and full-length sequences
         index : range(0, ..)
@@ -86,8 +86,8 @@ def parse_freecontact_coevolution_mult_prot(s, df_set, logging):
         database = df_set.loc[i, "database"]
         TMD_start = int(df_set.loc[i, "TMD_start"])
         TMD_end = int(df_set.loc[i, "TMD_end"])
-        freecontact_file = os.path.join(s["data_dir"], "features", "coevolution", database, "{}.surr{}.gaps{}.freecontact.csv".format(acc, s["num_of_sur_residues"], s["max_n_gaps_in_TMD_subject_seq"]))
-        freecontact_parsed_csv = os.path.join(s["data_dir"], "features", "coevolution", database, "{}.surr{}.gaps{}.freecontact_parsed.csv".format(acc, s["num_of_sur_residues"], s["max_n_gaps_in_TMD_subject_seq"]))
+        freecontact_file = paths.freecontact_csv(database, acc)
+        freecontact_parsed_csv = paths.freecontact_parsed_csv(database, acc)
 
         parse_freecontact_coevolution(acc, freecontact_file, freecontact_parsed_csv, TMD_start, TMD_end, logging)
     sys.stdout.write("\n")
@@ -267,8 +267,6 @@ def parse_freecontact_coevolution(acc, freecontact_file, freecontact_parsed_csv,
         238  NaN  NaN  NaN  NaN  NaN       NaN       NaN       NaN  0.049759  0.044692 ...   0.119658  0.236728  0.080722  0.114663  0.064796  0.096822  NaN  NaN  NaN  NaN
         """
 
-        # get full list of residues
-        position_list_unique = np.array(list(set(dfp.index.tolist() + dfp.columns.tolist())))
         # padding allows -4 and +4 indexing at ends
         padding = 4
         # DEPRECATED min_ method. Get start and end from df_set
@@ -372,7 +370,8 @@ def parse_freecontact_coevolution(acc, freecontact_file, freecontact_parsed_csv,
                 index_positions_highest_face = hep_cols
 
         # label the best face as 1, and all other residues as 0
-        index_positions_highest_face = set(index_positions_highest_face).intersection(set(df_out.index))
+        # sorted list, not a set: pandas 2.0 stopped accepting a set as an indexer
+        index_positions_highest_face = sorted(set(index_positions_highest_face).intersection(set(df_out.index)))
         df_out.loc[index_positions_highest_face, "XI_highest_face"] = 1
         df_out["XI_highest_face"] = df_out["XI_highest_face"].fillna(0).astype(int)
 

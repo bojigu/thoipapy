@@ -6,15 +6,16 @@ import pandas as pd
 
 import thoipapy
 from thoipapy.utils import normalise_0_1
+from thoipapy.artefacts import ArtefactPaths
 
 
-def calc_relative_position_mult_prot(s, df_set, logging):
+def calc_relative_position_mult_prot(paths: ArtefactPaths, df_set, surres: str, logging):
     """calculate the residue relative position on the TMD
 
     Parameters
     ----------
-    s : dict
-        Settings dictionary
+    paths : ArtefactPaths
+        Locations of the pipeline's input and output files.
     df_set : pd.DataFrame
         Dataframe containing the list of proteins to process, including their TMD sequences and full-length sequences
         index : range(0, ..)
@@ -33,10 +34,9 @@ def calc_relative_position_mult_prot(s, df_set, logging):
         tm_seq = df_set.loc[i, "full_seq"]
         seqlen = df_set.loc[i, "seqlen"]
 
-        relative_position_file = os.path.join(s["data_dir"], "features", "relative_position", database, "%s.relative_position%s.csv") % (acc, s["surres"])
+        relative_position_file = paths.relative_position_csv(database, acc, surres)
         thoipapy.utils.make_sure_path_exists(relative_position_file, isfile=True)
-        alignments_dir = os.path.join(s["data_dir"], "homologues", "alignments", database)
-        path_uniq_TMD_seqs_for_PSSM_FREECONTACT = os.path.join(alignments_dir, "{}.surr{}.gaps{}.uniq.for_PSSM_FREECONTACT.txt".format(acc, s["num_of_sur_residues"], s["max_n_gaps_in_TMD_subject_seq"]))
+        path_uniq_TMD_seqs_for_PSSM_FREECONTACT = paths.uniq_tmd_seqs_for_pssm_freecontact_txt(database, acc)
 
         calc_relative_position(acc, path_uniq_TMD_seqs_for_PSSM_FREECONTACT, relative_position_file, TMD_start, seqlen, logging)
 

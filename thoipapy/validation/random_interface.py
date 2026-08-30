@@ -1,11 +1,20 @@
+"""Generate randomised interfaces as a baseline predictor.
+
+NOT MAINTAINED. Reachable only from the generate_randomised_interfaces pipeline stage, which is switched off in both
+shipped settings files and disabled in the functional test. Last exercised for the 2020
+publication. Not covered by any test, and excluded from the refactoring applied to the maintained
+part of the package.
+"""
 import os
 
 import pandas as pd
 
 import thoipapy
+import thoipapy.utils
+from thoipapy.artefacts import ArtefactPaths
 
 
-def add_random_interface_to_combined_features_mult_prot(s, df_set, logging):
+def add_random_interface_to_combined_features_mult_prot(paths: ArtefactPaths, df_set, inter_pair_max: int, logging):
     """Creates combined data with a randomly chosen interface residues.
 
     Sorts TMDs according to length.
@@ -45,16 +54,16 @@ def add_random_interface_to_combined_features_mult_prot(s, df_set, logging):
     for i in df_set.index:
         acc = df_set.loc[i, "acc"]
         database = df_set.loc[i, "database"]
-        feature_combined_file = os.path.join(s["data_dir"], "features", "combined", database, "{}.surr{}.gaps{}.combined_features.csv".format(acc, s["num_of_sur_residues"], s["max_n_gaps_in_TMD_subject_seq"]))
-        feature_combined_file_rand_int = os.path.join(s["data_dir"], "features", "combined", "rand_int", database,
-                                                      "{}.surr{}.gaps{}.combined_features.csv".format(acc, s["num_of_sur_residues"], s["max_n_gaps_in_TMD_subject_seq"]))
+        feature_combined_file = paths.combined_features_csv(database, acc)
+        feature_combined_file_rand_int = os.path.join(paths.data_dir, "features", "combined", "rand_int", database,
+                                                      "{}.surr{}.gaps{}.combined_features.csv".format(acc, paths.num_of_sur_residues, paths.max_n_gaps_in_TMD_subject_seq))
         thoipapy.utils.make_sure_path_exists(feature_combined_file_rand_int, isfile=True)
 
         if database == "ETRA":
-            experimental_data_file = os.path.join(s["base_dir"], "ETRA_data", "Average_with_interface", "{}_mul_scan_average_data.xlsx".format(acc))
+            experimental_data_file = paths.etra_experimental_xlsx(acc)
         else:
-            # experimental_data_file = os.path.join(s["data_dir"], "features", 'structure', database, '{}.{}pairmax.bind.closedist.csv'.format(acc,s['inter_pair_max']))
-            experimental_data_file = os.path.join(s["data_dir"], "features", 'structure', database, '{}.{}pairmax.bind.closedist.csv'.format(acc, s['inter_pair_max']))
+            # experimental_data_file = paths.experimental_interface_csv(database, acc, inter_pair_max)
+            experimental_data_file = paths.experimental_interface_csv(database, acc, inter_pair_max)
 
         df_combined = pd.read_csv(feature_combined_file, index_col=0)
 

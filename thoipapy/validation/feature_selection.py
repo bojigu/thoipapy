@@ -1,9 +1,11 @@
 import pandas as pd
 
+from thoipapy.paths import MODEL_FEATURES_CSV
+
 from thoipapy.utils import convert_truelike_to_bool, convert_falselike_to_bool
 
 
-def drop_cols_not_used_in_ML(logging, df_data, settings_path, i=0):
+def drop_cols_not_used_in_ML(logging, df_data, i=0):
     """Remove columns not used in machine learning training or testing.
 
     This includes
@@ -19,11 +21,6 @@ def drop_cols_not_used_in_ML(logging, df_data, settings_path, i=0):
         Dataframe with either the training or test dataset
         columns = 'acc_db', "residue_num", "residue_name", etc
         rows = range of number of residues
-    settings_path : str
-        Path to excel file with all settings.
-        Necessary for getting the list of features included in the THOIPA algorithm.
-
-
     Returns
     -------
     df_data : pd.DataFrame
@@ -31,7 +28,7 @@ def drop_cols_not_used_in_ML(logging, df_data, settings_path, i=0):
         columns :
     """
     # read the features tab of the excel settings file
-    features_df = pd.read_excel(settings_path, sheet_name="features", index_col=0)
+    features_df = pd.read_csv(MODEL_FEATURES_CSV, index_col=0)
     # convert "WAHR" etc to true and false
     features_df["include"] = features_df["include"].apply(convert_truelike_to_bool, convert_nontrue=False)
     features_df["include"] = features_df["include"].apply(convert_falselike_to_bool)
@@ -56,6 +53,10 @@ def drop_cols_not_used_in_ML(logging, df_data, settings_path, i=0):
     features_df = features_df.loc[features_df.include == True]
     # filter df_data to only keep the desired feature columns
     feature_list = features_df.index.tolist()
-    feature_list_shared_cols = list(set(feature_list).intersection(set(df_data.columns)))
+    # Order-preserving. list(set(...)) here made the ML column order depend on PYTHONHASHSEED,
+    # and ExtraTreesClassifier draws its max_features candidates by column index, so the fitted
+    # model differed between runs even with random_state fixed.
+    present = set(df_data.columns)
+    feature_list_shared_cols = [f for f in feature_list if f in present]
     df_data = df_data.loc[:, feature_list_shared_cols]
     return df_data

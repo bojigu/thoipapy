@@ -7,17 +7,18 @@ import pandas as pd
 
 from thoipapy.utils import reorder_dataframe_columns, make_sure_path_exists
 from thoipapy.validation.feature_selection import drop_cols_not_used_in_ML
+from thoipapy.artefacts import ArtefactPaths
 
 
-def remove_duplicate_features_with_lower_MDI(s, logging):
+def remove_duplicate_features_with_lower_MDI(paths: ArtefactPaths, bind_column: str, features_to_be_retained_during_selection, max_similarity_duplicate_features: float, logging):
     logging.info('starting remove_duplicate_features_with_lower_MDI')
     # inputs
-    train_data_csv = Path(s["data_dir"]) / f"results/{s['setname']}/train_data/01_train_data_orig.csv"
-    max_similarity_duplicate_features = s["max_similarity_duplicate_features"]
+    train_data_csv = paths.train_data_orig_csv()
+    max_similarity_duplicate_features = max_similarity_duplicate_features
     # outputs
-    mean_decrease_impurity_all_features_csv = Path(s["data_dir"]) / f"results/{s['setname']}/train_data/01_feat_imp_MDI_before_feature_seln.csv"
-    results_remove_dup_feat_with_low_MDI_csv = Path(s["data_dir"]) / "results" / s["setname"] / "feat_imp/results_remove_dup_feat_with_low_MDI.csv"
-    train_data_excl_duplicates_csv = Path(s["data_dir"]) / f"results/{s['setname']}/train_data/02_train_data_excl_duplicates.csv"
+    mean_decrease_impurity_all_features_csv = paths.feat_imp_MDI_before_feature_seln_csv()
+    results_remove_dup_feat_with_low_MDI_csv = paths.results_remove_dup_feat_with_low_MDI_csv()
+    train_data_excl_duplicates_csv = paths.train_data_excl_duplicates_csv()
     make_sure_path_exists(results_remove_dup_feat_with_low_MDI_csv, isfile=True)
 
     df_MDI = pd.read_csv(mean_decrease_impurity_all_features_csv, index_col=0)
@@ -25,14 +26,14 @@ def remove_duplicate_features_with_lower_MDI(s, logging):
 
     if True in df_data.columns.str.contains("Unnamed").tolist():
         raise ValueError(f"unnamed column found when reading {train_data_csv}")
-    df_X = drop_cols_not_used_in_ML(logging, df_data, s["settings_path"])
+    df_X = drop_cols_not_used_in_ML(logging, df_data)
 
     correlated_feature_pairs = set()
     correlation_matrix = df_X.corr()
 
     duplicate_features_to_be_removed: List[str] = []
 
-    features_to_be_retained_during_selection = s['features_to_be_retained_during_selection'].split(",")
+    features_to_be_retained_during_selection = features_to_be_retained_during_selection.split(",")
     logging.info(f"features_to_be_retained_during_selection : {features_to_be_retained_during_selection}")
 
     for i in range(len(correlation_matrix.columns)):
@@ -80,7 +81,7 @@ def remove_duplicate_features_with_lower_MDI(s, logging):
 
     cols_to_keep = [c for c in df_X.columns if c not in duplicate_features_to_be_removed]
     df_X_excl_duplicates = df_X.reindex(columns=cols_to_keep, index=df_X.index)
-    df_X_excl_duplicates[s["bind_column"]] = df_data[s["bind_column"]]
+    df_X_excl_duplicates[bind_column] = df_data[bind_column]
     if df_X_excl_duplicates.isnull().values.any():
         raise Exception("df_X_excl_duplicates contains nan values")
 

@@ -49,28 +49,3 @@ def normalise_features(df_features_single_protein):
     return df_features_single_protein
 
 
-def normalise_number_of_homologues_to_categorical_variable(x):
-    """ DEPRECATED. Replaced with cubed root of the n_homologues.
-    Convert non-linear number of homologues to an integer value.
-
-    Parameters
-    ----------
-    x : int
-        Number of homologues in fasta alignment of TMD region including gaps.
-    """
-    if x <= 75:
-        return 1
-    elif x <= 100:
-        return 2
-    elif x <= 200:
-        return 3
-    elif x <= 400:
-        return 4
-    elif x <= 800:
-        return 5
-    elif x <= 1600:
-        return 6
-    elif x <= 3200:
-        return 7
-    else:
-        return 8

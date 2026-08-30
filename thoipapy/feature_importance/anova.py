@@ -3,18 +3,19 @@ from pathlib import Path
 import pandas as pd
 from thoipapy.utils import make_sure_path_exists
 from sklearn.feature_selection import SelectKBest, f_classif
+from thoipapy.artefacts import ArtefactPaths
 
 
-def select_best_features_with_anova(s, logging):
+def select_best_features_with_anova(paths: ArtefactPaths, bind_column: str, n_top_features_to_keep: int, logging):
     """ The f_classif function is an ANOVA implementation in python.
 
     This function selects the top features according to the ANOVA analysis.
     """
     logging.info('starting select_best_features_with_ANOVA')
     # inputs
-    train_data_excl_duplicates_csv = Path(s["data_dir"]) / f"results/{s['setname']}/train_data/02_train_data_excl_duplicates.csv"
+    train_data_excl_duplicates_csv = paths.train_data_excl_duplicates_csv()
     # outputs
-    top_features_anova_csv = Path(s["data_dir"]) / f"results/{s['setname']}/feat_imp/top_features_anova.csv"
+    top_features_anova_csv = paths.top_features_anova_csv()
 
     make_sure_path_exists(top_features_anova_csv, isfile=True)
 
@@ -23,12 +24,12 @@ def select_best_features_with_anova(s, logging):
         raise ValueError(f"unnamed column found when reading {train_data_excl_duplicates_csv}")
 
     X = df_data.copy()
-    del X[s["bind_column"]]
+    del X[bind_column]
     assert "interface" not in X.columns
 
-    y = df_data[s["bind_column"]]
+    y = df_data[bind_column]
 
-    cls = SelectKBest(score_func=f_classif, k=s["n_top_features_to_keep"])
+    cls = SelectKBest(score_func=f_classif, k=n_top_features_to_keep)
     fit: SelectKBest = cls.fit(X, y)
 
     X_selected = fit.transform(X)

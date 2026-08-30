@@ -11,12 +11,14 @@ from sklearn.model_selection import StratifiedKFold
 import thoipapy.utils
 from thoipapy import utils
 from thoipapy.validation.auc import calc_PRAUC_ROCAUC_using_10F_validation
-from thoipapy.ML_model.train_model import return_classifier_with_loaded_ensemble_parameters
+from thoipapy.ML_model.train_model import RANDOM_STATE, return_classifier_with_loaded_ensemble_parameters
 from thoipapy.validation.bocurve import calc_best_overlap_from_selected_column_in_df, calc_best_overlap, parse_BO_data_csv_to_excel
 from thoipapy.validation.leave_one_out import get_clusters_putative_homologues_in_protein_set
+from thoipapy.artefacts import ArtefactPaths
+from thoipapy.paths import MODEL_FEATURES_CSV
 
 
-def calc_feat_import_from_mean_decrease_accuracy(s, logging):
+def calc_feat_import_from_mean_decrease_accuracy(paths: ArtefactPaths, bind_column: str, min_n_homol_training: int, bootstrap: bool, n_residues_AUBOC_validation: int, logging):
     """Calculate feature importances using mean decrease in accuracy.
 
     This method differs from calc_feat_import_from_mean_decrease_impurity.
@@ -43,12 +45,12 @@ def calc_feat_import_from_mean_decrease_accuracy(s, logging):
     """
     logging.info('------------ starting calc_feat_import_from_mean_decrease_accuracy ------------')
     # input
-    train_data_csv = Path(s["data_dir"]) / f"results/{s['setname']}/train_data/03_train_data_after_first_feature_seln.csv"
-    tuned_ensemble_parameters_csv = Path(s["data_dir"]) / f"results/{s['setname']}/train_data/04_tuned_ensemble_parameters.csv"
+    train_data_csv = paths.train_data_after_first_feature_seln_csv()
+    tuned_ensemble_parameters_csv = paths.tuned_ensemble_parameters_csv()
     # output
-    feat_imp_MDA_xlsx = os.path.join(s["data_dir"], "results", s["setname"], "feat_imp", "feat_imp_mean_decrease_accuracy.xlsx")
-    feat_imp_temp_THOIPA_BO_curve_data_csv = Path(s["data_dir"]) / f"results/{s['setname']}/feat_imp/feat_imp_temp_THOIPA.best_overlap_data.csv"
-    feat_imp_temp_bocurve_data_xlsx = Path(s["data_dir"]) / f"results/{s['setname']}/feat_imp/feat_imp_temp_bocurve_data.xlsx"
+    feat_imp_MDA_xlsx = paths.feat_imp_mean_decrease_accuracy_xlsx()
+    feat_imp_temp_THOIPA_BO_curve_data_csv = paths.feat_imp_temp_bocurve_csv()
+    feat_imp_temp_bocurve_data_xlsx = paths.feat_imp_temp_bocurve_xlsx()
 
     thoipapy.utils.make_sure_path_exists(feat_imp_MDA_xlsx, isfile=True)
 
@@ -61,16 +63,15 @@ def calc_feat_import_from_mean_decrease_accuracy(s, logging):
         raise Exception("df_data contains nan values. Please check names of features_to_be_retained_during_selection in settings file.")
 
     # drop training data (full protein) that don't have enough homologues
-    if s["min_n_homol_training"] != 0:
-        df_data = df_data.loc[df_data.n_homologues >= s["min_n_homol_training"]]
+    if min_n_homol_training != 0:
+        df_data = df_data.loc[df_data.n_homologues >= min_n_homol_training]
 
-    cols_excluding_y = [c for c in df_data.columns if c != s['bind_column']]
+    cols_excluding_y = [c for c in df_data.columns if c != bind_column]
 
     X = df_data[cols_excluding_y]
     y = df_data["interface"]
 
-    settings_path = s["settings_path"]
-    df_feat = pd.read_excel(settings_path, sheet_name="features")
+    df_feat = pd.read_csv(MODEL_FEATURES_CSV)
     df_feat = df_feat.loc[df_feat.include == 1]
     feature_types: list = list(df_feat.feature_type.unique())
 
@@ -83,7 +84,7 @@ def calc_feat_import_from_mean_decrease_accuracy(s, logging):
     # cons_features = ["entropy", "cons4mean", "conservation"]
     # motif_features =  ["GxxxG", "SmxxxSm"]
     # physical_features = ["branched", "mass"]
-    # TMD_features = ["residue_depth", "n_TMDs", "n_homologues"]
+    # TMD_features = ["residue_depth", "n_homologues"]
     # polarity_and_pssm_features = polarity_features + pssm_features
     # features_nested_list = [polarity_and_pssm_features, coev_features, DI_features, MI_features, cons_features, motif_features, physical_features, TMD_features]
     # features_nested_namelist = ["polarity_and_pssm_features", "coev_features",  "DI_features", "MI_features", "cons_features", "motif_features", "physical_features", "TMD_features"]
@@ -91,16 +92,20 @@ def calc_feat_import_from_mean_decrease_accuracy(s, logging):
     # for i in range(len(features_nested_list)):
     #    sys.stdout.write("\n{} : {}".format(features_nested_namelist[i], features_nested_list[i]))
 
-    forest = return_classifier_with_loaded_ensemble_parameters(s, tuned_ensemble_parameters_csv)
+    forest = return_classifier_with_loaded_ensemble_parameters(tuned_ensemble_parameters_csv, bootstrap)
 
     pr_auc_orig, roc_auc_orig = calc_PRAUC_ROCAUC_using_10F_validation(X, y, forest)
-    auboc_orig = calc_AUBOC_for_feat_imp(y, X, forest, feat_imp_temp_THOIPA_BO_curve_data_csv, feat_imp_temp_bocurve_data_xlsx, s, logging)
+    auboc_orig = calc_AUBOC_for_feat_imp(paths, y, X, forest, feat_imp_temp_THOIPA_BO_curve_data_csv, feat_imp_temp_bocurve_data_xlsx, n_residues_AUBOC_validation, logging)
 
-    start = time.clock()
+    start = time.perf_counter()
 
     sys.stdout.write("\nmean : {:.03f}\n".format(pr_auc_orig)), sys.stdout.flush()
 
     ################### grouped features ###################
+
+    # Seeded so that feature importances are reproducible; the shuffles previously used the
+    # global numpy random state and gave different importances on every run.
+    rng = np.random.default_rng(RANDOM_STATE)
 
     grouped_feat_decrease_PR_AUC_dict = {}
     grouped_feat_decrease_ROC_AUC_dict = {}
@@ -109,12 +114,16 @@ def calc_feat_import_from_mean_decrease_accuracy(s, logging):
     for feature_type in feature_types:
         df_feat_selected = df_feat.loc[df_feat.feature_type == feature_type]
         feature_list = df_feat_selected.feature.to_list()
-        feature_list = list(set(feature_list).intersection(set(X.columns.tolist())))
+        present = set(X.columns)
+        feature_list = [f for f in feature_list if f in present]
         X_t = X.copy()
         for feature in feature_list:
             # shuffle the data for that feature
-            row_to_shuffle = X_t[feature].to_numpy()
-            np.random.shuffle(row_to_shuffle)
+            # copy=True is required: under pandas copy-on-write to_numpy() can return a
+            # read-only view, which np.random.shuffle cannot mutate in place. A copy was always
+            # the intent here, since the result is assigned straight back into the column.
+            row_to_shuffle = X_t[feature].to_numpy(copy=True)
+            rng.shuffle(row_to_shuffle)
             X_t[feature] = row_to_shuffle
         # calculate prediction performance after shuffling
         PR_AUC, ROC_AUC = calc_PRAUC_ROCAUC_using_10F_validation(X_t, y, forest)
@@ -125,7 +134,7 @@ def calc_feat_import_from_mean_decrease_accuracy(s, logging):
         decrease_ROC_AUC = roc_auc_orig - ROC_AUC
         grouped_feat_decrease_ROC_AUC_dict[feature_type] = decrease_ROC_AUC
 
-        auboc = calc_AUBOC_for_feat_imp(y, X_t, forest, feat_imp_temp_THOIPA_BO_curve_data_csv, feat_imp_temp_bocurve_data_xlsx, s, logging)
+        auboc = calc_AUBOC_for_feat_imp(paths, y, X_t, forest, feat_imp_temp_THOIPA_BO_curve_data_csv, feat_imp_temp_bocurve_data_xlsx, n_residues_AUBOC_validation, logging)
 
         decrease_auboc = auboc_orig - auboc
         grouped_feat_decrease_AUBOC_dict[feature_type] = decrease_auboc
@@ -146,8 +155,8 @@ def calc_feat_import_from_mean_decrease_accuracy(s, logging):
     for feature in X.columns:
         X_t = X.copy()
         # shuffle the data for that feature
-        row_to_shuffle = X_t[feature].to_numpy()
-        np.random.shuffle(row_to_shuffle)
+        row_to_shuffle = X_t[feature].to_numpy(copy=True)
+        rng.shuffle(row_to_shuffle)
         X_t[feature] = row_to_shuffle
         # calculate prediction performance after shuffling
         PR_AUC, ROC_AUC = calc_PRAUC_ROCAUC_using_10F_validation(X_t, y, forest)
@@ -158,7 +167,7 @@ def calc_feat_import_from_mean_decrease_accuracy(s, logging):
         decrease_ROC_AUC = roc_auc_orig - ROC_AUC
         single_feat_decrease_ROC_AUC_dict[feature] = decrease_ROC_AUC
 
-        auboc = calc_AUBOC_for_feat_imp(y, X_t, forest, feat_imp_temp_THOIPA_BO_curve_data_csv, feat_imp_temp_bocurve_data_xlsx, s, logging)
+        auboc = calc_AUBOC_for_feat_imp(paths, y, X_t, forest, feat_imp_temp_THOIPA_BO_curve_data_csv, feat_imp_temp_bocurve_data_xlsx, n_residues_AUBOC_validation, logging)
 
         decrease_auboc = auboc_orig - auboc
         single_feat_decrease_AUBOC_dict[feature] = decrease_auboc
@@ -192,20 +201,19 @@ def calc_feat_import_from_mean_decrease_accuracy(s, logging):
     df_single_feat.to_excel(writer, sheet_name="single_feat")
     df_single_feat_norm.to_excel(writer, sheet_name="single_feat_norm")
 
-    writer.save()
     writer.close()
 
-    duration = time.clock() - start
+    duration = time.perf_counter() - start
 
-    logging.info('{} calc_feat_import_from_mean_decrease_accuracy. PR_AUC({:.3f}). Time taken = {:.2f}.\nFeatures: {}'.format(s["setname"], pr_auc_orig, duration, X.columns.tolist()))
+    logging.info('{} calc_feat_import_from_mean_decrease_accuracy. PR_AUC({:.3f}). Time taken = {:.2f}.\nFeatures: {}'.format(paths.setname, pr_auc_orig, duration, X.columns.tolist()))
     logging.info(f'output: ({feat_imp_MDA_xlsx})')
     logging.info('------------ finished calc_feat_import_from_mean_decrease_accuracy ------------')
 
 
-def calc_AUBOC_for_feat_imp(y, X_t, forest, feat_imp_temp_THOIPA_BO_curve_data_csv, feat_imp_temp_bocurve_data_xlsx, s, logging):
+def calc_AUBOC_for_feat_imp(paths: ArtefactPaths, y, X_t, forest, feat_imp_temp_THOIPA_BO_curve_data_csv, feat_imp_temp_bocurve_data_xlsx, n_residues_AUBOC_validation: int, logging):
     THOIPA_BO_data_df = pd.DataFrame()
     acc_db_list = pd.Series(X_t.index).str.split("_").str[0].unique().tolist()
-    sim_matrix_xlsx = Path(s["data_dir"]) / f"results/{s['setname']}/clusters/{s['setname']}_sim_matrix.xlsx"
+    sim_matrix_xlsx = paths.sim_matrix_xlsx()
     putative_homologue_clusters = get_clusters_putative_homologues_in_protein_set(sim_matrix_xlsx)
 
     for acc_db in acc_db_list:
@@ -232,13 +240,13 @@ def calc_AUBOC_for_feat_imp(y, X_t, forest, feat_imp_temp_THOIPA_BO_curve_data_c
             THOIPA_BO_data_df = pd.concat([THOIPA_BO_data_df, THOIPA_BO_single_prot_df], axis=1, join="outer")
     THOIPA_BO_data_df.to_csv(feat_imp_temp_THOIPA_BO_curve_data_csv)
     # THOIPA_linechart_mean_obs_and_rand = analyse_bo_curve_underlying_data(THOIPA_BO_curve_data_csv, BO_curve_folder, names_excel_path)
-    parse_BO_data_csv_to_excel(feat_imp_temp_THOIPA_BO_curve_data_csv, feat_imp_temp_bocurve_data_xlsx, s["n_residues_AUBOC_validation"], logging, log_auboc=False)
+    parse_BO_data_csv_to_excel(feat_imp_temp_THOIPA_BO_curve_data_csv, feat_imp_temp_bocurve_data_xlsx, n_residues_AUBOC_validation, logging, log_auboc=False)
     df_bocurve = pd.read_excel(feat_imp_temp_bocurve_data_xlsx, sheet_name="mean_o_minus_r", index_col=0)
 
     # apply cutoff (e.g. 5 residues for AUBOC5)
-    n_residues_AUBOC_validation = s["n_residues_AUBOC_validation"]
+    n_residues_AUBOC_validation = n_residues_AUBOC_validation
     df_bocurve = df_bocurve.iloc[:n_residues_AUBOC_validation]
 
-    AUBOC = np.trapz(y=df_bocurve["mean_o_minus_r"], x=df_bocurve.index)
+    AUBOC = np.trapezoid(y=df_bocurve["mean_o_minus_r"], x=df_bocurve.index)
 
     return AUBOC

@@ -1,3 +1,10 @@
+"""Per-protein validation figures and summary statistics.
+
+NOT MAINTAINED. Reachable only from the run_validation pipeline stage, which is switched off in both
+shipped settings files and disabled in the functional test. Last exercised for the 2020
+publication. Not covered by any test, and excluded from the refactoring applied to the maintained
+part of the package.
+"""
 import os
 import pickle
 import sys
@@ -8,16 +15,18 @@ import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
 from Bio import pairwise2
-from scipy import interp
+from numpy import interp
 from scipy.stats import linregress
 from sklearn.metrics import roc_curve, auc, precision_recall_curve
 
 import thoipapy
 import thoipapy.validation.bocurve
 from thoipapy.utils import make_sure_path_exists
+import thoipapy.paper_figures.create_BOcurve_files
+from thoipapy.artefacts import ArtefactPaths
 
 
-def collect_indiv_validation_data(s, df_set, logging, namedict, predictors, THOIPA_predictor_name, subsets):
+def collect_indiv_validation_data(paths: ArtefactPaths, df_set, n_residues_AUBOC_validation: int, THOIPA_better_PREDDIMER, THOIPA_better_TMDOCK, THOIPA_better_both, logging, namedict, predictors, THOIPA_predictor_name, subsets):
     """
 
     Parameters
@@ -46,8 +55,8 @@ def collect_indiv_validation_data(s, df_set, logging, namedict, predictors, THOI
     roc_auc_mean_list = []
     roc_auc_std_list = []
 
-    # indiv_validation_dir: Path = Path(s["data_dir"]) / f"results/{s['setname']}/crossvalidation/indiv_validation"
-    indiv_validation_data_xlsx = Path(s["data_dir"]) / f"results/{s['setname']}/crossvalidation/indiv_validation/bocurve/indiv_validation_data.xlsx"
+    # indiv_validation_dir: Path = paths.crossvalidation_dir / f"indiv_validation"
+    indiv_validation_data_xlsx = paths.crossvalidation_dir / f"indiv_validation/bocurve/indiv_validation_data.xlsx"
 
     thoipapy.utils.make_sure_path_exists(indiv_validation_data_xlsx, isfile=True)
     # if not os.path.isdir(os.path.dirname(BOAUC10_barchart_pdf)):
@@ -62,12 +71,12 @@ def collect_indiv_validation_data(s, df_set, logging, namedict, predictors, THOI
         mean_tpr = 0.0
         mean_fpr = np.linspace(0, 1, 100)
 
-        auc_pkl = Path(s["data_dir"]) / f"results/{s['setname']}/crossvalidation/indiv_validation/roc_auc/{predictor}/ROC_AUC_data.pkl"
-        BO_curve_data_csv = Path(s["data_dir"]) / f"results/{s['setname']}/crossvalidation/indiv_validation/bocurve/data/{predictor}/BO_Curve_data.csv"
-        bocurve_data_xlsx = Path(s["data_dir"]) / f"results/{s['setname']}/crossvalidation/indiv_validation/bocurve/data/{predictor}/bocurve_data.xlsx"
-        BO_linechart_png = Path(s["data_dir"]) / f"results/{s['setname']}/crossvalidation/indiv_validation/bocurve/data/{predictor}/BO_linechart.png"
-        BO_barchart_png = Path(s["data_dir"]) / f"results/{s['setname']}/crossvalidation/indiv_validation/bocurve/data/{predictor}/AUBOC_barchart.png"
-        df_o_minus_r_mean_csv = Path(s["data_dir"]) / f"results/{s['setname']}/crossvalidation/indiv_validation/bocurve/data/{predictor}/df_o_minus_r_mean.csv"
+        auc_pkl = paths.crossvalidation_dir / f"indiv_validation/roc_auc/{predictor}/ROC_AUC_data.pkl"
+        BO_curve_data_csv = paths.crossvalidation_dir / f"indiv_validation/bocurve/data/{predictor}/BO_Curve_data.csv"
+        bocurve_data_xlsx = paths.crossvalidation_dir / f"indiv_validation/bocurve/data/{predictor}/bocurve_data.xlsx"
+        BO_linechart_png = paths.crossvalidation_dir / f"indiv_validation/bocurve/data/{predictor}/BO_linechart.png"
+        BO_barchart_png = paths.crossvalidation_dir / f"indiv_validation/bocurve/data/{predictor}/AUBOC_barchart.png"
+        df_o_minus_r_mean_csv = paths.crossvalidation_dir / f"indiv_validation/bocurve/data/{predictor}/df_o_minus_r_mean.csv"
         thoipapy.utils.make_sure_path_exists(auc_pkl, isfile=True)
         thoipapy.utils.make_sure_path_exists(BO_curve_data_csv, isfile=True)
 
@@ -78,7 +87,7 @@ def collect_indiv_validation_data(s, df_set, logging, namedict, predictors, THOI
 
             database = df_set.loc[i, "database"]
             acc_db = acc + "-" + database
-            merged_data_csv_path: Union[Path, str] = Path(s["data_dir"]) / f"results/{s['setname']}/predictions/merged/{database}.{acc}.merged.csv"
+            merged_data_csv_path: Union[Path, str] = paths.results_dir / f"predictions/merged/{database}.{acc}.merged.csv"
             merged_data_df = pd.read_csv(merged_data_csv_path, engine="python")
 
             # invert some predictors so that a high number always indicates a predicted interface residue
@@ -121,7 +130,7 @@ def collect_indiv_validation_data(s, df_set, logging, namedict, predictors, THOI
         BO_data_df.to_csv(BO_curve_data_csv)
         # parse BO data csv
         # print out mean values
-        thoipapy.validation.bocurve.parse_BO_data_csv_to_excel(BO_curve_data_csv, bocurve_data_xlsx, s["n_residues_AUBOC_validation"], logging, predictor)
+        thoipapy.validation.bocurve.parse_BO_data_csv_to_excel(BO_curve_data_csv, bocurve_data_xlsx, n_residues_AUBOC_validation, logging, predictor)
 
         # ROC AUC validation
         ROC_AUC_ser = pd.Series(ROC_AUC_dict)
@@ -142,16 +151,16 @@ def collect_indiv_validation_data(s, df_set, logging, namedict, predictors, THOI
         df_o_minus_r_mean_df[predictor] = df_o_minus_r_mean
 
         # apply cutoff (e.g. 5 residues for AUBOC5)
-        auboc_ser = df_o_minus_r_mean.iloc[:s["n_residues_AUBOC_validation"]]
+        auboc_ser = df_o_minus_r_mean.iloc[:n_residues_AUBOC_validation]
 
-        AUBOC = np.trapz(y=auboc_ser, x=auboc_ser.index)
+        AUBOC = np.trapezoid(y=auboc_ser, x=auboc_ser.index)
 
         AUBOC_list.append(AUBOC)
         AUBOC_from_complete_data_ser[predictor] = AUBOC
         linechar_name_list.append(predictor)
         AUC_AUBOC_name_list.append("{}-AUC".format(predictor))
         AUC_AUBOC_name_list.append("{}-AUBOC".format(predictor))
-        thoipapy.figs.create_BOcurve_files.save_BO_linegraph_and_barchart(s, bocurve_data_xlsx, BO_linechart_png, BO_barchart_png, namedict,
+        thoipapy.paper_figures.create_BOcurve_files.save_BO_linegraph_and_barchart(paths, n_residues_AUBOC_validation, bocurve_data_xlsx, BO_linechart_png, BO_barchart_png, namedict,
                                                                           logging, ROC_AUC_ser)
 
         ROC_AUC_df[predictor] = ROC_AUC_ser
@@ -196,11 +205,11 @@ def collect_indiv_validation_data(s, df_set, logging, namedict, predictors, THOI
 
         if "TMDOCK" in PR_AUC_df.columns and "PREDDIMER" in PR_AUC_df.columns:
             df_THOIPA_vs_others = pd.DataFrame()
-            df_THOIPA_vs_others["THOIPA_better_TMDOCK"] = PR_AUC_df[THOIPA_predictor_name] > PR_AUC_df.TMDOCK
-            df_THOIPA_vs_others["THOIPA_better_PREDDIMER"] = PR_AUC_df[THOIPA_predictor_name] > PR_AUC_df.PREDDIMER
-            df_THOIPA_vs_others["THOIPA_better_both"] = df_THOIPA_vs_others[["THOIPA_better_TMDOCK", "THOIPA_better_PREDDIMER"]].sum(axis=1) == 2
-            n_THOIPA_better_both = df_THOIPA_vs_others["THOIPA_better_both"].sum()
-            logging.info("THOIPA has higher precision-recall AUC than both TMDOCK and PREDDIMER for {}/{} proteins in {}".format(n_THOIPA_better_both, PR_AUC_df.shape[0], s["setname"]))
+            df_THOIPA_vs_otherTHOIPA_better_TMDOCK = PR_AUC_df[THOIPA_predictor_name] > PR_AUC_df.TMDOCK
+            df_THOIPA_vs_otherTHOIPA_better_PREDDIMER = PR_AUC_df[THOIPA_predictor_name] > PR_AUC_df.PREDDIMER
+            df_THOIPA_vs_otherTHOIPA_better_both = df_THOIPA_vs_others[["THOIPA_better_TMDOCK", "THOIPA_better_PREDDIMER"]].sum(axis=1) == 2
+            n_THOIPA_better_both = df_THOIPA_vs_otherTHOIPA_better_both.sum()
+            logging.info("THOIPA has higher precision-recall AUC than both TMDOCK and PREDDIMER for {}/{} proteins in {}".format(n_THOIPA_better_both, PR_AUC_df.shape[0], paths.setname))
             df_THOIPA_vs_others.to_excel(writer, sheet_name="THOIPA_vs_others")
 
         # #sys.stdout.write(roc_auc_mean_list)
@@ -225,11 +234,11 @@ def collect_indiv_validation_data(s, df_set, logging, namedict, predictors, THOI
         # AUC_4pred_mean_all_indiv_prot_df.to_excel(writer, sheet_name="ROC_AUC_mean_indiv")
 
 
-def create_indiv_validation_figs(s, logging, namedict, predictors, THOIPA_predictor_name, subsets):
-    perc_interf_vs_PR_cutoff_linechart_data_csv = Path(s["data_dir"]) / f"results/{s['setname']}/crossvalidation/indiv_validation/bocurve/perc_interf_vs_PR_cutoff_linechart_data.csv"
-    indiv_validation_data_xlsx = Path(s["data_dir"]) / f"results/{s['setname']}/crossvalidation/indiv_validation/bocurve/indiv_validation_data.xlsx"
+def create_indiv_validation_figs(paths: ArtefactPaths, logging, namedict, predictors, THOIPA_predictor_name, subsets):
+    perc_interf_vs_PR_cutoff_linechart_data_csv = paths.crossvalidation_dir / f"indiv_validation/bocurve/perc_interf_vs_PR_cutoff_linechart_data.csv"
+    indiv_validation_data_xlsx = paths.crossvalidation_dir / f"indiv_validation/bocurve/indiv_validation_data.xlsx"
 
-    indiv_validation_figs_dir: Path = Path(s["data_dir"]) / f"results/{s['setname']}/crossvalidation/indiv_validation/bocurve/figs"
+    indiv_validation_figs_dir: Path = paths.crossvalidation_dir / f"indiv_validation/bocurve/figs"
     make_sure_path_exists(indiv_validation_figs_dir)
 
     indiv_ROC_AUC_barchart_png: Union[Path, str] = indiv_validation_figs_dir / "indiv_ROC_AUC_barchart.png"
@@ -255,18 +264,18 @@ def create_indiv_validation_figs(s, logging, namedict, predictors, THOIPA_predic
     create_mean_ROC_AUC_barchart(ROC_AUC_df, mean_ROC_AUC_barchart_png)
     create_mean_PR_AUC_barchart(PR_AUC_df, mean_PR_AUC_barchart_png)
 
-    create_scatter_ROC_AUC_vs_PR_AUC(s, predictors, ROC_AUC_vs_PR_AUC_scatter_png)
+    create_scatter_ROC_AUC_vs_PR_AUC(paths, predictors, ROC_AUC_vs_PR_AUC_scatter_png)
 
     # for the complete list of proteins
-    create_linechart_perc_interf_vs_PR_cutoff(s, predictors, perc_interf_vs_PR_cutoff_linechart_png, perc_interf_vs_PR_cutoff_linechart_data_csv)
+    create_linechart_perc_interf_vs_PR_cutoff(paths, predictors, perc_interf_vs_PR_cutoff_linechart_png, perc_interf_vs_PR_cutoff_linechart_data_csv)
 
     # for each subset(e.g. ETRA) separately. Saved in "by_subset" subfolder
     for subset in subsets:
         perc_interf_vs_PR_cutoff_linechart_single_database_png: Union[Path, str] = indiv_validation_figs_dir / f"by_subset/{subset}_perc_interf_vs_PR_cutoff_linechart.png"
         perc_interf_vs_PR_cutoff_linechart_single_database_data_csv: Union[Path, str] = Path(
-            s["data_dir"]) / f"results/{s['setname']}/crossvalidation/indiv_validation/bocurve/{subset}_perc_interf_vs_PR_cutoff_linechart_data.csv"
+            paths.data_dir) / f"results/{paths.setname}/crossvalidation/indiv_validation/bocurve/{subset}_perc_interf_vs_PR_cutoff_linechart_data.csv"
 
-        create_linechart_perc_interf_vs_PR_cutoff(s, predictors, perc_interf_vs_PR_cutoff_linechart_single_database_png, perc_interf_vs_PR_cutoff_linechart_single_database_data_csv, subset=subset)
+        create_linechart_perc_interf_vs_PR_cutoff(paths, predictors, perc_interf_vs_PR_cutoff_linechart_single_database_png, perc_interf_vs_PR_cutoff_linechart_single_database_data_csv, subset=subset)
 
     logging.info("finished run_indiv_validation_THOIPA_PREDDIMER_TMDOCK")
 
@@ -312,10 +321,10 @@ def precision_recall_curve_rises_above_threshold(precision, recall, threshold=0.
     return PR_rises_above_threshold
 
 
-def create_scatter_ROC_AUC_vs_PR_AUC(s, predictors, ROC_AUC_vs_PR_AUC_scatter_png):
+def create_scatter_ROC_AUC_vs_PR_AUC(paths: ArtefactPaths, predictors, ROC_AUC_vs_PR_AUC_scatter_png):
     fig, ax = plt.subplots(figsize=(8, 8))
     for predictor in predictors:
-        auc_pkl = Path(s["data_dir"]) / f"results/{s['setname']}/crossvalidation/indiv_validation/roc_auc/{predictor}/ROC_AUC_data.pkl"
+        auc_pkl = paths.crossvalidation_dir / f"indiv_validation/roc_auc/{predictor}/ROC_AUC_data.pkl"
         with open(auc_pkl, "rb") as f:
             xv_dict = pickle.load(f)
         roc_auc_list = []
@@ -698,7 +707,7 @@ def merge_4_files_alignment_method_deprecated(acc, full_seq, train_data_file, TH
     sys.stdout.flush()
 
 
-def create_linechart_perc_interf_vs_PR_cutoff(s, predictors, perc_interf_vs_PR_cutoff_linechart_png, perc_interf_vs_PR_cutoff_linechart_data_csv, subset="all"):
+def create_linechart_perc_interf_vs_PR_cutoff(paths: ArtefactPaths, predictors, perc_interf_vs_PR_cutoff_linechart_png, perc_interf_vs_PR_cutoff_linechart_data_csv, subset="all"):
     """ Create linechart (and barchart) showing percentage of interface residues correctly predicted, according
     to precision-recall cutoffs.
 
@@ -738,13 +747,13 @@ def create_linechart_perc_interf_vs_PR_cutoff(s, predictors, perc_interf_vs_PR_c
 
         result_dict = {}
 
-        auc_pkl = Path(s["data_dir"]) / f"results/{s['setname']}/crossvalidation/indiv_validation/roc_auc/{predictor}/ROC_AUC_data.pkl"
+        auc_pkl = paths.crossvalidation_dir / f"indiv_validation/roc_auc/{predictor}/ROC_AUC_data.pkl"
 
         with open(auc_pkl, "rb") as f:
             xv_dict = pickle.load(f)
 
         for acc_db in xv_dict:
-            if subset is not "all":
+            if subset != "all":
                 if subset not in acc_db:
                     # skip the TMDs that are not in the right database
                     continue

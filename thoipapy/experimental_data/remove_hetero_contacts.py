@@ -4,9 +4,10 @@ from pathlib import Path
 import pandas as pd
 
 from thoipapy.utils import make_sure_path_exists
+from thoipapy.artefacts import ArtefactPaths
 
 
-def remove_crystal_hetero_contact_residues_mult_prot(s, df_set, logging):
+def remove_crystal_hetero_contact_residues_mult_prot(paths: ArtefactPaths, df_set, logging):
     """Run remove_crystal_hetero_contact_residues_mult_prot for a list of proteins.
 
       Parameters
@@ -21,7 +22,7 @@ def remove_crystal_hetero_contact_residues_mult_prot(s, df_set, logging):
           Python object with settings for logging to console and file.
 
       """
-    hetero_contact_residues_csv = Path(s["data_dir"]) / f"results/{s['setname']}/train_data/00_hetero_contact_residues.csv"
+    hetero_contact_residues_csv = paths.hetero_contact_residues_csv()
     make_sure_path_exists(hetero_contact_residues_csv, isfile=True)
 
     n_hetero_contact_residues = 0
@@ -30,9 +31,9 @@ def remove_crystal_hetero_contact_residues_mult_prot(s, df_set, logging):
         acc = df_set.loc[i, "acc"]
         database = df_set.loc[i, "database"]
         if database == "crystal":
-            feature_combined_file = Path(s["data_dir"]) / f"features/combined/{database}/{acc}.surr{s['num_of_sur_residues']}.gaps{s['max_n_gaps_in_TMD_subject_seq']}.combined_features.csv"
-            no_hetero_feature_combined_file = Path(s["data_dir"]) / f"features/combined/{database}/{acc}.nohetero.surr{s['num_of_sur_residues']}.gaps{s['max_n_gaps_in_TMD_subject_seq']}.combined_features.csv"
-            homo_hetero_contact_file = Path(s["data_dir"]) / f"features/structure/{database}/{acc}.homohetero.bind.closedist.csv"
+            feature_combined_file = paths.combined_features_csv(database, acc)
+            no_hetero_feature_combined_file = paths.combined_features_csv(database, acc, nohetero=True)
+            homo_hetero_contact_file = paths.homohetero_contact_csv(database, acc)
 
             hetero_contact_num = remove_crystal_hetero_contact_residues(acc, feature_combined_file, homo_hetero_contact_file, no_hetero_feature_combined_file, logging)
             n_hetero_contact_residues += hetero_contact_num

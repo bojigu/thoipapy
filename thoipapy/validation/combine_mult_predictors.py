@@ -1,3 +1,10 @@
+"""Merge predictions from several predictors into one table.
+
+NOT MAINTAINED. Reachable only from the run_validation pipeline stage, which is switched off in both
+shipped settings files and disabled in the functional test. Last exercised for the 2020
+publication. Not covered by any test, and excluded from the refactoring applied to the maintained
+part of the package.
+"""
 import os
 from pathlib import Path
 from typing import Union
@@ -6,9 +13,10 @@ import pandas as pd
 import numpy as np
 import thoipapy
 from thoipapy.utils import get_testsetname_trainsetname_from_run_settings
+from thoipapy.artefacts import ArtefactPaths
 
 
-def merge_predictions(s, df_set, logging):
+def merge_predictions(paths: ArtefactPaths, df_set, logging, testsetname: str, trainsetname: str):
     """Combines all available predictions for a particular testset.
 
     The testset is determined by the original set_number, not the "test_datasets" list.
@@ -31,11 +39,10 @@ def merge_predictions(s, df_set, logging):
     """
     logging.info("\n--------------- starting merge_predictions ---------------\n")
     # add the THOIPA prediction name to the list of columns to keep
-    THOIPA_pred_colname = "THOIPA_{}_LOO".format(s["set_number"])
+    THOIPA_pred_colname = "THOIPA_{}_LOO".format(paths.set_number)
 
-    other_predictors_dir = Path(s["data_dir"]) / "Predictions/other_predictors"
+    other_predictors_dir = paths.data_dir / "Predictions/other_predictors"
 
-    testsetname, trainsetname = get_testsetname_trainsetname_from_run_settings(s)
     thoipa_trainsetname = f"thoipa.train{trainsetname}"
 
     # for simplicity, keep only the predictions. Since the index is unique, it can be added later to the combined file.
@@ -47,12 +54,12 @@ def merge_predictions(s, df_set, logging):
         full_seq = df_set.loc[i, "full_seq"]
         database = df_set.loc[i, "database"]
         # inputs
-        train_data_file = os.path.join(s["data_dir"], "features", "combined", database, "{}.surr20.gaps5.combined_features.csv".format(acc))
-        THOIPA_LOO_prediction_csv = Path(s["data_dir"]) / f"results/{s['setname']}/predictions/THOIPA_LOO/{database}.{acc}.LOO.prediction.csv"
+        train_data_file = paths.combined_features_csv(database, acc)
+        THOIPA_LOO_prediction_csv = paths.results_dir / f"predictions/THOIPA_LOO/{database}.{acc}.LOO.prediction.csv"
         PREDDIMER_prediction_file = os.path.join(other_predictors_dir, database, "{}.preddimer.closedist.csv".format(acc))
         TMDOCK_prediction_file = os.path.join(other_predictors_dir, database, "{}.tmdock.closedist.csv".format(acc))
         # output
-        merged_data_csv_path: Union[Path, str] = Path(s["data_dir"]) / f"results/{s['setname']}/predictions/merged/{database}.{acc}.merged.csv"
+        merged_data_csv_path: Union[Path, str] = paths.results_dir / f"predictions/merged/{database}.{acc}.merged.csv"
         thoipapy.utils.make_sure_path_exists(merged_data_csv_path, isfile=True)
 
         # load the full feature file as the start of dfm
@@ -63,8 +70,8 @@ def merge_predictions(s, df_set, logging):
         # dfm["entropy"] = -1 * dfm["entropy"]
         file_list = [THOIPA_LOO_prediction_csv, PREDDIMER_prediction_file, TMDOCK_prediction_file]
         prediction_name_list = [THOIPA_pred_colname, "PREDDIMER", "TMDOCK"]
-        if s["setname"] == testsetname:
-            THOIPA_testset_trainset_csv = Path(s["data_dir"]) / f"results/{s['setname']}/predictions/thoipa.train{trainsetname}/{database}.{acc}.thoipa.train{trainsetname}.csv"
+        if paths.setname == testsetname:
+            THOIPA_testset_trainset_csv = paths.results_dir / f"predictions/thoipa.train{trainsetname}/{database}.{acc}.thoipa.train{trainsetname}.csv"
             file_list.append(THOIPA_testset_trainset_csv)
             prediction_name_list.append(thoipa_trainsetname)
         n_files_merged = 0
@@ -80,7 +87,7 @@ def merge_predictions(s, df_set, logging):
                                     f"\nacc : {acc}\nfile number : {n}\nTMD_seq : {TMD_seq}\nfull_seq in df_set : {full_seq}\n"
                                     f"THOIPA_LOO_prediction_csv:{THOIPA_LOO_prediction_csv}\ncsv file:{file}")
                     if prediction_name in [THOIPA_pred_colname, thoipa_trainsetname]:
-                        df = thoipapy.utils.add_mutation_missed_residues_with_na(s, acc, database, df)
+                        df = thoipapy.utils.add_mutation_missed_residues_with_na(paths.combined_features_csv(database, acc), acc, database, df)
                         TMD_seq = df["residue_name"].str.cat()
                     # skip protein
                     # continue
@@ -107,7 +114,8 @@ def merge_predictions(s, df_set, logging):
                 logging.warning(f"Input file not found: {file}")
 
         # keep the desired columns
-        new_columns_kept_in_combined_file = list(set(columns_kept_in_combined_file).intersection(set(dfm.columns)))
+        present = set(dfm.columns)
+        new_columns_kept_in_combined_file = [c for c in columns_kept_in_combined_file if c in present]
         dfm = dfm[new_columns_kept_in_combined_file]
 
         # add a completely random "prediction"

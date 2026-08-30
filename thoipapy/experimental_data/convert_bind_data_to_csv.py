@@ -1,9 +1,10 @@
 import csv
 import os
 import sys
+from thoipapy.artefacts import ArtefactPaths
 
 
-def convert_bind_data_to_csv(s, df_set, logging):
+def convert_bind_data_to_csv(paths: ArtefactPaths, df_set, logging):
     """Convert bind data (interface-residue or non-interface-residue) to a csv, for all proteins in a list.
 
     Parameters
@@ -19,8 +20,8 @@ def convert_bind_data_to_csv(s, df_set, logging):
     """
     for i in df_set.index:
         acc = df_set.loc[i, "acc"]
-        bind_file = os.path.join(s["data_dir"], "features", "structure", "%s.4.0closedist") % acc
-        csv_output_file = os.path.join(s["data_dir"], "features", "structure", "%s.4.0closedist.csv") % acc
+        bind_file = paths.data_dir / "features" / "structure" / f"{acc}.4.0closedist"
+        csv_output_file = paths.data_dir / "features" / "structure" / f"{acc}.4.0closedist.csv"
         if os.path.isfile(bind_file):
             try:
                 with open(bind_file, "r") as bind_file_handle:

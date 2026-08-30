@@ -4,9 +4,10 @@ import sys
 import pandas as pd
 
 from thoipapy.utils import normalise_between_2_values
+from thoipapy.artefacts import ArtefactPaths
 
 
-def add_experimental_data_to_combined_features_mult_prot(s, df_set, logging):
+def add_experimental_data_to_combined_features_mult_prot(paths: ArtefactPaths, df_set, inter_pair_max: int, logging):
     """Run add_experimental_data_to_combined_features for a list of proteins.
 
     Parameters
@@ -25,11 +26,11 @@ def add_experimental_data_to_combined_features_mult_prot(s, df_set, logging):
         acc = df_set.loc[i, "acc"]
         database = df_set.loc[i, "database"]
         TMD_seq = df_set.loc[i, "TMD_seq"]
-        feature_combined_file = os.path.join(s["data_dir"], "features", "combined", database, "{}.surr{}.gaps{}.combined_features.csv".format(acc, s["num_of_sur_residues"], s["max_n_gaps_in_TMD_subject_seq"]))
+        feature_combined_file = paths.combined_features_csv(database, acc)
         if database == "ETRA":
-            experimental_data_file = os.path.join(s["base_dir"], "ETRA_data", "Average_with_interface", "{}_mul_scan_average_data.xlsx".format(acc))
+            experimental_data_file = paths.etra_experimental_xlsx(acc)
         else:
-            experimental_data_file = os.path.join(s["data_dir"], "features", 'structure', database, '{}.{}pairmax.bind.closedist.csv'.format(acc, s['inter_pair_max']))
+            experimental_data_file = paths.experimental_interface_csv(database, acc, inter_pair_max)
 
         add_experimental_data_to_combined_features(acc, database, TMD_seq, feature_combined_file, experimental_data_file, logging)
 

@@ -1,3 +1,10 @@
+"""ROC curves for the validation figures.
+
+NOT MAINTAINED. Reachable only from the run_validation pipeline stage, which is switched off in both
+shipped settings files and disabled in the functional test. Last exercised for the 2020
+publication. Not covered by any test, and excluded from the refactoring applied to the maintained
+part of the package.
+"""
 import os
 from pathlib import Path
 from typing import Union
@@ -8,9 +15,10 @@ from sklearn.metrics import roc_curve, auc
 
 from thoipapy.utils import get_testsetname_trainsetname_from_run_settings, make_sure_path_exists, drop_redundant_proteins_from_list
 from thoipapy.validation.gather import create_df_with_all_predictions_for_all_residues_in_set
+from thoipapy.artefacts import ArtefactPaths
 
 
-def create_ROC_all_residues(s, df_set, logging):
+def create_ROC_all_residues(paths: ArtefactPaths, df_set, testsetname: str, trainsetname: str, logging):
     """Combine all residue predictions, so AUC can be calculated from a single array.
 
     Effectively stacks the CSVs on top of each other.
@@ -39,18 +47,18 @@ def create_ROC_all_residues(s, df_set, logging):
     logging.info('Starting combine_all_residue_predictions.')
 
     # output file with all predictions
-    pred_all_res_csv: Union[Path, str] = Path(s["data_dir"]) / f"results/{s['setname']}/crossvalidation/ROC/{s['setname']}_pred_all_res.csv"
-    # all_res_ROC_data_dict_pkl: Union[Path, str] = Path(s["data_dir"]) / f"results/{s['setname']}/crossvalidation/ROC/{s['setname']}_all_res_ROC_data_dict.pickle"
-    all_res_ROC_data_csv: Union[Path, str] = Path(s["data_dir"]) / f"results/{s['setname']}/crossvalidation/ROC/{s['setname']}_all_res_ROC_data.csv"
-    all_res_ROC_png: Union[Path, str] = Path(s["data_dir"]) / f"results/{s['setname']}/crossvalidation/ROC/{s['setname']}_all_res_ROC.png"
+    pred_all_res_csv: Union[Path, str] = paths.crossvalidation_dir / f"ROC/{paths.setname}_pred_all_res.csv"
+    # all_res_ROC_data_dict_pkl: Union[Path, str] = paths.crossvalidation_dir / f"ROC/{paths.setname}_all_res_ROC_data_dict.pickle"
+    all_res_ROC_data_csv: Union[Path, str] = paths.crossvalidation_dir / f"ROC/{paths.setname}_all_res_ROC_data.csv"
+    all_res_ROC_png: Union[Path, str] = paths.crossvalidation_dir / f"ROC/{paths.setname}_all_res_ROC.png"
 
     make_sure_path_exists(pred_all_res_csv, isfile=True)
 
     df_set_nonred = drop_redundant_proteins_from_list(df_set, logging)
 
-    df_all = create_df_with_all_predictions_for_all_residues_in_set(s, df_set_nonred, pred_all_res_csv, logging)
+    df_all = create_df_with_all_predictions_for_all_residues_in_set(paths, df_set_nonred, pred_all_res_csv, logging)
 
-    save_fig_ROC_all_residues(s, df_all, all_res_ROC_png, all_res_ROC_data_csv, logging)
+    save_fig_ROC_all_residues(paths, df_all, all_res_ROC_png, all_res_ROC_data_csv, testsetname, trainsetname, logging)
 
     df_all["subset"] = df_all.acc_db.str.split("-").str[1]
 
@@ -59,24 +67,23 @@ def create_ROC_all_residues(s, df_set, logging):
         df_subset = df_all.loc[df_all.subset == subset]
         if df_subset.empty:
             continue
-        ROC_png: Union[Path, str] = Path(s["data_dir"]) / f"results/{s['setname']}/crossvalidation/ROC/{s['setname']}_all_res_ROC_data_{subset}_subset.png"
-        ROC_data_csv: Union[Path, str] = Path(s["data_dir"]) / f"results/{s['setname']}/crossvalidation/ROC/{s['setname']}_all_res_ROC_data_{subset}_subset.csv"
-        save_fig_ROC_all_residues(s, df_subset, ROC_png, ROC_data_csv, logging)
+        ROC_png: Union[Path, str] = paths.crossvalidation_dir / f"ROC/{paths.setname}_all_res_ROC_data_{subset}_subset.png"
+        ROC_data_csv: Union[Path, str] = paths.crossvalidation_dir / f"ROC/{paths.setname}_all_res_ROC_data_{subset}_subset.csv"
+        save_fig_ROC_all_residues(paths, df_subset, ROC_png, ROC_data_csv, testsetname, trainsetname, logging)
 
     # with open(all_res_ROC_data_pkl, "wb") as f:
     #     pickle.dump(output_dict, f, protocol=pickle.HIGHEST_PROTOCOL)
     logging.info('Finished combine_all_residue_predictions.')
 
 
-def save_fig_ROC_all_residues(s, df, all_res_ROC_png, all_res_ROC_data_csv, logging):
+def save_fig_ROC_all_residues(paths: ArtefactPaths, df, all_res_ROC_png, all_res_ROC_data_csv, testsetname: str, trainsetname: str, logging):
     fontsize = 8
     fig, ax = plt.subplots(figsize=(5, 5))
     ax.plot([0, 1], [0, 1], color="0.5", linestyle="--", label="random", linewidth=1)
-    THOIPA_predictor = "THOIPA_{}_LOO".format(s["set_number"])
+    THOIPA_predictor = "THOIPA_{}_LOO".format(paths.set_number)
     predictors = [THOIPA_predictor, "TMDOCK", "LIPS_surface_ranked", "PREDDIMER"]
-    testsetname, trainsetname = get_testsetname_trainsetname_from_run_settings(s)
 
-    if s["setname"] == testsetname:
+    if paths.setname == testsetname:
         predictors.append(f"thoipa.train{trainsetname}")
 
     output_dict = {}

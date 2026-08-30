@@ -243,7 +243,7 @@ def parse_BO_data_csv_to_excel(bo_data_csv, bocurve_data_xlsx, n_residues_AUBOC_
     # apply cutoff (e.g. 5 residues for AUBOC5)
     auboc_ser = mean_o_minus_r_df["mean_o_minus_r"].iloc[:n_residues_AUBOC_validation]
 
-    auboc = np.trapz(auboc_ser, auboc_ser.index)
+    auboc = np.trapezoid(auboc_ser, auboc_ser.index)
 
     if log_auboc:
         logging.info("---{: >24} mean_AUBOC({:.2f}) n={} ---".format(predictor_name, auboc, df_o_minus_r.shape[1]))
