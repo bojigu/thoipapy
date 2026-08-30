@@ -35,3 +35,5 @@ var/
 /thoipapy.egg-info/
 
 *__pycache__*
+# Working notes: plans, reviews, meta-reviews. Never committed.
+*notrack.md
