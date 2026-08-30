@@ -1,0 +1,18 @@
+repos:
+  - repo: https://github.com/pre-commit/pre-commit-hooks
+    rev: v6.0.0
+    hooks:
+      - id: check-yaml
+      - id: check-toml
+      - id: check-added-large-files
+        # data/ is DVC-tracked, but the trained model is legitimately committed to git
+        args: ["--maxkb=512"]
+      - id: check-merge-conflict
+      - id: debug-statements
+  - repo: https://github.com/astral-sh/ruff-pre-commit
+    rev: v0.14.5
+    hooks:
+      - id: ruff
+        # Errors only, and no --fix. This is 2017-2020 scientific code: a full lint or a
+        # ruff-format pass rewrites ~70 files, which would bury any real change in noise.
+        # Reformatting the package is a worthwhile job, but a deliberate separate one.
