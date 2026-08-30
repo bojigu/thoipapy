@@ -2,6 +2,34 @@
 THOIPApy releases
 =================
 
+2.0.0
+-----
+* python 3.11-3.13, numpy 2, pandas 2/3, scikit-learn 1.9. Drops python 3.8 and Django.
+* the shipped model was retrained: the 2020 scikit-learn 0.23 pickle cannot be loaded by any
+  current version. Predictions are statistically indistinguishable from the published model.
+* bugfix: feature selection was not reproducible. Column order came from a python set, so it
+  varied with the interpreter hash seed and the selected feature set differed between runs.
+  Model training and hyperparameter tuning are now seeded.
+* bugfix: the standalone predictor numbered residues from 0 while the training pipeline numbered
+  from 1. ``res_num_full_seq`` in ``THOIPA_full_out.csv`` was one lower than the true UniProt
+  residue number. Now 1-based throughout. Stored output from earlier versions will differ.
+* bugfix: CD-HIT redundancy reduction never removed a protein.
+* bugfix: a stage set to FALSE in the settings spreadsheet could still run, because a non-empty
+  string is truthy in python.
+* bugfix: five sites hardcoded ``surr20.gaps5`` while the writers built the suffix from the
+  settings, so changing either setting made the pipeline read and write different filenames.
+* 10-fold cross-validation now groups by protein rather than splitting residues.
+* pipeline functions take explicit parameters instead of a settings dictionary; paths come from
+  ``ArtefactPaths`` and stage flags from ``RunSettings``.
+* removes ~3,300 lines of unreachable code. ``import thoipapy`` now loads 9 modules, not 70.
+* publication figure code moved to ``thoipapy/paper_figures``, unmaintained.
+* packaging moved to pyproject.toml; fixes a bug where the settings file the predictor loads on
+  every run was missing from the built wheel.
+* settings moved from a multi-sheet Excel workbook to CSV, so they can be diffed in git and
+  edited without Excel. Values are typed on load, so a setting of 0 can no longer be read as a
+  non-empty string and behave as if it were 1. ~20 settings that no code read were removed.
+* see the readme for how to reproduce the published 2020 results.
+
 1.2.0
 -----
 * bugfix: prevent error when (highly random) sequence in rate4site output did not match initial TMD
