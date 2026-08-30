@@ -1,0 +1,6 @@
+outs:
+- md5: 5fe8bf0fc2707e4b2217c0f7b9d2505e.dir
+  size: 145921
+  nfiles: 24
+  hash: md5
+  path: ETRA_data

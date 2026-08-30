@@ -1,0 +1,6 @@
+outs:
+- md5: 145c3b677573849dbaee564172e35a44.dir
+  size: 49436
+  nfiles: 100
+  hash: md5
+  path: Proteins

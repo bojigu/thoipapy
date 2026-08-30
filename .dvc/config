@@ -1,0 +1,4 @@
+[core]
+    remote = public
+['remote "public"']
+    url = https://pub-8035182a0114482f896998f10c4fdeb7.r2.dev/thoipapy_dvc
