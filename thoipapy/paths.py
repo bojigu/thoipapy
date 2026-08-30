@@ -1,7 +1,7 @@
 """Canonical paths for the thoipapy data directory.
 
 The pipeline used to expect ``data_dir``, ``sets_dir`` and ``base_dir`` to be injected into the
-settings dict by whatever called it. Neither shipped settings spreadsheet defined them, so the
+settings dict by whatever called it. Neither shipped settings file defined them, so the
 only thing that ever set them was the functional test, and the package could not be run
 reproducibly from a clean checkout.
 
@@ -23,7 +23,7 @@ REPO_ROOT: Path = Path(__file__).parents[1]
 DATA_DIR: Path = REPO_ROOT / "data"
 
 # Protein set definitions (setNN.csv) and protein_names.csv. Small, human-authored inputs, so
-# these live in git rather than DVC. Named "sets" because thoipapy/figs/create_heatmap_from_
+# these live in git rather than DVC. Named "sets" because paper_figures/create_heatmap_from_
 # merge_file.py looks for protein sets at base_dir/"sets" while run.py uses sets_dir; with
 # base_dir == DATA_DIR, this single directory satisfies both conventions.
 SETS_DIR: Path = DATA_DIR / "sets"
@@ -36,6 +36,10 @@ SETTING_DIR: Path = Path(__file__).parent / "setting"
 # "features" sheet of the settings workbook, which meant the settings file was simultaneously a
 # key-value store and a data table.
 MODEL_FEATURES_CSV: Path = SETTING_DIR / "model_features.csv"
+
+# Which predictors appear in the comparison figures. Was the "selected_predictors" sheet of
+# the settings workbook; it had no equivalent when the settings moved to CSV.
+SELECTED_PREDICTORS_CSV: Path = SETTING_DIR / "selected_predictors.csv"
 
 # Settings for a full training run, and for a single standalone prediction.
 RUN_SETTINGS_CSV: Path = SETTING_DIR / "run_settings_example.csv"

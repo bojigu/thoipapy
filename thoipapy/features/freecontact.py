@@ -55,10 +55,19 @@ def coevolution_calculation_with_freecontact(path_uniq_TMD_seqs_for_PSSM_FREECON
 
             command = utils.Command(exect_str)
             command.run(timeout=400, log_stderr=False)
+            if not command.succeeded():
+                raise RuntimeError(
+                    f"freecontact failed on {path_uniq_TMD_seqs_for_PSSM_FREECONTACT}: "
+                    f"returncode={command.returncode}, "
+                    f"timed_out={command.timed_out}. Command: {exect_str}"
+                )
 
             logging.info(f"coevolution_calculation_with_freecontact finished ({freecontact_file})")
-        except:
-            logging.warning("freecontact gives an error")
+        except Exception:
+            # Was a bare `except` logging a fixed string, so a missing binary, a timeout and a
+            # malformed alignment were indistinguishable, and the traceback was discarded.
+            logging.exception(f"coevolution_calculation_with_freecontact failed on {path_uniq_TMD_seqs_for_PSSM_FREECONTACT}")
+            raise
     else:
         logging.warning("{} does not exist".format(path_uniq_TMD_seqs_for_PSSM_FREECONTACT))
 

@@ -145,6 +145,11 @@ def rate4site_calculation(TMD_seq: str, acc: str, fasta_uniq_TMD_seqs_surr5_for_
             start = time.time()
             command = utils.Command(exect_str)
             command.run(timeout=1200, log_stderr=False)
+            if not command.succeeded():
+                raise RuntimeError(
+                    f"rate4site failed: returncode={command.returncode}, "
+                    f"timed_out={command.timed_out}. Command: {exect_str}"
+                )
             duration = time.time() - start
             logging.info(f"rate4site finished after {duration} seconds")
 
@@ -207,6 +212,11 @@ def run_cdhit(cons_cdhit_input_fasta: Union[Path, str], cons_cdhit_output_fasta:
     exect_str = f"cd-hit -i {cons_cdhit_input_fasta} -o {cons_cdhit_output_fasta} -c {cutoff:0.2f} {word_size_command}"
     command = utils.Command(exect_str)
     command.run(timeout=120, log_stderr=False)
+    if not command.succeeded():
+        raise RuntimeError(
+            f"cd-hit failed: returncode={command.returncode}, "
+            f"timed_out={command.timed_out}. Command: {exect_str}"
+        )
     if not cons_cdhit_output_fasta.is_file():
         raise Exception(f"cd-hit output not found: input={cons_cdhit_input_fasta}, output={cons_cdhit_output_fasta}, commandstring={exect_str}")
     cdhit_cluster_reps = []

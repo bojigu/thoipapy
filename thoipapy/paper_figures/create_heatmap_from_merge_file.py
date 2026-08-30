@@ -15,6 +15,21 @@ from matplotlib import pyplot as plt
 from thoipapy.utils import normalise_between_2_values, get_testsetname_trainsetname_from_run_settings, get_test_and_train_set_lists
 
 
+def _format_reference(source, date) -> str:
+    """Render the citation shown on figure labels, e.g. "Zhu et al. 2010".
+
+    The protein names table used to carry a literal " et al. " column purely so that a spreadsheet
+    formula could concatenate it between source and date. The label was built by slicing
+    source..date, which picked that column up. The column is gone, so the separator is applied here.
+    """
+    if pd.isna(source):
+        return "" if pd.isna(date) else str(date)
+    source = str(source)
+    if source == "this study":
+        return source if pd.isna(date) else f"{source} {date}"
+    return source if pd.isna(date) else f"{source} et al. {date}"
+
+
 def create_merged_heatmap_for_trainset_and_testset(s, df_set, logging):
     """Create heatmap from merged disruption, combined_prediction, and features in  traindata.csv files.
         Parameters
@@ -51,7 +66,7 @@ def create_merged_heatmap_for_trainset_and_testset(s, df_set, logging):
     for setname, THOIPA_column in zip(set_list, THOIPA_column_list):
 
         set_path = thoipapy.common.get_path_of_protein_set(setname, Path(s["base_dir"]) / "sets")
-        df_set = pd.read_excel(set_path, sheet_name='proteins')
+        df_set = pd.read_csv(set_path)
 
         LIPS_col = "LIPS_surface"  # "LIPS_surface_ranked"
         coev_col = "DI4mean"
@@ -59,7 +74,7 @@ def create_merged_heatmap_for_trainset_and_testset(s, df_set, logging):
         dfh_cols = ["res_num_full_seq", "residue_name", "interface", "interface_score", THOIPA_column, "PREDDIMER", "TMDOCK", LIPS_col, "conservation", "relative_polarity", coev_col]
 
         names_csv_path = os.path.join(s["base_dir"], "protein_names.csv")
-        df_names = pd.read_excel(names_csv_path, index_col=0)
+        df_names = pd.read_csv(names_csv_path, index_col=0)
         df_names["acc_db"] = df_names.index + "_" + df_names["database"]
         df_names["acc"] = df_names.index
         df_names.set_index("acc_db", inplace=True)
@@ -76,12 +91,12 @@ def create_merged_heatmap_for_trainset_and_testset(s, df_set, logging):
             uniprot = df_names.loc[acc_db, "uniprot"]
 
             if database == "ETRA":
-                ref = "".join(df_names.loc[acc_db, "source":"date"].dropna().astype(str).tolist())
+                ref = _format_reference(df_names.loc[acc_db, "source"], df_names.loc[acc_db, "date"])
                 savename = "{}_{}".format(acc, shortname)
                 fig_label = "{shortname} [{subset} dataset, {acc}, {ref}]".format(shortname=shortname,
                                                                                   subset=database, acc=acc, ref=ref)
             elif database == "NMR":
-                ref = "".join(df_names.loc[acc_db, "source":"date"].dropna().astype(str).to_list())
+                ref = _format_reference(df_names.loc[acc_db, "source"], df_names.loc[acc_db, "date"])
                 savename = "{}_{}".format(acc, shortname)
                 fig_label = "{shortname} [{subset} dataset, {acc}, PDB:{pdb}, {ref}]".format(shortname=shortname,
                                                                                              subset=database, acc=acc, pdb=df_names.loc[acc_db, "PDB acc"], ref=ref)
