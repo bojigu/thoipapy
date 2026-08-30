@@ -1,5 +1,5 @@
-import os
 import sys
+from pathlib import Path
 
 import pandas as pd
 
@@ -59,15 +59,20 @@ def add_experimental_data_to_combined_features(
     """
     df_combined = pd.read_csv(feature_combined_file, index_col=0)
 
-    if not os.path.isfile(experimental_data_file):
+    # ArtefactPaths hands back a Path. `str.replace` and `Path.replace` are unrelated: the latter
+    # moves a file on disk and takes a single argument, so the uppercase fallback below has to
+    # operate on the filename rather than on the path object.
+    experimental_data_file = Path(experimental_data_file)
+
+    if not experimental_data_file.is_file():
         # try searching for the data files with uppercase accession
-        experimental_data_file = experimental_data_file.replace(acc, acc.upper())
-        if os.path.isfile(experimental_data_file):
+        experimental_data_file = experimental_data_file.with_name(experimental_data_file.name.replace(acc, acc.upper()))
+        if experimental_data_file.is_file():
             logging.warning(f"experimental_data_file IS IN UPPERCASE ({experimental_data_file})")
 
-    if os.path.isfile(experimental_data_file):
+    if experimental_data_file.is_file():
         if database == "ETRA":
-            sys.stdout.write(experimental_data_file)
+            logging.info(f"reading ETRA experimental data from {experimental_data_file}")
             df_experiment_data = pd.read_csv(experimental_data_file)
             # The file previously carried an unnamed index column duplicating aa_position, which was
             # read as the index and checked here. The column is gone; aa_position carries the same

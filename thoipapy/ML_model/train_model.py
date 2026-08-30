@@ -77,6 +77,9 @@ def return_classifier_with_loaded_ensemble_parameters(
     criterion = ensemble_parameters_ser["criterion"]
     oob_score = False
 
+    # scikit-learn accepts either an int or one of the named strategies, and both branches below
+    # are used, so the annotation has to admit both.
+    max_features: int | str
     if totally_randomized_trees:
         max_features = 1
         min_samples_leaf = 1

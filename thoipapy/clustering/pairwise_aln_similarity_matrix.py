@@ -67,7 +67,10 @@ def create_identity_matrix_using_pairwise_alignments(
                     df_ident.at[acc, target_acc] = 0
                     continue
                 if (acc, target_acc) not in acc_pairs_analysed and (target_acc, acc) not in acc_pairs_analysed:
-                    alignments = pairwise2.align.globalds(query, target_seq, subst_mat, gap_open, gap_extend)
+                    # globalds exists at runtime; it is missing from the shipped Biopython stubs.
+                    alignments = pairwise2.align.globalds(  # type: ignore[attr-defined]
+                        query, target_seq, subst_mat, gap_open, gap_extend
+                    )
                     a = alignments[0]
                     q = np.array(list(a[0]))
                     m = np.array(list(a[1]))
@@ -135,8 +138,10 @@ def create_identity_matrix_using_pairwise_alignments(
     df_clusters = pd.DataFrame()
     for TMD_name, cluster in cluster_TMD_dict.items():
         df_clusters.at[TMD_name, "cluster"] = str(tuple(cluster))
-    all_clusters = df_clusters.cluster.unique()
-    all_clusters = [make_tuple(t) for t in all_clusters]
+    cluster_strings = df_clusters.cluster.unique()
+    # Starts as tuples parsed from the cluster column and becomes sets after each reduction
+    # round; both are only ever iterated and flattened, so the element type is deliberately open.
+    all_clusters: list = [make_tuple(t) for t in cluster_strings]
     flattened_names_in_all_clusters = [item for sublist in all_clusters for item in sublist]
     # confirm that all TMDs are represented in the list of clusters
     assert set(TMD_names) == set(flattened_names_in_all_clusters)
@@ -176,7 +181,9 @@ def create_identity_matrix_using_pairwise_alignments(
     )
 
 
-def reduce_clusters_based_on_common_elements(all_clusters: list[list], TMD_name_list: list):
+# all_clusters arrives as a list of tuples and is replaced by a list of sets on each reduction
+# round, so the element type is deliberately open.
+def reduce_clusters_based_on_common_elements(all_clusters: list, TMD_name_list: list):
     n_iterations = 0
     n_clusters_is_constant = False
     output_list: list[set] = []

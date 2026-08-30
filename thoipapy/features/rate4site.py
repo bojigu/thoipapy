@@ -72,13 +72,13 @@ def rate4site_calculation(
     logging,
     rerun_rate4site: bool = False,
 ):
-    output_dir: Path | str = rate4site_csv.parent
+    output_dir: Path = rate4site_csv.parent
     if not output_dir.is_dir():
         output_dir.mkdir(parents=True)
     # temp output files
-    rate4site_orig_output: Path | str = output_dir / f"{acc}.rate4site_orig_output.txt"
-    cons_cdhit_input_fasta: Path | str = output_dir / f"{acc}.lipo_seqs_cdhit_input.fas"
-    cons_cdhit_output_fasta: Path | str = output_dir / f"{acc}.lipo_seqs_cdhit_output.fas"
+    rate4site_orig_output: Path = output_dir / f"{acc}.rate4site_orig_output.txt"
+    cons_cdhit_input_fasta: Path = output_dir / f"{acc}.lipo_seqs_cdhit_input.fas"
+    cons_cdhit_output_fasta: Path = output_dir / f"{acc}.lipo_seqs_cdhit_output.fas"
     rate4site_input: Path | str = output_dir / f"{acc}.rate4site_input.fas"
     with open(cons_cdhit_input_fasta, "w") as f_out:
         with open(fasta_uniq_TMD_seqs_surr5_for_LIPO) as f_in:
@@ -225,7 +225,7 @@ def get_word_size(cutoff: float):
     return "error"
 
 
-def run_cdhit(cons_cdhit_input_fasta: Path | str, cons_cdhit_output_fasta: Path | str, cutoff: float) -> list:
+def run_cdhit(cons_cdhit_input_fasta: Path, cons_cdhit_output_fasta: Path, cutoff: float) -> list:
     word_size = get_word_size(cutoff)
     word_size_command = "" if cutoff == 1.0 else f"-n {word_size}"
     exect_str = f"cd-hit -i {cons_cdhit_input_fasta} -o {cons_cdhit_output_fasta} -c {cutoff:0.2f} {word_size_command}"

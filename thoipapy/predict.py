@@ -127,6 +127,8 @@ def run_THOIPA_prediction(
         # the following code will only continue if the TMD seq is found ONCE in the full protein seq
 
     m = re.search(TMD_seq, full_seq)
+    # The findall guard above returns early unless there is exactly one hit, so this cannot be None.
+    assert m is not None
     # 1-based, UniProt-style, matching thoipapy.common.process_set_protein_seqs. The standalone
     # predictor previously used the raw 0-based python index here while the training pipeline used
     # 1-based, and both feed the same downstream functions (parse_NCBI_xml_to_csv,
@@ -405,8 +407,7 @@ def get_md5_checksum(TMD_seq: str, full_seq: str) -> str:
     TMD_plus_full_seq = TMD_seq + "_" + full_seq
     # adjust encoding for md5 creation
     # TMD_plus_full_seq = unicodedata.normalize('NFKD', TMD_plus_full_seq).encode('ascii', 'ignore')
-    TMD_plus_full_seq = TMD_plus_full_seq.encode("ascii", "ignore")
-    hash_object = hashlib.md5(TMD_plus_full_seq)
+    hash_object = hashlib.md5(TMD_plus_full_seq.encode("ascii", "ignore"))
     md5 = hash_object.hexdigest()
     return md5
 
@@ -448,7 +449,7 @@ if __name__ == "__main__":
         # process every input file in the args.d input folder
         input_dir = Path(args.d)
         infile_names = glob.glob(os.path.join(input_dir, "*.txt"))
-        infile_list = [file for file in infile_names]
+        infile_list = [Path(file) for file in infile_names]
     elif args.i is not None:
         # process only a single input file
         infile_list = [Path(args.i)]

@@ -22,13 +22,13 @@ def homodimer_residue_closedist_calculate_from_complex(
         chain1_pdb_tm_end = row_array[5]
         chain2_pdb_tm_start = row_array[10]
         chain2_pdb_tm_end = row_array[11]
-        hash1arrayx = {}
+        hash1arrayx: dict = {}
         hash1arrayy = {}
         hash1arrayz = {}
-        hash2arrayx = {}
+        hash2arrayx: dict = {}
         hash2arrayy = {}
         hash2arrayz = {}
-        hashclosedist = {}
+        hashclosedist: dict = {}
         hash1CAarrayx = {}
         hash1CAarrayy = {}
         hash1CAarrayz = {}

@@ -1,7 +1,6 @@
 import csv
 import os
 import re
-import sys
 import tarfile
 from pathlib import Path
 from shutil import move
@@ -369,134 +368,140 @@ def extract_filtered_csv_homologues_to_alignments(
     # remove the final ".tar.gz" to get the csv filename
     BLAST_csv_file = Path(str(BLAST_csv_tar)[:-7])
 
-    if BLAST_csv_tar.is_file:
-        with tarfile.open(BLAST_csv_tar, "r:gz") as tar:
-            BLAST_csv_file_basename = os.path.basename(BLAST_csv_file)
-            with tar.extractfile(BLAST_csv_file_basename) as BLAST_csv_extracted:
-                df = pd.read_csv(BLAST_csv_extracted)
-                n_total_BLAST_hits = df.shape[0]
+    # Was `if BLAST_csv_tar.is_file:` -- a reference to the bound method, which is always truthy,
+    # so the guard never did anything. Missing input is an error, not something to skip past.
+    if not BLAST_csv_tar.is_file():
+        raise FileNotFoundError(
+            f"{acc} extract_filtered_csv_homologues_to_alignments failed: BLAST csv archive not "
+            f"found ({BLAST_csv_tar}). Run the homologue download and xml parsing stages first."
+        )
+    with tarfile.open(BLAST_csv_tar, "r:gz") as tar:
+        BLAST_csv_file_basename = os.path.basename(BLAST_csv_file)
+        extracted = tar.extractfile(BLAST_csv_file_basename)
+        if extracted is None:
+            raise FileNotFoundError(f"{BLAST_csv_file_basename} is not a regular file in {BLAST_csv_tar}")
+        with extracted as BLAST_csv_extracted:
+            df = pd.read_csv(BLAST_csv_extracted)
+            n_total_BLAST_hits = df.shape[0]
 
-                # create regex search string, e.g. V-*L-*L-*G-*A-*V-*G-*G-*A-*G-*A-*T-*A-*L-*V-*F-*L-*S-*F-*C
-                # (finds sequence regardless of gaps)
-                TMD_regex_ss = create_regex_string(query_TMD_seq)
+            # create regex search string, e.g. V-*L-*L-*G-*A-*V-*G-*G-*A-*G-*A-*T-*A-*L-*V-*F-*L-*S-*F-*C
+            # (finds sequence regardless of gaps)
+            TMD_regex_ss = create_regex_string(query_TMD_seq)
 
-                # obtain the bool, start, end of TMD seqs in the match sequences. Add to the new TMD-specific dataframe.
-                start_end_list_in_alignment_ser = df.query_align_seq.apply(
-                    get_start_and_end_of_TMD_in_query, args=(TMD_regex_ss,)
-                ).dropna()
-                df["start"] = start_end_list_in_alignment_ser.apply(lambda x: x[1])
-                df["end"] = start_end_list_in_alignment_ser.apply(lambda x: x[2])
-                # slice TMDs out of dfs_sel, and save them in the new df_TMD
-                df.dropna(subset=["start", "end"], inplace=True)
-                df["start"] = df["start"].astype(int)
-                df["end"] = df["end"].astype(int)
+            # obtain the bool, start, end of TMD seqs in the match sequences. Add to the new TMD-specific dataframe.
+            start_end_list_in_alignment_ser = df.query_align_seq.apply(
+                get_start_and_end_of_TMD_in_query, args=(TMD_regex_ss,)
+            ).dropna()
+            df["start"] = start_end_list_in_alignment_ser.apply(lambda x: x[1])
+            df["end"] = start_end_list_in_alignment_ser.apply(lambda x: x[2])
+            # slice TMDs out of dfs_sel, and save them in the new df_TMD
+            df.dropna(subset=["start", "end"], inplace=True)
+            df["start"] = df["start"].astype(int)
+            df["end"] = df["end"].astype(int)
 
-                if df.empty:
-                    BLAST_xml_tar = Path(str(BLAST_csv_tar).replace(".csv.tar.gz", ".xml.tar.gz")).name
-                    raise ValueError(
-                        f"{acc} extract_filtered_csv_homologues_to_alignments failed.\nNone of the homologues in csv-tarball {BLAST_csv_tar} contained the original TMD sequence.\n"
-                        "This can occur when the homologue xml file is old, and the sequences from BLAST and the protein set don't match.\nDelete the "
-                        f"homologue xml file ({BLAST_xml_tar}), re-run NCBI blast, and try-again"
-                    )
-
-                df["query_TMD_align_seq"] = df.apply(slice_query_TMD_seq, axis=1)
-                df["markup_TMD_align_seq"] = df.apply(slice_markup_TMD_seq, axis=1)
-                df["subject_TMD_align_seq"] = df.apply(slice_match_TMD_seq, axis=1)
-
-                # slice out the TMD plus surrounding 5 residues
-                # the start index needs to be adjusted as necessary
-                # (as far as I understand, indexing "12345"[0:10] is allowed
-                start_min_5 = df["start"] - 5
-                start_min_5[start_min_5 < 0] = 0
-                df["start_min_5"] = start_min_5
-                df["subject_TMD_align_seq_surr5"] = df.apply(slice_match_TMD_seq_surr5, axis=1)
-
-                df["X_in_subject_TMD_align_seq_surr5"] = df["subject_TMD_align_seq_surr5"].str.contains("X")
-
-                # calculate fraction identity of TMD region only
-                df["frac_ident_TMD"] = (
-                    df.markup_TMD_align_seq.str.len() - df.markup_TMD_align_seq.str.replace("+", " ").str.count(" ")
-                ) / TMD_len
-
-                # count gaps
-                df["n_gaps_query_align_seq"] = df.query_TMD_align_seq.str.count("-")
-                df["n_gaps_subject_align_seq"] = df.subject_TMD_align_seq.str.count("-")
-
-                # filter by gaps in query, gaps in subject, and fraction identity of TMD
-                df.query(
-                    f"n_gaps_query_align_seq <= {int(max_n_gaps_in_TMD_query_seq)} & n_gaps_subject_align_seq <= {int(max_n_gaps_in_TMD_subject_seq)} & X_in_subject_TMD_align_seq_surr5 == False & "
-                    f"frac_ident_TMD > {float(min_identity_of_TMD_seq)}",
-                    inplace=True,
+            if df.empty:
+                BLAST_xml_tar = Path(str(BLAST_csv_tar).replace(".csv.tar.gz", ".xml.tar.gz")).name
+                raise ValueError(
+                    f"{acc} extract_filtered_csv_homologues_to_alignments failed.\nNone of the homologues in csv-tarball {BLAST_csv_tar} contained the original TMD sequence.\n"
+                    "This can occur when the homologue xml file is old, and the sequences from BLAST and the protein set don't match.\nDelete the "
+                    f"homologue xml file ({BLAST_xml_tar}), re-run NCBI blast, and try-again"
                 )
 
-                # save all TMD sequences (NON-UNIQUE) for manual inspection of alignments only
-                n_total_filtered_seqs = df.shape[0]
+            df["query_TMD_align_seq"] = df.apply(slice_query_TMD_seq, axis=1)
+            df["markup_TMD_align_seq"] = df.apply(slice_markup_TMD_seq, axis=1)
+            df["subject_TMD_align_seq"] = df.apply(slice_match_TMD_seq, axis=1)
 
-                save_fasta(df, "subject_TMD_align_seq", fasta_all_TMD_seqs, acc, query_TMD_seq)
+            # slice out the TMD plus surrounding 5 residues
+            # the start index needs to be adjusted as necessary
+            # (as far as I understand, indexing "12345"[0:10] is allowed
+            start_min_5 = df["start"] - 5
+            start_min_5[start_min_5 < 0] = 0
+            df["start_min_5"] = start_min_5
+            df["subject_TMD_align_seq_surr5"] = df.apply(slice_match_TMD_seq_surr5, axis=1)
 
-                # save unique sequences WITH gaps (FOR COEVOLUTION WITH FREECONTACT, ETC)
-                uniq_TMD_seqs_for_PSSM_FREECONTACT = df.subject_TMD_align_seq.unique()
-                # remove seqs with O, U, or J that are not accepted by rate4site
-                uniq_TMD_seqs_for_PSSM_FREECONTACT = [
-                    x for x in uniq_TMD_seqs_for_PSSM_FREECONTACT if not contains_unaccepted_letter(x)
-                ]
+            df["X_in_subject_TMD_align_seq_surr5"] = df["subject_TMD_align_seq_surr5"].str.contains("X")
 
-                save_seqs(uniq_TMD_seqs_for_PSSM_FREECONTACT, path_uniq_TMD_seqs_for_PSSM_FREECONTACT, query_TMD_seq)
-                save_fasta_from_array(
-                    uniq_TMD_seqs_for_PSSM_FREECONTACT, fasta_uniq_TMD_seqs_for_PSSM_FREECONTACT, acc, query_TMD_seq
-                )
+            # calculate fraction identity of TMD region only
+            df["frac_ident_TMD"] = (
+                df.markup_TMD_align_seq.str.len() - df.markup_TMD_align_seq.str.replace("+", " ").str.count(" ")
+            ) / TMD_len
 
-                # save unique sequences WITHOUT gaps (FOR LIPS)
-                uniq_TMD_seqs_no_gaps_for_LIPS = [seq for seq in uniq_TMD_seqs_for_PSSM_FREECONTACT if "-" not in seq]
-                save_seqs(uniq_TMD_seqs_no_gaps_for_LIPS, path_uniq_TMD_seqs_no_gaps_for_LIPS, query_TMD_seq)
-                save_fasta_from_array(
-                    uniq_TMD_seqs_no_gaps_for_LIPS, fasta_uniq_TMD_seqs_no_gaps_for_LIPS, acc, query_TMD_seq
-                )
+            # count gaps
+            df["n_gaps_query_align_seq"] = df.query_TMD_align_seq.str.count("-")
+            df["n_gaps_subject_align_seq"] = df.subject_TMD_align_seq.str.count("-")
 
-                # save unique sequences WITH gaps with 5 surrounding residues (FOR PSSM and Hessa LIPO)
-                # delete any longer sequences, where the query had gaps
-                # assume the first sequence has no gaps
-                TMD_plus_5_len = len(df.iloc[0, :]["subject_TMD_align_seq_surr5"])
+            # filter by gaps in query, gaps in subject, and fraction identity of TMD
+            df.query(
+                f"n_gaps_query_align_seq <= {int(max_n_gaps_in_TMD_query_seq)} & n_gaps_subject_align_seq <= {int(max_n_gaps_in_TMD_subject_seq)} & X_in_subject_TMD_align_seq_surr5 == False & "
+                f"frac_ident_TMD > {float(min_identity_of_TMD_seq)}",
+                inplace=True,
+            )
 
-                # only keep the seqs that have the same length as the first one
-                df_no_gaps_in_q_plus5 = df.loc[df["subject_TMD_align_seq_surr5"].str.len() == TMD_plus_5_len]
-                uniq_TMD_seqs_surr5_for_LIPO = df_no_gaps_in_q_plus5["subject_TMD_align_seq_surr5"].unique()
-                uniq_TMD_seqs_surr5_for_LIPO = [
-                    x for x in uniq_TMD_seqs_surr5_for_LIPO if not contains_unaccepted_letter(x)
-                ]
-                save_seqs(
-                    uniq_TMD_seqs_surr5_for_LIPO, path_uniq_TMD_seqs_surr5_for_LIPO, query_TMD_seq=query_TMD_seq_surr5
-                )
-                save_fasta_from_array(
-                    uniq_TMD_seqs_surr5_for_LIPO,
-                    fasta_uniq_TMD_seqs_surr5_for_LIPO,
+            # save all TMD sequences (NON-UNIQUE) for manual inspection of alignments only
+            n_total_filtered_seqs = df.shape[0]
+
+            save_fasta(df, "subject_TMD_align_seq", fasta_all_TMD_seqs, acc, query_TMD_seq)
+
+            # save unique sequences WITH gaps (FOR COEVOLUTION WITH FREECONTACT, ETC)
+            uniq_TMD_seqs_for_PSSM_FREECONTACT = df.subject_TMD_align_seq.unique()
+            # remove seqs with O, U, or J that are not accepted by rate4site
+            uniq_TMD_seqs_for_PSSM_FREECONTACT = [
+                x for x in uniq_TMD_seqs_for_PSSM_FREECONTACT if not contains_unaccepted_letter(x)
+            ]
+
+            save_seqs(uniq_TMD_seqs_for_PSSM_FREECONTACT, path_uniq_TMD_seqs_for_PSSM_FREECONTACT, query_TMD_seq)
+            save_fasta_from_array(
+                uniq_TMD_seqs_for_PSSM_FREECONTACT, fasta_uniq_TMD_seqs_for_PSSM_FREECONTACT, acc, query_TMD_seq
+            )
+
+            # save unique sequences WITHOUT gaps (FOR LIPS)
+            uniq_TMD_seqs_no_gaps_for_LIPS = [seq for seq in uniq_TMD_seqs_for_PSSM_FREECONTACT if "-" not in seq]
+            save_seqs(uniq_TMD_seqs_no_gaps_for_LIPS, path_uniq_TMD_seqs_no_gaps_for_LIPS, query_TMD_seq)
+            save_fasta_from_array(
+                uniq_TMD_seqs_no_gaps_for_LIPS, fasta_uniq_TMD_seqs_no_gaps_for_LIPS, acc, query_TMD_seq
+            )
+
+            # save unique sequences WITH gaps with 5 surrounding residues (FOR PSSM and Hessa LIPO)
+            # delete any longer sequences, where the query had gaps
+            # assume the first sequence has no gaps
+            TMD_plus_5_len = len(df.iloc[0, :]["subject_TMD_align_seq_surr5"])
+
+            # only keep the seqs that have the same length as the first one
+            df_no_gaps_in_q_plus5 = df.loc[df["subject_TMD_align_seq_surr5"].str.len() == TMD_plus_5_len]
+            uniq_TMD_seqs_surr5_for_LIPO = df_no_gaps_in_q_plus5["subject_TMD_align_seq_surr5"].unique()
+            uniq_TMD_seqs_surr5_for_LIPO = [
+                x for x in uniq_TMD_seqs_surr5_for_LIPO if not contains_unaccepted_letter(x)
+            ]
+            save_seqs(
+                uniq_TMD_seqs_surr5_for_LIPO, path_uniq_TMD_seqs_surr5_for_LIPO, query_TMD_seq=query_TMD_seq_surr5
+            )
+            save_fasta_from_array(
+                uniq_TMD_seqs_surr5_for_LIPO,
+                fasta_uniq_TMD_seqs_surr5_for_LIPO,
+                acc,
+                query_TMD_seq=query_TMD_seq_surr5,
+            )
+
+            single_prot_dict["n_total_BLAST_hits"] = n_total_BLAST_hits
+            single_prot_dict["n_total_filtered_seqs"] = n_total_filtered_seqs
+            single_prot_dict["n_uniq_TMD_seqs_for_PSSM_FREECONTACT"] = len(uniq_TMD_seqs_for_PSSM_FREECONTACT)
+            single_prot_dict["n_uniq_TMD_seqs_no_gaps_for_LIPS"] = len(uniq_TMD_seqs_no_gaps_for_LIPS)
+            single_prot_dict["n_uniq_TMD_seqs_surr5_for_LIPO"] = len(uniq_TMD_seqs_surr5_for_LIPO)
+
+            single_prot_aln_result_ser = pd.Series(single_prot_dict)
+            single_prot_aln_result_ser.to_csv(alignment_summary_csv)
+
+            logging.info(
+                "{} extract_filtered_csv_homologues_to_alignments finished ({}). {}, {}, and {} valid seqs "
+                "from {} total".format(
                     acc,
-                    query_TMD_seq=query_TMD_seq_surr5,
+                    path_uniq_TMD_seqs_for_PSSM_FREECONTACT,
+                    single_prot_dict["n_uniq_TMD_seqs_for_PSSM_FREECONTACT"],
+                    single_prot_dict["n_uniq_TMD_seqs_no_gaps_for_LIPS"],
+                    single_prot_dict["n_uniq_TMD_seqs_surr5_for_LIPO"],
+                    n_total_filtered_seqs,
                 )
-
-                single_prot_dict["n_total_BLAST_hits"] = n_total_BLAST_hits
-                single_prot_dict["n_total_filtered_seqs"] = n_total_filtered_seqs
-                single_prot_dict["n_uniq_TMD_seqs_for_PSSM_FREECONTACT"] = len(uniq_TMD_seqs_for_PSSM_FREECONTACT)
-                single_prot_dict["n_uniq_TMD_seqs_no_gaps_for_LIPS"] = len(uniq_TMD_seqs_no_gaps_for_LIPS)
-                single_prot_dict["n_uniq_TMD_seqs_surr5_for_LIPO"] = len(uniq_TMD_seqs_surr5_for_LIPO)
-
-                single_prot_aln_result_ser = pd.Series(single_prot_dict)
-                single_prot_aln_result_ser.to_csv(alignment_summary_csv)
-
-                logging.info(
-                    "{} extract_filtered_csv_homologues_to_alignments finished ({}). {}, {}, and {} valid seqs "
-                    "from {} total".format(
-                        acc,
-                        path_uniq_TMD_seqs_for_PSSM_FREECONTACT,
-                        single_prot_dict["n_uniq_TMD_seqs_for_PSSM_FREECONTACT"],
-                        single_prot_dict["n_uniq_TMD_seqs_no_gaps_for_LIPS"],
-                        single_prot_dict["n_uniq_TMD_seqs_surr5_for_LIPO"],
-                        n_total_filtered_seqs,
-                    )
-                )
-
-    else:
-        sys.stdout.write(f"{BLAST_csv_tar} not found")
+            )
 
     return single_prot_dict
 

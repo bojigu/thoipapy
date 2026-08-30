@@ -172,7 +172,6 @@ def run_LOO_validation(
         assert acc_db not in filtered_index_acc_db
 
         loo_validation_data = LooValidationData()
-        loo_validation_data.acc = acc
         loo_validation_data.acc_db = df_set.loc[i, "acc_db"]
         loo_validation_data.bind_column = bind_column
         loo_validation_data.database = database

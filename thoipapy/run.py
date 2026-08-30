@@ -167,10 +167,13 @@ def run_one_set(s: dict, set_number: int):
     #    thoipapy.structures.deprecated.NMR_data.calc_closedist_from_NMR_best_model(s)
 
     if stages.Atom_Close_Dist:
-        infor = thoipapy.experimental_data.closest_heavy_atom_dist.homodimer_residue_closedist_calculate_from_complex(
-            thoipapy, s, logging
+        # This stage needs a helix-pair file listing the PDB chains and their TM boundaries. No
+        # setting supplies one, and the call here passed the thoipapy module and the settings dict
+        # into a function expecting ArtefactPaths and a file path, so it could never have run.
+        raise NotImplementedError(
+            "Atom_Close_Dist needs a homodimer helix-pair file, which no setting provides. "
+            "Supply the path and call homodimer_residue_closedist_calculate_from_complex directly."
         )
-        sys.stdout.write(infor)
 
     ###################################################################################################
     #                                                                                                 #
