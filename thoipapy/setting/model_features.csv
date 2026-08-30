@@ -1,0 +1,116 @@
+feature,include,feature_type
+acc_db,0,not_included
+interface,0,not_included
+interface_score,0,not_included
+residue_num,0,not_included
+residue_name,0,not_included
+interface_score_norm,0,not_included
+n_homologues,1,TMD properties
+conservation,1,conservation
+A,1,polarity and PSSM
+I,1,polarity and PSSM
+L,1,polarity and PSSM
+V,1,polarity and PSSM
+F,1,polarity and PSSM
+W,1,polarity and PSSM
+Y,1,polarity and PSSM
+N,1,polarity and PSSM
+C,1,polarity and PSSM
+Q,1,polarity and PSSM
+M,1,polarity and PSSM
+S,1,polarity and PSSM
+T,1,polarity and PSSM
+D,1,polarity and PSSM
+E,1,polarity and PSSM
+R,1,polarity and PSSM
+H,1,polarity and PSSM
+K,1,polarity and PSSM
+G,1,polarity and PSSM
+P,1,polarity and PSSM
+polarity,1,polarity and PSSM
+polarity3Nmean,1,polarity and PSSM
+polarity3Cmean,1,polarity and PSSM
+polarity1mean,1,polarity and PSSM
+relative_polarity,1,polarity and PSSM
+DImax,1,coevolution
+DItop4mean,1,coevolution
+DItop8mean,1,coevolution
+DI4cum,1,coevolution
+DI8cum,1,coevolution
+MImax,1,coevolution
+MItop4mean,1,coevolution
+MItop8mean,1,coevolution
+MIall_mean,1,coevolution
+MI1mean,1,coevolution
+MI2mean,1,coevolution
+Hydrophobicity_sAA,0,polarity and PSSM
+PI_sAA,0,polarity and PSSM
+Aromatic_sAA,0,physical properties
+Polar_sAA,0,polarity and PSSM
+Small_sAA,0,physical properties
+branched,1,physical properties
+mass,1,physical properties
+MI3mean,1,coevolution
+MI4mean,1,coevolution
+MI4value,1,coevolution
+MI4_inclusive_mean,1,coevolution
+MI4_inclusive_max,1,coevolution
+MI5mean,1,coevolution
+MI_highest_face,1,coevolution
+DIall_mean,1,coevolution
+DI1mean,1,coevolution
+DI2mean,1,coevolution
+DI3mean,1,coevolution
+DI4mean,1,coevolution
+DI4value,1,coevolution
+DI4_inclusive_mean,1,coevolution
+DI4_inclusive_max,1,coevolution
+DI5mean,1,coevolution
+DI_highest_face,1,coevolution
+DImax_raw,1,coevolution
+DItop4mean_raw,1,coevolution
+DItop8mean_raw,1,coevolution
+MImax_raw,1,coevolution
+MItop4mean_raw,1,coevolution
+MItop8mean_raw,1,coevolution
+MIall_mean_raw,1,coevolution
+MI1mean_raw,1,coevolution
+MI2mean_raw,1,coevolution
+MI3mean_raw,1,coevolution
+MI4mean_raw,1,coevolution
+MI4value_raw,1,coevolution
+MI4_inclusive_mean_raw,1,coevolution
+MI4_inclusive_max_raw,1,coevolution
+MI5mean_raw,1,coevolution
+DIall_mean_raw,1,coevolution
+DI1mean_raw,1,coevolution
+DI2mean_raw,1,coevolution
+DI3mean_raw,1,coevolution
+DI4mean_raw,1,coevolution
+DI4value_raw,1,coevolution
+DI4_inclusive_mean_raw,1,coevolution
+DI4_inclusive_max_raw,1,coevolution
+DI5mean_raw,1,coevolution
+RelPos_TMD,1,residue position
+RelPos_fullseq,1,TMD properties
+residue_depth,1,residue position
+LIPS_polarity,1,polarity and PSSM
+LIPS_entropy,0,polarity and PSSM
+LIPS_surface,1,polarity and PSSM
+rate4site,1,conservation
+GxxxG,1,GxxxG-like motifs
+SmxxxSm,1,GxxxG-like motifs
+PolarxxxPolar,1,GxxxG-like motifs
+res_num_full_seq,0,TMD properties
+LIPS_L*E,1,conservation
+LIPS_surface_ranked,1,conservation
+LIPS_surface_ranked_norm,1,conservation
+cons*polarity,1,conservation
+cons4mean,1,conservation
+rate4site4mean,1,conservation
+polarity4mean,1,polarity and PSSM
+CS,1,polarity and PSSM
+DE,1,polarity and PSSM
+KR,1,polarity and PSSM
+QN,1,polarity and PSSM
+LIV,1,polarity and PSSM
