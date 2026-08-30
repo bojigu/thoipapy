@@ -5,6 +5,7 @@ shipped settings files and disabled in the functional test. Last exercised for t
 publication. Not covered by any test, and excluded from the refactoring applied to the maintained
 part of the package.
 """
+
 import os
 
 import pandas as pd
@@ -41,12 +42,12 @@ def add_random_interface_to_combined_features_mult_prot(paths: ArtefactPaths, df
     df_set.sort_values("TMD_len", inplace=True)
     df_set.index = range(df_set.shape[0])
 
-    logging.info("df_set.tail(2) before adding protein01 to end of protein list\n{}".format(df_set.tail(2)))
+    logging.info(f"df_set.tail(2) before adding protein01 to end of protein list\n{df_set.tail(2)}")
 
     # add the first TMD again at the end of the list
     df_set.loc[df_set.index.max() + 1, :] = df_set.loc[0, :]
 
-    logging.info("df_set.tail(2) after adding protein01 to end of protein list\n{}".format(df_set.tail(2)))
+    logging.info(f"df_set.tail(2) after adding protein01 to end of protein list\n{df_set.tail(2)}")
 
     df_experiment_data_prev_TMD = pd.DataFrame()
     interface_list_prev_TMD = []
@@ -55,8 +56,14 @@ def add_random_interface_to_combined_features_mult_prot(paths: ArtefactPaths, df
         acc = df_set.loc[i, "acc"]
         database = df_set.loc[i, "database"]
         feature_combined_file = paths.combined_features_csv(database, acc)
-        feature_combined_file_rand_int = os.path.join(paths.data_dir, "features", "combined", "rand_int", database,
-                                                      "{}.surr{}.gaps{}.combined_features.csv".format(acc, paths.num_of_sur_residues, paths.max_n_gaps_in_TMD_subject_seq))
+        feature_combined_file_rand_int = os.path.join(
+            paths.data_dir,
+            "features",
+            "combined",
+            "rand_int",
+            database,
+            f"{acc}.surr{paths.num_of_sur_residues}.gaps{paths.max_n_gaps_in_TMD_subject_seq}.combined_features.csv",
+        )
         thoipapy.utils.make_sure_path_exists(feature_combined_file_rand_int, isfile=True)
 
         if database == "ETRA":
@@ -69,10 +76,19 @@ def add_random_interface_to_combined_features_mult_prot(paths: ArtefactPaths, df
 
         if database == "ETRA":
             df_experiment_data = pd.read_csv(experimental_data_file)
-            df_experiment_data = df_experiment_data.rename(columns={"aa_position": "residue_num", "orig_aa": "residue_name", "Interface": "interface", "Disruption": "interface_score"})
+            df_experiment_data = df_experiment_data.rename(
+                columns={
+                    "aa_position": "residue_num",
+                    "orig_aa": "residue_name",
+                    "Interface": "interface",
+                    "Disruption": "interface_score",
+                }
+            )
         else:
             df_experiment_data = pd.read_csv(experimental_data_file)
-            df_experiment_data = df_experiment_data.rename(columns={"bind": "interface", "closedist": "interface_score"})
+            df_experiment_data = df_experiment_data.rename(
+                columns={"bind": "interface", "closedist": "interface_score"}
+            )
 
         if i > 0:
             # make sure that a range index is used
@@ -81,9 +97,11 @@ def add_random_interface_to_combined_features_mult_prot(paths: ArtefactPaths, df
             df_experiment_data_prev_TMD = df_experiment_data_prev_TMD.reindex(df_combined.index)
             # convert to a list that can be added to the combined file.
             # Replace nan with 0 (non-interface), where the prev TMD is shorter than the current TMD (all except protein 1, when sorted by TMD_len)
-            interface_list_prev_TMD = df_experiment_data_prev_TMD.interface.fillna(0).astype(int).tolist()  # [:df_combined.shape[0]]
+            interface_list_prev_TMD = (
+                df_experiment_data_prev_TMD.interface.fillna(0).astype(int).tolist()
+            )  # [:df_combined.shape[0]]
             """ Instead of adding the full DF of experimental data, simply add a RANDOM list of interface residues(from the previous TMD).
-            
+
             current list of interface residues that belongs to the current TMD
             [0, 0, 0, 0, 0, 0, 0, 0, 1, 1, 0, 1, 1, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0]
             list of interface residues extracted from the previous TMD
@@ -98,8 +116,8 @@ def add_random_interface_to_combined_features_mult_prot(paths: ArtefactPaths, df
             df_combined.to_csv(feature_combined_file_rand_int)
             # logging.info("{} add_random_interface_to_combined_features finished ({})".format(acc, feature_combined_file_rand_int))
 
-        logging.info("{}    real interface for this TMD {}".format(acc, df_experiment_data.interface.tolist()))
-        logging.info("{} RANDOM interface from prev TMD {}".format(acc, interface_list_prev_TMD))
+        logging.info(f"{acc}    real interface for this TMD {df_experiment_data.interface.tolist()}")
+        logging.info(f"{acc} RANDOM interface from prev TMD {interface_list_prev_TMD}")
 
         df_experiment_data_prev_TMD = df_experiment_data
 

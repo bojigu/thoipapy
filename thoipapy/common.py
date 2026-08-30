@@ -9,25 +9,25 @@ import signal
 import sys
 from pathlib import Path
 from time import strftime
+
 import numpy as np
 import pandas as pd
 import psutil
-from Bio import SeqIO
 from Bio.SeqUtils.ProtParam import ProteinAnalysis
+
 import thoipapy
 from thoipapy.paths import BASE_DIR, DATA_DIR, SETS_DIR
-from thoipapy.utils import convert_truelike_to_bool, convert_falselike_to_bool
-
+from thoipapy.utils import convert_falselike_to_bool, convert_truelike_to_bool
 
 # from korbinian.utils import convert_truelike_to_bool, convert_falselike_to_bool
 # from thoipapy.utils import convert_truelike_to_bool, convert_falselike_to_bool
 
 
-    # return s["tmp_surr_left"],s["tmp_surr_right"]
+# return s["tmp_surr_left"],s["tmp_surr_right"]
 
 
 def calc_lipophilicity(seq, method="mean"):
-    """ Calculates the average hydrophobicity of a sequence according to the Hessa biological scale.
+    """Calculates the average hydrophobicity of a sequence according to the Hessa biological scale.
 
     Function taken from korbinian.utils (allowed under MIT license).
 
@@ -77,9 +77,30 @@ def calc_lipophilicity(seq, method="mean"):
     for a pandas series with 852 tmds: 118 ms per loop
     """
     # hydrophobicity scale
-    hessa_scale = np.array([0.11, -0.13, 3.49, 2.68, -0.32, 0.74, 2.06, -0.6, 2.71,
-                            -0.55, -0.1, 2.05, 2.23, 2.36, 2.58, 0.84, 0.52, -0.31,
-                            0.3, 0.68])
+    hessa_scale = np.array(
+        [
+            0.11,
+            -0.13,
+            3.49,
+            2.68,
+            -0.32,
+            0.74,
+            2.06,
+            -0.6,
+            2.71,
+            -0.55,
+            -0.1,
+            2.05,
+            2.23,
+            2.36,
+            2.58,
+            0.84,
+            0.52,
+            -0.31,
+            0.3,
+            0.68,
+        ]
+    )
     # convert to biopython analysis object
     analysed_seq = ProteinAnalysis(seq)
     # biopython count_amino_acids returns a dictionary.
@@ -99,7 +120,6 @@ def calc_lipophilicity(seq, method="mean"):
         return sum_of_multiplied / number_of_residues
     if method == "sum":
         return sum_of_multiplied
-
 
 
 def _coerce_setting(value, declared_type, parameter: str):
@@ -135,8 +155,8 @@ def _coerce_setting(value, declared_type, parameter: str):
         # convert_int so that 0/1, which is how most of these flags are actually written, is read
         # as a boolean rather than inferred as an integer
         as_bool = convert_falselike_to_bool(
-            convert_truelike_to_bool(text, convert_int=True, convert_float=True),
-            convert_int=True, convert_float=True)
+            convert_truelike_to_bool(text, convert_int=True, convert_float=True), convert_int=True, convert_float=True
+        )
         if not isinstance(as_bool, bool):
             raise ValueError(f"setting {parameter!r} is declared bool but has the value {value!r}")
         return as_bool
@@ -202,8 +222,16 @@ def create_settingdict(settings_path):
     for parameter, value in dfset.set_index("parameter")["value"].to_dict().items():
         s[parameter] = _coerce_setting(value, types.get(parameter), parameter)
 
-    list_paths_to_normalise = ['MiRMAK_data_folder', 'base_dir', 'sets_dir', 'data_dir',
-                               'Rcode', 'hhblits_dir', 'uniprot_database_dir', 'Rscript_dir']
+    list_paths_to_normalise = [
+        "MiRMAK_data_folder",
+        "base_dir",
+        "sets_dir",
+        "data_dir",
+        "Rcode",
+        "hhblits_dir",
+        "uniprot_database_dir",
+        "Rscript_dir",
+    ]
     # normalise the paths for selected columns, so that they are appropriate for the operating system
     for path in list_paths_to_normalise:
         if path in s:
@@ -234,9 +262,9 @@ def create_settingdict(settings_path):
 
 
 def setup_keyboard_interrupt_and_error_logging(s, setname):
-    ''' -------Setup keyboard interrupt----------
-        Taken from korbinian python package by Mark Teese. This is allowed under the permissive MIT license.
-    '''
+    """-------Setup keyboard interrupt----------
+    Taken from korbinian python package by Mark Teese. This is allowed under the permissive MIT license.
+    """
 
     # import arcgisscripting
 
@@ -244,11 +272,11 @@ def setup_keyboard_interrupt_and_error_logging(s, setname):
         raise KeyboardInterrupt("CTRL-C!")
 
     signal.signal(signal.SIGINT, ctrlc)
-    '''+++++++++++++++LOGGING++++++++++++++++++'''
+    """+++++++++++++++LOGGING++++++++++++++++++"""
     date_string = strftime("%Y%m%d_%H_%M_%S")
 
     # designate the output logfile
-    logfile = os.path.join(s["data_dir"], "Logging", '%s_%s_logfile.log' % (setname, date_string))
+    logfile = os.path.join(s["data_dir"], "Logging", f"{setname}_{date_string}_logfile.log")
 
     # # if multiprocessing is used, disable logging except for critical messages.
     # if s["use_multiprocessing"]:
@@ -266,7 +294,7 @@ def setup_keyboard_interrupt_and_error_logging(s, setname):
 
 
 def setup_error_logging(logfile, level_console="DEBUG", level_logfile="DEBUG", print_system_info=True):
-    """ Sets up error logging, and logs a number of system settings.
+    """Sets up error logging, and logs a number of system settings.
 
     Taken from korbinian python package by Mark Teese. This is allowed under the permissive MIT license.
 
@@ -280,58 +308,52 @@ def setup_error_logging(logfile, level_console="DEBUG", level_logfile="DEBUG", p
         Logging level for printing to logfile. DEBUG, WARNING or CRITICAL
     """
     # load the log settings in json format
-    logsettings = json.dumps({
-        "handlers": {
-            "console": {
-                "formatter": "brief",
-                "class": "logging.StreamHandler",
-                "stream": "ext://sys.stdout",
-                "level": "DEBUG"
+    logsettings = json.dumps(
+        {
+            "handlers": {
+                "console": {
+                    "formatter": "brief",
+                    "class": "logging.StreamHandler",
+                    "stream": "ext://sys.stdout",
+                    "level": "DEBUG",
+                },
+                "file": {
+                    "maxBytes": 10000000,
+                    "formatter": "precise",
+                    "backupCount": 3,
+                    "class": "logging.handlers.RotatingFileHandler",
+                    "level": "DEBUG",
+                    "filename": "logfile.txt",
+                },
             },
-            "file": {
-                "maxBytes": 10000000,
-                "formatter": "precise",
-                "backupCount": 3,
-                "class": "logging.handlers.RotatingFileHandler",
-                "level": "DEBUG",
-                "filename": "logfile.txt"
-            }
+            "version": 1,
+            "root": {"handlers": ["console", "file"], "propagate": "no", "level": "DEBUG"},
+            "formatters": {
+                "simple": {"format": "format=%(asctime)s - %(name)s - %(levelname)s - %(message)s"},
+                "precise": {"format": "%(asctime)s %(name)-15s %(levelname)-8s %(message)s"},
+                "brief": {"format": "%(levelname)-8s: %(name)-15s: %(message)s"},
+            },
         },
-        "version": 1,
-        "root": {
-            "handlers": [
-                "console",
-                "file"
-            ],
-            "propagate": "no",
-            "level": "DEBUG"
-        },
-        "formatters": {
-            "simple": {
-                "format": "format=%(asctime)s - %(name)s - %(levelname)s - %(message)s"
-            },
-            "precise": {
-                "format": "%(asctime)s %(name)-15s %(levelname)-8s %(message)s"
-            },
-            "brief": {
-                "format": "%(levelname)-8s: %(name)-15s: %(message)s"
-            }
-        }
-    }, skipkeys=True, sort_keys=True, indent=4, separators=(',', ': '))
+        skipkeys=True,
+        sort_keys=True,
+        indent=4,
+        separators=(",", ": "),
+    )
 
     config = json.loads(logsettings)
     # add user parameters to the logging settings (logfile, and logging levels)
-    config['handlers']['file']['filename'] = logfile
-    config['handlers']['console']['level'] = level_console
-    config['handlers']['file']['level'] = level_logfile
+    config["handlers"]["file"]["filename"] = logfile
+    config["handlers"]["console"]["level"] = level_console
+    config["handlers"]["file"]["level"] = level_logfile
 
     # create a blank logging file
     thoipapy.utils.make_sure_path_exists(logfile, isfile=True)
-    with open(logfile, 'w') as f:
+    with open(logfile, "w"):
+        # creating the file is the point; nothing is written
         pass
 
     # clear any previous logging handlers that might have been previously run in the console
-    logging.getLogger('').handlers = []
+    logging.getLogger("").handlers = []
     # load the logging settings from the modified json string
     logging.config.dictConfig(config)
     # collect a number of system settings that could be useful for troubleshooting
@@ -350,8 +372,10 @@ def setup_error_logging(logfile, level_console="DEBUG", level_logfile="DEBUG", p
     system_settings_dict["argv"] = sys.argv
     system_settings_dict["dirname(argv[0])"] = os.path.abspath(os.path.expanduser(os.path.dirname(sys.argv[0])))
     system_settings_dict["pwd"] = os.path.abspath(os.path.expanduser(os.path.curdir))
-    system_settings_dict["total_ram"] = "{:0.2f} GB".format(psutil.virtual_memory()[0] / 1000000000)
-    system_settings_dict["available_ram"] = "{:0.2f} GB ({}% used)".format(psutil.virtual_memory()[1] / 1000000000, psutil.virtual_memory()[2])
+    system_settings_dict["total_ram"] = f"{psutil.virtual_memory()[0] / 1000000000:0.2f} GB"
+    system_settings_dict["available_ram"] = (
+        f"{psutil.virtual_memory()[1] / 1000000000:0.2f} GB ({psutil.virtual_memory()[2]}% used)"
+    )
     # log the system settings
     if print_system_info:
         logging.warning(system_settings_dict)
@@ -363,7 +387,9 @@ def setup_error_logging(logfile, level_console="DEBUG", level_logfile="DEBUG", p
     #    raise
     # except Exception:
     #    logging.error('Failed to open file', exc_info=True)
-    logging.warning('LOGGING SETUP IS SUCCESSFUL (logging levels: console={}, logfile={}). \n'.format(level_console, level_logfile))
+    logging.warning(
+        f"LOGGING SETUP IS SUCCESSFUL (logging levels: console={level_console}, logfile={level_logfile}). \n"
+    )
     return logging
 
 
@@ -388,8 +414,12 @@ def get_path_of_protein_set(setname, sets_dir):
     if len(matching) == 1:
         return matching[0]
     if len(matching) == 0:
-        raise FileNotFoundError(f"No protein set file found for setname '{setname}'.\nFiles in {sets_dir}: {[os.path.basename(p) for p in set_file_list]}")
-    raise ValueError(f"More than one file in the set folder contains '{setname}' in the filename.\nmatching = {matching}")
+        raise FileNotFoundError(
+            f"No protein set file found for setname '{setname}'.\nFiles in {sets_dir}: {[os.path.basename(p) for p in set_file_list]}"
+        )
+    raise ValueError(
+        f"More than one file in the set folder contains '{setname}' in the filename.\nmatching = {matching}"
+    )
 
 
 def process_set_protein_seqs(s, setname, df_set, set_path):
@@ -409,19 +439,23 @@ def process_set_protein_seqs(s, setname, df_set, set_path):
             df_set.loc[i, "TMD_start"] = m.start() + 1
             df_set.loc[i, "TMD_end"] = m.end()
         else:
-            raise IndexError("TMD seq not found in full_seq.\nacc = {}\nTMD_seq = {}\nfull_seq = {}".format(acc, TMD_seq, full_seq))
+            raise IndexError(f"TMD seq not found in full_seq.\nacc = {acc}\nTMD_seq = {TMD_seq}\nfull_seq = {full_seq}")
 
     # first get TMD plus 5 surrounding residues (for TMD_lipo script)
     num_of_sur_residues = 5
     # TODO to improve consistency, replace create_column_with_TMD_plus_surround_seq with new
     # thoipapy.utils.SurroundingSequence developed for the standalone predictor
-    df_set, TMD_seq_pl_surr_series = thoipapy.utils.create_column_with_TMD_plus_surround_seq(df_set, num_of_sur_residues)
+    df_set, TMD_seq_pl_surr_series = thoipapy.utils.create_column_with_TMD_plus_surround_seq(
+        df_set, num_of_sur_residues
+    )
     df_set["TMD_seq_pl_surr5"] = TMD_seq_pl_surr_series
 
     # Repeat for the actual surrounding number of residues chosen in the settings file
     # this overwrites the indexing columns created for the surr5 above, except for the final sequence
     num_of_sur_residues = s["num_of_sur_residues"]
-    df_set, TMD_seq_pl_surr_series = thoipapy.utils.create_column_with_TMD_plus_surround_seq(df_set, num_of_sur_residues)
+    df_set, TMD_seq_pl_surr_series = thoipapy.utils.create_column_with_TMD_plus_surround_seq(
+        df_set, num_of_sur_residues
+    )
     df_set["TMD_seq_pl_surr"] = TMD_seq_pl_surr_series
 
     # add the number of included residues in the surrounding seq to the left and right of the TMD
@@ -446,7 +480,7 @@ def process_set_protein_seqs(s, setname, df_set, set_path):
     cdhit_cluster_txt = Path(s["data_dir"]) / f"results/{s['setname']}/clusters/{setname}.fas.1.clstr.sorted.txt"
     if os.path.isfile(cdhit_cluster_txt):
         lines_with_ref_seq = []
-        with open(cdhit_cluster_txt, "r") as f:
+        with open(cdhit_cluster_txt) as f:
             for line in f:
                 if "*" in line:
                     lines_with_ref_seq.append(line)
@@ -454,11 +488,15 @@ def process_set_protein_seqs(s, setname, df_set, set_path):
         cluster_rep_lines_ser = pd.Series(lines_with_ref_seq)
         # extracts the number between > and - (i.e., the index), sorts and returns as a list
         # redundant sequences will be excluded
-        cluster_rep_list = cluster_rep_lines_ser.str.extract(">(\d*)-", expand=False).astype(int).sort_values().tolist()
+        cluster_rep_list = (
+            cluster_rep_lines_ser.str.extract(r">(\d*)-", expand=False).astype(int).sort_values().tolist()
+        )
         df_set.loc[cluster_rep_list, "cdhit_cluster_rep"] = True
         df_set["cdhit_cluster_rep"] = df_set["cdhit_cluster_rep"].fillna(False)
     else:
-        logging.warning("No CD-HIT results found for automatic redundancy reduction. It is assumed that dataset is non-redundant. Further CD-HIT clustering may be used for predictor validation.")
+        logging.warning(
+            "No CD-HIT results found for automatic redundancy reduction. It is assumed that dataset is non-redundant. Further CD-HIT clustering may be used for predictor validation."
+        )
         df_set["cdhit_cluster_rep"] = "no_cdhit_results"
 
     """  Rearrange the dataframe columns so that the order is as follows.
@@ -467,7 +505,9 @@ def process_set_protein_seqs(s, setname, df_set, set_path):
 
     """
     # reorder columns
-    df_set = thoipapy.utils.reorder_dataframe_columns(df_set, ['acc', 'seqlen', 'TMD_start', 'TMD_end', "tm_surr_left", "tm_surr_right", "database"])
+    df_set = thoipapy.utils.reorder_dataframe_columns(
+        df_set, ["acc", "seqlen", "TMD_start", "TMD_end", "tm_surr_left", "tm_surr_right", "database"]
+    )
 
     # Residue positions are whole numbers and are written to the processed CSV, so they must not
     # be serialised as "192.0". Assigning back through .iloc no longer changes the dtype under
@@ -477,7 +517,9 @@ def process_set_protein_seqs(s, setname, df_set, set_path):
         df_set[column] = df_set[column].astype(int)
 
     # save to csv, which is opened by other functions
-    list_of_tmd_start_end = os.path.join(s["data_dir"], "Input_data", os.path.basename(set_path)[:-5] + "_processed.csv")
+    list_of_tmd_start_end = os.path.join(
+        s["data_dir"], "Input_data", os.path.basename(set_path)[:-5] + "_processed.csv"
+    )
     s["list_of_tmd_start_end"] = list_of_tmd_start_end
     thoipapy.utils.make_sure_path_exists(list_of_tmd_start_end, isfile=True)
     df_set.set_index("acc").to_csv(list_of_tmd_start_end)

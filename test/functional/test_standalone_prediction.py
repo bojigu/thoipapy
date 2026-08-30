@@ -1,11 +1,12 @@
 from pathlib import Path
-from shutil import rmtree, copyfile
+from shutil import copyfile, rmtree
 
+import pytest
 import thoipapy
-from test.helpers.helpers import TestProtein
 from thoipapy import run_THOIPA_prediction
 from thoipapy.utils import make_sure_path_exists
-import pytest
+
+from test.helpers.helpers import TestProtein
 
 
 @pytest.mark.requires_tool("rate4site", "freecontact", "cd-hit")
@@ -16,7 +17,9 @@ def test_standalone_prediction_with_pre_downloaded_homologues_1xioA4():
     thoipapy_module_path = Path(thoipapy.__file__).parents[1]
     out_dir = thoipapy_module_path / f"test/test_outputs/pre_downloaded_homologues_{tp.acc}"
     make_sure_path_exists(out_dir / "datafiles")
-    pre_downloaded_homologue_xml_tar_gz: Path = thoipapy_module_path / f"test/test_inputs/blast_data_valid/{tp.acc}.surr20.BLAST.xml.tar.gz"
+    pre_downloaded_homologue_xml_tar_gz: Path = (
+        thoipapy_module_path / f"test/test_inputs/blast_data_valid/{tp.acc}.surr20.BLAST.xml.tar.gz"
+    )
     assert pre_downloaded_homologue_xml_tar_gz.is_file()
     temp_homologue_xml_tar_gz: Path = out_dir / "datafiles/BLAST_results.xml.tar.gz"
     copyfile(pre_downloaded_homologue_xml_tar_gz, temp_homologue_xml_tar_gz)
@@ -37,7 +40,9 @@ def test_standalone_prediction_with_pre_downloaded_homologues_4hksA1():
     thoipapy_module_path = Path(thoipapy.__file__).parents[1]
     out_dir = thoipapy_module_path / f"test/test_outputs/pre_downloaded_homologues_{tp.acc}"
     make_sure_path_exists(out_dir / "datafiles")
-    pre_downloaded_homologue_xml_tar_gz: Path = thoipapy_module_path / f"test/test_inputs/blast_data_valid/{tp.acc}.surr20.BLAST.xml.tar.gz"
+    pre_downloaded_homologue_xml_tar_gz: Path = (
+        thoipapy_module_path / f"test/test_inputs/blast_data_valid/{tp.acc}.surr20.BLAST.xml.tar.gz"
+    )
     assert pre_downloaded_homologue_xml_tar_gz.is_file()
     temp_homologue_xml_tar_gz: Path = out_dir / "datafiles/BLAST_results.xml.tar.gz"
     copyfile(pre_downloaded_homologue_xml_tar_gz, temp_homologue_xml_tar_gz)

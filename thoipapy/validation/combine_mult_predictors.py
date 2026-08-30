@@ -5,14 +5,14 @@ shipped settings files and disabled in the functional test. Last exercised for t
 publication. Not covered by any test, and excluded from the refactoring applied to the maintained
 part of the package.
 """
+
 import os
 from pathlib import Path
-from typing import Union
 
-import pandas as pd
 import numpy as np
+import pandas as pd
+
 import thoipapy
-from thoipapy.utils import get_testsetname_trainsetname_from_run_settings
 from thoipapy.artefacts import ArtefactPaths
 
 
@@ -39,15 +39,29 @@ def merge_predictions(paths: ArtefactPaths, df_set, logging, testsetname: str, t
     """
     logging.info("\n--------------- starting merge_predictions ---------------\n")
     # add the THOIPA prediction name to the list of columns to keep
-    THOIPA_pred_colname = "THOIPA_{}_LOO".format(paths.set_number)
+    THOIPA_pred_colname = f"THOIPA_{paths.set_number}_LOO"
 
     other_predictors_dir = paths.data_dir / "Predictions/other_predictors"
 
     thoipa_trainsetname = f"thoipa.train{trainsetname}"
 
     # for simplicity, keep only the predictions. Since the index is unique, it can be added later to the combined file.
-    columns_kept_in_combined_file = ['residue_num', 'residue_name', THOIPA_pred_colname, thoipa_trainsetname, 'TMDOCK', 'PREDDIMER', 'interface', 'interface_score', "LIPS_surface", "LIPS_surface_ranked", 'LIPS_L*E', "relative_polarity",
-                                     "conservation", "DI4mean"]
+    columns_kept_in_combined_file = [
+        "residue_num",
+        "residue_name",
+        THOIPA_pred_colname,
+        thoipa_trainsetname,
+        "TMDOCK",
+        "PREDDIMER",
+        "interface",
+        "interface_score",
+        "LIPS_surface",
+        "LIPS_surface_ranked",
+        "LIPS_L*E",
+        "relative_polarity",
+        "conservation",
+        "DI4mean",
+    ]
 
     for i in df_set.index:
         acc = df_set.loc[i, "acc"]
@@ -56,10 +70,10 @@ def merge_predictions(paths: ArtefactPaths, df_set, logging, testsetname: str, t
         # inputs
         train_data_file = paths.combined_features_csv(database, acc)
         THOIPA_LOO_prediction_csv = paths.results_dir / f"predictions/THOIPA_LOO/{database}.{acc}.LOO.prediction.csv"
-        PREDDIMER_prediction_file = os.path.join(other_predictors_dir, database, "{}.preddimer.closedist.csv".format(acc))
-        TMDOCK_prediction_file = os.path.join(other_predictors_dir, database, "{}.tmdock.closedist.csv".format(acc))
+        PREDDIMER_prediction_file = os.path.join(other_predictors_dir, database, f"{acc}.preddimer.closedist.csv")
+        TMDOCK_prediction_file = os.path.join(other_predictors_dir, database, f"{acc}.tmdock.closedist.csv")
         # output
-        merged_data_csv_path: Union[Path, str] = paths.results_dir / f"predictions/merged/{database}.{acc}.merged.csv"
+        merged_data_csv_path: Path | str = paths.results_dir / f"predictions/merged/{database}.{acc}.merged.csv"
         thoipapy.utils.make_sure_path_exists(merged_data_csv_path, isfile=True)
 
         # load the full feature file as the start of dfm
@@ -71,7 +85,10 @@ def merge_predictions(paths: ArtefactPaths, df_set, logging, testsetname: str, t
         file_list = [THOIPA_LOO_prediction_csv, PREDDIMER_prediction_file, TMDOCK_prediction_file]
         prediction_name_list = [THOIPA_pred_colname, "PREDDIMER", "TMDOCK"]
         if paths.setname == testsetname:
-            THOIPA_testset_trainset_csv = paths.results_dir / f"predictions/thoipa.train{trainsetname}/{database}.{acc}.thoipa.train{trainsetname}.csv"
+            THOIPA_testset_trainset_csv = (
+                paths.results_dir
+                / f"predictions/thoipa.train{trainsetname}/{database}.{acc}.thoipa.train{trainsetname}.csv"
+            )
             file_list.append(THOIPA_testset_trainset_csv)
             prediction_name_list.append(thoipa_trainsetname)
         n_files_merged = 0
@@ -83,11 +100,15 @@ def merge_predictions(paths: ArtefactPaths, df_set, logging, testsetname: str, t
                 TMD_seq = df["residue_name"].str.cat()
                 if TMD_seq not in full_seq:
                     logging.warning(prediction_name)
-                    logging.warning("Sequence in residue_name column of dataframe is not found in the original df_set sequence."
-                                    f"\nacc : {acc}\nfile number : {n}\nTMD_seq : {TMD_seq}\nfull_seq in df_set : {full_seq}\n"
-                                    f"THOIPA_LOO_prediction_csv:{THOIPA_LOO_prediction_csv}\ncsv file:{file}")
+                    logging.warning(
+                        "Sequence in residue_name column of dataframe is not found in the original df_set sequence."
+                        f"\nacc : {acc}\nfile number : {n}\nTMD_seq : {TMD_seq}\nfull_seq in df_set : {full_seq}\n"
+                        f"THOIPA_LOO_prediction_csv:{THOIPA_LOO_prediction_csv}\ncsv file:{file}"
+                    )
                     if prediction_name in [THOIPA_pred_colname, thoipa_trainsetname]:
-                        df = thoipapy.utils.add_mutation_missed_residues_with_na(paths.combined_features_csv(database, acc), acc, database, df)
+                        df = thoipapy.utils.add_mutation_missed_residues_with_na(
+                            paths.combined_features_csv(database, acc), acc, database, df
+                        )
                         TMD_seq = df["residue_name"].str.cat()
                     # skip protein
                     # continue
@@ -127,5 +148,5 @@ def merge_predictions(paths: ArtefactPaths, df_set, logging, testsetname: str, t
         # save to "Merged" folder, so as not to get confused with the "combined" files
         dfm.to_csv(merged_data_csv_path)
 
-        logging.info("{} predictions combined. n_files_merged : {}. ({})".format(acc, n_files_merged, merged_data_csv_path))
+        logging.info(f"{acc} predictions combined. n_files_merged : {n_files_merged}. ({merged_data_csv_path})")
     logging.info("\n--------------- finished merge_predictions ---------------\n")

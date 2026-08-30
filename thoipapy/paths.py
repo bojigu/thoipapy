@@ -15,6 +15,7 @@ never reads any of these. Validating here would break that deployment. Call
 :func:`assert_data_dir_available` instead at the top of anything that genuinely needs the
 training data, so an installed copy fails loudly rather than silently writing into site-packages.
 """
+
 from pathlib import Path
 
 REPO_ROOT: Path = Path(__file__).parents[1]

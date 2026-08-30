@@ -2,12 +2,12 @@ import csv
 import os
 
 import thoipapy
-from thoipapy.artefacts import ArtefactPaths
 import thoipapy.utils
+from thoipapy.artefacts import ArtefactPaths
 
 
 def create_PSSM_from_MSA_mult_prot(paths: ArtefactPaths, df_set, logging):
-    """ Runs create_PSSM_from_MSA for each protein in a list.
+    """Runs create_PSSM_from_MSA for each protein in a list.
 
     Parameters
     ----------
@@ -24,7 +24,7 @@ def create_PSSM_from_MSA_mult_prot(paths: ArtefactPaths, df_set, logging):
     -------
 
     """
-    logging.info('start pssm calculation')
+    logging.info("start pssm calculation")
     for i in df_set.index:
         acc = df_set.loc[i, "acc"]
         database = df_set.loc[i, "database"]
@@ -58,11 +58,36 @@ def create_PSSM_from_MSA(path_uniq_TMD_seqs_for_PSSM_FREECONTACT, pssm_csv, acc,
     """
     if os.path.isfile(path_uniq_TMD_seqs_for_PSSM_FREECONTACT):
         thoipapy.utils.make_sure_path_exists(pssm_csv, isfile=True)
-        with open(pssm_csv, 'w') as pssm_file_handle:
+        with open(pssm_csv, "w") as pssm_file_handle:
             mat = []
             writer = csv.writer(pssm_file_handle)
-            writer.writerow(['residue_num', 'residue_name', 'A', 'I', 'L', 'V', 'F', 'W', 'Y', 'N', 'C', 'Q', 'M', 'S', 'T', 'D', 'E', 'R', 'H', 'K', 'G', 'P'])
-            with open(path_uniq_TMD_seqs_for_PSSM_FREECONTACT, "r") as f:
+            writer.writerow(
+                [
+                    "residue_num",
+                    "residue_name",
+                    "A",
+                    "I",
+                    "L",
+                    "V",
+                    "F",
+                    "W",
+                    "Y",
+                    "N",
+                    "C",
+                    "Q",
+                    "M",
+                    "S",
+                    "T",
+                    "D",
+                    "E",
+                    "R",
+                    "H",
+                    "K",
+                    "G",
+                    "P",
+                ]
+            )
+            with open(path_uniq_TMD_seqs_for_PSSM_FREECONTACT) as f:
                 for line in f.readlines():
                     # strip removes \n. Input currently is not FASTA, no need to check for >
                     mat.append(list(line.strip()))
@@ -75,8 +100,10 @@ def create_PSSM_from_MSA(path_uniq_TMD_seqs_for_PSSM_FREECONTACT, pssm_csv, acc,
             # number of residues in each sequence
             n_residues = len(mat[0])
             if n_residues != len(TMD_seq):
-                raise ValueError("Alignment length does not match TMD length. Check that appropriate TMD_seq (or TMD_seq_surr5) has been inserted."
-                                 "TMD_seq : {}, first line of alignment = {}".format(TMD_seq, mat[0]))
+                raise ValueError(
+                    "Alignment length does not match TMD length. Check that appropriate TMD_seq (or TMD_seq_surr5) has been inserted."
+                    f"TMD_seq : {TMD_seq}, first line of alignment = {mat[0]}"
+                )
             # number of sequences in alignment
             n_seqs = len(mat)
             column = []
@@ -93,10 +120,28 @@ def create_PSSM_from_MSA(path_uniq_TMD_seqs_for_PSSM_FREECONTACT, pssm_csv, acc,
                     # append the residue in that column
                     # this results in a list of residues at that column position, for all sequences
                     column.append(mat[i][j])
-                aa_num = [column.count('A') / n_seqs, column.count('I') / n_seqs, column.count('L') / n_seqs, column.count('V') / n_seqs, column.count('F') / n_seqs,
-                          column.count('W') / n_seqs, column.count('Y') / n_seqs, column.count('N') / n_seqs, column.count('C') / n_seqs, column.count('Q') / n_seqs,
-                          column.count('M') / n_seqs, column.count('S') / n_seqs, column.count('T') / n_seqs, column.count('D') / n_seqs, column.count('E') / n_seqs,
-                          column.count('R') / n_seqs, column.count('H') / n_seqs, column.count('K') / n_seqs, column.count('G') / n_seqs, column.count('P') / n_seqs]
+                aa_num = [
+                    column.count("A") / n_seqs,
+                    column.count("I") / n_seqs,
+                    column.count("L") / n_seqs,
+                    column.count("V") / n_seqs,
+                    column.count("F") / n_seqs,
+                    column.count("W") / n_seqs,
+                    column.count("Y") / n_seqs,
+                    column.count("N") / n_seqs,
+                    column.count("C") / n_seqs,
+                    column.count("Q") / n_seqs,
+                    column.count("M") / n_seqs,
+                    column.count("S") / n_seqs,
+                    column.count("T") / n_seqs,
+                    column.count("D") / n_seqs,
+                    column.count("E") / n_seqs,
+                    column.count("R") / n_seqs,
+                    column.count("H") / n_seqs,
+                    column.count("K") / n_seqs,
+                    column.count("G") / n_seqs,
+                    column.count("P") / n_seqs,
+                ]
                 # add the residue name to the second column
                 aa_num.insert(0, TMD_seq[j])
                 # aa_num.insert(0, mat[0][j])  #DEPRECATED: Assumes that first sequence is always the original sequence (will break as soon as this is not the case...)
@@ -107,7 +152,7 @@ def create_PSSM_from_MSA(path_uniq_TMD_seqs_for_PSSM_FREECONTACT, pssm_csv, acc,
                 """
                 writer.writerow(aa_num)
                 column = []
-            logging.info('{} pssm calculation finished ({})'.format(acc, pssm_csv))
+            logging.info(f"{acc} pssm calculation finished ({pssm_csv})")
 
     else:
-        logging.warning("{} homo_filter_fasta_file does not exist({})".format(acc, path_uniq_TMD_seqs_for_PSSM_FREECONTACT))
+        logging.warning(f"{acc} homo_filter_fasta_file does not exist({path_uniq_TMD_seqs_for_PSSM_FREECONTACT})")

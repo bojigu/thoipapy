@@ -1,8 +1,8 @@
 """Tests for the typed pipeline stage flags."""
-from dataclasses import fields
+
+from dataclasses import FrozenInstanceError, fields
 
 import pytest
-
 from thoipapy.common import create_settingdict
 from thoipapy.paths import RUN_SETTINGS_CSV, STANDALONE_SETTINGS_CSV
 from thoipapy.run_settings import RunSettings
@@ -15,14 +15,23 @@ def test_missing_flags_default_to_off():
     assert stages.train_machine_learning_model is False
 
 
-@pytest.mark.parametrize("raw,expected", [
-    (True, True), (False, False),
-    (1, True), (0, False),
-    ("TRUE", True), ("FALSE", False),
-    ("true", True), ("false", False),
-    ("T", True), ("F", False),
-    ("Yes", True), ("no", False),
-])
+@pytest.mark.parametrize(
+    "raw,expected",
+    [
+        (True, True),
+        (False, False),
+        (1, True),
+        (0, False),
+        ("TRUE", True),
+        ("FALSE", False),
+        ("true", True),
+        ("false", False),
+        ("T", True),
+        ("F", False),
+        ("Yes", True),
+        ("no", False),
+    ],
+)
 def test_boolean_coercion(raw, expected):
     """The spreadsheet's type column is unreliable, so values are coerced here instead.
 
@@ -46,7 +55,7 @@ def test_unrecognised_values_are_rejected_at_load_time(bad):
 
 def test_is_frozen():
     stages = RunSettings.from_settings({})
-    with pytest.raises(Exception):
+    with pytest.raises(FrozenInstanceError):
         stages.pssm_calculation = True
 
 
@@ -69,8 +78,14 @@ def test_builds_from_the_shipped_settings_files(settings_csv):
 def test_standalone_settings_enable_the_feature_pipeline():
     """Pins what the shipped standalone settings actually switch on."""
     stages = RunSettings.from_settings(create_settingdict(STANDALONE_SETTINGS_CSV))
-    for stage in ["pssm_calculation", "entropy_calculation", "rate4site_calculation",
-                  "coevolution_calculation", "lips_score_calculation", "motifs_from_seq"]:
+    for stage in [
+        "pssm_calculation",
+        "entropy_calculation",
+        "rate4site_calculation",
+        "coevolution_calculation",
+        "lips_score_calculation",
+        "motifs_from_seq",
+    ]:
         assert getattr(stages, stage) is True, f"{stage} should be enabled"
     # validation is off, and known to be broken
     assert stages.run_validation is False

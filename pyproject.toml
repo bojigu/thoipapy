@@ -109,17 +109,39 @@ markers = [
     "requires_tool(*names): needs external command-line programs; skipped if absent.",
 ]
 
+[tool.black]
+line-length = 120
+target-version = ["py312"]
+
 [tool.ruff]
-line-length = 200
 target-version = "py312"
+line-length = 120
+src = ["thoipapy", "scripts", "test"]
 
 [tool.ruff.lint]
-# Genuine errors only: syntax errors, undefined names, broken f-strings, duplicate arguments.
-# Style rules are deliberately excluded for now -- enabling them on this codebase produces ~100
-# findings in code that predates the house style and is not being touched by this upgrade.
-# Deliberately narrow: syntax errors, undefined names and obviously broken comparisons only.
-# Worth considering: F841 (dead assignment) and ARG001 (unused argument) together catch the
-# failure mode where a mechanical rename matches inside a string subscript, turning
-# df["col"] = x into dfcol = x. Both are currently off because the existing code has 62 and 42
-# pre-existing hits respectively, so turning them on is a cleanup project, not a config change.
-select = ["E9", "F63", "F7", "F82"]
+# Matches the DataCatalysis house rule set. T20 (flake8-print) keeps the pipeline on `logging`:
+# a print goes to a terminal nobody keeps, so anything it reported is gone once the run ends.
+select = ["E", "F", "W", "I", "UP", "B", "T20"]
+ignore = ["E501", "B905"]
+
+[tool.ruff.lint.per-file-ignores]
+# Tests report through pytest, and the build script is an interactive tool rather than a
+# recorded pipeline step.
+"test/**" = ["T20"]
+"scripts/**" = ["T20"]
+# These modules run a statement before their imports -- selecting the matplotlib backend, or
+# installing a warnings filter -- which has to happen before the package it applies to is
+# imported. Their imports therefore cannot all sit at the top of the file.
+"thoipapy/predict.py" = ["E402"]
+"thoipapy/features/combine_features.py" = ["E402"]
+"thoipapy/run.py" = ["E402"]
+"thoipapy/paper_figures/create_BOcurve_files.py" = ["E402"]
+"thoipapy/paper_figures/create_heatmap_from_merge_file.py" = ["E402"]
+
+[tool.ruff.lint.isort]
+combine-as-imports = true
+
+[tool.mypy]
+python_version = "3.13"
+ignore_missing_imports = true
+allow_untyped_globals = true

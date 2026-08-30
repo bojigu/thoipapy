@@ -1,11 +1,13 @@
 import os
 import sys
+
 import numpy as np
 import pandas as pd
 from matplotlib import pyplot as plt
 from pytoxr.mathfunctions import residuals, sine_perfect_helix
 from scipy.optimize import leastsq
 from scipy.stats import ttest_ind
+
 from thoipapy.utils import create_colour_lists, make_sure_path_exists
 
 
@@ -14,7 +16,13 @@ def get_pivot_table_coev_data(s, i, XI, df_set):
     database = df_set.loc[i, "database"]
     TMD_start = int(df_set.loc[i, "TMD_start"])
     TMD_end = int(df_set.loc[i, "TMD_end"])
-    freecontact_file = os.path.join(s["data_dir"], "features", "coevolution", database, "{}.surr{}.gaps{}.freecontact.csv".format(acc, s["num_of_sur_residues"], s["max_n_gaps_in_TMD_subject_seq"]))
+    freecontact_file = os.path.join(
+        s["data_dir"],
+        "features",
+        "coevolution",
+        database,
+        "{}.surr{}.gaps{}.freecontact.csv".format(acc, s["num_of_sur_residues"], s["max_n_gaps_in_TMD_subject_seq"]),
+    )
 
     df = pd.read_csv(freecontact_file, sep=" ", header=None)
     df.columns = ["n1", "res1", "n2", "res2", "MI", "DI"]
@@ -34,12 +42,12 @@ def get_pivot_table_coev_data(s, i, XI, df_set):
 
     """ asymmetrical pivoted data
 
-         235       236       237       238       239       240 ...        252       253       254       255       256       
-    n1                                                     ...                                                              
-    235   0.243618  0.404760  0.017704  0.106223  0.244482 ...   0.132235  0.219876  0.198667  0.360217  0.320984  0.145523 
-    236        NaN  0.332451  0.140595  0.000747  0.151737 ...   0.217048  0.403469  0.174750  0.286540  0.357700  0.044577 
-    237        NaN       NaN  0.062405  0.173925  0.353367 ...   0.336857  0.657512  0.418125  0.521322  0.538269  0.229414 
-    238        NaN       NaN       NaN  0.049759  0.044692 ...   0.119658  0.236728  0.080722  0.114663  0.064796  0.096822 
+         235       236       237       238       239       240 ...        252       253       254       255       256
+    n1                                                     ...
+    235   0.243618  0.404760  0.017704  0.106223  0.244482 ...   0.132235  0.219876  0.198667  0.360217  0.320984  0.145523
+    236        NaN  0.332451  0.140595  0.000747  0.151737 ...   0.217048  0.403469  0.174750  0.286540  0.357700  0.044577
+    237        NaN       NaN  0.062405  0.173925  0.353367 ...   0.336857  0.657512  0.418125  0.521322  0.538269  0.229414
+    238        NaN       NaN       NaN  0.049759  0.044692 ...   0.119658  0.236728  0.080722  0.114663  0.064796  0.096822
     """
     # get full list of residues
     position_list = range(TMD_start, TMD_end + 1)
@@ -75,8 +83,10 @@ def calc_coev_vs_res_dist(s, df_set, logging):
 
     """
 
-    logging.info('calc_coev_vs_res_dist starting')
-    coev_vs_res_dist_xlsx = os.path.join(s["data_dir"], "results", s["setname"], "{}_coev_vs_res_dist.xlsx".format(s["setname"]))
+    logging.info("calc_coev_vs_res_dist starting")
+    coev_vs_res_dist_xlsx = os.path.join(
+        s["data_dir"], "results", s["setname"], "{}_coev_vs_res_dist.xlsx".format(s["setname"])
+    )
     writer = pd.ExcelWriter(coev_vs_res_dist_xlsx)
 
     for XI in ["MI", "DI"]:
@@ -93,9 +103,9 @@ def calc_coev_vs_res_dist(s, df_set, logging):
             dfp = get_pivot_table_coev_data(s, i, XI, df_set)
 
             """dfp pivot table has a symmetric coevolution values between all residues
-            
+
                     307       308       309       310       311       312       313       314       315       316    ...          326       327       328       329       330       331       332       333       334       335
-            n1                                                                                                         ...                                                                                                       
+            n1                                                                                                         ...
             307       NaN  0.233388  0.251910  0.257193  0.365270  0.468933  0.313458  0.253943  0.278989  0.297606    ...     0.206634  0.153770  0.271118  0.364004  0.185186  0.286575  0.166321  0.313355  0.269962  0.307910
             308  0.233388       NaN  0.194896  0.290690  0.230827  0.300403  0.371423  0.149162  0.250657  0.283342    ...     0.130392  0.135035  0.317070  0.266557  0.134991  0.244770  0.164932  0.211624  0.185211  0.155684
             309  0.251910  0.194896       NaN  0.376993  0.401137  0.480202  0.313931  0.298846  0.336291  0.317149    ...     0.253053  0.229490  0.359081  0.366537  0.203667  0.264654  0.221240  0.373255  0.300027  0.240920
@@ -159,20 +169,20 @@ def calc_coev_vs_res_dist(s, df_set, logging):
 
                 # add mean for this distance(b) to summary dictionary
                 if not np.isnan(mean_for_this_dist):
-                    coev_dist_dict[b] = float("{:.03f}".format(mean_for_this_dist))
+                    coev_dist_dict[b] = float(f"{mean_for_this_dist:.03f}")
                 if not np.isnan(mean_Cterm):
-                    N_coev_dist_dict[b] = float("{:.03f}".format(mean_Cterm))
+                    N_coev_dist_dict[b] = float(f"{mean_Cterm:.03f}")
 
             # add summary values for this TMD to the output dicts
             nested_coev_dist_dict[acc_db] = coev_dist_dict
             nested_Cterm_dist_dict[acc_db] = N_coev_dist_dict
 
         # save output dicts with all TMD values to excel
-        pd.DataFrame(nested_coev_dist_dict).to_excel(writer, sheet_name="coev_{}".format(XI))
-        pd.DataFrame(nested_Cterm_dist_dict).to_excel(writer, sheet_name="C_{}".format(XI))
+        pd.DataFrame(nested_coev_dist_dict).to_excel(writer, sheet_name=f"coev_{XI}")
+        pd.DataFrame(nested_Cterm_dist_dict).to_excel(writer, sheet_name=f"C_{XI}")
 
     writer.close()
-    logging.info('calc_coev_vs_res_dist finished')
+    logging.info("calc_coev_vs_res_dist finished")
 
 
 def plot_coev_vs_res_dist(s, logging):
@@ -195,16 +205,18 @@ def plot_coev_vs_res_dist(s, logging):
     -------
 
     """
-    logging.info('plot_coev_vs_res_dist starting')
+    logging.info("plot_coev_vs_res_dist starting")
     plt.rcParams["font.family"] = "Verdana"
     plt.rcParams["font.family"] = "Verdana"
     colour_dict = create_colour_lists()
-    blue1 = colour_dict["TUM_colours"]['TUM1']
-    blue5 = colour_dict["TUM_colours"]['TUM5']
-    TUMblue = colour_dict["TUM_colours"]['TUMBlue']
+    colour_dict["TUM_colours"]["TUM1"]
+    colour_dict["TUM_colours"]["TUM5"]
+    TUMblue = colour_dict["TUM_colours"]["TUMBlue"]
 
     fontsize = 9
-    coev_vs_res_dist_xlsx = os.path.join(s["data_dir"], "results", s["setname"], "{}_coev_vs_res_dist.xlsx".format(s["setname"]))
+    coev_vs_res_dist_xlsx = os.path.join(
+        s["data_dir"], "results", s["setname"], "{}_coev_vs_res_dist.xlsx".format(s["setname"])
+    )
 
     fig, ax = plt.subplots(figsize=(4.5, 3.42))
 
@@ -219,14 +231,13 @@ def plot_coev_vs_res_dist(s, logging):
     y_helical = [1, 0] * 7
     # fit to a perfect helix starting at 0 using leastsq
     sine_constants_guess_perfhelix = [1.575, 0.5]
-    sine_constants_perfhelix1, cov_perfhelix, infodict_perfhelix, mesg_perfhelix, ier_perfhelix = leastsq(residuals,
-                                                                                                          sine_constants_guess_perfhelix,
-                                                                                                          args=(sine_perfect_helix, x_helical, y_helical),
-                                                                                                          full_output=1)
+    sine_constants_perfhelix1, cov_perfhelix, infodict_perfhelix, mesg_perfhelix, ier_perfhelix = leastsq(
+        residuals, sine_constants_guess_perfhelix, args=(sine_perfect_helix, x_helical, y_helical), full_output=1
+    )
 
     # create smooth sine curve x-points
     x_rng = np.linspace(0, 20, 200)
-    logging.info("sine_constants_perfhelix1 : {}".format(sine_constants_perfhelix1))
+    logging.info(f"sine_constants_perfhelix1 : {sine_constants_perfhelix1}")
     # adjust the height as desired
     sine_constants_fixed_centre = (sine_constants_perfhelix1[0], 0)
     # fit and plot
@@ -255,20 +266,24 @@ def plot_coev_vs_res_dist(s, logging):
 
     # plot MI on secondary axis
     ax2 = ax.twinx()
-    df = pd.read_excel(coev_vs_res_dist_xlsx, sheet_name="{}MI".format(excel_tab))
+    df = pd.read_excel(coev_vs_res_dist_xlsx, sheet_name=f"{excel_tab}MI")
     mean_ser = df.mean(axis=1)
-    mean_ser.plot(ax=ax2, label="mutual information (MI)", fontsize=fontsize, color=colour_dict["TUM_accents"]['orange'])
+    mean_ser.plot(
+        ax=ax2, label="mutual information (MI)", fontsize=fontsize, color=colour_dict["TUM_accents"]["orange"]
+    )
 
-    df = pd.read_excel(coev_vs_res_dist_xlsx, sheet_name="{}DI".format(excel_tab))
+    df = pd.read_excel(coev_vs_res_dist_xlsx, sheet_name=f"{excel_tab}DI")
     mean_ser = df.mean(axis=1)
     mean_ser.plot(ax=ax, label="direct information (DI)", fontsize=fontsize, color=TUMblue)
 
     # axis colours
-    ax2.tick_params("y", colors=colour_dict["TUM_accents"]['orange'])
+    ax2.tick_params("y", colors=colour_dict["TUM_accents"]["orange"])
     ax.tick_params("y", colors=TUMblue)
     # axis labels
     ax.set_ylabel("mean DI coevolution score", labelpad=-3, fontsize=fontsize, color=TUMblue)
-    ax2.set_ylabel("mean MI coevolution score", labelpad=1, fontsize=fontsize, color=colour_dict["TUM_accents"]['orange'])
+    ax2.set_ylabel(
+        "mean MI coevolution score", labelpad=1, fontsize=fontsize, color=colour_dict["TUM_accents"]["orange"]
+    )
 
     ax.set_xlabel("residue distance", fontsize=fontsize)
 
@@ -281,7 +296,7 @@ def plot_coev_vs_res_dist(s, logging):
     handles, labels = ax.get_legend_handles_labels()
     handles = [handles[1], handles[0]]
     labels = [labels[1], labels[0]]
-    ax.legend(handles, labels, ncol=1, loc=1, fontsize=fontsize, frameon=True, facecolor='white')
+    ax.legend(handles, labels, ncol=1, loc=1, fontsize=fontsize, frameon=True, facecolor="white")
     # fig.legend(fontsize=fontsize, loc="upper right", bbox_to_anchor=[0.85, 0.95])
     fig.tight_layout()
     fig.savefig(figpath, dpi=240)
@@ -289,16 +304,28 @@ def plot_coev_vs_res_dist(s, logging):
 
 
 def calc_retrospective_coev_from_list_interf_res(s, df_set, logging):
-    logging.info('calc_retrospective_coev_from_list_interf_res starting')
+    logging.info("calc_retrospective_coev_from_list_interf_res starting")
 
     result_dict = {}
 
     for randomise_int_res in [False, True]:
 
-        if randomise_int_res == True:
-            retrospective_coev_from_list_interf_res_xlsx = os.path.join(s["data_dir"], "results", s["setname"], "retrospective", "{}_retrospective_coev_from_list_interf_res_random.xlsx".format(s["setname"]))
+        if randomise_int_res:
+            retrospective_coev_from_list_interf_res_xlsx = os.path.join(
+                s["data_dir"],
+                "results",
+                s["setname"],
+                "retrospective",
+                "{}_retrospective_coev_from_list_interf_res_random.xlsx".format(s["setname"]),
+            )
         else:
-            retrospective_coev_from_list_interf_res_xlsx = os.path.join(s["data_dir"], "results", s["setname"], "retrospective", "{}_retrospective_coev_from_list_interf_res.xlsx".format(s["setname"]))
+            retrospective_coev_from_list_interf_res_xlsx = os.path.join(
+                s["data_dir"],
+                "results",
+                s["setname"],
+                "retrospective",
+                "{}_retrospective_coev_from_list_interf_res.xlsx".format(s["setname"]),
+            )
 
         if not os.path.exists(os.path.join(s["data_dir"], "results", s["setname"], "retrospective")):
             os.makedirs(os.path.join(s["data_dir"], "results", s["setname"], "retrospective"))
@@ -306,7 +333,9 @@ def calc_retrospective_coev_from_list_interf_res(s, df_set, logging):
 
         # randomise_int_res = False
         remove_residues_outside_interface_region = False
-        logging.info("randomise_int_res = {}, remove_residues_outside_interface_region = {}".format(randomise_int_res, remove_residues_outside_interface_region))
+        logging.info(
+            f"randomise_int_res = {randomise_int_res}, remove_residues_outside_interface_region = {remove_residues_outside_interface_region}"
+        )
         InterResList_of_last_TMD = None
         NoninterResList_of_last_TMD = None
         TMD_start_of_last_TMD = None
@@ -321,19 +350,43 @@ def calc_retrospective_coev_from_list_interf_res(s, df_set, logging):
                     is_first_TMD = True
                 else:
                     is_first_TMD = False
-                sub_dict, InterResList_of_last_TMD, NoninterResList_of_last_TMD, TMD_start_of_last_TMD = calc_retrospective_coev_from_list_interf_res_single_prot(sub_dict, s, logging, i, XI, is_first_TMD, df_set,
-                                                                                                                                                                  randomise_int_res, InterResList_of_last_TMD,
-                                                                                                                                                                  NoninterResList_of_last_TMD, TMD_start_of_last_TMD,
-                                                                                                                                                                  remove_residues_outside_interface_region)
+                sub_dict, InterResList_of_last_TMD, NoninterResList_of_last_TMD, TMD_start_of_last_TMD = (
+                    calc_retrospective_coev_from_list_interf_res_single_prot(
+                        sub_dict,
+                        s,
+                        logging,
+                        i,
+                        XI,
+                        is_first_TMD,
+                        df_set,
+                        randomise_int_res,
+                        InterResList_of_last_TMD,
+                        NoninterResList_of_last_TMD,
+                        TMD_start_of_last_TMD,
+                        remove_residues_outside_interface_region,
+                    )
+                )
 
-            if randomise_int_res == True:
+            if randomise_int_res:
                 # need to add the data for the first TMD, which was skipped above
                 i = 0
                 is_first_TMD = False
-                sub_dict, InterResList_of_last_TMD, NoninterResList_of_last_TMD, TMD_start_of_last_TMD = calc_retrospective_coev_from_list_interf_res_single_prot(sub_dict, s, logging, i, XI, is_first_TMD, df_set,
-                                                                                                                                                                  randomise_int_res, InterResList_of_last_TMD,
-                                                                                                                                                                  NoninterResList_of_last_TMD, TMD_start_of_last_TMD,
-                                                                                                                                                                  remove_residues_outside_interface_region)
+                sub_dict, InterResList_of_last_TMD, NoninterResList_of_last_TMD, TMD_start_of_last_TMD = (
+                    calc_retrospective_coev_from_list_interf_res_single_prot(
+                        sub_dict,
+                        s,
+                        logging,
+                        i,
+                        XI,
+                        is_first_TMD,
+                        df_set,
+                        randomise_int_res,
+                        InterResList_of_last_TMD,
+                        NoninterResList_of_last_TMD,
+                        TMD_start_of_last_TMD,
+                        remove_residues_outside_interface_region,
+                    )
+                )
             # save each MI and DI separately
             df_retro = pd.DataFrame(sub_dict).T
             df_retro.to_excel(writer, sheet_name=XI)
@@ -359,29 +412,47 @@ def calc_retrospective_coev_from_list_interf_res(s, df_set, logging):
             n_TMDs_total = df_retro.shape[0]
             perc_higher_int = n_TMDs_with_higher_int / n_TMDs_total
 
-            logging.info(f"\n{perc_higher_int * 100:.2f} % ({n_TMDs_with_higher_int}/{n_TMDs_total}) of TMDs have higher {XI} of interface than non-interface")
+            logging.info(
+                f"\n{perc_higher_int * 100:.2f} % ({n_TMDs_with_higher_int}/{n_TMDs_total}) of TMDs have higher {XI} of interface than non-interface"
+            )
 
-            logging.info("\n\nmean values\n{}\n".format(df_retro.mean()))
+            logging.info(f"\n\nmean values\n{df_retro.mean()}\n")
 
             t_value, p_value = ttest_ind(df_retro.AverageInter, df_retro.AverageNoninter)
 
             # logging.info("remove_residues_outside_interface_region = {}".format(remove_residues_outside_interface_region))
             logging.info(f"\np-value for average {XI} coevolution of interface vs non-interface = {p_value:.03f}")
 
-            result_dict[randomise_int_res] = {XI: {"n_TMDs_with_higher_int": n_TMDs_with_higher_int,
-                                                   "n_TMDs_total": n_TMDs_total,
-                                                   "perc_higher_int": perc_higher_int,
-                                                   "p_value": p_value}}
+            result_dict[randomise_int_res] = {
+                XI: {
+                    "n_TMDs_with_higher_int": n_TMDs_with_higher_int,
+                    "n_TMDs_total": n_TMDs_total,
+                    "perc_higher_int": perc_higher_int,
+                    "p_value": p_value,
+                }
+            }
 
         writer.close()
 
-    df = pd.DataFrame(result_dict)
+    pd.DataFrame(result_dict)
     sys.stdout.write("\n")
-    logging.info('calc_retrospective_coev_from_list_interf_res finished')
+    logging.info("calc_retrospective_coev_from_list_interf_res finished")
 
 
-def calc_retrospective_coev_from_list_interf_res_single_prot(sub_dict, s, logging, i, XI, is_first_TMD, df_set, randomise_int_res, InterResList_of_last_TMD, NoninterResList_of_last_TMD, TMD_start_of_last_TMD,
-                                                             remove_residues_outside_interface_region):
+def calc_retrospective_coev_from_list_interf_res_single_prot(
+    sub_dict,
+    s,
+    logging,
+    i,
+    XI,
+    is_first_TMD,
+    df_set,
+    randomise_int_res,
+    InterResList_of_last_TMD,
+    NoninterResList_of_last_TMD,
+    TMD_start_of_last_TMD,
+    remove_residues_outside_interface_region,
+):
     """Calculate average fraction of DI for a single protein.
 
     PANDAS METHOD USED FOR ETRA DATASET.
@@ -431,8 +502,22 @@ def calc_retrospective_coev_from_list_interf_res_single_prot(sub_dict, s, loggin
     TMD_start = int(df_set.loc[i, "TMD_start"])
     TMD_end = int(df_set.loc[i, "TMD_end"])
     TMD_len = TMD_end - TMD_start
-    freecontact_file = os.path.join(s["data_dir"], "features", "coevolution", database, "{}.surr{}.gaps{}.freecontact.csv".format(acc, s["num_of_sur_residues"], s["max_n_gaps_in_TMD_subject_seq"]))
-    feature_combined_file = os.path.join(s["data_dir"], "features", "combined", database, "{}.surr{}.gaps{}.combined_features.csv".format(acc, s["num_of_sur_residues"], s["max_n_gaps_in_TMD_subject_seq"]))
+    freecontact_file = os.path.join(
+        s["data_dir"],
+        "features",
+        "coevolution",
+        database,
+        "{}.surr{}.gaps{}.freecontact.csv".format(acc, s["num_of_sur_residues"], s["max_n_gaps_in_TMD_subject_seq"]),
+    )
+    feature_combined_file = os.path.join(
+        s["data_dir"],
+        "features",
+        "combined",
+        database,
+        "{}.surr{}.gaps{}.combined_features.csv".format(
+            acc, s["num_of_sur_residues"], s["max_n_gaps_in_TMD_subject_seq"]
+        ),
+    )
 
     df = pd.read_csv(freecontact_file, sep=" ", header=None)
     df.columns = ["n1", "res1", "n2", "res2", "MI", "DI"]
@@ -452,12 +537,12 @@ def calc_retrospective_coev_from_list_interf_res_single_prot(sub_dict, s, loggin
 
     """ asymmetrical pivoted data
 
-         235       236       237       238       239       240 ...        252       253       254       255       256       
-    n1                                                     ...                                                              
-    235   0.243618  0.404760  0.017704  0.106223  0.244482 ...   0.132235  0.219876  0.198667  0.360217  0.320984  0.145523 
-    236        NaN  0.332451  0.140595  0.000747  0.151737 ...   0.217048  0.403469  0.174750  0.286540  0.357700  0.044577 
-    237        NaN       NaN  0.062405  0.173925  0.353367 ...   0.336857  0.657512  0.418125  0.521322  0.538269  0.229414 
-    238        NaN       NaN       NaN  0.049759  0.044692 ...   0.119658  0.236728  0.080722  0.114663  0.064796  0.096822 
+         235       236       237       238       239       240 ...        252       253       254       255       256
+    n1                                                     ...
+    235   0.243618  0.404760  0.017704  0.106223  0.244482 ...   0.132235  0.219876  0.198667  0.360217  0.320984  0.145523
+    236        NaN  0.332451  0.140595  0.000747  0.151737 ...   0.217048  0.403469  0.174750  0.286540  0.357700  0.044577
+    237        NaN       NaN  0.062405  0.173925  0.353367 ...   0.336857  0.657512  0.418125  0.521322  0.538269  0.229414
+    238        NaN       NaN       NaN  0.049759  0.044692 ...   0.119658  0.236728  0.080722  0.114663  0.064796  0.096822
     """
     # get full list of residues
     position_list = range(TMD_start, TMD_end + 1)
@@ -470,7 +555,7 @@ def calc_retrospective_coev_from_list_interf_res_single_prot(sub_dict, s, loggin
     """dfp now contains the coevolution data as a symmetrical dataframe, from each residue to the other
 
               192       193       194       195       196       197       198       199       200       201    ...          210       211       212       213       214       215       216       217       218       219
-    n1                                                                                                         ...                                                                                                       
+    n1                                                                                                         ...
     192       NaN  0.092237  0.026186  0.126701  0.108622  0.107383  0.075048  0.070287  0.084822  0.037957    ...     0.152848  0.074908  0.073767  0.159693  0.044335  0.092576  0.057039  0.176549  0.076715  0.066157
     193  0.092237       NaN  0.089528  0.137392  0.112203  0.153103  0.114659  0.173971  0.134006  0.091982    ...     0.237441  0.107704  0.097004  0.216488  0.146309  0.100271  0.101273  0.301949  0.105543  0.193257
     194  0.026186  0.089528       NaN  0.102470  0.078647  0.138274  0.141817  0.142261  0.133799  0.079009    ...     0.172375  0.111071  0.121039  0.171232  0.106160  0.095982  0.188747  0.230212  0.093526  0.217379
@@ -478,7 +563,7 @@ def calc_retrospective_coev_from_list_interf_res_single_prot(sub_dict, s, loggin
     196  0.108622  0.112203  0.078647  0.162021       NaN  0.147395  0.106920  0.186598  0.170876  0.074893    ...     0.152920  0.130958  0.104620  0.165248  0.071461  0.117822  0.113831  0.243438  0.097208  0.153550
     197  0.107383  0.153103  0.138274  0.124095  0.147395       NaN  0.185372  0.300418  0.254464  0.135116    ...     0.294558  0.214323  0.237466  0.396039  0.111643  0.203568  0.221890  0.442481  0.167183  0.255704
     198  0.075048  0.114659  0.141817  0.131162  0.106920  0.185372       NaN  0.188028  0.174667  0.158833    ...     0.145839  0.134066  0.147938  0.256873  0.098789  0.146614  0.202526  0.266566  0.114003  0.211277
-    199  
+    199
     """
 
     # open combined file with interface definitions
@@ -500,7 +585,7 @@ def calc_retrospective_coev_from_list_interf_res_single_prot(sub_dict, s, loggin
         NoninterResList = [x for x in NoninterResList if lowest_interface_res < x < highest_interface_res]
         # logging.info("final NoninterResList = {}".format(NoninterResList))
 
-    if randomise_int_res == False:
+    if not randomise_int_res:
         # calculate mean coevolution values for the desired selection of the dataframe.
         # Note that the values are symmetric and doubled ([235,236] and also [236,235])
         # but the mean will be unaffected
@@ -508,10 +593,10 @@ def calc_retrospective_coev_from_list_interf_res_single_prot(sub_dict, s, loggin
         mean_XI_noninterface = dfp.loc[NoninterResList, NoninterResList].mean().mean()
 
         sub_dict[acc] = {"AverageInter": mean_XI_interface, "AverageNoninter": mean_XI_noninterface}
-    elif randomise_int_res == True and is_first_TMD == True:
+    elif randomise_int_res and is_first_TMD:
         # can't used the interface residues from previous protein
         pass
-    elif randomise_int_res == True and is_first_TMD != True:
+    elif randomise_int_res and not is_first_TMD:
         # FOR RANDOMISATION, THE ORIGINAL INDEXING BASED ON AA NUMBERS MUST BE REPLACED BY RANGE INDEXING
 
         # convert from amino acid numbering to a range index by subtracting the TMD_start
@@ -602,7 +687,7 @@ def calc_retrospective_coev_from_struct_contacts(s, dfset, logging):
      - this is named as "last TMD" because the randomisation takes took? the positions of first TMD and applied them to the last
 
     Takes pairwise coevolution values from FreeContact output file.
-    E.g. D:\thoipa_base_dir\THOIPA_data\Features\coevolution\ NMR\O15455.surr20.gaps5.freecontact.csv
+    E.g. D:\thoipa_base_dir\\THOIPA_data\\Features\\coevolution\\ NMR\\O15455.surr20.gaps5.freecontact.csv
     Data looks like this:
     1 F 2 F 0.195863 0.552187
     1 F 3 M 0.172853 -0.530669
@@ -641,14 +726,20 @@ def calc_retrospective_coev_from_struct_contacts(s, dfset, logging):
     -------
 
     """
-    logging.info('calc_retrospective_coev_from_struct_contacts starting')
+    logging.info("calc_retrospective_coev_from_struct_contacts starting")
 
-    # if randomise_int_res == True:
+    # if randomise_int_res:
     #     retrospective_coev_xlsx = os.path.join(s["data_dir"], "results", s["setname"], "retrospective", "{}_retrospective_coev_from_struct_contact_random.xlsx".format(s["setname"]))
     # else:
     #     retrospective_coev_xlsx = os.path.join(s["data_dir"], "results", s["setname"], "retrospective", "{}_retrospective_coev_from_struct_contact.xlsx".format(s["setname"]))
 
-    retrospective_coev_xlsx = os.path.join(s["data_dir"], "results", s["setname"], "retrospective", "{}_retrospective_coev_from_struct_contact.xlsx".format(s["setname"]))
+    retrospective_coev_xlsx = os.path.join(
+        s["data_dir"],
+        "results",
+        s["setname"],
+        "retrospective",
+        "{}_retrospective_coev_from_struct_contact.xlsx".format(s["setname"]),
+    )
     make_sure_path_exists(retrospective_coev_xlsx, isfile=True)
     writer = pd.ExcelWriter(retrospective_coev_xlsx)
 
@@ -656,16 +747,20 @@ def calc_retrospective_coev_from_struct_contacts(s, dfset, logging):
 
     for randomise_int_res in [False, True]:
         # suffix for excel tabs e.g. "DI" and "DI_rand"
-        suffix = "_rand" if randomise_int_res == True else ""
+        suffix = "_rand" if randomise_int_res else ""
 
         remove_residues_outside_interface_region = False
-        logging.info("randomise_int_res = {}, remove_residues_outside_interface_region = {}".format(randomise_int_res, remove_residues_outside_interface_region))
+        logging.info(
+            f"randomise_int_res = {randomise_int_res}, remove_residues_outside_interface_region = {remove_residues_outside_interface_region}"
+        )
         InterPairList_of_last_TMD = None
         NonInterPairList_of_last_TMD = None
         TMD_start_of_last_TMD = None
-        crystal_NMR_interpair_file = os.path.join(s["data_dir"], "results", "Average_Fraction_DI", "Crystal_NMR_interpair.csv")
+        crystal_NMR_interpair_file = os.path.join(
+            s["data_dir"], "results", "Average_Fraction_DI", "Crystal_NMR_interpair.csv"
+        )
         pd_int = pd.read_csv(crystal_NMR_interpair_file, engine="python", index_col=0)
-        """pd_int looks like this    
+        """pd_int looks like this
         acc	    inter1	inter2
         1orqC4	14	    20
         1orqC4	14	    23
@@ -677,7 +772,7 @@ def calc_retrospective_coev_from_struct_contacts(s, dfset, logging):
 
         # get list of proteins sort by TMD length
         # note that this will probably only work for set04
-        dfset.index = dfset['TMD_seq'].str.len()
+        dfset.index = dfset["TMD_seq"].str.len()
         # sys.stdout.write("test of random sorting")
         # dfset.index = np.random.random(dfset.shape[0])
         dfset = dfset.sort_index(ascending=True).reset_index(drop=True)
@@ -688,7 +783,7 @@ def calc_retrospective_coev_from_struct_contacts(s, dfset, logging):
 
         for i in dfset.index:
             acc = dfset.at[i, "acc"]
-            TMD_len = len(dfset.at[i, "TMD_seq"])
+            len(dfset.at[i, "TMD_seq"])
             sys.stdout.write(".")
             sys.stdout.flush()
             if i == 0:
@@ -699,8 +794,22 @@ def calc_retrospective_coev_from_struct_contacts(s, dfset, logging):
             # if not all([randomise_int_res == True and i == 0]):
 
             # is_first_TMD = False
-            sub_dict, InterPairList, NoninterPairList, TMD_start_of_last_TMD = calc_retrospective_coev_from_struct_contacts_single_prot(sub_dict, s, pd_int, i, logging, is_first_TMD, dfset, randomise_int_res, InterPairList_of_last_TMD,
-                                                                                                                                        NonInterPairList_of_last_TMD, TMD_start_of_last_TMD, remove_residues_outside_interface_region)
+            sub_dict, InterPairList, NoninterPairList, TMD_start_of_last_TMD = (
+                calc_retrospective_coev_from_struct_contacts_single_prot(
+                    sub_dict,
+                    s,
+                    pd_int,
+                    i,
+                    logging,
+                    is_first_TMD,
+                    dfset,
+                    randomise_int_res,
+                    InterPairList_of_last_TMD,
+                    NonInterPairList_of_last_TMD,
+                    TMD_start_of_last_TMD,
+                    remove_residues_outside_interface_region,
+                )
+            )
             # save all lists of interacting and non-interacting pairs
             InterPairList_dict[acc] = str(InterPairList)
             NoninterPairList_dict[acc] = str(NoninterPairList)
@@ -712,19 +821,35 @@ def calc_retrospective_coev_from_struct_contacts(s, dfset, logging):
             # NonInterPairList_of_last_TMD_max = np.array(NonInterPairList_of_last_TMD).max()
             NonInterPairList_of_last_TMD = NoninterPairList
 
-        if randomise_int_res == True:
+        if randomise_int_res:
             # need to add the data for the first TMD, which was skipped above
             i = 0
             is_first_TMD = False
-            logging.info("Randomisation is True. All other proteins finished. Starting first TMD, using the contacts from the last (longest) TMD above.")
-            sub_dict, InterPairList, NoninterPairList, TMD_start_of_last_TMD = calc_retrospective_coev_from_struct_contacts_single_prot(sub_dict, s, pd_int, i, logging, is_first_TMD, dfset, randomise_int_res, InterPairList_of_last_TMD,
-                                                                                                                                        NonInterPairList_of_last_TMD, TMD_start_of_last_TMD, remove_residues_outside_interface_region)
+            logging.info(
+                "Randomisation is True. All other proteins finished. Starting first TMD, using the contacts from the last (longest) TMD above."
+            )
+            sub_dict, InterPairList, NoninterPairList, TMD_start_of_last_TMD = (
+                calc_retrospective_coev_from_struct_contacts_single_prot(
+                    sub_dict,
+                    s,
+                    pd_int,
+                    i,
+                    logging,
+                    is_first_TMD,
+                    dfset,
+                    randomise_int_res,
+                    InterPairList_of_last_TMD,
+                    NonInterPairList_of_last_TMD,
+                    TMD_start_of_last_TMD,
+                    remove_residues_outside_interface_region,
+                )
+            )
 
         df_retro = pd.DataFrame(sub_dict).T
-        df_retro.to_excel(writer, sheet_name="DI{}".format(suffix))
+        df_retro.to_excel(writer, sheet_name=f"DI{suffix}")
 
         """Save lists of interacting or non-interacting residue pairs:
-        E.g. 
+        E.g.
                 InterPair	                                 NonInterPair
         1orqC4	[[14, 20], [14, 23], [14, 24], [18, 24]]	[[1, 2], [2, 1], [1, 3], [3, 1], [1, 4], [4, 1], [1, 5], [5, 1], ..........
         1xioA4	[[1, 2], [5, 6], [12, 12], [16, 16]]	    [[1, 3], [3, 1], [1, 4], [4, 1], [1, 5], [5, 1], [1, 6], [6, 1], .............
@@ -737,7 +862,7 @@ def calc_retrospective_coev_from_struct_contacts(s, dfset, logging):
 
         create_quick_plot = True
         if create_quick_plot:
-            retrospective_coev_plot = retrospective_coev_xlsx[:-5] + "DI{}.png".format(suffix)
+            retrospective_coev_plot = retrospective_coev_xlsx[:-5] + f"DI{suffix}.png"
             df_retro["inter_larger"] = df_retro.AverageInter > df_retro.AverageNoninter
             fig, ax = plt.subplots()
             df_retro[["AverageInter", "AverageNoninter"]].plot(kind="bar", ax=ax)
@@ -756,22 +881,24 @@ def calc_retrospective_coev_from_struct_contacts(s, dfset, logging):
         n_TMDs_total = df_retro.shape[0]
 
         perc_higher_int = n_TMDs_with_higher_int / n_TMDs_total
-        logging.info("\n{:.2f} % ({}/{}) of TMDs have higher DI of interface than non-interface".format(perc_higher_int * 100,
-                                                                                                        n_TMDs_with_higher_int,
-                                                                                                        n_TMDs_total))
+        logging.info(
+            f"\n{perc_higher_int * 100:.2f} % ({n_TMDs_with_higher_int}/{n_TMDs_total}) of TMDs have higher DI of interface than non-interface"
+        )
 
-        logging.info("\n\nmean values\n{}\n".format(df_retro.mean()))
+        logging.info(f"\n\nmean values\n{df_retro.mean()}\n")
 
         t_value, p_value = ttest_ind(df_retro.AverageInter, df_retro.AverageNoninter)
 
         # logging.info("remove_residues_outside_interface_region = {}".format(remove_residues_outside_interface_region))
-        logging.info("\np-value for average DI coevolution of interface vs non-interface = {:.03f}".format(p_value))
+        logging.info(f"\np-value for average DI coevolution of interface vs non-interface = {p_value:.03f}")
 
         colname = "real_interface" if not randomise_int_res else "random_interface"
-        summary_dict[colname] = {"n_TMDs_with_higher_DI_of_interface_than_noninterface": n_TMDs_with_higher_int,
-                                 "n_TMDs_total": n_TMDs_total,
-                                 "perc_higher_int": perc_higher_int,
-                                 "p_value": p_value}
+        summary_dict[colname] = {
+            "n_TMDs_with_higher_DI_of_interface_than_noninterface": n_TMDs_with_higher_int,
+            "n_TMDs_total": n_TMDs_total,
+            "perc_higher_int": perc_higher_int,
+            "p_value": p_value,
+        }
 
     df_summary = pd.DataFrame(summary_dict)
 
@@ -779,11 +906,23 @@ def calc_retrospective_coev_from_struct_contacts(s, dfset, logging):
     writer.close()
 
     sys.stdout.write("\n")
-    logging.info('calc_retrospective_coev_from_struct_contacts finished')
+    logging.info("calc_retrospective_coev_from_struct_contacts finished")
 
 
-def calc_retrospective_coev_from_struct_contacts_single_prot(sub_dict, s, pd_int, i, logging, is_first_TMD, dfset, randomise_int_res, InterPairList_of_last_TMD, NonInterPairList_of_last_TMD, TMD_start_of_last_TMD,
-                                                             remove_residues_outside_interface_region):
+def calc_retrospective_coev_from_struct_contacts_single_prot(
+    sub_dict,
+    s,
+    pd_int,
+    i,
+    logging,
+    is_first_TMD,
+    dfset,
+    randomise_int_res,
+    InterPairList_of_last_TMD,
+    NonInterPairList_of_last_TMD,
+    TMD_start_of_last_TMD,
+    remove_residues_outside_interface_region,
+):
     """Calculate retrospective coevolution from structural data with interpair contacts, for a single protein.
 
     see docstring above for calc_retrospective_coev_from_struct_contacts
@@ -812,8 +951,8 @@ def calc_retrospective_coev_from_struct_contacts_single_prot(sub_dict, s, pd_int
     # Wang and Barth used a value of 8. However this leads to a completely different distribution of contacting and non-contacting residues.
     max_dist_noncontact_res_pairs = 8
 
-    acc = dfset.loc[i, 'acc']
-    database = dfset.loc[i, 'database']
+    acc = dfset.loc[i, "acc"]
+    database = dfset.loc[i, "database"]
     InterPairList = pd_int.loc[acc, ["inter1", "inter2"]].values.tolist()
     interlist = []
     for x in InterPairList:
@@ -821,12 +960,14 @@ def calc_retrospective_coev_from_struct_contacts_single_prot(sub_dict, s, pd_int
     lowest_interface_res = min(interlist)
     highest_interface_res = max(interlist)
     NoninterPairList = []
-    freecontact_file = os.path.join(s["data_dir"], "features", "coevolution", database, "{}.surr20.gaps5.freecontact.csv".format(acc))
+    freecontact_file = os.path.join(
+        s["data_dir"], "features", "coevolution", database, f"{acc}.surr20.gaps5.freecontact.csv"
+    )
     inter_within8_dict = {}
     DI_dict = {}
 
     if os.path.isfile(freecontact_file):
-        with open(freecontact_file, 'r') as f:
+        with open(freecontact_file) as f:
 
             for line in f:
                 # arr: < class 'list'>: ['16', 'V', '17', 'E', '0.289263', '5.95475']
@@ -835,19 +976,25 @@ def calc_retrospective_coev_from_struct_contacts_single_prot(sub_dict, s, pd_int
                 # add forward and backward pair to DI_dict (e.g. 16_17, or 17_16)
                 # DI_dict and inter_within8_dict looks like this
                 # {'1_2': '3.12626', '2_1': '3.12626', '1_3': '0.589193', '3_1': '0.589193',
-                DI_dict[arr[0] + '_' + arr[2]] = arr[5]
-                DI_dict[arr[2] + '_' + arr[0]] = arr[5]
+                DI_dict[arr[0] + "_" + arr[2]] = arr[5]
+                DI_dict[arr[2] + "_" + arr[0]] = arr[5]
 
                 # if separating distance is less than max_dist_noncontact_res_pairs, add pair scores forwards and backwards
                 if int(arr[2]) - int(arr[0]) <= max_dist_noncontact_res_pairs:
                     # arr[5] is the DI score
-                    inter_within8_dict[arr[0] + '_' + arr[2]] = arr[5]
-                    inter_within8_dict[arr[2] + '_' + arr[0]] = arr[5]
+                    inter_within8_dict[arr[0] + "_" + arr[2]] = arr[5]
+                    inter_within8_dict[arr[2] + "_" + arr[0]] = arr[5]
                     # if the pair (e.g. 16_17, or 17_16) is not in the list of interface pairs
                     # add it to the list of non-interface residues
-                    if [int(arr[0]), int(arr[2])] not in InterPairList and [int(arr[0]), int(arr[2])] not in InterPairList:
+                    if [int(arr[0]), int(arr[2])] not in InterPairList and [
+                        int(arr[0]),
+                        int(arr[2]),
+                    ] not in InterPairList:
                         if remove_residues_outside_interface_region:
-                            if lowest_interface_res < int(arr[0]) < highest_interface_res and lowest_interface_res < int(arr[2]) < highest_interface_res:
+                            if (
+                                lowest_interface_res < int(arr[0]) < highest_interface_res
+                                and lowest_interface_res < int(arr[2]) < highest_interface_res
+                            ):
                                 NoninterPairList.append([int(arr[0]), int(arr[2])])
                                 NoninterPairList.append([int(arr[2]), int(arr[0])])
                         else:
@@ -855,22 +1002,24 @@ def calc_retrospective_coev_from_struct_contacts_single_prot(sub_dict, s, pd_int
                             NoninterPairList.append([int(arr[2]), int(arr[0])])
         f.close()
 
-    if randomise_int_res == False:
-        logging.info("No randomisation. Real InterPairList for this TMD = {}".format(InterPairList))
+    if not randomise_int_res:
+        logging.info(f"No randomisation. Real InterPairList for this TMD = {InterPairList}")
 
-        average_DI_inter, average_DI_non_inter = calc_average_DI_inter_and_average_DI_non_inter(InterPairList, NoninterPairList, DI_dict, inter_within8_dict)
+        average_DI_inter, average_DI_non_inter = calc_average_DI_inter_and_average_DI_non_inter(
+            InterPairList, NoninterPairList, DI_dict, inter_within8_dict
+        )
 
         # sys.stdout.write(non_inter_DI)
         # sys.stdout.write(acc,average_DI_inter,average_DI_non_inter, "is first TMD", is_first_TMD, "randomise_int_res", randomise_int_res)
         sub_dict[acc] = {"AverageInter": average_DI_inter, "AverageNoninter": average_DI_non_inter}
 
     # Randomisation of first TMD not possible. Skip and return the true interface only.
-    elif randomise_int_res == True and is_first_TMD == True:
+    elif randomise_int_res and is_first_TMD:
         # First TMD is skipped now, and added separately later
         # No InterPairList_of_last_TMD available for interface randomisation!
         pass
 
-    elif randomise_int_res == True and is_first_TMD != True:
+    elif randomise_int_res and not is_first_TMD:
         # TEST: add 2 residues to all interface residues
         # InterPairList_of_last_TMD =[list(np.array(x) + 5) for x in InterPairList_of_last_TMD]
 
@@ -879,21 +1028,23 @@ def calc_retrospective_coev_from_struct_contacts_single_prot(sub_dict, s, pd_int
         InterPairList_rand = [x for x in InterPairList_of_last_TMD if x[0] <= tmd_len and x[1] <= tmd_len]
         NonInterPairList_rand = [x for x in NonInterPairList_of_last_TMD if x[0] <= tmd_len and x[1] <= tmd_len]
 
-        logging.info("Randomisation of contacting residues for TMD # {} (acc = {})".format(i, acc))
-        logging.info("Real InterPairList for this TMD = {}".format(InterPairList))
-        logging.info("Random NonInterPairList_rand for TMD, taken from last TMD in list = {}".format(InterPairList_rand))
+        logging.info(f"Randomisation of contacting residues for TMD # {i} (acc = {acc})")
+        logging.info(f"Real InterPairList for this TMD = {InterPairList}")
+        logging.info(f"Random NonInterPairList_rand for TMD, taken from last TMD in list = {InterPairList_rand}")
 
         orig_max = np.array(InterPairList_of_last_TMD).max()
         final_max_after_filtering_out_res_too_long = np.array(InterPairList_rand).max()
 
         if orig_max != final_max_after_filtering_out_res_too_long:
             sys.stdout.write("\nmust be the last TMD, if sorting is done correctly")
-            sys.stdout.write("\norig_max {} final_max_after_filtering_out_res_too_long {}".format(orig_max, final_max_after_filtering_out_res_too_long))
+            sys.stdout.write(
+                f"\norig_max {orig_max} final_max_after_filtering_out_res_too_long {final_max_after_filtering_out_res_too_long}"
+            )
 
         # #sys.stdout.write(acc,InterPairList_rand,NonInterPairList_rand, "is first TMD", is_first_TMD, "randomise_int_res", randomise_int_res)
         # inter_DI = []
         # non_inter_DI = []
-        # for key, value in inter_within8_dict.items():
+        # for key, _value in inter_within8_dict.items():
         #     inter_pair = [int(x) for x in key.split('_')]
         #     if inter_pair in InterPairList_rand:
         #         inter_DI.append(float(inter_within8_dict[key]))
@@ -903,7 +1054,9 @@ def calc_retrospective_coev_from_struct_contacts_single_prot(sub_dict, s, pd_int
         # average_DI_non_inter = np.mean(non_inter_DI)
         # #sys.stdout.write(acc,average_DI_inter,average_DI_non_inter, "is first TMD", is_first_TMD, "randomise_int_res", randomise_int_res)
 
-        average_DI_inter, average_DI_non_inter = calc_average_DI_inter_and_average_DI_non_inter(InterPairList_rand, NonInterPairList_rand, DI_dict, inter_within8_dict)
+        average_DI_inter, average_DI_non_inter = calc_average_DI_inter_and_average_DI_non_inter(
+            InterPairList_rand, NonInterPairList_rand, DI_dict, inter_within8_dict
+        )
 
         sub_dict[acc] = {"AverageInter": average_DI_inter, "AverageNoninter": average_DI_non_inter}
 
@@ -937,7 +1090,7 @@ def calc_average_DI_inter_and_average_DI_non_inter(InterPairList, NoninterPairLi
     inter_DI = []
     non_inter_DI = []
     # DEPRECATED OLD CODE ALSO APPLIED 8 residue limit to the interacting residues!!!
-    # for key, value in inter_within8_dict.items():
+    # for key, _value in inter_within8_dict.items():
     #     inter_pair = [int(x) for x in key.split('_')]
     #     if inter_pair in InterPairList:
     #         inter_DI.append(float(inter_within8_dict[key]))
@@ -945,14 +1098,14 @@ def calc_average_DI_inter_and_average_DI_non_inter(InterPairList, NoninterPairLi
     #         non_inter_DI.append(float(inter_within8_dict[key]))
 
     # interface residues have no filter
-    for key, value in DI_dict.items():
-        inter_pair = [int(x) for x in key.split('_')]
+    for key, _value in DI_dict.items():
+        inter_pair = [int(x) for x in key.split("_")]
         if inter_pair in InterPairList:
             inter_DI.append(float(DI_dict[key]))
 
     # non-interface residues filtered by max_dist_noncontact_res_pairs
-    for key, value in inter_within8_dict.items():
-        inter_pair = [int(x) for x in key.split('_')]
+    for key, _value in inter_within8_dict.items():
+        inter_pair = [int(x) for x in key.split("_")]
         if inter_pair in NoninterPairList:
             non_inter_DI.append(float(inter_within8_dict[key]))
 

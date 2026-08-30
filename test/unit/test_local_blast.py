@@ -11,7 +11,6 @@ instead. Swiss-Prot is ~340 MB built and answers in well under a second.
 import os
 
 import pytest
-
 from thoipapy.homologues.NCBI_download import (
     LOCAL_BLAST_DB_ENV_VAR,
     get_local_blast_db,
@@ -65,5 +64,11 @@ def test_local_blastp_raises_on_a_missing_database(tmp_path):
     import logging
 
     with pytest.raises(RuntimeError, match="local blastp failed"):
-        run_local_blastp(">t\nMKV", tmp_path / "out.xml", expect_value=10,
-                         hit_list_size=10, db=str(tmp_path / "does_not_exist"), logging=logging)
+        run_local_blastp(
+            ">t\nMKV",
+            tmp_path / "out.xml",
+            expect_value=10,
+            hit_list_size=10,
+            db=str(tmp_path / "does_not_exist"),
+            logging=logging,
+        )

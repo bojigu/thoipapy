@@ -14,6 +14,7 @@ Two kinds of test cannot run everywhere:
   been observed to hang indefinitely, so they are deselected by default via the ``-m 'not
   network'`` default in pyproject.toml. Run them with ``pytest -m network``.
 """
+
 import shutil
 
 import pytest

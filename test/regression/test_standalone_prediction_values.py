@@ -7,9 +7,10 @@ have passed unchanged if every prediction became 0.5. These tests pin the actual
 Both proteins use homologue tarballs already committed under ``test/test_inputs``, so no network
 access is needed. rate4site, freecontact and cd-hit must be installed.
 """
+
 import sys
 from pathlib import Path
-from shutil import copyfile, rmtree
+from shutil import copyfile
 
 import pandas as pd
 import pytest
@@ -77,8 +78,7 @@ def test_residue_numbering_is_one_based(tmp_path):
     expected_start = tp.full_seq.index(tp.tmd_seq) + 1
     actual_start = int(df["res_num_full_seq"].iloc[0])
     assert actual_start == expected_start, (
-        f"first TMD residue should be numbered {expected_start} (1-based UniProt), "
-        f"got {actual_start}"
+        f"first TMD residue should be numbered {expected_start} (1-based UniProt), " f"got {actual_start}"
     )
     # and the residue letter at that position must actually match the sequence
     assert tp.full_seq[actual_start - 1] == df["residue_name"].iloc[0]

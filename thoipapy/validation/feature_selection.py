@@ -1,8 +1,7 @@
 import pandas as pd
 
 from thoipapy.paths import MODEL_FEATURES_CSV
-
-from thoipapy.utils import convert_truelike_to_bool, convert_falselike_to_bool
+from thoipapy.utils import convert_falselike_to_bool, convert_truelike_to_bool
 
 
 def drop_cols_not_used_in_ML(logging, df_data, i=0):
@@ -40,17 +39,19 @@ def drop_cols_not_used_in_ML(logging, df_data, i=0):
     # only print this stuff for the first TMD analysed, if in a list
     if i == 0:
         if len(features_missing_from_model_features_csv) > 1:
-            logging.info("\nfeatures_missing_from_model_features_csv, {}".format(features_missing_from_model_features_csv))
+            logging.info(f"\nfeatures_missing_from_model_features_csv, {features_missing_from_model_features_csv}")
             if "Unnamed: 0" in features_missing_from_model_features_csv:
                 raise IndexError("Unnamed column is in dataframe. Try opening csv with index_col=0.")
         if len(unused_features_in_model_features_csv) > 1:
-            logging.info("\nunused_features_in_model_features_csv, {}".format(unused_features_in_model_features_csv))
+            logging.info(f"\nunused_features_in_model_features_csv, {unused_features_in_model_features_csv}")
             if len(unused_features_in_model_features_csv) > 2:
-                logging.warning("There are more than two unused features in model_features.csv. "
-                                "This is acceptable for standalone predictor, but otherwise the settings file "
-                                "might need to be checked.")
+                logging.warning(
+                    "There are more than two unused features in model_features.csv. "
+                    "This is acceptable for standalone predictor, but otherwise the settings file "
+                    "might need to be checked."
+                )
     # drop any features that are not labeled TRUE for inclusion
-    features_df = features_df.loc[features_df.include == True]
+    features_df = features_df.loc[features_df.include == True]  # noqa: E712  object dtype: 1 and False mixed
     # filter df_data to only keep the desired feature columns
     feature_list = features_df.index.tolist()
     # Order-preserving. list(set(...)) here made the ML column order depend on PYTHONHASHSEED,

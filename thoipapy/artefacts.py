@@ -23,10 +23,11 @@ Usage::
     paths = ArtefactPaths.from_settings(s)
     df = pd.read_csv(paths.train_data_orig_csv())
 """
+
 from dataclasses import dataclass
 from pathlib import Path
 
-from thoipapy.paths import BASE_DIR, DATA_DIR, SETS_DIR
+from thoipapy.paths import BASE_DIR, SETS_DIR
 
 
 @dataclass(frozen=True)
@@ -142,7 +143,13 @@ class ArtefactPaths:
         return self.data_dir / "features" / "coevolution" / database / f"{acc}.{self.surr_gaps_suffix}.freecontact.csv"
 
     def freecontact_parsed_csv(self, database: str, acc: str) -> Path:
-        return self.data_dir / "features" / "coevolution" / database / f"{acc}.{self.surr_gaps_suffix}.freecontact_parsed.csv"
+        return (
+            self.data_dir
+            / "features"
+            / "coevolution"
+            / database
+            / f"{acc}.{self.surr_gaps_suffix}.freecontact_parsed.csv"
+        )
 
     def combined_features_csv(self, database: str, acc: str, nohetero: bool = False) -> Path:
         """The per-protein feature table. Five readers used to hardcode surr20.gaps5 here.
@@ -154,7 +161,13 @@ class ArtefactPaths:
             structures have one; see remove_crystal_hetero in the settings.
         """
         infix = ".nohetero" if nohetero else ""
-        return self.data_dir / "features" / "combined" / database / f"{acc}{infix}.{self.surr_gaps_suffix}.combined_features.csv"
+        return (
+            self.data_dir
+            / "features"
+            / "combined"
+            / database
+            / f"{acc}{infix}.{self.surr_gaps_suffix}.combined_features.csv"
+        )
 
     # --- alignments -----------------------------------------------------------
 
@@ -178,7 +191,13 @@ class ArtefactPaths:
     # --- remaining per-protein features ---------------------------------------
 
     def pssm_surr5_csv(self, database: str, acc: str) -> Path:
-        return self.data_dir / "features" / "pssm" / database / f"{acc}.surr5.gaps{self.max_n_gaps_in_TMD_subject_seq}.pssm.csv"
+        return (
+            self.data_dir
+            / "features"
+            / "pssm"
+            / database
+            / f"{acc}.surr5.gaps{self.max_n_gaps_in_TMD_subject_seq}.pssm.csv"
+        )
 
     def lipo_csv(self, database: str, acc: str, scalename: str) -> Path:
         return self.data_dir / "features" / "lipophilicity" / database / f"{acc}_{scalename}_lipo.csv"
@@ -200,7 +219,6 @@ class ArtefactPaths:
 
     def full_seq_fasta(self, database: str, acc: str) -> Path:
         return self.protein_dir(database) / f"{acc}.fasta"
-
 
     def blast_xml(self, database: str, acc: str) -> Path:
         return self.data_dir / "homologues" / "xml" / database / f"{acc}.{self.surr_suffix}.BLAST.xml"

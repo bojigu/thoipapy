@@ -1,20 +1,20 @@
-from pathlib import Path
-from typing import List
-
 import pandas as pd
-from thoipapy.utils import make_sure_path_exists
 from sklearn.feature_selection import RFE
-from thoipapy.ML_model.train_model import return_classifier_with_loaded_ensemble_parameters
+
 from thoipapy.artefacts import ArtefactPaths
+from thoipapy.ML_model.train_model import return_classifier_with_loaded_ensemble_parameters
+from thoipapy.utils import make_sure_path_exists
 
 
-def select_best_features_with_ensemble_rfe(paths: ArtefactPaths, bind_column: str, n_top_features_to_keep: int, bootstrap: bool, logging):
-    """ The f_classif function is an rfe implementation in python.
+def select_best_features_with_ensemble_rfe(
+    paths: ArtefactPaths, bind_column: str, n_top_features_to_keep: int, bootstrap: bool, logging
+):
+    """The f_classif function is an rfe implementation in python.
 
     This function selects the top features according to the rfe analysis.
     """
 
-    logging.info('starting select_best_features_with_rfe')
+    logging.info("starting select_best_features_with_rfe")
     # inputs
     tuned_ensemble_parameters_csv = paths.tuned_ensemble_parameters_before_feature_seln_csv()
     train_data_excl_duplicates_csv = paths.train_data_excl_duplicates_csv()
@@ -36,9 +36,9 @@ def select_best_features_with_ensemble_rfe(paths: ArtefactPaths, bind_column: st
     forest = return_classifier_with_loaded_ensemble_parameters(tuned_ensemble_parameters_csv, bootstrap)
     rfe = RFE(forest, n_features_to_select=n_top_features_to_keep)
     fit = rfe.fit(X, y)
-    logging.info("Num Features: %d" % fit.n_features_)
-    logging.info("Selected Features: %s" % fit.support_)
-    logging.info("Feature Ranking: %s" % fit.ranking_)
+    logging.info(f"Num Features: {fit.n_features_}")
+    logging.info(f"Selected Features: {fit.support_}")
+    logging.info(f"Feature Ranking: {fit.ranking_}")
 
     df_rfe = pd.DataFrame()
     df_rfe["features"] = X.columns
@@ -46,10 +46,10 @@ def select_best_features_with_ensemble_rfe(paths: ArtefactPaths, bind_column: st
     df_rfe.sort_values("ranking", ascending=True, inplace=True)
     df_rfe.to_csv(top_features_rfe_csv)
 
-    top_features_ensemble_rfe: List[str] = df_rfe.loc[df_rfe["ranking"] == 1]["features"].to_list()
+    top_features_ensemble_rfe: list[str] = df_rfe.loc[df_rfe["ranking"] == 1]["features"].to_list()
     logging.info(f"best {n_top_features_to_keep} according to ensemble RFE : {top_features_ensemble_rfe}")
     logging.info(f"output saved to {top_features_rfe_csv}")
-    logging.info('finished select_best_features_with_ensemble_rfe')
+    logging.info("finished select_best_features_with_ensemble_rfe")
 
     # logging.info("----------------------------------------------------------------------")
     # logging.info("starting linear RFE")

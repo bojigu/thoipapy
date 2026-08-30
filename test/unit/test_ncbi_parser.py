@@ -1,14 +1,17 @@
 from pathlib import Path
 from shutil import rmtree
 
-from test.helpers.helpers import TestProtein
 from thoipapy.homologues.NCBI_parser import parse_NCBI_xml_to_csv
-from thoipapy.utils import make_sure_path_exists, LogOnlyToConsole
+from thoipapy.utils import LogOnlyToConsole, make_sure_path_exists
+
+from test.helpers.helpers import TestProtein
 
 
 def test_parse_NCBI_xml_to_csv():
     # example xml tarball includes "CREATE_VIEW" string indicating malformed xml that needs cleaning, as often retrieved from NCBI
-    blast_xml_tar: Path = Path(__file__).parents[1] / "test_inputs/blast_data_with_malformed_xml/BLAST_results.xml.tar.gz"
+    blast_xml_tar: Path = (
+        Path(__file__).parents[1] / "test_inputs/blast_data_with_malformed_xml/BLAST_results.xml.tar.gz"
+    )
     blast_csv_tar = Path(__file__).parents[1] / "test_outputs/test_parse_NCBI_xml_to_csv/BLAST_results.csv.tar.gz"
     make_sure_path_exists(blast_csv_tar, isfile=True)
     tp: TestProtein = TestProtein()

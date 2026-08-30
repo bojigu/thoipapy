@@ -5,27 +5,29 @@ shipped settings files and disabled in the functional test. Last exercised for t
 publication. Not covered by any test, and excluded from the refactoring applied to the maintained
 part of the package.
 """
+
 import os
 import pickle
 import sys
 import time
-from pathlib import Path
 
 import numpy as np
 import pandas as pd
 from matplotlib import pyplot as plt
 from numpy import interp
-from sklearn.metrics import roc_curve, auc
+from sklearn.metrics import auc, roc_curve
 from sklearn.model_selection import StratifiedGroupKFold
 
 import thoipapy.utils
+from thoipapy.artefacts import ArtefactPaths
+from thoipapy.ML_model.train_model import return_classifier_with_loaded_ensemble_parameters
 from thoipapy.utils import dropna_with_report
 from thoipapy.validation.feature_selection import drop_cols_not_used_in_ML
-from thoipapy.ML_model.train_model import return_classifier_with_loaded_ensemble_parameters
-from thoipapy.artefacts import ArtefactPaths
 
 
-def run_10fold_cross_validation(paths: ArtefactPaths, min_n_homol_training: int, cross_validation_number_of_splits: int, bootstrap: bool, logging):
+def run_10fold_cross_validation(
+    paths: ArtefactPaths, min_n_homol_training: int, cross_validation_number_of_splits: int, bootstrap: bool, logging
+):
     """Run 10-fold cross-validation for a particular set of TMDs (e.g. set04).
 
     The SAME SET is used for both training and cross-validation.
@@ -49,10 +51,12 @@ def run_10fold_cross_validation(paths: ArtefactPaths, min_n_homol_training: int,
         Also contains the mean ROC curve, and the mean AUC.
     """
     sys.stdout.write("\n--------------- starting run_10fold_cross_validation ---------------\n")
-    train_data_after_first_feature_seln_csv = paths.results_dir / f"train_data/03_train_data_after_first_feature_seln.csv"
-    tuned_ensemble_parameters_csv = paths.results_dir / f"train_data/04_tuned_ensemble_parameters.csv"
-    crossvalidation_pkl = os.path.join(paths.crossvalidation_dir, "data", "{}_10F_data.pkl".format(paths.setname))
-    features_csv = paths.results_dir / f"feat_imp/test_features.csv"
+    train_data_after_first_feature_seln_csv = (
+        paths.results_dir / "train_data/03_train_data_after_first_feature_seln.csv"
+    )
+    tuned_ensemble_parameters_csv = paths.results_dir / "train_data/04_tuned_ensemble_parameters.csv"
+    crossvalidation_pkl = os.path.join(paths.crossvalidation_dir, "data", f"{paths.setname}_10F_data.pkl")
+    features_csv = paths.results_dir / "feat_imp/test_features.csv"
 
     thoipapy.utils.make_sure_path_exists(crossvalidation_pkl, isfile=True)
     thoipapy.utils.make_sure_path_exists(features_csv, isfile=True)
@@ -76,7 +80,7 @@ def run_10fold_cross_validation(paths: ArtefactPaths, min_n_homol_training: int,
     sgkf = StratifiedGroupKFold(n_splits=cross_validation_number_of_splits)
     cv = list(sgkf.split(X, y, groups=groups))
 
-    n_features = X.shape[1]
+    X.shape[1]
     forest = return_classifier_with_loaded_ensemble_parameters(tuned_ensemble_parameters_csv, bootstrap)
 
     mean_tpr = 0.0
@@ -87,17 +91,17 @@ def run_10fold_cross_validation(paths: ArtefactPaths, min_n_homol_training: int,
     start = time.perf_counter()
 
     for i, (train, test) in enumerate(cv):
-        sys.stdout.write("f{}.".format(i + 1)), sys.stdout.flush()
+        sys.stdout.write(f"f{i + 1}."), sys.stdout.flush()
         probas_ = forest.fit(X.iloc[train], y.iloc[train]).predict_proba(X.iloc[test])
         # Compute ROC curve and area the curve
         fpr, tpr, thresholds = roc_curve(y.iloc[test], probas_[:, 1], drop_intermediate=False)
-        xv_dict["fpr{}".format(i)] = fpr
-        xv_dict["tpr{}".format(i)] = tpr
+        xv_dict[f"fpr{i}"] = fpr
+        xv_dict[f"tpr{i}"] = tpr
         mean_tpr += interp(mean_fpr, fpr, tpr)
         mean_tpr[0] = 0.0
     sys.stdout.write("\n"), sys.stdout.flush()
 
-    logging.info("tree depths : {}".format([estimator.tree_.max_depth for estimator in forest.estimators_]))
+    logging.info(f"tree depths : {[estimator.tree_.max_depth for estimator in forest.estimators_]}")
 
     duration = time.perf_counter() - start
 
@@ -116,7 +120,9 @@ def run_10fold_cross_validation(paths: ArtefactPaths, min_n_homol_training: int,
 
     features_ser = pd.Series(X.columns)
     features_ser.to_csv(features_csv)
-    logging.info('{} 10-fold validation. AUC({:.3f}). Time taken = {:.2f}.\nFeatures: {}'.format(paths.setname, ROC_AUC, duration, X.columns.tolist()))
+    logging.info(
+        f"{paths.setname} 10-fold validation. AUC({ROC_AUC:.3f}). Time taken = {duration:.2f}.\nFeatures: {X.columns.tolist()}"
+    )
     sys.stdout.write("\n--------------- finished run_10fold_cross_validation ---------------\n")
 
 
@@ -135,8 +141,8 @@ def create_10fold_cross_validation_fig(paths: ArtefactPaths, cross_validation_nu
     """
     sys.stdout.write("\n--------------- starting create_10fold_cross_validation_fig ---------------\n")
     # plt.rcParams.update({'font.size': 7})
-    crossvalidation_png = os.path.join(paths.crossvalidation_dir, "{}_10F_ROC.png".format(paths.setname))
-    crossvalidation_pkl = os.path.join(paths.crossvalidation_dir, "data", "{}_10F_data.pkl".format(paths.setname))
+    crossvalidation_png = os.path.join(paths.crossvalidation_dir, f"{paths.setname}_10F_ROC.png")
+    crossvalidation_pkl = os.path.join(paths.crossvalidation_dir, "data", f"{paths.setname}_10F_data.pkl")
 
     # open pickle file
     with open(crossvalidation_pkl, "rb") as f:
@@ -146,13 +152,19 @@ def create_10fold_cross_validation_fig(paths: ArtefactPaths, cross_validation_nu
     fig, ax = plt.subplots(figsize=figsize)
 
     for i in range(cross_validation_number_of_splits):
-        roc_auc = auc(xv_dict["fpr{}".format(i)], xv_dict["tpr{}".format(i)])
-        ax.plot(xv_dict["fpr{}".format(i)], xv_dict["tpr{}".format(i)], lw=1, label='fold %d (area = %0.2f)' % (i, roc_auc), alpha=0.8)
+        roc_auc = auc(xv_dict[f"fpr{i}"], xv_dict[f"tpr{i}"])
+        ax.plot(xv_dict[f"fpr{i}"], xv_dict[f"tpr{i}"], lw=1, label=f"fold {i} (area = {roc_auc:0.2f})", alpha=0.8)
 
     ROC_AUC = xv_dict["ROC_AUC"]
 
-    ax.plot(xv_dict["false_positive_rate_mean"], xv_dict["true_positive_rate_mean"], color="k", label='mean (area = %0.2f)' % ROC_AUC, lw=1.5)
-    ax.plot([0, 1], [0, 1], '--', color=(0.6, 0.6, 0.6), label='random')
+    ax.plot(
+        xv_dict["false_positive_rate_mean"],
+        xv_dict["true_positive_rate_mean"],
+        color="k",
+        label=f"mean (area = {ROC_AUC:0.2f})",
+        lw=1.5,
+    )
+    ax.plot([0, 1], [0, 1], "--", color=(0.6, 0.6, 0.6), label="random")
     ax.set_xlim([-0.05, 1.05])
     ax.set_ylim([-0.05, 1.05])
     ax.set_xlabel("False positive rate")

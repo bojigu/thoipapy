@@ -12,6 +12,7 @@ output, run::
 review the reported diff, then ``dvc add test/regression_data && dvc push`` and commit the updated
 ``.dvc`` file together with the code change that caused it.
 """
+
 from pathlib import Path
 
 import pandas as pd
@@ -37,7 +38,9 @@ def require_golden(relative_path: str) -> Path:
     return path
 
 
-def assert_frame_matches_golden(actual: pd.DataFrame, relative_path: str, tolerance: float = PREDICTION_TOLERANCE) -> None:
+def assert_frame_matches_golden(
+    actual: pd.DataFrame, relative_path: str, tolerance: float = PREDICTION_TOLERANCE
+) -> None:
     """Compare a dataframe against its golden reference, with a diff that says what moved.
 
     pandas' own assertion message is not much help when a numeric column has drifted, so the
@@ -50,14 +53,12 @@ def assert_frame_matches_golden(actual: pd.DataFrame, relative_path: str, tolera
         f"  expected: {list(expected.columns)}\n"
         f"  actual:   {list(actual.columns)}"
     )
-    assert len(actual) == len(expected), (
-        f"{relative_path}: row count changed, {len(expected)} -> {len(actual)}"
-    )
+    assert len(actual) == len(expected), f"{relative_path}: row count changed, {len(expected)} -> {len(actual)}"
 
     numeric = [c for c in expected.columns if pd.api.types.is_numeric_dtype(expected[c])]
     worst_col, worst_delta, worst_row = None, 0.0, None
     for col in numeric:
-        delta = (actual[col].to_numpy() - expected[col].to_numpy())
+        delta = actual[col].to_numpy() - expected[col].to_numpy()
         abs_delta = abs(delta)
         if abs_delta.max() > worst_delta:
             worst_delta = float(abs_delta.max())

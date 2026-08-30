@@ -1,17 +1,18 @@
 import sys
-from pathlib import Path
 
 import numpy as np
 import pandas as pd
 
+from thoipapy.artefacts import ArtefactPaths
+from thoipapy.ML_model.train_model import return_classifier_with_loaded_ensemble_parameters
 from thoipapy.ML_model.tune import tune_ensemble_parameters
 from thoipapy.utils import dropna_with_report, make_sure_path_exists
 from thoipapy.validation.feature_selection import drop_cols_not_used_in_ML
-from thoipapy.ML_model.train_model import return_classifier_with_loaded_ensemble_parameters
-from thoipapy.artefacts import ArtefactPaths
 
 
-def get_initial_ensemble_parameters_before_feature_selection(paths: ArtefactPaths, bind_column: str, bootstrap: bool, logging):
+def get_initial_ensemble_parameters_before_feature_selection(
+    paths: ArtefactPaths, bind_column: str, bootstrap: bool, logging
+):
     # logging.info('RF_variable_importance_calculate is running\n')
     train_data_csv = paths.train_data_orig_csv()
     # output
@@ -50,7 +51,7 @@ def calc_feat_import_using_MDI_before_feature_seln(paths: ArtefactPaths, bootstr
 
     X = drop_cols_not_used_in_ML(logging, df_data)
     y = df_data["interface"]
-    n_features = X.shape[1]
+    X.shape[1]
 
     # regular trees, or Totally Randomized Trees
     model_types = ["", "_TRT"]
@@ -58,10 +59,16 @@ def calc_feat_import_using_MDI_before_feature_seln(paths: ArtefactPaths, bootstr
 
     for model_type in model_types:
         if model_type == "_TRT":
-            forest = return_classifier_with_loaded_ensemble_parameters(tuned_ensemble_parameters_before_feature_seln_csv, bootstrap, totally_randomized_trees=True)
-            logging.info("IMPORTANCES FOR TOTALLY RANDOMIZED TREES (max_features=1, max_depth=None, min_samples_leaf=1)")
+            forest = return_classifier_with_loaded_ensemble_parameters(
+                tuned_ensemble_parameters_before_feature_seln_csv, bootstrap, totally_randomized_trees=True
+            )
+            logging.info(
+                "IMPORTANCES FOR TOTALLY RANDOMIZED TREES (max_features=1, max_depth=None, min_samples_leaf=1)"
+            )
         elif model_type == "":
-            forest = return_classifier_with_loaded_ensemble_parameters(tuned_ensemble_parameters_before_feature_seln_csv, bootstrap)
+            forest = return_classifier_with_loaded_ensemble_parameters(
+                tuned_ensemble_parameters_before_feature_seln_csv, bootstrap
+            )
             logging.info("Feature ranking:")
         else:
             raise ValueError("model type unknown")
@@ -88,13 +95,20 @@ def calculate_mean_decrease_impurity_for_dataset(X, y, forest, model_type, loggi
     nested_dict = {}
     for f in range(X.shape[1]):
         if f < 10:
-            logging.info("%d. feature %d (%f) %s" % (f + 1, indices_arr[f], importances_arr[indices_arr[f]], importances_text_list[indices_arr[f]]))
-        single_feature_dict = {"original_order": indices_arr[f], "mean_decrease_impurity{}".format(model_type): importances_arr[indices_arr[f]], "feature{}".format(model_type): importances_text_list[indices_arr[f]],
-                               "std{}".format(model_type): std_arr[f]}
+            logging.info(
+                f"{f + 1}. feature {indices_arr[f]} ({importances_arr[indices_arr[f]]:f}) "
+                f"{importances_text_list[indices_arr[f]]}"
+            )
+        single_feature_dict = {
+            "original_order": indices_arr[f],
+            f"mean_decrease_impurity{model_type}": importances_arr[indices_arr[f]],
+            f"feature{model_type}": importances_text_list[indices_arr[f]],
+            f"std{model_type}": std_arr[f],
+        }
         nested_dict[f + 1] = single_feature_dict
     sys.stdout.write("\n\n"), sys.stdout.flush()
     df_imp = pd.DataFrame(nested_dict).T
-    df_imp["order_importance{}".format(model_type)] = df_imp.index
+    df_imp[f"order_importance{model_type}"] = df_imp.index
     # df_imp.set_index("feature", inplace=True)
     df_imp.set_index("original_order", inplace=True)
     return df_imp

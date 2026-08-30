@@ -1,19 +1,20 @@
-from pathlib import Path
-from typing import Union
-
-from Bio.Blast import NCBIWWW
-from thoipapy.utils import get_free_space, HardDriveSpaceException
 import os
+import platform
 import subprocess
 import tarfile
-import platform
 import time
+from pathlib import Path
 from time import strftime
-from thoipapy.utils import delete_BLAST_xml, make_sure_path_exists
+
+from Bio.Blast import NCBIWWW
+
 from thoipapy.artefacts import ArtefactPaths
+from thoipapy.utils import HardDriveSpaceException, delete_BLAST_xml, get_free_space, make_sure_path_exists
 
 
-def download_homologues_from_ncbi_mult_prot(paths: ArtefactPaths, df_set, expect_value, hit_list_size: int, rerun_existing_blast_results: bool, logging):
+def download_homologues_from_ncbi_mult_prot(
+    paths: ArtefactPaths, df_set, expect_value, hit_list_size: int, rerun_existing_blast_results: bool, logging
+):
     """Runs download_homologues_from_ncbi for a set of proteins
 
     Parameters
@@ -43,13 +44,14 @@ def download_homologues_from_ncbi_mult_prot(paths: ArtefactPaths, df_set, expect
 
             if size[0] < 5:
                 raise HardDriveSpaceException(
-                    "Hard drive space limit reached, there is only %s %s space left." % (size[0], size[1]))
+                    f"Hard drive space limit reached, there is only {size[0]} {size[1]} space left."
+                )
 
         # log the exception, so you actually can see what goes on in the logfile
         except HardDriveSpaceException as e:
             logging.critical(e)
             # now stop all processes and raise an error
-            raise HardDriveSpaceException("process stopped")
+            raise HardDriveSpaceException("process stopped") from e
     else:
         logging.warning("Your system does not seem to be Linux or Windows. Harddrive space check not conducted.")
 
@@ -75,19 +77,23 @@ def download_homologues_from_ncbi_mult_prot(paths: ArtefactPaths, df_set, expect
         else:
             if rerun_existing_blast_results:
                 run_download = True
-                logging.info('{} starting download_homologues_from_ncbi_mult_prot (EXISTING xml.tar.gz FILE WILL BE OVERWRITTEN)'.format(acc))
+                logging.info(
+                    f"{acc} starting download_homologues_from_ncbi_mult_prot (EXISTING xml.tar.gz FILE WILL BE OVERWRITTEN)"
+                )
             elif rerun_existing_blast_results in [False, 0]:
                 run_download = False
-                logging.info('{} download_homologues_from_ncbi_mult_prot skipped (EXISTING xml.tar.gz FILE)'.format(acc))
+                logging.info(f"{acc} download_homologues_from_ncbi_mult_prot skipped (EXISTING xml.tar.gz FILE)")
                 # skip protein
                 continue
             else:
-                raise ValueError('rerun_existing_blast_results does not seem to be True or False')
+                raise ValueError("rerun_existing_blast_results does not seem to be True or False")
 
         if run_download:
-            download_homologues_from_ncbi(acc, TMD_seq_pl_surr, blast_xml_file, xml_txt, xml_tar_gz, expect_value, hit_list_size, logging)
+            download_homologues_from_ncbi(
+                acc, TMD_seq_pl_surr, blast_xml_file, xml_txt, xml_tar_gz, expect_value, hit_list_size, logging
+            )
 
-    logging.info('homologues download was finished')
+    logging.info("homologues download was finished")
 
 
 NCBI_CONTACT_EMAIL_ENV_VAR = "THOIPA_NCBI_CONTACT_EMAIL"
@@ -103,8 +109,9 @@ def get_local_blast_db() -> str:
     return os.environ.get(LOCAL_BLAST_DB_ENV_VAR, "").strip()
 
 
-def run_local_blastp(query_fasta_string: str, blast_xml_file: Union[Path, str], expect_value: float,
-                     hit_list_size: int, db: str, logging) -> None:
+def run_local_blastp(
+    query_fasta_string: str, blast_xml_file: Path | str, expect_value: float, hit_list_size: int, db: str, logging
+) -> None:
     """Search a local BLAST database with blastp, writing NCBI-format XML.
 
     Output format 5 is not optional: NCBI_parser reads BLAST XML, so a local search has to produce
@@ -120,13 +127,20 @@ def run_local_blastp(query_fasta_string: str, blast_xml_file: Union[Path, str], 
 
     cmd = [
         "blastp",
-        "-query", str(query_file),
-        "-db", db,
-        "-outfmt", "5",
-        "-evalue", str(expect_value),
-        "-max_target_seqs", str(hit_list_size),
-        "-num_threads", str(min(8, os.cpu_count() or 1)),
-        "-out", str(blast_xml_file),
+        "-query",
+        str(query_file),
+        "-db",
+        db,
+        "-outfmt",
+        "5",
+        "-evalue",
+        str(expect_value),
+        "-max_target_seqs",
+        str(hit_list_size),
+        "-num_threads",
+        str(min(8, os.cpu_count() or 1)),
+        "-out",
+        str(blast_xml_file),
     ]
     logging.info(f"running local blastp against {db}")
     try:
@@ -165,7 +179,17 @@ def identify_to_ncbi() -> None:
 # BLAST URL API serves nr, refseq_protein, swissprot, pdb, env_nr, tsa_nr, landmark and pataa.
 # Of those only nr has depth comparable to UniRef90, and NCBI's swissprot is as shallow as a local
 # Swiss-Prot build. To search UniRef90, build it locally and set THOIPA_LOCAL_BLAST_DB.
-def download_homologues_from_ncbi(acc: str, TMD_seq_pl_surr: str, blast_xml_file: Union[Path, str], xml_txt: Union[Path, str], xml_tar_gz: Union[Path, str], expect_value: float, hit_list_size: int, logging, db: str = "nr"):
+def download_homologues_from_ncbi(
+    acc: str,
+    TMD_seq_pl_surr: str,
+    blast_xml_file: Path | str,
+    xml_txt: Path | str,
+    xml_tar_gz: Path | str,
+    expect_value: float,
+    hit_list_size: int,
+    logging,
+    db: str = "nr",
+):
     """Downloads homologue xml file using NCBI BLAST via the biopython qBLAST wrapper.
 
     Parameters
@@ -191,15 +215,15 @@ def download_homologues_from_ncbi(acc: str, TMD_seq_pl_surr: str, blast_xml_file
         NCBI database to search.
         Default is "nr"
     """
-    logging.info('{} starting download_homologues_from_ncbi'.format(acc))
+    logging.info(f"{acc} starting download_homologues_from_ncbi")
 
     # create an empty text file with the download date
     date = strftime("%Y%m%d")
     database_searched = get_local_blast_db() or f"ncbi_{db}"
     with open(xml_txt, "w") as f:
-        f.write("acc\t{}\ndownload_date\t{}\ndatabase\t{}\nexpect_value\t{}\n".format(acc, date, database_searched, expect_value))
+        f.write(f"acc\t{acc}\ndownload_date\t{date}\ndatabase\t{database_searched}\nexpect_value\t{expect_value}\n")
 
-    query_fasta_string = ">{} TMD add surround 20 residues\n{}".format(acc, TMD_seq_pl_surr)
+    query_fasta_string = f">{acc} TMD add surround 20 residues\n{TMD_seq_pl_surr}"
     make_sure_path_exists(blast_xml_file, isfile=True)
 
     local_db = get_local_blast_db()
@@ -215,9 +239,9 @@ def download_homologues_from_ncbi(acc: str, TMD_seq_pl_surr: str, blast_xml_file
         if local_db:
             run_local_blastp(query_fasta_string, blast_xml_file, expect_value, hit_list_size, local_db, logging)
         else:
-            tmp_protein_homologues_xml_handle = NCBIWWW.qblast("blastp", db, query_fasta_string,
-                                                               expect=expect_value,
-                                                               hitlist_size=hit_list_size)
+            tmp_protein_homologues_xml_handle = NCBIWWW.qblast(
+                "blastp", db, query_fasta_string, expect=expect_value, hitlist_size=hit_list_size
+            )
             with open(blast_xml_file, "w") as save_tmp_xml_file:
                 save_tmp_xml_file.write(tmp_protein_homologues_xml_handle.read())
 
@@ -226,15 +250,17 @@ def download_homologues_from_ncbi(acc: str, TMD_seq_pl_surr: str, blast_xml_file
     except Exception:
         # Was a bare `except`. A hang is not an exception, so this never caught the failure mode
         # that matters; what it did catch, it caught silently.
-        logging.exception(f"{acc} BLAST search failed. "
-                          f"A typical error message is 'query string not found in the CGI context in qblast'. "
-                          f"A refusal shortly after an identical query usually means NCBI is throttling "
-                          f"this client.")
+        logging.exception(
+            f"{acc} BLAST search failed. "
+            f"A typical error message is 'query string not found in the CGI context in qblast'. "
+            f"A refusal shortly after an identical query usually means NCBI is throttling "
+            f"this client."
+        )
 
     duration = time.time() - start
 
     if os.path.isfile(blast_xml_file):
-        with tarfile.open(xml_tar_gz, mode='w:gz') as tar:
+        with tarfile.open(xml_tar_gz, mode="w:gz") as tar:
             # add the files to the compressed tarfile
             tar.add(blast_xml_file, arcname=os.path.basename(blast_xml_file))
             tar.add(xml_txt, arcname=os.path.basename(xml_txt))
@@ -243,7 +269,7 @@ def download_homologues_from_ncbi(acc: str, TMD_seq_pl_surr: str, blast_xml_file
     else:
         raise Exception(f"{acc} download_homologues_from_ncbi failed, blast_xml_file not found ({blast_xml_file})")
 
-    logging.info("Output file: {}. (time taken = {:0.3f} min)".format(xml_tar_gz, duration / 60))
+    logging.info(f"Output file: {xml_tar_gz}. (time taken = {duration / 60:0.3f} min)")
 
 
 def download_10_homologues_from_ncbi(paths: ArtefactPaths, df_set, rerun_existing_blast_results: bool, logging):
@@ -275,7 +301,9 @@ def download_10_homologues_from_ncbi(paths: ArtefactPaths, df_set, rerun_existin
         database = df_set.loc[i, "database"]
 
         # run online server NCBI blastp with biopython module
-        blast_xml_file = str(paths.data_dir / "homologues" / "xml" / "10_hits" / database / f"{acc}.{paths.surr_suffix}.BLAST.xml")
+        blast_xml_file = str(
+            paths.data_dir / "homologues" / "xml" / "10_hits" / database / f"{acc}.{paths.surr_suffix}.BLAST.xml"
+        )
         xml_tar_gz = blast_xml_file[:-4] + ".xml.tar.gz"
         xml_txt = blast_xml_file[:-4] + "_details.txt"
 
@@ -284,16 +312,20 @@ def download_10_homologues_from_ncbi(paths: ArtefactPaths, df_set, rerun_existin
         else:
             if rerun_existing_blast_results:
                 run_download = True
-                logging.info('{} starting download_homologues_from_ncbi_mult_prot (EXISTING xml.tar.gz FILE WILL BE OVERWRITTEN)'.format(acc))
+                logging.info(
+                    f"{acc} starting download_homologues_from_ncbi_mult_prot (EXISTING xml.tar.gz FILE WILL BE OVERWRITTEN)"
+                )
             elif rerun_existing_blast_results in [False, 0]:
                 run_download = False
-                logging.info('{} download_homologues_from_ncbi_mult_prot skipped (EXISTING xml.tar.gz FILE)'.format(acc))
+                logging.info(f"{acc} download_homologues_from_ncbi_mult_prot skipped (EXISTING xml.tar.gz FILE)")
                 # skip protein
                 continue
             else:
-                raise ValueError('rerun_existing_blast_results does not seem to be True or False')
+                raise ValueError("rerun_existing_blast_results does not seem to be True or False")
 
         if run_download:
-            download_homologues_from_ncbi(acc, full_seq, blast_xml_file, xml_txt, xml_tar_gz, expect_value, hit_list_size, logging)
+            download_homologues_from_ncbi(
+                acc, full_seq, blast_xml_file, xml_txt, xml_tar_gz, expect_value, hit_list_size, logging
+            )
 
-    logging.info('homologues download was finished')
+    logging.info("homologues download was finished")

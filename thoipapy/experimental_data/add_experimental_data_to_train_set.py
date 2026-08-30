@@ -3,8 +3,8 @@ import sys
 
 import pandas as pd
 
-from thoipapy.utils import normalise_between_2_values
 from thoipapy.artefacts import ArtefactPaths
+from thoipapy.utils import normalise_between_2_values
 
 
 def add_experimental_data_to_combined_features_mult_prot(paths: ArtefactPaths, df_set, inter_pair_max: int, logging):
@@ -32,15 +32,19 @@ def add_experimental_data_to_combined_features_mult_prot(paths: ArtefactPaths, d
         else:
             experimental_data_file = paths.experimental_interface_csv(database, acc, inter_pair_max)
 
-        add_experimental_data_to_combined_features(acc, database, TMD_seq, feature_combined_file, experimental_data_file, logging)
+        add_experimental_data_to_combined_features(
+            acc, database, TMD_seq, feature_combined_file, experimental_data_file, logging
+        )
 
 
-def add_experimental_data_to_combined_features(acc, database, TMD_seq, feature_combined_file, experimental_data_file, logging):
+def add_experimental_data_to_combined_features(
+    acc, database, TMD_seq, feature_combined_file, experimental_data_file, logging
+):
     """Add the "bind" experimental data "interface_score" to the csv file with features.
 
     Parameters
     ----------
-	acc : str
+        acc : str
         Protein accession (e.g. UniProt, PDB)
     database : str
         Database name, e.g. "crystal", "NMR" or "ETRA".
@@ -59,7 +63,7 @@ def add_experimental_data_to_combined_features(acc, database, TMD_seq, feature_c
         # try searching for the data files with uppercase accession
         experimental_data_file = experimental_data_file.replace(acc, acc.upper())
         if os.path.isfile(experimental_data_file):
-            logging.warning("experimental_data_file IS IN UPPERCASE ({})".format(experimental_data_file))
+            logging.warning(f"experimental_data_file IS IN UPPERCASE ({experimental_data_file})")
 
     if os.path.isfile(experimental_data_file):
         if database == "ETRA":
@@ -69,17 +73,26 @@ def add_experimental_data_to_combined_features(acc, database, TMD_seq, feature_c
             # read as the index and checked here. The column is gone; aa_position carries the same
             # 1-based residue numbering, so assert on it directly.
             assert list(df_experiment_data.aa_position) == list(range(1, df_experiment_data.shape[0] + 1))
-            df_experiment_data = df_experiment_data.rename(columns={"aa_position": "residue_num", "orig_aa": "residue_name", "Interface": "interface", "Disruption": "interface_score"})
+            df_experiment_data = df_experiment_data.rename(
+                columns={
+                    "aa_position": "residue_num",
+                    "orig_aa": "residue_name",
+                    "Interface": "interface",
+                    "Disruption": "interface_score",
+                }
+            )
         else:
             df_experiment_data = pd.read_csv(experimental_data_file)
-            df_experiment_data = df_experiment_data.rename(columns={"bind": "interface", "closedist": "interface_score"})
+            df_experiment_data = df_experiment_data.rename(
+                columns={"bind": "interface", "closedist": "interface_score"}
+            )
             # confirm that correct index_col is chosen
             assert list(df_experiment_data.index) == list(range(df_experiment_data.shape[0]))
             closedist_notes = False
             if closedist_notes:
                 min_closedist = df_experiment_data.interface_score.min()
                 if min_closedist < 3:
-                    sys.stdout.write("\n{} {} min_closedist {:0.2f}".format(acc, database, min_closedist))
+                    sys.stdout.write(f"\n{acc} {database} min_closedist {min_closedist:0.2f}")
 
         # join the two dataframes together
         # if either the residue_num or residue_name don't match, the rows will be dropped
@@ -89,10 +102,10 @@ def add_experimental_data_to_combined_features(acc, database, TMD_seq, feature_c
         if TMD_seq != TMD_seq_in_merged_file:
             TMD_seq_in_combined_file = df_combined.residue_name.str.cat()
             TMD_seq_in_bind_file = df_experiment_data.residue_name.str.cat()
-            sys.stdout.write("\n{}, TMD_seq in protein set   = {}".format(acc, TMD_seq))
-            sys.stdout.write("\n{}, TMD_seq_in_combined_file = {}".format(acc, TMD_seq_in_combined_file))
-            sys.stdout.write("\n{}, TMD_seq_in_bind_file     = {}".format(acc, TMD_seq_in_bind_file))
-            sys.stdout.write("\n{}, TMD_seq_in_merged_file   = {}\n".format(acc, TMD_seq_in_merged_file))
+            sys.stdout.write(f"\n{acc}, TMD_seq in protein set   = {TMD_seq}")
+            sys.stdout.write(f"\n{acc}, TMD_seq_in_combined_file = {TMD_seq_in_combined_file}")
+            sys.stdout.write(f"\n{acc}, TMD_seq_in_bind_file     = {TMD_seq_in_bind_file}")
+            sys.stdout.write(f"\n{acc}, TMD_seq_in_merged_file   = {TMD_seq_in_merged_file}\n")
             # sys.stdout.write("TMD_seq in original settings file and final merged features dataframe does not match.")
             raise IndexError("TMD_seq in original settings file and final merged features dataframe does not match.")
 
@@ -102,17 +115,28 @@ def add_experimental_data_to_combined_features(acc, database, TMD_seq, feature_c
         # 1 = definitely an interface
         if database == "crystal" or database == "NMR":
             # normalize crystal and NMR closedistance to between 0 and 1 with invert, min and max values were set as 2 and 10 angstrom
-            df_combined_plus_exp_data["interface_score_norm"] = normalise_between_2_values(df_combined_plus_exp_data["interface_score"], 2, 10, invert=True)
+            df_combined_plus_exp_data["interface_score_norm"] = normalise_between_2_values(
+                df_combined_plus_exp_data["interface_score"], 2, 10, invert=True
+            )
         elif database == "ETRA":
             ###normalize ETRA experimental disruption value to the range of 0 to 1 without invert, the min and max values were set as -0.4 and 0.4
-            df_combined_plus_exp_data["interface_score_norm"] = normalise_between_2_values(df_combined_plus_exp_data["interface_score"], -0.4, 0.4)
+            df_combined_plus_exp_data["interface_score_norm"] = normalise_between_2_values(
+                df_combined_plus_exp_data["interface_score"], -0.4, 0.4
+            )
 
-        new_index: pd.Series = acc + "-" + database + "_" + df_combined_plus_exp_data["residue_num"].apply(lambda x: f"{x:02d}") + df_combined_plus_exp_data["residue_name"]
+        new_index: pd.Series = (
+            acc
+            + "-"
+            + database
+            + "_"
+            + df_combined_plus_exp_data["residue_num"].apply(lambda x: f"{x:02d}")
+            + df_combined_plus_exp_data["residue_name"]
+        )
         df_combined_plus_exp_data.index = new_index
 
         # overwrite existing combined features file
         df_combined_plus_exp_data.to_csv(feature_combined_file)
-        logging.info("{} add_experimental_data_to_combined_features_mult_prot finished ({})".format(acc, experimental_data_file))
+        logging.info(f"{acc} add_experimental_data_to_combined_features_mult_prot finished ({experimental_data_file})")
 
     else:
-        logging.warning("{} add_experimental_data_to_combined_features failed, {} not found".format(acc, experimental_data_file))
+        logging.warning(f"{acc} add_experimental_data_to_combined_features failed, {experimental_data_file} not found")

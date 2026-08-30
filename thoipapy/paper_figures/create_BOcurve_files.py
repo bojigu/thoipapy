@@ -1,21 +1,34 @@
+# The FutureWarning filter has to run before pandas and seaborn are imported, so it sits above
+# every other import in the module.
 import warnings
-from pathlib import Path
-from typing import Union
 
-warnings.simplefilter(action='ignore', category=FutureWarning)
-import pandas as pd
+warnings.simplefilter(action="ignore", category=FutureWarning)
+
 import os
-import numpy as np
+from pathlib import Path
+
 import matplotlib.pyplot as plt
-import warnings
+import numpy as np
+import pandas as pd
 from scipy.stats import linregress
-from thoipapy.utils import normalise_0_1, make_sure_path_exists
+
 from thoipapy.artefacts import ArtefactPaths
+from thoipapy.utils import make_sure_path_exists, normalise_0_1
 
 warnings.filterwarnings("ignore")
 
 
-def save_BO_linegraph_and_barchart(paths: ArtefactPaths, n_residues_AUBOC_validation, bocurve_data_xlsx, BO_linechart_png, BO_barchart_png, namedict, logging, AUC_ser, plot_o_over_r=False):
+def save_BO_linegraph_and_barchart(
+    paths: ArtefactPaths,
+    n_residues_AUBOC_validation,
+    bocurve_data_xlsx,
+    BO_linechart_png,
+    BO_barchart_png,
+    namedict,
+    logging,
+    AUC_ser,
+    plot_o_over_r=False,
+):
     df_o_minus_r = pd.read_excel(bocurve_data_xlsx, sheet_name="df_o_minus_r", index_col=0)
     BO_scatter_png = str(BO_barchart_png)[:-12] + "scatter.png"
 
@@ -25,7 +38,9 @@ def save_BO_linegraph_and_barchart(paths: ArtefactPaths, n_residues_AUBOC_valida
     #                                                                                                     #
     #######################################################################################################
     # load AUBOC values as a series
-    mean_o_minus_r_by_sample_ser = pd.read_excel(bocurve_data_xlsx, sheet_name="mean_o_minus_r_by_sample", index_col=0)["mean_o_minus_r_by_sample"]
+    mean_o_minus_r_by_sample_ser = pd.read_excel(bocurve_data_xlsx, sheet_name="mean_o_minus_r_by_sample", index_col=0)[
+        "mean_o_minus_r_by_sample"
+    ]
     # select sample sizes 5 and 10
     df_valid_indiv = df_o_minus_r.loc[[5, 10], :].T.copy()
     df_valid_indiv["AUBOC"] = mean_o_minus_r_by_sample_ser
@@ -33,7 +48,7 @@ def save_BO_linegraph_and_barchart(paths: ArtefactPaths, n_residues_AUBOC_valida
     df_valid_indiv.sort_values("AUBOC", axis=0, ascending=False, inplace=True)
 
     """ df_valid_indiv should now have the results from BO curve and ROC for each protein
-    
+
                       AUBOC  sample size 5  sample size 10   ROC AUC
     3ij4_A-crystal  17.456522       1.913043        1.652174  0.714286
     4wit_A-crystal  16.620000       2.000000        2.000000  0.622807
@@ -62,7 +77,7 @@ def save_BO_linegraph_and_barchart(paths: ArtefactPaths, n_residues_AUBOC_valida
     # slope, intercept, r_value, p_value, std_err = scipy.stats.linregress(x, y)
     x_first_last_dp = np.array([df_valid_indiv["AUBOC"].min(), df_valid_indiv["AUBOC"].max()])
     y_fitted = x_first_last_dp * slope + intercept
-    ax.plot(x_first_last_dp, y_fitted, label="$R^2$ : {:.2f}".format(r_value ** 2))
+    ax.plot(x_first_last_dp, y_fitted, label=f"$R^2$ : {r_value ** 2:.2f}")
 
     ax.set_xlabel("AUBOC")
     ax.set_ylabel("ROC AUC")
@@ -77,8 +92,10 @@ def save_BO_linegraph_and_barchart(paths: ArtefactPaths, n_residues_AUBOC_valida
     for col in df_valid_indiv.columns:
         df_valid_indiv[col] = normalise_0_1(df_valid_indiv[col])[0] + 0.01
 
-    bocurve_data_xlsx: Union[Path, str] = paths.crossvalidation_dir / f"data/{paths.setname}_thoipa_loo_bo_curve_data.xlsx"
-    BO_data_valid_indiv_csv: Union[Path, str] = paths.crossvalidation_dir / f"data/{paths.setname}_BO_curve_data_valid_indiv.csv"
+    bocurve_data_xlsx: Path | str = paths.crossvalidation_dir / f"data/{paths.setname}_thoipa_loo_bo_curve_data.xlsx"
+    BO_data_valid_indiv_csv: Path | str = (
+        paths.crossvalidation_dir / f"data/{paths.setname}_BO_curve_data_valid_indiv.csv"
+    )
     make_sure_path_exists(bocurve_data_xlsx, isfile=True)
 
     df_valid_indiv = df_valid_indiv.reindex(columns=["AUBOC", 5, 10, "ROC AUC"])
@@ -138,7 +155,7 @@ def save_BO_linegraph_and_barchart(paths: ArtefactPaths, n_residues_AUBOC_valida
     figsize = np.array([3.42, 3.42]) * 2  # DOUBLE the real size, due to problems on Bo computer with fontsizes
     fig, ax = plt.subplots(figsize=figsize)
 
-    df_o_minus_r_mean.plot(ax=ax, color="#0f7d9b", linestyle="-", label="prediction (AUBOC : {:0.2f}".format(AUBOC))
+    df_o_minus_r_mean.plot(ax=ax, color="#0f7d9b", linestyle="-", label=f"prediction (AUBOC : {AUBOC:0.2f}")
     ax.plot([1, 10], [0, 0], color="#0f7d9b", linestyle="--", label="random", alpha=0.5)
 
     if plot_o_over_r:
@@ -149,13 +166,13 @@ def save_BO_linegraph_and_barchart(paths: ArtefactPaths, n_residues_AUBOC_valida
     # ax.set_ylim(0)
     ax.grid(False)
     ax.set_ylabel("fraction of correctly predicted residues\n(observed - random)", color="#0f7d9b")
-    ax.tick_params('y', colors="#0f7d9b")
+    ax.tick_params("y", colors="#0f7d9b")
 
-    ax.spines['left'].set_color("#0f7d9b")
+    ax.spines["left"].set_color("#0f7d9b")
     ax.legend()
     if plot_o_over_r:
-        ax2.tick_params('y', colors="#9b2d0f")
-        ax2.spines['right'].set_color("#9b2d0f")
+        ax2.tick_params("y", colors="#9b2d0f")
+        ax2.spines["right"].set_color("#9b2d0f")
         # ax.set_ylabel("performance value\n (observed / random)", color="#9b2d0f")
         ax.set_ylabel("fraction of correctly predicted residues\n(observed / random)", color="#9b2d0f")
         ax2.legend()
@@ -172,7 +189,7 @@ def save_extra_BO_figs(bocurve_data_xlsx, other_figs_path):
     linechart_obs_indiv = os.path.join(other_figs_path, "2_linechart_obs_indiv.png")
     linechart_p_indiv = os.path.join(other_figs_path, "3_linechart_p_indiv.png")
     linechart_o_minus_r = os.path.join(other_figs_path, "4_linechart_o_minus_r.png")
-    linechart_o_over_r = os.path.join(other_figs_path, "5_linechart_o_over_r.png")
+    os.path.join(other_figs_path, "5_linechart_o_over_r.png")
 
     dfrand = pd.read_excel(bocurve_data_xlsx, sheet_name="dfrand", index_col=0)
     dfobs = pd.read_excel(bocurve_data_xlsx, sheet_name="dfobs", index_col=0)

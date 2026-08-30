@@ -16,6 +16,7 @@ only exists on one of the three sheets and is blank on eight rows of that one, s
 arrive as the string ``"TRUE"``. That worked by accident -- a non-empty string is truthy -- but so
 is ``"FALSE"``, which meant a stage switched off in the spreadsheet could still run.
 """
+
 from dataclasses import dataclass, fields
 from typing import Any
 
@@ -34,7 +35,7 @@ def _as_bool(value: Any, name: str) -> bool:
     """
     if isinstance(value, bool):
         return value
-    if isinstance(value, (int, float)) and value in (0, 1):
+    if isinstance(value, int | float) and value in (0, 1):
         return bool(value)
     if isinstance(value, str):
         lowered = value.strip().lower()
@@ -67,7 +68,7 @@ class RunSettings:
     entropy_calculation: bool = False
     rate4site_calculation: bool = False
     coevolution_calculation: bool = False
-    clac_relative_position: bool = False   # spelling preserved: it is the spreadsheet column name
+    clac_relative_position: bool = False  # spelling preserved: it is the spreadsheet column name
     calc_lipo_from_pssm: bool = False
     lips_score_calculation: bool = False
     motifs_from_seq: bool = False

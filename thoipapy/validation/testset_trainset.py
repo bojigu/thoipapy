@@ -5,43 +5,55 @@ shipped settings files and disabled in the functional test. Last exercised for t
 publication. Not covered by any test, and excluded from the refactoring applied to the maintained
 part of the package.
 """
+
 import os
 import pickle
 from pathlib import Path
-from typing import Union
 
 import joblib
 import numpy as np
 import pandas as pd
 from matplotlib import pyplot as plt
 from numpy import interp
-from sklearn.metrics import roc_curve, auc
+from sklearn.metrics import auc, roc_curve
 
 import thoipapy.common
 import thoipapy.paper_figures
 import thoipapy.utils
 import thoipapy.validation
 import thoipapy.validation.bocurve
+from thoipapy.artefacts import ArtefactPaths
 from thoipapy.paper_figures.create_BOcurve_files import save_BO_linegraph_and_barchart, save_extra_BO_figs
 from thoipapy.validation.bocurve import parse_BO_data_csv_to_excel
-from thoipapy.utils import get_test_and_train_set_lists
-from thoipapy.artefacts import ArtefactPaths
 
 
-def run_testset_trainset_validation(paths: ArtefactPaths, n_residues_AUBOC_validation: int, test_set_list, train_set_list, logging):
+def run_testset_trainset_validation(
+    paths: ArtefactPaths, n_residues_AUBOC_validation: int, test_set_list, train_set_list, logging
+):
 
     validate_LIPS_for_testset(paths, n_residues_AUBOC_validation, test_set_list, logging)
-    validate_LIPS_for_testset(paths, n_residues_AUBOC_validation, test_set_list, logging, LIPS_name="LIPS_surface_ranked", pred_col="LIPS_surface_ranked")
+    validate_LIPS_for_testset(
+        paths,
+        n_residues_AUBOC_validation,
+        test_set_list,
+        logging,
+        LIPS_name="LIPS_surface_ranked",
+        pred_col="LIPS_surface_ranked",
+    )
 
-    validate_THOIPA_for_testset_trainset_combination(paths, n_residues_AUBOC_validation, test_set_list, train_set_list, logging)
+    validate_THOIPA_for_testset_trainset_combination(
+        paths, n_residues_AUBOC_validation, test_set_list, train_set_list, logging
+    )
 
 
-def validate_THOIPA_for_testset_trainset_combination(paths: ArtefactPaths, n_residues_AUBOC_validation: int, test_set_list, train_set_list, logging):
-    """ Creates ROC and BO-curve for a particular testset-trainset combination.
+def validate_THOIPA_for_testset_trainset_combination(
+    paths: ArtefactPaths, n_residues_AUBOC_validation: int, test_set_list, train_set_list, logging
+):
+    """Creates ROC and BO-curve for a particular testset-trainset combination.
 
     Parameters
     ----------
-	s : dict
+        s : dict
         Settings dictionary for figures.
     test_set_list : list
         List of test datasets in selection
@@ -68,22 +80,33 @@ def validate_THOIPA_for_testset_trainset_combination(paths: ArtefactPaths, n_res
     names_csv_path = paths.protein_names_csv
     namedict = thoipapy.utils.create_namedict(names_csv_path)
 
-    for n, train_set in enumerate(train_set_list):
-        trainsetname = "set{:02d}".format(int(train_set))
+    for _n, train_set in enumerate(train_set_list):
+        trainsetname = f"set{int(train_set):02d}"
         model_pkl = paths.data_dir / f"results/{trainsetname}/{trainsetname}_ML_model.lpkl"
 
         for test_set in test_set_list:
-            testsetname = "set{:02d}".format(int(test_set))
+            testsetname = f"set{int(test_set):02d}"
 
             # BO_curve_folder = paths.data_dir / f"results{testsetname}/blindvalidation/thoipa.train{trainsetname}"
             # THOIPA_BO_curve_data_csv = os.path.join(paths.data_dir, "results", "compare_testset_trainset", "data", "Test{}_Train{}.THOIPA".format(testsetname, trainsetname), "data", "Test{}_Train{}.THOIPA.best_overlap_data.csv".format(testsetname, trainsetname))
-            THOIPA_BO_curve_data_csv = paths.data_dir / f"results/{testsetname}/blindvalidation/thoipa.train{trainsetname}/THOIPA.best_overlap_data.csv"
+            THOIPA_BO_curve_data_csv = (
+                paths.data_dir
+                / f"results/{testsetname}/blindvalidation/thoipa.train{trainsetname}/THOIPA.best_overlap_data.csv"
+            )
             # THOIPA_ROC_pkl = os.path.join(paths.data_dir, "results", "compare_testset_trainset", "data", "Test{}_Train{}.THOIPA".format(testsetname, trainsetname), "data", "Test{}_Train{}.THOIPA.ROC_data.pkl".format(testsetname, trainsetname))
-            THOIPA_ROC_pkl = paths.data_dir / f"results/{testsetname}/blindvalidation/thoipa.train{trainsetname}/ROC_data.pkl"
+            THOIPA_ROC_pkl = (
+                paths.data_dir / f"results/{testsetname}/blindvalidation/thoipa.train{trainsetname}/ROC_data.pkl"
+            )
 
-            bocurve_data_xlsx = paths.data_dir / f"results/{testsetname}/blindvalidation/thoipa.train{trainsetname}/bocurve_data.xlsx"
-            BO_linechart_png = paths.data_dir / f"results/{testsetname}/blindvalidation/thoipa.train{trainsetname}/BO_linechart.png"
-            BO_barchart_png = paths.data_dir / f"results/{testsetname}/blindvalidation/thoipa.train{trainsetname}/AUBOC_barchart.png"
+            bocurve_data_xlsx = (
+                paths.data_dir / f"results/{testsetname}/blindvalidation/thoipa.train{trainsetname}/bocurve_data.xlsx"
+            )
+            BO_linechart_png = (
+                paths.data_dir / f"results/{testsetname}/blindvalidation/thoipa.train{trainsetname}/BO_linechart.png"
+            )
+            BO_barchart_png = (
+                paths.data_dir / f"results/{testsetname}/blindvalidation/thoipa.train{trainsetname}/AUBOC_barchart.png"
+            )
 
             thoipapy.utils.make_sure_path_exists(bocurve_data_xlsx, isfile=True)
 
@@ -103,12 +126,26 @@ def validate_THOIPA_for_testset_trainset_combination(paths: ArtefactPaths, n_res
                 database = testdataset_df.loc[i, "database"]
                 acc_db = acc + "-" + database
                 testdata_combined_file = paths.combined_features_csv(database, acc)
-                THOIPA_pred_csv = paths.data_dir / f"results/{testsetname}/predictions/thoipa.train{trainsetname}/{database}.{acc}.thoipa.train{trainsetname}.csv"
-                combined_incl_THOIPA_csv = paths.data_dir / f"results/{testsetname}/predictions/thoipa.train{trainsetname}/{database}.{acc}.thoipa.train{trainsetname}_incl_combined.csv"
+                THOIPA_pred_csv = (
+                    paths.data_dir
+                    / f"results/{testsetname}/predictions/thoipa.train{trainsetname}/{database}.{acc}.thoipa.train{trainsetname}.csv"
+                )
+                combined_incl_THOIPA_csv = (
+                    paths.data_dir
+                    / f"results/{testsetname}/predictions/thoipa.train{trainsetname}/{database}.{acc}.thoipa.train{trainsetname}_incl_combined.csv"
+                )
 
                 thoipapy.utils.make_sure_path_exists(combined_incl_THOIPA_csv, isfile=True)
 
-                combined_incl_THOIPA_df = save_THOIPA_pred_indiv_prot(paths, model_pkl, testdata_combined_file, THOIPA_pred_csv, combined_incl_THOIPA_csv, trainsetname, logging)
+                combined_incl_THOIPA_df = save_THOIPA_pred_indiv_prot(
+                    paths,
+                    model_pkl,
+                    testdata_combined_file,
+                    THOIPA_pred_csv,
+                    combined_incl_THOIPA_csv,
+                    trainsetname,
+                    logging,
+                )
 
                 #######################################################################################################
                 #                                                                                                     #
@@ -122,7 +159,9 @@ def validate_THOIPA_for_testset_trainset_combination(paths: ArtefactPaths, n_res
                     # (it is closest distance and low value means high propencity of interfacial)
                     combined_incl_THOIPA_df["interface_score"] = -1 * combined_incl_THOIPA_df["interface_score"]
 
-                THOIPA_BO_single_prot_df = thoipapy.validation.bocurve.calc_best_overlap_from_selected_column_in_df(acc_db, combined_incl_THOIPA_df, pred_col=f"thoipa.train{trainsetname}")
+                THOIPA_BO_single_prot_df = thoipapy.validation.bocurve.calc_best_overlap_from_selected_column_in_df(
+                    acc_db, combined_incl_THOIPA_df, pred_col=f"thoipa.train{trainsetname}"
+                )
 
                 if THOIPA_BO_data_df.empty:
                     THOIPA_BO_data_df = THOIPA_BO_single_prot_df
@@ -139,7 +178,9 @@ def validate_THOIPA_for_testset_trainset_combination(paths: ArtefactPaths, n_res
 
                 predictor_name = f"thoipa.train{trainsetname}"
 
-                fpr, tpr, thresholds = roc_curve(df_for_roc.interface, df_for_roc[predictor_name], drop_intermediate=False)
+                fpr, tpr, thresholds = roc_curve(
+                    df_for_roc.interface, df_for_roc[predictor_name], drop_intermediate=False
+                )
                 roc_auc = auc(fpr, tpr)
                 mean_tpr += interp(mean_fpr, fpr, tpr)
                 mean_tpr[0] = 0.0
@@ -155,12 +196,23 @@ def validate_THOIPA_for_testset_trainset_combination(paths: ArtefactPaths, n_res
             THOIPA_BO_data_df.to_csv(THOIPA_BO_curve_data_csv)
 
             # THOIPA_linechart_mean_obs_and_rand = analyse_bo_curve_underlying_data(THOIPA_BO_curve_data_csv, BO_curve_folder, names_csv_path)
-            parse_BO_data_csv_to_excel(THOIPA_BO_curve_data_csv, bocurve_data_xlsx, n_residues_AUBOC_validation, logging)
+            parse_BO_data_csv_to_excel(
+                THOIPA_BO_curve_data_csv, bocurve_data_xlsx, n_residues_AUBOC_validation, logging
+            )
             AUC_ser = pd.Series(xv_dict_THOIPA[acc_db]["roc_auc"])
-            AUBOC = save_BO_linegraph_and_barchart(paths, n_residues_AUBOC_validation, bocurve_data_xlsx, BO_linechart_png, BO_barchart_png, namedict, logging, AUC_ser)
+            AUBOC = save_BO_linegraph_and_barchart(
+                paths,
+                n_residues_AUBOC_validation,
+                bocurve_data_xlsx,
+                BO_linechart_png,
+                BO_barchart_png,
+                namedict,
+                logging,
+                AUC_ser,
+            )
 
             if "you_want_more_details" == "TRUE":
-                other_figs_path: Union[Path, str] = paths.crossvalidation_dir / f"other_figs"
+                other_figs_path: Path | str = paths.crossvalidation_dir / "other_figs"
                 save_extra_BO_figs(bocurve_data_xlsx, other_figs_path)
 
             #######################################################################################################
@@ -184,17 +236,30 @@ def validate_THOIPA_for_testset_trainset_combination(paths: ArtefactPaths, n_res
 
             create_ROC_fig_for_testset_trainset_combination(THOIPA_ROC_pkl)
 
-            logging.info("test{}_train{} AUC({:.03f}), AUBOC({:.2f}). ({})".format(testsetname, trainsetname, mean_roc_auc, AUBOC, BO_barchart_png))
+            logging.info(
+                f"test{testsetname}_train{trainsetname} AUC({mean_roc_auc:.03f}), AUBOC({AUBOC:.2f}). ({BO_barchart_png})"
+            )
 
 
-def validate_LIPS_for_testset(paths: ArtefactPaths, n_residues_AUBOC_validation: int, test_set_list, logging, LIPS_name="LIPS_LE", pred_col="LIPS_L*E"):
+def validate_LIPS_for_testset(
+    paths: ArtefactPaths,
+    n_residues_AUBOC_validation: int,
+    test_set_list,
+    logging,
+    LIPS_name="LIPS_LE",
+    pred_col="LIPS_L*E",
+):
     names_csv_path = paths.protein_names_csv
     namedict = thoipapy.utils.create_namedict(names_csv_path)
 
-
     for test_set in test_set_list:
-        testsetname = "set{:02d}".format(int(test_set))
-        LIPS_BO_curve_data_csv = paths.data_dir / "results" / testsetname / f"blindvalidation/{LIPS_name}/{LIPS_name}.best_overlap_data.csv.csv"
+        testsetname = f"set{int(test_set):02d}"
+        LIPS_BO_curve_data_csv = (
+            paths.data_dir
+            / "results"
+            / testsetname
+            / f"blindvalidation/{LIPS_name}/{LIPS_name}.best_overlap_data.csv.csv"
+        )
         # LIPS_BO_curve_data_csv = os.path.join(paths.data_dir, "results", "compare_testset_trainset", "data", "Test{}.{}".format(testsetname, LIPS_name), "Test{}.{}.best_overlap_data.csv".format(testsetname, LIPS_name))
         # BO_curve_folder = os.path.join(paths.data_dir, "results", "compare_testset_trainset", "data", "Test{}.{}".format(testsetname, LIPS_name))
         BO_curve_folder = paths.data_dir / "results" / testsetname / f"blindvalidation/{LIPS_name}"
@@ -233,8 +298,20 @@ def validate_LIPS_for_testset(paths: ArtefactPaths, n_residues_AUBOC_validation:
             # SAVE LIPS PREDICTION DATA
             # this is somewhat inefficient, as it is conducted for every test dataset
             # LIPS_pred_csv = os.path.join(os.path.dirname(paths.data_dir), "features", "Predictions", "testset_trainset", database, "{}.LIPS_pred.csv".format(acc, testsetname))
-            LIPS_pred_csv = paths.data_dir / f"results/{testsetname}/predictions/{LIPS_name}/{database}.{acc}.{LIPS_name}.csv"
-            LIPS_pred_df = combined_df[["residue_name", "residue_num", "LIPS_polarity", "LIPS_entropy", "LIPS_L*E", "LIPS_surface", "LIPS_surface_ranked"]]
+            LIPS_pred_csv = (
+                paths.data_dir / f"results/{testsetname}/predictions/{LIPS_name}/{database}.{acc}.{LIPS_name}.csv"
+            )
+            LIPS_pred_df = combined_df[
+                [
+                    "residue_name",
+                    "residue_num",
+                    "LIPS_polarity",
+                    "LIPS_entropy",
+                    "LIPS_L*E",
+                    "LIPS_surface",
+                    "LIPS_surface_ranked",
+                ]
+            ]
             thoipapy.utils.make_sure_path_exists(LIPS_pred_csv, isfile=True)
             LIPS_pred_df.to_csv(LIPS_pred_csv)
 
@@ -245,7 +322,9 @@ def validate_LIPS_for_testset(paths: ArtefactPaths, n_residues_AUBOC_validation:
                 # (it is closest distance and low value means high propencity of interfacial)
                 combined_df["interface_score"] = -1 * combined_df["interface_score"]
 
-            LIPS_BO_single_prot_df = thoipapy.validation.bocurve.calc_best_overlap_from_selected_column_in_df(acc_db, combined_df, experiment_col="interface_score", pred_col=pred_col)
+            LIPS_BO_single_prot_df = thoipapy.validation.bocurve.calc_best_overlap_from_selected_column_in_df(
+                acc_db, combined_df, experiment_col="interface_score", pred_col=pred_col
+            )
 
             # Was `if LIPS_BO_single_prot_df.empty`, which replaced everything accumulated so far
             # with an empty frame as soon as one protein produced no usable data. Compare with the
@@ -284,10 +363,19 @@ def validate_LIPS_for_testset(paths: ArtefactPaths, n_residues_AUBOC_validation:
         # parse_BO_data_csv_to_excel(LIPS_BO_curve_data_csv, BO_curve_folder, names_csv_path)
         parse_BO_data_csv_to_excel(LIPS_BO_curve_data_csv, bocurve_data_xlsx, n_residues_AUBOC_validation, logging)
         AUC_ser = pd.Series(xv_dict_LIPS[acc_db]["roc_auc"])
-        AUBOC = save_BO_linegraph_and_barchart(paths, n_residues_AUBOC_validation, bocurve_data_xlsx, BO_linechart_png, BO_barchart_png, namedict, logging, AUC_ser)
+        AUBOC = save_BO_linegraph_and_barchart(
+            paths,
+            n_residues_AUBOC_validation,
+            bocurve_data_xlsx,
+            BO_linechart_png,
+            BO_barchart_png,
+            namedict,
+            logging,
+            AUC_ser,
+        )
 
         if "you_want_more_details" == "TRUE":
-            other_figs_path: Union[Path, str] = paths.crossvalidation_dir / f"other_figs"
+            other_figs_path: Path | str = paths.crossvalidation_dir / "other_figs"
             save_extra_BO_figs(bocurve_data_xlsx, other_figs_path)
 
         #######################################################################################################
@@ -311,7 +399,7 @@ def validate_LIPS_for_testset(paths: ArtefactPaths, n_residues_AUBOC_validation:
 
         create_ROC_fig_for_testset_trainset_combination(LIPS_ROC_pkl)
 
-        logging.info("test{}.{} AUC({:.03f}), AUBOC({:.2f}). ({})".format(testsetname, LIPS_name, mean_roc_auc, AUBOC, BO_barchart_png))
+        logging.info(f"test{testsetname}.{LIPS_name} AUC({mean_roc_auc:.03f}), AUBOC({AUBOC:.2f}). ({BO_barchart_png})")
 
 
 def create_ROC_fig_for_testset_trainset_combination(THOIPA_ROC_pkl):
@@ -319,7 +407,7 @@ def create_ROC_fig_for_testset_trainset_combination(THOIPA_ROC_pkl):
     ROC_pkl_basename = os.path.basename(THOIPA_ROC_pkl)[:-4]
     ROC_pkl_dir = os.path.dirname(THOIPA_ROC_pkl)
 
-    ROC_png = os.path.join(ROC_pkl_dir, "{}.ROC.png".format(ROC_pkl_basename))
+    ROC_png = os.path.join(ROC_pkl_dir, f"{ROC_pkl_basename}.ROC.png")
     thoipapy.utils.make_sure_path_exists(ROC_png, isfile=True)
 
     # open pickle file
@@ -333,13 +421,25 @@ def create_ROC_fig_for_testset_trainset_combination(THOIPA_ROC_pkl):
 
     for acc_db in xv_dict_THOIPA:
         roc_auc = xv_dict_THOIPA[acc_db]["roc_auc"]
-        ax.plot(xv_dict_THOIPA[acc_db]["fpr"], xv_dict_THOIPA[acc_db]["tpr"], lw=1, label='{} ({:0.2f})'.format(acc_db, roc_auc), alpha=0.8)
+        ax.plot(
+            xv_dict_THOIPA[acc_db]["fpr"],
+            xv_dict_THOIPA[acc_db]["tpr"],
+            lw=1,
+            label=f"{acc_db} ({roc_auc:0.2f})",
+            alpha=0.8,
+        )
 
     # mean_roc_auc = auc(df_xv["false_positive_rate"], df_xv["true_positive_rate"])
     mean_roc_auc = ROC_out_dict["mean_roc_auc"]
 
-    ax.plot(ROC_out_dict["false_positive_rate_mean"], ROC_out_dict["true_positive_rate_mean"], color="k", label='mean (area = %0.2f)' % mean_roc_auc, lw=1.5)
-    ax.plot([0, 1], [0, 1], '--', color=(0.6, 0.6, 0.6), label='random')
+    ax.plot(
+        ROC_out_dict["false_positive_rate_mean"],
+        ROC_out_dict["true_positive_rate_mean"],
+        color="k",
+        label=f"mean (area = {mean_roc_auc:0.2f})",
+        lw=1.5,
+    )
+    ax.plot([0, 1], [0, 1], "--", color=(0.6, 0.6, 0.6), label="random")
     ax.set_xlim([-0.05, 1.05])
     ax.set_ylim([-0.05, 1.05])
     ax.set_xlabel("False positive rate")
@@ -350,11 +450,20 @@ def create_ROC_fig_for_testset_trainset_combination(THOIPA_ROC_pkl):
     # fig.savefig(thoipapy.utils.pdf_subpath(ROC_png))
 
 
-def save_THOIPA_pred_indiv_prot(paths: ArtefactPaths, model_pkl, testdata_combined_file, THOIPA_pred_csv, test_combined_incl_pred, trainsetname, logging):
-    combined_incl_THOIPA_df = pd.read_csv(testdata_combined_file, sep=',', engine='python', index_col=0)
+def save_THOIPA_pred_indiv_prot(
+    paths: ArtefactPaths,
+    model_pkl,
+    testdata_combined_file,
+    THOIPA_pred_csv,
+    test_combined_incl_pred,
+    trainsetname,
+    logging,
+):
+    combined_incl_THOIPA_df = pd.read_csv(testdata_combined_file, sep=",", engine="python", index_col=0)
 
-
-    trainset_data_filtered = paths.data_dir / f"results/{trainsetname}/train_data/03_train_data_after_first_feature_seln.csv"
+    trainset_data_filtered = (
+        paths.data_dir / f"results/{trainsetname}/train_data/03_train_data_after_first_feature_seln.csv"
+    )
 
     fit = joblib.load(model_pkl)
 

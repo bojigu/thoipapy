@@ -1,43 +1,35 @@
 #!/usr/bin/env python
-# -*- coding: utf-8 -*-
 """
 Utilities file containing useful functions.
 More recent functions are at the top.
 Many of these are taken from he korbinian python package by Mark Teese. This is allowed under the permissive MIT license.
 """
-import csv
-import glob
+import ctypes
 import logging
 import os
+import platform
 import re as re
 import subprocess
 import sys
-import tarfile
-import unicodedata
 import threading
+import unicodedata
 from pathlib import Path
-from typing import Union
 
+import matplotlib.colors as colors
 import numpy as np
 import pandas as pd
-from shutil import copyfile
-from time import strftime
-import platform
-import matplotlib.colors as colors
-import ctypes
-from scipy.special import comb
 
 # Above this fraction of residues lost to NaN, a dropna() is treated as a pipeline failure rather
 # than as data cleaning. See dropna_with_report.
 MAX_FRACTION_ROWS_DROPPED = 0.05
 
 
-class Command(object):
-    '''
+class Command:
+    """
     subprocess for running shell commands in win and linux
     This will run commands from python as if it was a normal windows console or linux terminal.
     taken from http://stackoverflow.com/questions/17257694/running-jar-files-from-python)'
-    '''
+    """
 
     def __init__(self, cmd):
         self.cmd = cmd
@@ -63,7 +55,7 @@ class Command(object):
             # if the console prints anything longer than 5 characters, log it
             if len(self.stderr) > 5:
                 if log_stderr:
-                    logging.warning('FAULTS: %s' % self.stderr)
+                    logging.warning(f"FAULTS: {self.stderr}")
 
         thread = threading.Thread(target=target)
         thread.start()
@@ -89,8 +81,8 @@ class Command(object):
         return self.returncode == 0 and not self.timed_out
 
 
-def make_sure_path_exists(input_path: Union[Path, str], isfile: bool = False):
-    """ If path to directory or folder doesn't exist, creates the necessary directory.
+def make_sure_path_exists(input_path: Path | str, isfile: bool = False):
+    """If path to directory or folder doesn't exist, creates the necessary directory.
     Set isfile=True to indicate a filepath, where the parent directory needs to be created.
     """
     input_path = Path(input_path)
@@ -107,7 +99,7 @@ def make_sure_path_exists(input_path: Union[Path, str], isfile: bool = False):
 
 
 def reorder_dataframe_columns(dataframe, cols, front=True):
-    '''Takes a dataframe and a subsequence of its columns,
+    """Takes a dataframe and a subsequence of its columns,
        returns dataframe with seq as first columns if "front" is True,
        and seq as last columns if "front" is False.
        taken from https://stackoverflow.com/questions/12329853/how-to-rearrange-pandas-column-sequence
@@ -124,7 +116,7 @@ def reorder_dataframe_columns(dataframe, cols, front=True):
     Usage
     -----
     df = reorder_dataframe_columns(df, ["TMD_start", "database", "whatever other col I want first"])
-    '''
+    """
     for col in cols:
         if col not in dataframe.columns:
             cols.remove(col)
@@ -157,12 +149,12 @@ def delete_BLAST_xml(blast_xml_file):
     # delete the original files
     try:
         os.remove(blast_xml_file)
-    except:
-        sys.stdout.write("{} could not be deleted".format(blast_xml_file))
+    except OSError:
+        sys.stdout.write(f"{blast_xml_file} could not be deleted")
     try:
         os.remove(xml_txt)
-    except:
-        sys.stdout.write("{} could not be deleted".format(xml_txt))
+    except OSError:
+        sys.stdout.write(f"{xml_txt} could not be deleted")
 
 
 def get_n_of_gaps_at_start_and_end_of_seq(seq):
@@ -186,14 +178,12 @@ def get_list_residues_in_motif(seq, motif_ss, motif_len):
     match_start_list = []
     match_end_list = [0] * motif_len
     # counter for the matches
-    match_number = 0
-    result_dict = {}
 
     for start in range(len(seq) - motif_len):
         # for a SmallxxxSmall motif, the end is 4 residues later
         end = start + motif_len
         # get the matched segment
-        segment = seq[start:end + 1]
+        segment = seq[start : end + 1]
         # check if the segment contains a motif
         match = re.match(motif_ss, segment)
         if match:
@@ -222,7 +212,7 @@ def get_list_residues_in_motif(seq, motif_ss, motif_len):
 
 def slice_TMD_seq_pl_surr(df_set):
     # note that due to uniprot-like indexing, the start index = start-1
-    return df_set['full_seq'][int(df_set['TMD_start_pl_surr'] - 1):int(df_set['TMD_end_pl_surr'])]
+    return df_set["full_seq"][int(df_set["TMD_start_pl_surr"] - 1) : int(df_set["TMD_end_pl_surr"])]
 
 
 def create_column_with_TMD_plus_surround_seq(df_set, num_of_sur_residues):
@@ -238,7 +228,7 @@ def create_column_with_TMD_plus_surround_seq(df_set, num_of_sur_residues):
 
 
 def create_namedict(names_csv_path, style="shortname [acc-db]"):
-    """ Create protein name dictionary from the CSV of detailed protein info.
+    """Create protein name dictionary from the CSV of detailed protein info.
 
     e.g. namedict[P02724-NMR
 
@@ -270,10 +260,10 @@ def create_namedict(names_csv_path, style="shortname [acc-db]"):
 
     # add old names in index "e.g. Q13563-crystal", so that they are replaced with new "X-ray" names in figs
     xray_row_bool_ser = df_names.acc_db.str.contains("X-ray")
-    df_xray = df_names.loc[xray_row_bool_ser == True].copy()
+    df_xray = df_names.loc[xray_row_bool_ser == True].copy()  # noqa: E712  bool mask, not truthiness
     df_xray.index = df_xray["PDB acc"] + "-crystal"
     df_xray["acc_db"] = df_xray["PDB acc"] + "-" + df_xray.database
-    df_names = pd.concat([df_names.loc[xray_row_bool_ser == False], df_xray])
+    df_names = pd.concat([df_names.loc[xray_row_bool_ser == False], df_xray])  # noqa: E712  bool mask
 
     # df_names = df_names.loc[df_names.database == database]
     if style == "shortname [acc-db]":
@@ -345,7 +335,9 @@ def drop_redundant_proteins_from_list(df_set, logging):
     else:
         df_set_nonred = df_set.loc[df_set.cdhit_cluster_rep.astype(bool)]
     n_prot_final = df_set_nonred.shape[0]
-    logging.info("CDHIT redundancy reduction : n_prot_initial = {}, n_prot_final = {}, n_prot_dropped = {}".format(n_prot_initial, n_prot_final, n_prot_initial - n_prot_final))
+    logging.info(
+        f"CDHIT redundancy reduction : n_prot_initial = {n_prot_initial}, n_prot_final = {n_prot_final}, n_prot_dropped = {n_prot_initial - n_prot_final}"
+    )
     return df_set_nonred
 
 
@@ -368,16 +360,18 @@ def add_res_num_full_seq_to_df(acc, df, TMD_seq, full_seq, prediction_name, file
     if m:
         # convert from python indexing to unprot indexing
         TMD_start = m.start() + 1
-        TMD_end = m.end()
+        m.end()
         df["res_num_full_seq"] = np.array(range(df.shape[0])) + TMD_start
     else:
-        raise IndexError("TMD seq not found in full_seq.\nacc = {}\nTMD_seq = {}\nfull_seq = {}\n"
-                         "prediction_name={},file={}".format(acc, TMD_seq, full_seq, prediction_name, file))
+        raise IndexError(
+            f"TMD seq not found in full_seq.\nacc = {acc}\nTMD_seq = {TMD_seq}\nfull_seq = {full_seq}\n"
+            f"prediction_name={prediction_name},file={file}"
+        )
     return df
 
 
 def shorten(x):
-    '''
+    """
     convert 3-letter amino acid name to 1-letter form
     Parameters
     ----------
@@ -387,18 +381,36 @@ def shorten(x):
     y : str, one-letter aa sequence
     -------
 
-    '''
-    d = {'CYS': 'C', 'ASP': 'D', 'SER': 'S', 'GLN': 'Q', 'LYS': 'K',
-         'ILE': 'I', 'PRO': 'P', 'THR': 'T', 'PHE': 'F', 'ASN': 'N',
-         'GLY': 'G', 'HIS': 'H', 'LEU': 'L', 'ARG': 'R', 'TRP': 'W',
-         'ALA': 'A', 'VAL': 'V', 'GLU': 'E', 'TYR': 'Y', 'MET': 'M',
-         'UNK': 'U'}
+    """
+    d = {
+        "CYS": "C",
+        "ASP": "D",
+        "SER": "S",
+        "GLN": "Q",
+        "LYS": "K",
+        "ILE": "I",
+        "PRO": "P",
+        "THR": "T",
+        "PHE": "F",
+        "ASN": "N",
+        "GLY": "G",
+        "HIS": "H",
+        "LEU": "L",
+        "ARG": "R",
+        "TRP": "W",
+        "ALA": "A",
+        "VAL": "V",
+        "GLU": "E",
+        "TYR": "Y",
+        "MET": "M",
+        "UNK": "U",
+    }
     if len(x) % 3 != 0:
-        raise ValueError('Input length should be a multiple of three')
+        raise ValueError("Input length should be a multiple of three")
 
-    y = ''
+    y = ""
     for i in range(int(len(x) / 3)):
-        y += d[x[3 * i:3 * i + 3]]
+        y += d[x[3 * i : 3 * i + 3]]
     return y
 
 
@@ -413,7 +425,7 @@ def add_mutation_missed_residues_with_na(combined_features_csv, acc, database, d
 
 
 def normalise_0_1(arraylike):
-    """ Normalise an array to values between 0 and 1.
+    """Normalise an array to values between 0 and 1.
 
     The following linear formula is used.
     norm_array = (orig_array - array_min)/(array_max - array_min)
@@ -453,7 +465,7 @@ def normalise_0_1(arraylike):
 
 
 def denormalise_0_1(value_or_array, array_min, array_max):
-    """ Denormalise a value or array to orig values.
+    """Denormalise a value or array to orig values.
 
     For use after normalisation between 0 and 1 with the normalise_0_1 function.
 
@@ -501,8 +513,9 @@ def denormalise_0_1(value_or_array, array_min, array_max):
     norm_array_mean_denormalised == orig_array_mean
     """
     if isinstance(value_or_array, list):
-        raise ValueError('this function accepts arraylike data, not a list. '
-                         'Please check data or convert list to numpy array')
+        raise ValueError(
+            "this function accepts arraylike data, not a list. " "Please check data or convert list to numpy array"
+        )
     elif isinstance(value_or_array, float):
         denormalised = value_or_array * (array_max - array_min) + array_min
     elif isinstance(value_or_array, np.ndarray):
@@ -510,9 +523,11 @@ def denormalise_0_1(value_or_array, array_min, array_max):
     elif isinstance(value_or_array, pd.Series):
         denormalised = value_or_array * (array_max - array_min) + array_min
     else:
-        sys.stdout.write("Unknown datatype. denormalise_0_1 has been given an input that does not appear to be "
-                         "an int, float, np.ndarray or pandas Series\n"
-                         "Attempting to process as if it is arraylike.....")
+        sys.stdout.write(
+            "Unknown datatype. denormalise_0_1 has been given an input that does not appear to be "
+            "an int, float, np.ndarray or pandas Series\n"
+            "Attempting to process as if it is arraylike....."
+        )
     return denormalised
 
 
@@ -562,40 +577,40 @@ def normalise_between_2_values(arraylike, min_value, max_value, invert=False):
 
 
 def create_colour_lists():
-    '''
+    """
     Converts several lists of rgb colours to the python format (normalized to between 0 and 1)
     Returns a dictionary that contains dictionaries of palettes with named colours (eg. TUM blues)
     and also lists of unnamed colours (e.g. tableau20)
     (copied from tlabtools 2016.08.08)
-    '''
+    """
     output_dict = {}
 
     matplotlib_150 = list(colors.cnames.values())
-    output_dict['matplotlib_150'] = matplotlib_150
+    output_dict["matplotlib_150"] = matplotlib_150
 
     # define colour dictionaries. TUM colours are based on the style guide.
     colour_dicts = {
-        'TUM_colours': {
-            'TUMBlue': (34, 99, 169),
-            'TUM1': (100, 160, 200),
-            'TUM2': (1, 51, 89),
-            'TUM3': (42, 110, 177),
-            'TUM4': (153, 198, 231),
-            'TUM5': (0, 82, 147)
+        "TUM_colours": {
+            "TUMBlue": (34, 99, 169),
+            "TUM1": (100, 160, 200),
+            "TUM2": (1, 51, 89),
+            "TUM3": (42, 110, 177),
+            "TUM4": (153, 198, 231),
+            "TUM5": (0, 82, 147),
         },
-        'TUM_oranges': {
-            'TUM0': (202, 101, 10),
-            'TUM1': (213, 148, 96),
-            'TUM2': (102, 49, 5),
-            'TUM3': (220, 108, 11),
-            'TUM4': (247, 194, 148),
-            'TUM5': (160, 78, 8)
+        "TUM_oranges": {
+            "TUM0": (202, 101, 10),
+            "TUM1": (213, 148, 96),
+            "TUM2": (102, 49, 5),
+            "TUM3": (220, 108, 11),
+            "TUM4": (247, 194, 148),
+            "TUM5": (160, 78, 8),
         },
-        'TUM_accents': {
-            'green': (162, 183, 0),
-            'orange': (227, 114, 34),
-            'ivory': (218, 215, 203),
-        }
+        "TUM_accents": {
+            "green": (162, 183, 0),
+            "orange": (227, 114, 34),
+            "ivory": (218, 215, 203),
+        },
     }
 
     # convert the nested dicts to python 0 to 1 format
@@ -604,28 +619,50 @@ def create_colour_lists():
             # define r, g, b as ints
             r, g, b = colour_dicts[c_dict][c]
             # normalise r, g, b and add to dict
-            colour_dicts[c_dict][c] = (r / 255., g / 255., b / 255.)
+            colour_dicts[c_dict][c] = (r / 255.0, g / 255.0, b / 255.0)
         # add normalised colours to output dictionary
         output_dict[c_dict] = colour_dicts[c_dict]
 
     # define colour lists
     colour_lists = {
-        'tableau20': [
-            (31, 119, 180), (174, 199, 232), (255, 127, 14), (255, 187, 120),
-            (44, 160, 44), (152, 223, 138), (214, 39, 40), (255, 152, 150),
-            (148, 103, 189), (197, 176, 213), (140, 86, 75), (196, 156, 148),
-            (227, 119, 194), (247, 182, 210), (127, 127, 127), (199, 199, 199),
-            (188, 189, 34), (219, 219, 141), (23, 190, 207), (158, 218, 229)
+        "tableau20": [
+            (31, 119, 180),
+            (174, 199, 232),
+            (255, 127, 14),
+            (255, 187, 120),
+            (44, 160, 44),
+            (152, 223, 138),
+            (214, 39, 40),
+            (255, 152, 150),
+            (148, 103, 189),
+            (197, 176, 213),
+            (140, 86, 75),
+            (196, 156, 148),
+            (227, 119, 194),
+            (247, 182, 210),
+            (127, 127, 127),
+            (199, 199, 199),
+            (188, 189, 34),
+            (219, 219, 141),
+            (23, 190, 207),
+            (158, 218, 229),
         ],
-        'tableau20blind': [
-            (0, 107, 164), (255, 128, 14), (171, 171, 171), (89, 89, 89),
-            (95, 158, 209), (200, 82, 0), (137, 137, 137), (163, 200, 236),
-            (255, 188, 121), (207, 207, 207)
-        ]
+        "tableau20blind": [
+            (0, 107, 164),
+            (255, 128, 14),
+            (171, 171, 171),
+            (89, 89, 89),
+            (95, 158, 209),
+            (200, 82, 0),
+            (137, 137, 137),
+            (163, 200, 236),
+            (255, 188, 121),
+            (207, 207, 207),
+        ],
     }
     # normalise the colours for the colour lists
     for rgb_list in colour_lists:
-        colour_array = np.array(colour_lists[rgb_list]) / 255.
+        colour_array = np.array(colour_lists[rgb_list]) / 255.0
         colour_array_tup = tuple(map(tuple, colour_array))
         colour_lists[rgb_list] = colour_array_tup
         # add normalised colours to output dictionary
@@ -633,26 +670,34 @@ def create_colour_lists():
     # create a mixed blue/grey colour list, with greys in decreasing darkness
     TUM_colours_list_with_greys = []
     grey = 0.7
-    for c in colour_dicts['TUM_colours'].values():
-        TUM_colours_list_with_greys.append('%0.2f' % grey)
+    for c in colour_dicts["TUM_colours"].values():
+        TUM_colours_list_with_greys.append(f"{grey:0.2f}")
         TUM_colours_list_with_greys.append(c)
         grey -= 0.1
-    output_dict['TUM_colours_list_with_greys'] = TUM_colours_list_with_greys
+    output_dict["TUM_colours_list_with_greys"] = TUM_colours_list_with_greys
 
-    output_dict['HTML_list01'] = ['#808080', '#D59460', '#005293', '#A1B11A', '#9ECEEC', '#0076B8', '#454545', "#7b3294", "#c2a5cf", "#008837", "#a6dba0"]
+    output_dict["HTML_list01"] = [
+        "#808080",
+        "#D59460",
+        "#005293",
+        "#A1B11A",
+        "#9ECEEC",
+        "#0076B8",
+        "#454545",
+        "#7b3294",
+        "#c2a5cf",
+        "#008837",
+        "#a6dba0",
+    ]
     return output_dict
 
 
 def get_free_space(folder, format="MB"):
     """
-        Return folder/drive free space
+    Return folder/drive free space
     """
-    fConstants = {"GB": 1073741824,
-                  "MB": 1048576,
-                  "KB": 1024,
-                  "B": 1
-                  }
-    if platform.system() == 'Windows':
+    fConstants = {"GB": 1073741824, "MB": 1048576, "KB": 1024, "B": 1}
+    if platform.system() == "Windows":
         free_bytes = ctypes.c_ulonglong(0)
         ctypes.windll.kernel32.GetDiskFreeSpaceExW(ctypes.c_wchar_p(folder), None, None, ctypes.pointer(free_bytes))
         return (int(free_bytes.value / fConstants[format.upper()]), format)
@@ -661,14 +706,14 @@ def get_free_space(folder, format="MB"):
 
 
 def create_regex_string(inputseq):
-    ''' adds '-*' between each aa or nt/aa in a DNA or protein sequence, so that a particular
+    """adds '-*' between each aa or nt/aa in a DNA or protein sequence, so that a particular
     aligned sequence can be identified via a regex search, even if it contains gaps
     inputseq : 'LQQLWNA'
     output   : 'L-*Q-*Q-*L-*W-*N-*A'
-    '''
-    search_string = ''
+    """
+    search_string = ""
     for letter in inputseq:
-        letter_with_underscore = letter + '-*'
+        letter_with_underscore = letter + "-*"
         search_string += letter_with_underscore
     return search_string[:-2]
 
@@ -701,10 +746,48 @@ def convert_truelike_to_bool(input_item, convert_int=False, convert_float=False,
     # convert a column in a pandas DataFrame
     df["column_name"] = df["column_name"].apply(convert_truelike_to_bool)
     """
-    list_True_items = [True, 'True', "true", "TRUE", "T", "t", 'wahr', 'WAHR', 'prawdziwy', 'verdadeiro', 'sann', 'istinit',
-                       'veritable', 'Pravda', 'sandt', 'vrai', 'igaz', 'veru', 'verdadero', 'sant', 'gwir', 'PRAWDZIWY',
-                       'VERDADEIRO', 'SANN', 'ISTINIT', 'VERITABLE', 'PRAVDA', 'SANDT', 'VRAI', 'IGAZ', 'VERU',
-                       'VERDADERO', 'SANT', 'GWIR', 'bloody oath', 'BLOODY OATH', 'nu', 'NU', 'damn right', 'DAMN RIGHT']
+    list_True_items = [
+        True,
+        "True",
+        "true",
+        "TRUE",
+        "T",
+        "t",
+        "wahr",
+        "WAHR",
+        "prawdziwy",
+        "verdadeiro",
+        "sann",
+        "istinit",
+        "veritable",
+        "Pravda",
+        "sandt",
+        "vrai",
+        "igaz",
+        "veru",
+        "verdadero",
+        "sant",
+        "gwir",
+        "PRAWDZIWY",
+        "VERDADEIRO",
+        "SANN",
+        "ISTINIT",
+        "VERITABLE",
+        "PRAVDA",
+        "SANDT",
+        "VRAI",
+        "IGAZ",
+        "VERU",
+        "VERDADERO",
+        "SANT",
+        "GWIR",
+        "bloody oath",
+        "BLOODY OATH",
+        "nu",
+        "NU",
+        "damn right",
+        "DAMN RIGHT",
+    ]
 
     # if you want to accept 1 or 1.0 as a true value, add it to the list
     if convert_int:
@@ -720,10 +803,10 @@ def convert_truelike_to_bool(input_item, convert_int=False, convert_float=False,
         # otherwise, for strings not in the True list, the original string will be returned
         nontrue_return_value = input_item
     # return True if the input item is in the list. If not, return either False, or the original input_item
-    return_value = input_item_is_true if input_item_is_true == True else nontrue_return_value
+    return_value = input_item_is_true if input_item_is_true else nontrue_return_value
     # special case: decide if 1 as an integer is True or 1
     if input_item == 1:
-        if convert_int == True:
+        if convert_int:
             return_value = True
         else:
             return_value = 1
@@ -755,12 +838,62 @@ def convert_falselike_to_bool(input_item, convert_int=False, convert_float=False
     # convert a column in a pandas DataFrame
     df["column_name"] = df["column_name"].apply(convert_falselike_to_bool)
     """
-    list_False_items = [False, "False", "false", "FALSE", "F", "f", "falsch", "FALSCH", "valse", "lažna", "fals",
-                        "NEPRAVDA", "falsk", "vals", "faux", "pa vre", "tsis tseeb", "hamis", "palsu", "uongo", "ngeb",
-                        "viltus", "klaidinga", "falz", "falso", "USANN", "wartosc false", "falošné", "falskt", "yanlis",
-                        "sai", "ffug", "VALSE", "LAŽNA", "FALS", "FALSK", "VALS", "FAUX", "PA VRE", "TSIS TSEEB",
-                        "HAMIS", "PALSU", "UONGO", "NGEB", "VILTUS", "KLAIDINGA", "FALZ", "FALSO", "WARTOSC FALSE",
-                        "FALOŠNÉ", "FALSKT", "YANLIS", "SAI", "FFUG"]
+    list_False_items = [
+        False,
+        "False",
+        "false",
+        "FALSE",
+        "F",
+        "f",
+        "falsch",
+        "FALSCH",
+        "valse",
+        "lažna",
+        "fals",
+        "NEPRAVDA",
+        "falsk",
+        "vals",
+        "faux",
+        "pa vre",
+        "tsis tseeb",
+        "hamis",
+        "palsu",
+        "uongo",
+        "ngeb",
+        "viltus",
+        "klaidinga",
+        "falz",
+        "falso",
+        "USANN",
+        "wartosc false",
+        "falošné",
+        "falskt",
+        "yanlis",
+        "sai",
+        "ffug",
+        "VALSE",
+        "LAŽNA",
+        "FALS",
+        "FALSK",
+        "VALS",
+        "FAUX",
+        "PA VRE",
+        "TSIS TSEEB",
+        "HAMIS",
+        "PALSU",
+        "UONGO",
+        "NGEB",
+        "VILTUS",
+        "KLAIDINGA",
+        "FALZ",
+        "FALSO",
+        "WARTOSC FALSE",
+        "FALOŠNÉ",
+        "FALSKT",
+        "YANLIS",
+        "SAI",
+        "FFUG",
+    ]
 
     # if you want to accept 0 or 0.0 as a false value, add it to the list
     if convert_int:
@@ -783,18 +916,18 @@ class HardDriveSpaceException(Exception):
         return canonical_string_representation(self.parameter)
 
 
-class LogOnlyToConsole(object):
+class LogOnlyToConsole:
     def __init__(self):
         pass
 
     def info(self, message):
-        sys.stdout.write("\n{}".format(message))
+        sys.stdout.write(f"\n{message}")
 
     def warning(self, message):
-        sys.stdout.write("\n{}".format(message))
+        sys.stdout.write(f"\n{message}")
 
     def critical(self, message):
-        sys.stdout.write("\n{}".format(message))
+        sys.stdout.write(f"\n{message}")
 
 
 def open_csv_as_series(input_csv):
@@ -809,33 +942,37 @@ def get_testsetname_trainsetname_from_run_settings(s):
     test_set_list, train_set_list = get_test_and_train_set_lists(s)
     assert len(test_set_list) == 1
     assert len(train_set_list) == 1
-    testsetname = "set{:02d}".format(int(test_set_list[0]))
-    trainsetname = "set{:02d}".format(int(train_set_list[0]))
+    testsetname = f"set{int(test_set_list[0]):02d}"
+    trainsetname = f"set{int(train_set_list[0]):02d}"
     return testsetname, trainsetname
 
 
 def get_test_and_train_set_lists(s):
-    if s["test_datasets"] == True:
+    if s["test_datasets"] is True:
         test_set_list = ["1"]
-    elif s["test_datasets"] == False:
+    elif s["test_datasets"] is False:
         test_set_list = ["0"]
     elif isinstance(s["test_datasets"], int):
         test_set_list = [str(s["test_datasets"])]
     elif isinstance(s["test_datasets"], str):
         test_set_list = s["test_datasets"].split(",")
     else:
-        raise ValueError("test_datasets type is not correct {} ({})".format(s["test_datasets"], type(s["test_datasets"])))
+        raise ValueError(
+            "test_datasets type is not correct {} ({})".format(s["test_datasets"], type(s["test_datasets"]))
+        )
 
-    if s["train_datasets"] == True:
+    if s["train_datasets"] is True:
         train_set_list = ["1"]
-    elif s["train_datasets"] == False:
+    elif s["train_datasets"] is False:
         train_set_list = ["0"]
     elif isinstance(s["train_datasets"], int):
         train_set_list = [str(s["train_datasets"])]
     elif isinstance(s["train_datasets"], str):
         train_set_list = s["train_datasets"].split(",")
     else:
-        raise ValueError("train_datasets type is not correct {} ({})".format(s["train_datasets"], type(s["train_datasets"])))
+        raise ValueError(
+            "train_datasets type is not correct {} ({})".format(s["train_datasets"], type(s["train_datasets"]))
+        )
 
     return test_set_list, train_set_list
 

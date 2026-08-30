@@ -5,39 +5,59 @@ shipped settings files and disabled in the functional test. Last exercised for t
 publication. Not covered by any test, and excluded from the refactoring applied to the maintained
 part of the package.
 """
-import os
+
 import pickle
 import re
-from pathlib import Path
 
 import numpy as np
 import pandas as pd
 from matplotlib import pyplot as plt
 from numpy import interp
 
-import thoipapy
-from thoipapy.utils import make_sure_path_exists
 from thoipapy.artefacts import ArtefactPaths
+from thoipapy.utils import make_sure_path_exists
 
 
-def validate_multiple_predictors_and_subsets_auboc(paths: ArtefactPaths, df_set, n_residues_AUBOC_validation: int, logging):
+def validate_multiple_predictors_and_subsets_auboc(
+    paths: ArtefactPaths, df_set, n_residues_AUBOC_validation: int, logging
+):
     logging.info("start create_AUBOC_43databases_figs")
 
-    predictors = ["THOIPA_{}_LOO".format(paths.set_number), "PREDDIMER", "TMDOCK", "LIPS_surface_ranked", "random"]  # "LIPS_L*E",
+    predictors = [
+        f"THOIPA_{paths.set_number}_LOO",
+        "PREDDIMER",
+        "TMDOCK",
+        "LIPS_surface_ranked",
+        "random",
+    ]  # "LIPS_L*E",
     subsets = ["crystal", "NMR", "ETRA"]
     for subset in subsets:
         df_o_minus_r_mean_df = pd.DataFrame()
         AUBOC_list = []
-        mean_AUBOC_file = paths.crossvalidation_dir / f"compare_selected_predictors/data/{paths.setname}.{subset}.4predictors_mean_AUBOC.csv"
-        mean_AUBOC_barplot_png = paths.crossvalidation_dir / f"compare_selected_predictors/figs/{paths.setname}.{subset}.4predictors_mean_AUBOC.png"
-        BOCURVE_linechart_csv = paths.crossvalidation_dir / f"compare_selected_predictors/data/{paths.setname}.{subset}.4predictors_BOCURVE_linechart.csv"
-        BOCURVE_linechart_png = paths.crossvalidation_dir / f"compare_selected_predictors/figs/{paths.setname}.{subset}.4predictors_BOCURVE_linechart.png"
+        mean_AUBOC_file = (
+            paths.crossvalidation_dir
+            / f"compare_selected_predictors/data/{paths.setname}.{subset}.4predictors_mean_AUBOC.csv"
+        )
+        mean_AUBOC_barplot_png = (
+            paths.crossvalidation_dir
+            / f"compare_selected_predictors/figs/{paths.setname}.{subset}.4predictors_mean_AUBOC.png"
+        )
+        BOCURVE_linechart_csv = (
+            paths.crossvalidation_dir
+            / f"compare_selected_predictors/data/{paths.setname}.{subset}.4predictors_BOCURVE_linechart.csv"
+        )
+        BOCURVE_linechart_png = (
+            paths.crossvalidation_dir
+            / f"compare_selected_predictors/figs/{paths.setname}.{subset}.4predictors_BOCURVE_linechart.png"
+        )
         make_sure_path_exists(BOCURVE_linechart_png, isfile=True)
 
         make_sure_path_exists(mean_AUBOC_file, isfile=True)
 
         for predictor in predictors:
-            bocurve_data_xlsx = paths.crossvalidation_dir / f"indiv_validation/bocurve/data/{predictor}/bocurve_data.xlsx"
+            bocurve_data_xlsx = (
+                paths.crossvalidation_dir / f"indiv_validation/bocurve/data/{predictor}/bocurve_data.xlsx"
+            )
             df_o_minus_r = pd.read_excel(bocurve_data_xlsx, sheet_name="df_o_minus_r", index_col=0)
             df_o_minus_r = df_o_minus_r.filter(regex=subset, axis=1)
             df_o_minus_r_mean = df_o_minus_r.T.mean()
@@ -60,14 +80,14 @@ def validate_multiple_predictors_and_subsets_auboc(paths: ArtefactPaths, df_set,
         fig, ax = plt.subplots(figsize=figsize)
         for i, column in enumerate(df_o_minus_r_mean_df.columns):
             # df_o_minus_r_mean_df.plot(ax=ax, color="#0f7d9b", linestyle="-", label="prediction (AUBOC : {:0.2f}".format(AUBOC))
-            label_name = "{}(AUBOC:{:.2f})".format(predictors[i], AUBOC_list[i])
+            label_name = f"{predictors[i]}(AUBOC:{AUBOC_list[i]:.2f})"
             df_o_minus_r_mean_df[column].plot(ax=ax, linestyle="-", label=label_name, color=color_list[i])
         ax.plot([1, 10], [0, 0], color="#0f7d9b", linestyle="--", label="random", alpha=0.5)
         ax.grid(False)
         ax.set_ylabel("performance value\n(observed - random)", color="#0f7d9b")
-        ax.tick_params('y', colors="#0f7d9b")
+        ax.tick_params("y", colors="#0f7d9b")
 
-        ax.spines['left'].set_color("#0f7d9b")
+        ax.spines["left"].set_color("#0f7d9b")
         ax.legend()
         fig.tight_layout()
         fig.savefig(BOCURVE_linechart_png, dpi=140)
@@ -91,16 +111,28 @@ def validate_multiple_predictors_and_subsets_auboc(paths: ArtefactPaths, df_set,
 
 def validate_multiple_predictors_and_subsets_auc(paths: ArtefactPaths, df_set, logging):
     logging.info("start create_AUC_4predictors_3databases_figs")
-    predictors = ["THOIPA_{}_LOO".format(paths.set_number), "PREDDIMER", "TMDOCK", "LIPS_surface_ranked"]  # "LIPS_L*E",
+    predictors = [f"THOIPA_{paths.set_number}_LOO", "PREDDIMER", "TMDOCK", "LIPS_surface_ranked"]  # "LIPS_L*E",
     subsets = ["crystal", "NMR", "ETRA"]
     for subset in subsets:
         mean_roc_auc_list = []
         mean_tpr_list = []
         # outputs
-        mean_AUC_file = paths.crossvalidation_dir / f"compare_selected_predictors/data/{paths.setname}.{subset}.4predictors_mean_AUC.csv"
-        mean_AUC_barplot_png = paths.crossvalidation_dir / f"compare_selected_predictors/figs/{paths.setname}.{subset}.4predictors_mean_AUC.png"
-        ROC_curve_csv = paths.crossvalidation_dir / f"compare_selected_predictors/data/{paths.setname}.{subset}.4predictors_AUC_ROC.csv"
-        AUC_ROC_png = paths.crossvalidation_dir / f"compare_selected_predictors/figs/{paths.setname}.{subset}.4predictors_AUC_ROC.png"
+        mean_AUC_file = (
+            paths.crossvalidation_dir
+            / f"compare_selected_predictors/data/{paths.setname}.{subset}.4predictors_mean_AUC.csv"
+        )
+        mean_AUC_barplot_png = (
+            paths.crossvalidation_dir
+            / f"compare_selected_predictors/figs/{paths.setname}.{subset}.4predictors_mean_AUC.png"
+        )
+        ROC_curve_csv = (
+            paths.crossvalidation_dir
+            / f"compare_selected_predictors/data/{paths.setname}.{subset}.4predictors_AUC_ROC.csv"
+        )
+        AUC_ROC_png = (
+            paths.crossvalidation_dir
+            / f"compare_selected_predictors/figs/{paths.setname}.{subset}.4predictors_AUC_ROC.png"
+        )
 
         make_sure_path_exists(mean_AUC_file, isfile=True)
 
@@ -120,10 +152,10 @@ def validate_multiple_predictors_and_subsets_auc(paths: ArtefactPaths, df_set, l
                 xv_dict = pickle.load(f)
                 for k, v in xv_dict.items():
                     if re.search(subset, k):
-                        mean_roc_auc.append(v['roc_auc'])
+                        mean_roc_auc.append(v["roc_auc"])
                         # mean_roc_auc.append(v['auc'])
-                        fpr = v['fpr']
-                        tpr = v['tpr']
+                        fpr = v["fpr"]
+                        tpr = v["tpr"]
                         mean_tpr += interp(mean_fpr, fpr, tpr)
                         mean_tpr[0] = 0.0
                         n = n + 1
@@ -132,13 +164,13 @@ def validate_multiple_predictors_and_subsets_auc(paths: ArtefactPaths, df_set, l
             mean_tpr /= n
             mean_tpr[-1] = 1.0
 
-            dfb = pd.DataFrame(big_list_of_tprs)
+            pd.DataFrame(big_list_of_tprs)
 
             mean_roc_auc = np.mean(mean_roc_auc)
             mean_roc_auc_list.append(mean_roc_auc)
             mean_tpr_list.append(mean_tpr)
-            ax.plot(mean_fpr, mean_tpr, lw=1, label="{} (area = {:.2f})".format(predictor_name, mean_roc_auc), alpha=0.8)
-        ax.plot([0, 1], [0, 1], '--', color=(0.6, 0.6, 0.6), label='random')
+            ax.plot(mean_fpr, mean_tpr, lw=1, label=f"{predictor_name} (area = {mean_roc_auc:.2f})", alpha=0.8)
+        ax.plot([0, 1], [0, 1], "--", color=(0.6, 0.6, 0.6), label="random")
         ax.set_xlim([-0.05, 1.05])
         ax.set_ylim([-0.05, 1.05])
         ax.set_xlabel("False positive rate")
@@ -148,8 +180,7 @@ def validate_multiple_predictors_and_subsets_auc(paths: ArtefactPaths, df_set, l
         fig.savefig(AUC_ROC_png, dpi=240)
         # fig.savefig(thoipapy.utils.pdf_subpath(AUC_ROC_png))
 
-        df_tpr = pd.DataFrame.from_records(list(map(list, zip(*mean_tpr_list))),
-                                           columns=predictors)
+        df_tpr = pd.DataFrame.from_records(list(map(list, zip(*mean_tpr_list))), columns=predictors)
         df_tpr.to_csv(ROC_curve_csv)
 
         auc_mean_df = pd.DataFrame.from_records([mean_roc_auc_list], columns=predictors)

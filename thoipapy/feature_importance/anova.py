@@ -1,17 +1,16 @@
-from pathlib import Path
-
 import pandas as pd
-from thoipapy.utils import make_sure_path_exists
 from sklearn.feature_selection import SelectKBest, f_classif
+
 from thoipapy.artefacts import ArtefactPaths
+from thoipapy.utils import make_sure_path_exists
 
 
 def select_best_features_with_anova(paths: ArtefactPaths, bind_column: str, n_top_features_to_keep: int, logging):
-    """ The f_classif function is an ANOVA implementation in python.
+    """The f_classif function is an ANOVA implementation in python.
 
     This function selects the top features according to the ANOVA analysis.
     """
-    logging.info('starting select_best_features_with_ANOVA')
+    logging.info("starting select_best_features_with_ANOVA")
     # inputs
     train_data_excl_duplicates_csv = paths.train_data_excl_duplicates_csv()
     # outputs
@@ -43,7 +42,7 @@ def select_best_features_with_anova(paths: ArtefactPaths, bind_column: str, n_to
 
     # make sure that there are no duplicate columns that ruin the mapping to column names
     if len(top_features_anova) != len(set(top_features_anova)):
-        raise Exception(f"top_features_anova contains duplicate values")
+        raise Exception("top_features_anova contains duplicate values")
 
     top_features_anova_ser = pd.Series()
     top_features_anova_ser["top_features"] = top_features_anova
@@ -52,4 +51,4 @@ def select_best_features_with_anova(paths: ArtefactPaths, bind_column: str, n_to
     top_features_anova_ser.to_csv(top_features_anova_csv)
 
     logging.info(f"output saved to {top_features_anova_csv}")
-    logging.info('finished select_best_features_with_ANOVA')
+    logging.info("finished select_best_features_with_ANOVA")

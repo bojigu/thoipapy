@@ -16,6 +16,7 @@ for the new reference values is recorded next to them.
 
 Hardcoded paths, no argparse, per the house style for pipeline scripts.
 """
+
 import shutil
 import sys
 import tempfile
@@ -76,8 +77,9 @@ def report_diff(relative_path: str, new: pd.DataFrame) -> bool:
         if pd.api.types.is_numeric_dtype(new[col]):
             delta = abs(new[col].to_numpy() - old[col].to_numpy())
             if delta.max() > 0:
-                print(f"  CHANGED  {relative_path} [{col}]  max|delta| = {delta.max():.3e}  "
-                      f"mean = {delta.mean():.3e}")
+                print(
+                    f"  CHANGED  {relative_path} [{col}]  max|delta| = {delta.max():.3e}  " f"mean = {delta.mean():.3e}"
+                )
                 changed = True
         else:
             n = (old[col].astype(str) != new[col].astype(str)).sum()

@@ -3,11 +3,12 @@ import os
 
 import scipy as sc
 from pandas import Series
+
 from thoipapy.artefacts import ArtefactPaths
 
 
 def entropy_calculation_mult_prot(paths: ArtefactPaths, df_set, surres: str, logging):
-    """ Runs entropy_calculation for a set of proteins
+    """Runs entropy_calculation for a set of proteins
 
     Parameters
     ----------
@@ -20,7 +21,7 @@ def entropy_calculation_mult_prot(paths: ArtefactPaths, df_set, surres: str, log
     logging : logging.Logger
         Python object with settings for logging to console and file.
     """
-    logging.info('start entropy calculation')
+    logging.info("start entropy calculation")
 
     for i in df_set.index:
         acc = df_set.loc[i, "acc"]
@@ -58,7 +59,7 @@ def entropy_calculation(acc, path_uniq_TMD_seqs_for_PSSM_FREECONTACT, TMD_seq, e
         if not os.path.isdir(os.path.dirname(entropy_file)):
             os.makedirs(os.path.dirname(entropy_file))
 
-        with open(entropy_file, 'w') as entropy_file_handle:
+        with open(entropy_file, "w") as entropy_file_handle:
             mat = []
             with open(path_uniq_TMD_seqs_for_PSSM_FREECONTACT) as f:
                 # iterate through each sequence
@@ -70,8 +71,14 @@ def entropy_calculation(acc, path_uniq_TMD_seqs_for_PSSM_FREECONTACT, TMD_seq, e
                 n_residues = len(mat[0])
                 n_seqs = len(mat)
                 column = []
-            writer = csv.writer(entropy_file_handle, delimiter=',', quotechar='"', lineterminator='\n',
-                                quoting=csv.QUOTE_NONNUMERIC, doublequote=True)
+            writer = csv.writer(
+                entropy_file_handle,
+                delimiter=",",
+                quotechar='"',
+                lineterminator="\n",
+                quoting=csv.QUOTE_NONNUMERIC,
+                doublequote=True,
+            )
             writer.writerow(["residue_num", "residue_name", "conservation"])
             # iterate through each residue position
             for j in range(0, n_residues):
@@ -94,12 +101,20 @@ def entropy_calculation(acc, path_uniq_TMD_seqs_for_PSSM_FREECONTACT, TMD_seq, e
                 # in figures, for less technical readers, "high conservation and polarity" is easier to understand than "low entropy and high polarity"
                 conservation = (entropy_orig * -1) + 3
                 csv_header_for_ncbi_homologues_file = [j + 1, TMD_seq[j], conservation]
-                writer = csv.writer(entropy_file_handle, delimiter=',', quotechar='"', lineterminator='\n',
-                                    quoting=csv.QUOTE_NONNUMERIC, doublequote=True)
+                writer = csv.writer(
+                    entropy_file_handle,
+                    delimiter=",",
+                    quotechar='"',
+                    lineterminator="\n",
+                    quoting=csv.QUOTE_NONNUMERIC,
+                    doublequote=True,
+                )
                 writer.writerow(csv_header_for_ncbi_homologues_file)
                 # entropy_file_handle.write(mat[0][j]+' '+ str(entropy)+'\n')
                 column = []
             # entropy_file_handle.close()
-            logging.info('{} entropy_calculation finished ({})'.format(acc, entropy_file))
+            logging.info(f"{acc} entropy_calculation finished ({entropy_file})")
     else:
-        logging.warning("{} entropy_calculation failed. {} input file not found".format(acc, path_uniq_TMD_seqs_for_PSSM_FREECONTACT))
+        logging.warning(
+            f"{acc} entropy_calculation failed. {path_uniq_TMD_seqs_for_PSSM_FREECONTACT} input file not found"
+        )

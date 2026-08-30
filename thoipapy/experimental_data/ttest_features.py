@@ -1,15 +1,12 @@
 import sys
-from typing import List
 
-import pandas as pd
 import numpy as np
+import pandas as pd
 import scipy.stats as stats
-import os
-from pathlib import Path
 
+from thoipapy.artefacts import ArtefactPaths
 from thoipapy.utils import make_sure_path_exists
 from thoipapy.validation.feature_selection import drop_cols_not_used_in_ML
-from thoipapy.artefacts import ArtefactPaths
 
 
 def generate_boot_matrix(z, B):
@@ -34,7 +31,9 @@ def calc_ttest_pvalue_from_bootstrapped_data(x, y, equal_var=False, B=100000, pl
     orig = stats.ttest_ind(x, y, equal_var=equal_var)
 
     # Generate bootstrap distribution of t statistic
-    xboot = generate_boot_matrix(x - np.mean(x), B=B)  # important centering step to get sampling distribution under the null
+    xboot = generate_boot_matrix(
+        x - np.mean(x), B=B
+    )  # important centering step to get sampling distribution under the null
     yboot = generate_boot_matrix(y - np.mean(y), B=B)
     sampling_distribution = stats.ttest_ind(xboot, yboot, axis=1, equal_var=equal_var)[0]
 
@@ -45,14 +44,17 @@ def calc_ttest_pvalue_from_bootstrapped_data(x, y, equal_var=False, B=100000, pl
 
 
 def conduct_ttest_for_all_features(paths: ArtefactPaths, bind_column: str, trainsetname: str, logging):
-    logging.info('starting conduct_ttest_for_selected_features_used_in_model')
+    logging.info("starting conduct_ttest_for_selected_features_used_in_model")
     # inputs
     train_data_csv = paths.train_data_orig_csv()
     # IMPORTANT: the features used in the model are taken from the trainset as defined in "train_datasets" in the excel file, not from the actual set being investigated
     # feat_imp_MDA_xlsx = os.path.join(s["data_dir"], "results", trainsetname, "feat_imp", "feat_imp_mean_decrease_accuracy.xlsx")
 
     # outputs
-    ttest_pvalues_bootstrapped_data_using_traindata_selected_features_xlsx = paths.ttest_dir() / f"ttest_pvalues_bootstrapped_data_using_traindata_selected_features(train{trainsetname}).xlsx"
+    ttest_pvalues_bootstrapped_data_using_traindata_selected_features_xlsx = (
+        paths.ttest_dir()
+        / f"ttest_pvalues_bootstrapped_data_using_traindata_selected_features(train{trainsetname}).xlsx"
+    )
     correlated_features_csv = paths.ttest_dir() / "correlated_features.csv"
 
     make_sure_path_exists(ttest_pvalues_bootstrapped_data_using_traindata_selected_features_xlsx, isfile=True)
@@ -103,7 +105,7 @@ def conduct_ttest_for_all_features(paths: ArtefactPaths, bind_column: str, train
     dfcorr = df.corr()
     dfcorr.to_csv(correlated_features_csv)
 
-    highly_correlated_feature_sets: List[set] = []
+    highly_correlated_feature_sets: list[set] = []
 
     for col in feature_columns:
         correlated_features = dfcorr[col].loc[dfcorr[col] > cutoff_R2_correlated].index.tolist()
@@ -127,7 +129,9 @@ def conduct_ttest_for_all_features(paths: ArtefactPaths, bind_column: str, train
     sign_coevolution_feats = [x for x in dft_sign.index.tolist() if "MI" in x or "DI" in x]
     sign_coevolution_feats = sorted(sign_coevolution_feats)
     list_sign_bootstrapped = ", ".join(sign_coevolution_feats)
-    logging.info("{} coevolution features significantly different between int and non-interface, REGULAR TTEST\n".format(len(sign_coevolution_feats)))
+    logging.info(
+        f"{len(sign_coevolution_feats)} coevolution features significantly different between int and non-interface, REGULAR TTEST\n"
+    )
     logging.info(list_sign_bootstrapped)
 
     dft_sign_boot = dft[dft.p_bootstrapped_ttest < 0.05].copy()
@@ -135,12 +139,16 @@ def conduct_ttest_for_all_features(paths: ArtefactPaths, bind_column: str, train
     sign_coevolution_feats = [x for x in dft_sign_boot.index.tolist() if "MI" in x or "DI" in x]
     sign_coevolution_feats = sorted(sign_coevolution_feats)
     list_sign_bootstrapped = ", ".join(sign_coevolution_feats)
-    logging.info("{} coevolution features significantly different between int and non-interface, BOOTSTRAPPED TTEST\n".format(len(sign_coevolution_feats)))
+    logging.info(
+        f"{len(sign_coevolution_feats)} coevolution features significantly different between int and non-interface, BOOTSTRAPPED TTEST\n"
+    )
     logging.info(list_sign_bootstrapped)
 
     dft["t-test p-value (bootstrapped data)"] = dft["p_bootstrapped_ttest"].apply(convert_pvalue_to_text)
 
-    dft_formatted = dft[["higher for interface residues", "t-test p-value (bootstrapped data)", "correlated features (R2 > 0.6)"]]
+    dft_formatted = dft[
+        ["higher for interface residues", "t-test p-value (bootstrapped data)", "correlated features (R2 > 0.6)"]
+    ]
 
     with pd.ExcelWriter(ttest_pvalues_bootstrapped_data_using_traindata_selected_features_xlsx) as writer:
         dft_formatted.to_excel(writer, sheet_name="formatted")
@@ -148,18 +156,20 @@ def conduct_ttest_for_all_features(paths: ArtefactPaths, bind_column: str, train
         dft_sign.to_excel(writer, sheet_name="significant")
         dft_sign_boot.to_excel(writer, sheet_name="significant_bootstrapped")
 
-    logging.info(f'finished conduct_ttest_for_selected_features_used_in_model ({ttest_pvalues_bootstrapped_data_using_traindata_selected_features_xlsx})')
+    logging.info(
+        f"finished conduct_ttest_for_selected_features_used_in_model ({ttest_pvalues_bootstrapped_data_using_traindata_selected_features_xlsx})"
+    )
 
 
 def convert_pvalue_to_text(p, bootstrap_replicates=100000):
     n_significant_figures = len(str(bootstrap_replicates)) - 1
 
-    formatter = "{:0.%if}" % n_significant_figures
+    formatter = f"{{:0.{n_significant_figures}f}}"
 
     assert isinstance(p, float)
     if p == 0.0:
         lowest_possible_pvalue_based_on_n_bootstrap_replicates = 1 / bootstrap_replicates
-        min_value_tested = f"{float(1 / bootstrap_replicates):}"
+        f"{float(1 / bootstrap_replicates):}"
         return "<" + formatter.format(lowest_possible_pvalue_based_on_n_bootstrap_replicates)
 
     return formatter.format(p)

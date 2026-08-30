@@ -6,11 +6,8 @@ minutes once NCBI had seen it several times. Biopython's qblast has no email arg
 set through the module-level NCBIWWW.email that qblast forwards as a URL parameter.
 """
 
-import os
-
 import pytest
 from Bio.Blast import NCBIWWW
-
 from thoipapy.homologues.NCBI_download import NCBI_CONTACT_EMAIL_ENV_VAR, identify_to_ncbi
 
 
@@ -45,6 +42,7 @@ def test_whitespace_only_contact_email_is_treated_as_unset(monkeypatch):
 def test_qblast_actually_forwards_the_module_level_email():
     """Guard the assumption this design rests on, in case Biopython changes it."""
     import inspect
+
     source = inspect.getsource(NCBIWWW.qblast)
     assert '"email": email' in source, (
         "Biopython's qblast no longer forwards the module-level NCBIWWW.email. "

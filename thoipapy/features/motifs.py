@@ -1,10 +1,8 @@
-import os
-
 import pandas as pd
 
 import thoipapy
-from thoipapy.artefacts import ArtefactPaths
 import thoipapy.utils
+from thoipapy.artefacts import ArtefactPaths
 
 
 def motifs_from_seq_mult_protein(paths: ArtefactPaths, df_set, logging):
@@ -21,7 +19,7 @@ def motifs_from_seq_mult_protein(paths: ArtefactPaths, df_set, logging):
     logging : logging.Logger
         Python object with settings for logging to console and file.
     """
-    logging.info('start parsing lips output to cons and lips scores')
+    logging.info("start parsing lips output to cons and lips scores")
 
     for i in df_set.index:
         acc = df_set.loc[i, "acc"]
@@ -54,9 +52,11 @@ def motifs_from_seq(TMD_seq, TMD_seq_pl_surr, tm_surr_left, tm_surr_right, motif
         Python object with settings for logging to console and file.
     """
 
-    motif_dict = {"GxxxG": {"motif_ss": r"[G].{3}[G]", "motif_len": 4},
-                  "SmxxxSm": {"motif_ss": r"[GASC].{3}[GASC]", "motif_len": 4},
-                  "PolarxxxPolar": {"motif_ss": r"[DKERQPHNSGYTWAMC].{3}[DKERQPHNSGYTWAMC]", "motif_len": 4}}
+    motif_dict = {
+        "GxxxG": {"motif_ss": r"[G].{3}[G]", "motif_len": 4},
+        "SmxxxSm": {"motif_ss": r"[GASC].{3}[GASC]", "motif_len": 4},
+        "PolarxxxPolar": {"motif_ss": r"[DKERQPHNSGYTWAMC].{3}[DKERQPHNSGYTWAMC]", "motif_len": 4},
+    }
     # This simple method doesn't work for "LxxLLxL", as the internal residues are not labelled
     # "LxxLLxL": {"motif_ss": r"([LVI].{2}[LVI][LVI].{1}[LVI])", "motif_len": 6}}
 
@@ -73,7 +73,7 @@ def motifs_from_seq(TMD_seq, TMD_seq_pl_surr, tm_surr_left, tm_surr_right, motif
         # sys.stdout.write(TMD_seq)
         # sys.stdout.write("".join([str(x) for x in list_residues_in_motif])[tm_surr_left:len(TMD_seq_pl_surr) - tm_surr_right])
         # slice out the TMD region
-        list_residues_in_motif_TMD_only = list_residues_in_motif[tm_surr_left: len(TMD_seq_pl_surr) - tm_surr_right]
+        list_residues_in_motif_TMD_only = list_residues_in_motif[tm_surr_left : len(TMD_seq_pl_surr) - tm_surr_right]
         df_motifs[motif_name] = list_residues_in_motif_TMD_only
     df_motifs.to_csv(motifs_file, index=False)
-    logging.info("motifs_from_seq finished ({})".format(motifs_file))
+    logging.info(f"motifs_from_seq finished ({motifs_file})")

@@ -10,6 +10,7 @@ refitting on a reversed column order moved predicted probabilities by up to 0.11
 These tests run the ordering-sensitive code in subprocesses with different PYTHONHASHSEED values,
 which is the only way to actually catch a reintroduced `set`.
 """
+
 import re
 import subprocess
 import sys
@@ -20,8 +21,21 @@ REPO_ROOT = Path(__file__).parents[2]
 # Deliberately unordered relative to the training data, so a set round-trip cannot accidentally
 # reproduce the input order and let a regression slip through.
 FEATURES = [
-    "polarity3Cmean", "DI3mean", "V", "conservation", "L", "GxxxG", "DI5mean", "mass",
-    "relative_polarity", "H", "branched", "RelPos_TMD", "E", "residue_depth", "DImax",
+    "polarity3Cmean",
+    "DI3mean",
+    "V",
+    "conservation",
+    "L",
+    "GxxxG",
+    "DI5mean",
+    "mass",
+    "relative_polarity",
+    "H",
+    "branched",
+    "RelPos_TMD",
+    "E",
+    "residue_depth",
+    "DImax",
 ]
 
 

@@ -1,30 +1,24 @@
-from pathlib import Path
-
 import numpy as np
 import pandas as pd
 from matplotlib import pyplot as plt
-from thoipapy.utils import normalise_0_1
 
 import thoipapy.utils
-from thoipapy.ML_model.train_model import return_classifier_with_loaded_ensemble_parameters
-from thoipapy.feature_importance.mean_decrease_impurity import calculate_mean_decrease_impurity_for_dataset
-from thoipapy.utils import create_colour_lists, normalise_between_2_values
 from thoipapy.artefacts import ArtefactPaths
+from thoipapy.feature_importance.mean_decrease_impurity import calculate_mean_decrease_impurity_for_dataset
+from thoipapy.ML_model.train_model import return_classifier_with_loaded_ensemble_parameters
+from thoipapy.utils import create_colour_lists, normalise_0_1
 
 
 def plot_feature_importance(paths: ArtefactPaths, bind_column: str, bootstrap: bool, logging):
-    """Create figures showing ML feature importance.
-    """
+    """Create figures showing ML feature importance."""
     # matplotlib 3.6 renamed the bundled seaborn styles, freezing them at the seaborn 0.8 look
-    plt.style.use('seaborn-v0_8-whitegrid')
-    plt.rcParams['errorbar.capsize'] = 1
-    plt.rcParams.update({'font.size': 4})
+    plt.style.use("seaborn-v0_8-whitegrid")
+    plt.rcParams["errorbar.capsize"] = 1
+    plt.rcParams.update({"font.size": 4})
     colour_dict = create_colour_lists()
 
-    trainset = "set08"
-
     # input
-    mean_decrease_impurity_all_features_csv = paths.feat_imp_MDI_before_feature_seln_csv()
+    paths.feat_imp_MDI_before_feature_seln_csv()
     feat_imp_mean_decrease_accuracy_xlsx = paths.feat_imp_mean_decrease_accuracy_xlsx()
     tuned_ensemble_parameters_csv = paths.tuned_ensemble_parameters_csv()
     # output
@@ -69,10 +63,10 @@ def plot_feature_importance(paths: ArtefactPaths, bind_column: str, bootstrap: b
     # determine the plot height by the number of features
     # currently set for 30
     plot_height = 4 * n_features_in_plot / 30
-    figsize = np.array([4.42, plot_height])
+    np.array([4.42, plot_height])
     fig, ax = plt.subplots()
 
-    TUMblue = colour_dict["TUM_colours"]['TUMBlue']
+    TUMblue = colour_dict["TUM_colours"]["TUMBlue"]
 
     df["MDA_AUBOC"].plot(kind="bar", ax=ax, color=TUMblue)
     # df["MDA_PR_AUC"].plot(kind="bar", ax=ax, position=1, color="#17a8a5")

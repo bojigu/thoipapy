@@ -1,18 +1,23 @@
 import os
 import sys
 from pathlib import Path
-from typing import Union
 
-import thoipapy
 # import eccpy
 import numpy as np
 import pandas as pd
-import seaborn as sns;
+import seaborn as sns
+
+import thoipapy
 
 sns.set()
 from matplotlib import pyplot as plt
+
 # from eccpy.tools import normalise_between_2_values
-from thoipapy.utils import normalise_between_2_values, get_testsetname_trainsetname_from_run_settings, get_test_and_train_set_lists
+from thoipapy.utils import (
+    get_test_and_train_set_lists,
+    get_testsetname_trainsetname_from_run_settings,
+    normalise_between_2_values,
+)
 
 
 def _format_reference(source, date) -> str:
@@ -32,24 +37,25 @@ def _format_reference(source, date) -> str:
 
 def create_merged_heatmap_for_trainset_and_testset(s, df_set, logging):
     """Create heatmap from merged disruption, combined_prediction, and features in  traindata.csv files.
-        Parameters
-        ----------
-        df_set : dict
-            dictionary contains the set file contents
-        s : dict
-            settings dictionary
+    Parameters
+    ----------
+    df_set : dict
+        dictionary contains the set file contents
+    s : dict
+        settings dictionary
 
-        Output files
-        ------------
-        heatmap : png
-            heatmap_path = os.path.join(p["BZ12_2file_heatmap"], "{}.png".format(savename))
-        heatmap : pdf
-            heatmap_pdf_path = os.path.join(p["BZ12_2file_heatmap_pdf"], "{}.pdf".format(savename))
-        heatmap_data : xlsx
-            heatmap_data_xlsx_path = os.path.join(p["BZ12_2file_data"], "{}_heatmap_data.xlsx".format(savename))
-        """
+    Output files
+    ------------
+    heatmap : png
+        heatmap_path = os.path.join(p["BZ12_2file_heatmap"], "{}.png".format(savename))
+    heatmap : pdf
+        heatmap_pdf_path = os.path.join(p["BZ12_2file_heatmap_pdf"], "{}.pdf".format(savename))
+    heatmap_data : xlsx
+        heatmap_data_xlsx_path = os.path.join(p["BZ12_2file_data"], "{}_heatmap_data.xlsx".format(savename))
+    """
     sys.stdout.write(
-        '\n~~~~~~~~~~~~                 starting create_heatmap_from_merged_files              ~~~~~~~~~~~~\n')
+        "\n~~~~~~~~~~~~                 starting create_heatmap_from_merged_files              ~~~~~~~~~~~~\n"
+    )
     sys.stdout.flush()
     #################################################################
     #             EXTRACT NAMES FROM NAMES EXCEL FILE               #
@@ -71,7 +77,19 @@ def create_merged_heatmap_for_trainset_and_testset(s, df_set, logging):
         LIPS_col = "LIPS_surface"  # "LIPS_surface_ranked"
         coev_col = "DI4mean"
 
-        dfh_cols = ["res_num_full_seq", "residue_name", "interface", "interface_score", THOIPA_column, "PREDDIMER", "TMDOCK", LIPS_col, "conservation", "relative_polarity", coev_col]
+        dfh_cols = [
+            "res_num_full_seq",
+            "residue_name",
+            "interface",
+            "interface_score",
+            THOIPA_column,
+            "PREDDIMER",
+            "TMDOCK",
+            LIPS_col,
+            "conservation",
+            "relative_polarity",
+            coev_col,
+        ]
 
         names_csv_path = os.path.join(s["base_dir"], "protein_names.csv")
         df_names = pd.read_csv(names_csv_path, index_col=0)
@@ -92,32 +110,38 @@ def create_merged_heatmap_for_trainset_and_testset(s, df_set, logging):
 
             if database == "ETRA":
                 ref = _format_reference(df_names.loc[acc_db, "source"], df_names.loc[acc_db, "date"])
-                savename = "{}_{}".format(acc, shortname)
-                fig_label = "{shortname} [{subset} dataset, {acc}, {ref}]".format(shortname=shortname,
-                                                                                  subset=database, acc=acc, ref=ref)
+                savename = f"{acc}_{shortname}"
+                fig_label = f"{shortname} [{database} dataset, {acc}, {ref}]"
             elif database == "NMR":
                 ref = _format_reference(df_names.loc[acc_db, "source"], df_names.loc[acc_db, "date"])
-                savename = "{}_{}".format(acc, shortname)
-                fig_label = "{shortname} [{subset} dataset, {acc}, PDB:{pdb}, {ref}]".format(shortname=shortname,
-                                                                                             subset=database, acc=acc, pdb=df_names.loc[acc_db, "PDB acc"], ref=ref)
+                savename = f"{acc}_{shortname}"
+                fig_label = "{shortname} [{subset} dataset, {acc}, PDB:{pdb}, {ref}]".format(
+                    shortname=shortname, subset=database, acc=acc, pdb=df_names.loc[acc_db, "PDB acc"], ref=ref
+                )
             elif database == "crystal":
-                savename = acc + "_".format(database)
+                savename = acc + "_".format()
                 # fig_label = acc + " [{} subset, PDB:{}, chain:{}, TMD:{}]".format(database, acc[:-2], acc[-2], acc[-1])
-                fig_label = "{} [X-ray dataset, {}, PDB:{}, chain:{}, TMD:{}]]".format(shortname, uniprot, acc[:-2], acc[-2], acc[-1])
+                fig_label = f"{shortname} [X-ray dataset, {uniprot}, PDB:{acc[:-2]}, chain:{acc[-2]}, TMD:{acc[-1]}]]"
             else:
-                raise ValueError("database not recognised : {}".format(database))
+                raise ValueError(f"database not recognised : {database}")
 
-            sys.stdout.write("\n{} {}".format(savename, fig_label))
-            create_single_merged_heatmap(setname, s, acc, database, savename, fig_label, dfh_cols, THOIPA_column, LIPS_col, coev_col)
+            sys.stdout.write(f"\n{savename} {fig_label}")
+            create_single_merged_heatmap(
+                setname, s, acc, database, savename, fig_label, dfh_cols, THOIPA_column, LIPS_col, coev_col
+            )
 
 
-def create_single_merged_heatmap(setname, s, acc, database, savename, fig_label, dfh_cols, THOIPA_column, LIPS_col, coev_col):
-    merged_data_csv_path: Union[Path, str] = Path(s["data_dir"]) / f"results/{setname}/predictions/merged/{database}.{acc}.merged.csv"
+def create_single_merged_heatmap(
+    setname, s, acc, database, savename, fig_label, dfh_cols, THOIPA_column, LIPS_col, coev_col
+):
+    merged_data_csv_path: Path | str = (
+        Path(s["data_dir"]) / f"results/{setname}/predictions/merged/{database}.{acc}.merged.csv"
+    )
     dfm = pd.read_csv(merged_data_csv_path, index_col=None)
 
-    heatmap_path = os.path.join(s["data_dir"], "heatmap", database, "{}.png".format(acc))
-    heatmap_pdf_path = os.path.join(s["data_dir"], "heatmap", database, "pdf", "{}.pdf".format(acc))
-    heatmap_data_xlsx_path = os.path.join(s["data_dir"], "heatmap", database, "xlsx", "{}_merged.xlsx".format(acc))
+    heatmap_path = os.path.join(s["data_dir"], "heatmap", database, f"{acc}.png")
+    heatmap_pdf_path = os.path.join(s["data_dir"], "heatmap", database, "pdf", f"{acc}.pdf")
+    heatmap_data_xlsx_path = os.path.join(s["data_dir"], "heatmap", database, "xlsx", f"{acc}_merged.xlsx")
     hetero_bind_file = os.path.join(s["data_dir"], "features", "structure", database, "{}.hetero.bind.csv").format(acc)
     thoipapy.utils.make_sure_path_exists(heatmap_pdf_path, isfile=True)
     thoipapy.utils.make_sure_path_exists(heatmap_data_xlsx_path, isfile=True)
@@ -158,7 +182,17 @@ def create_single_merged_heatmap(setname, s, acc, database, savename, fig_label,
     # currently coevolution doesn't need to be normalised (already norm in each TMD between 0 and 1
     dfh["coevolution_norm"] = dfh[coev_col]
 
-    cols_to_plot = ['interface score_norm', 'interface', 'PREDDIMER_norm', 'TMDOCK_norm', 'THOIPA_norm', 'LIPS_norm', 'conservation_norm', 'relative polarity_norm', 'coevolution_norm']
+    cols_to_plot = [
+        "interface score_norm",
+        "interface",
+        "PREDDIMER_norm",
+        "TMDOCK_norm",
+        "THOIPA_norm",
+        "LIPS_norm",
+        "conservation_norm",
+        "relative polarity_norm",
+        "coevolution_norm",
+    ]
     cols_to_plot_renamed = [x[:-5] if "_norm" in x else x for x in cols_to_plot]
 
     # transpose dataframe so that "interface" etc is on the left
@@ -179,7 +213,7 @@ def create_single_merged_heatmap(setname, s, acc, database, savename, fig_label,
     for res in wherever_your_hetero(folding)_residues_are:
         if res == folding:
             df_labels.loc["interface_score", res] = "*"
-    
+
     """
     if os.path.exists(hetero_bind_file):
         df_hetero = pd.read_csv(hetero_bind_file, engine="python")
@@ -198,9 +232,9 @@ def create_single_merged_heatmap(setname, s, acc, database, savename, fig_label,
     # sns.set_context("paper", rc={"font.size": 10, "axes.titlesize": 10, "axes.labelsize": 10})
     """
     IMPORTANT!!
-    The default fontsize controls the spacing between the subplots, EVEN IF THERE ARE NO TITLES or XLABELS!      
+    The default fontsize controls the spacing between the subplots, EVEN IF THERE ARE NO TITLES or XLABELS!
     """
-    plt.rcParams['font.size'] = fontsize / 2
+    plt.rcParams["font.size"] = fontsize / 2
     # relative height of each subplot heatmap
     gridspec_kw = {"height_ratios": [4, 8, 6]}
 
@@ -216,21 +250,48 @@ def create_single_merged_heatmap(setname, s, acc, database, savename, fig_label,
 
     # plot the same data in main axis, and twinx
     # interface and interface_score
-    sns.heatmap(dfh_to_plot[0:2], ax=axes[0], xticklabels=False, cbar=False, cmap=cmap)  # fmt = "s", annot_kws={"Axes.set_facecolor", 0.5} ,
-    sns.heatmap(dfh_to_plot[0:2], ax=ax2_0, cbar=False, cmap=cmap, annot=df_labels[0:2], fmt="s",
-                annot_kws={"color": "k", "fontsize": fontsize, "verticalalignment": "top"})
+    sns.heatmap(
+        dfh_to_plot[0:2], ax=axes[0], xticklabels=False, cbar=False, cmap=cmap
+    )  # fmt = "s", annot_kws={"Axes.set_facecolor", 0.5} ,
+    sns.heatmap(
+        dfh_to_plot[0:2],
+        ax=ax2_0,
+        cbar=False,
+        cmap=cmap,
+        annot=df_labels[0:2],
+        fmt="s",
+        annot_kws={"color": "k", "fontsize": fontsize, "verticalalignment": "top"},
+    )
 
     # PREDDIMER, TMDOCK, THOIPA, LIPS
-    sns.heatmap(dfh_to_plot[2:6], ax=axes[1], xticklabels=False, cbar=False,
-                cmap=cmap)  # fmt = "s", annot_kws={"Axes.set_facecolor", 0.5} ,
-    sns.heatmap(dfh_to_plot[2:6], ax=ax2_1, cbar=False, xticklabels=[''] * dfh_to_plot.shape[1],
-                cmap=cmap, annot=df_labels[2:6], fmt="s", annot_kws={"color": "k", "fontsize": fontsize})  # fmt = "s", annot_kws={"Axes.set_facecolor", 0.5} ,
+    sns.heatmap(
+        dfh_to_plot[2:6], ax=axes[1], xticklabels=False, cbar=False, cmap=cmap
+    )  # fmt = "s", annot_kws={"Axes.set_facecolor", 0.5} ,
+    sns.heatmap(
+        dfh_to_plot[2:6],
+        ax=ax2_1,
+        cbar=False,
+        xticklabels=[""] * dfh_to_plot.shape[1],
+        cmap=cmap,
+        annot=df_labels[2:6],
+        fmt="s",
+        annot_kws={"color": "k", "fontsize": fontsize},
+    )  # fmt = "s", annot_kws={"Axes.set_facecolor", 0.5} ,
 
     # conservation, relative polarity, coevolution
-    sns.heatmap(dfh_to_plot[6:9], ax=axes[2], cbar=False,
-                cmap=cmap)  # fmt = "s", annot_kws={"Axes.set_facecolor", 0.5} ,
-    sns.heatmap(dfh_to_plot[6:9], ax=ax2_2, cbar=False, xticklabels=[''] * dfh_to_plot.shape[1],
-                cmap=cmap, annot=df_labels[6:9], fmt="s", annot_kws={"color": "k", "fontsize": fontsize})  # fmt = "s", annot_kws={"Axes.set_facecolor", 0.5} ,
+    sns.heatmap(
+        dfh_to_plot[6:9], ax=axes[2], cbar=False, cmap=cmap
+    )  # fmt = "s", annot_kws={"Axes.set_facecolor", 0.5} ,
+    sns.heatmap(
+        dfh_to_plot[6:9],
+        ax=ax2_2,
+        cbar=False,
+        xticklabels=[""] * dfh_to_plot.shape[1],
+        cmap=cmap,
+        annot=df_labels[6:9],
+        fmt="s",
+        annot_kws={"color": "k", "fontsize": fontsize},
+    )  # fmt = "s", annot_kws={"Axes.set_facecolor", 0.5} ,
 
     # set fontsize and rotation of y-labels
     # there is currently a bug, whereby "interface" in y-axis is not written, unless y-ticks are specified and yticklabels are hard-coded as below
@@ -242,7 +303,7 @@ def create_single_merged_heatmap(setname, s, acc, database, savename, fig_label,
     # bottom residue numbers
     fontsize_bottom_residue_num = fontsize * 0.75
     axes[2].set_xticklabels(dfh.index, fontsize=fontsize_bottom_residue_num, rotation=0)
-    axes[2].tick_params(axis="x", direction='out', pad=1.5, tick2On=False)
+    axes[2].tick_params(axis="x", direction="out", pad=1.5, tick2On=False)
 
     # figure title
     # residue letters at top
@@ -250,11 +311,11 @@ def create_single_merged_heatmap(setname, s, acc, database, savename, fig_label,
     ax2_0.set_xticks(axes[2].get_xticks())
     ax2_0.xaxis.tick_top()
     ax2_0.set_xticklabels(dfh.residue_name, fontsize=fontsize)
-    ax2_0.tick_params(axis="x", direction='out', pad=-0.1, tick2On=False)
+    ax2_0.tick_params(axis="x", direction="out", pad=-0.1, tick2On=False)
 
     # remove ticks from centre of heatmap
-    ax2_1.tick_params(axis="x", direction='out', pad=-0.1, tick2On=False)
-    ax2_2.tick_params(axis="x", direction='out', pad=-0.1, tick2On=False)
+    ax2_1.tick_params(axis="x", direction="out", pad=-0.1, tick2On=False)
+    ax2_2.tick_params(axis="x", direction="out", pad=-0.1, tick2On=False)
 
     plt.tight_layout()
     fig.savefig(heatmap_path, dpi=240)
@@ -265,7 +326,7 @@ def create_single_merged_heatmap(setname, s, acc, database, savename, fig_label,
         dfh.to_excel(writer, sheet_name="dfh")
         dfh_to_plot.to_excel(writer, sheet_name="dfh_to_plot")
 
-    sys.stdout.write("\n{} heatmap finished. ({})".format(savename, heatmap_path))
+    sys.stdout.write(f"\n{savename} heatmap finished. ({heatmap_path})")
     sys.stdout.flush()
 
     #

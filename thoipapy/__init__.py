@@ -9,6 +9,7 @@ Before this, every __init__ imported all of its submodules, so `import thoipapy`
 pulled in 70 of the 85 modules -- the whole ML stack, seaborn, statsmodels and a package of
 deprecated code -- on every process start, including for a single prediction.
 """
+
 from thoipapy.predict import run_THOIPA_prediction
 
 __all__ = ["run_THOIPA_prediction"]

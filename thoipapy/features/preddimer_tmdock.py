@@ -1,11 +1,10 @@
 import os
 from pathlib import Path
-from typing import Union
 
 import pandas as pd
 
-from thoipapy.utils import normalise_between_2_values
 from thoipapy.artefacts import ArtefactPaths
+from thoipapy.utils import normalise_between_2_values
 
 
 def add_PREDDIMER_TMDOCK_to_combined_features_mult_prot(paths: ArtefactPaths, df_set, logging):
@@ -26,9 +25,9 @@ def add_PREDDIMER_TMDOCK_to_combined_features_mult_prot(paths: ArtefactPaths, df
     for i in df_set.index:
         acc = df_set.loc[i, "acc"]
         database = df_set.loc[i, "database"]
-        TMD_seq = df_set.loc[i, "TMD_seq"]
+        df_set.loc[i, "TMD_seq"]
         feature_combined_file = paths.combined_features_csv(database, acc)
-        merged_data_csv_path: Union[Path, str] = paths.merged_predictions_csv(database, acc)
+        merged_data_csv_path: Path | str = paths.merged_predictions_csv(database, acc)
 
         add_PREDDIMER_TMDOCK_to_combined_features(acc, feature_combined_file, merged_data_csv_path, logging)
 
@@ -40,7 +39,7 @@ def add_PREDDIMER_TMDOCK_to_combined_features(acc, feature_combined_file, merged
 
     Parameters
     ----------
-	acc : str
+        acc : str
         Protein accession (e.g. UniProt, PDB)
     feature_combined_file : str
         Path to csv with all features combined
@@ -54,7 +53,9 @@ def add_PREDDIMER_TMDOCK_to_combined_features(acc, feature_combined_file, merged
     df_combined.set_index("res_num_full_seq", inplace=True, drop=False)
 
     if not os.path.isfile(merged_data_csv_path):
-        logging.warning("merged_data_csv_path NOT FOUND. TMDOCK and PREDDIMER not added to combined file. ({})".format(merged_data_csv_path))
+        logging.warning(
+            f"merged_data_csv_path NOT FOUND. TMDOCK and PREDDIMER not added to combined file. ({merged_data_csv_path})"
+        )
 
     if os.path.isfile(merged_data_csv_path):
         df_predictions = pd.read_csv(merged_data_csv_path, index_col=0)
@@ -97,7 +98,7 @@ def add_PREDDIMER_TMDOCK_to_combined_features(acc, feature_combined_file, merged
         df_combined_new.index = orig_df_combined_index
         # overwrite existing combined features file
         df_combined_new.to_csv(feature_combined_file)
-        logging.info("{} add_PREDDIMER_TMDOCK_to_combined_features finished ({})".format(acc, merged_data_csv_path))
+        logging.info(f"{acc} add_PREDDIMER_TMDOCK_to_combined_features finished ({merged_data_csv_path})")
 
     else:
-        logging.warning("{} add_PREDDIMER_TMDOCK_to_combined_features failed, {} not found".format(acc, merged_data_csv_path))
+        logging.warning(f"{acc} add_PREDDIMER_TMDOCK_to_combined_features failed, {merged_data_csv_path} not found")

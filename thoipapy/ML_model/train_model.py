@@ -1,12 +1,10 @@
-from pathlib import Path
-import pandas as pd
-import numpy as np
-from sklearn.ensemble import ExtraTreesClassifier
-import os
 import joblib
-from thoipapy.utils import dropna_with_report
-import pickle
+import numpy as np
+import pandas as pd
+from sklearn.ensemble import ExtraTreesClassifier
+
 from thoipapy.artefacts import ArtefactPaths
+from thoipapy.utils import dropna_with_report
 
 # Seed used for every ExtraTreesClassifier built by this module. The published 2020 model was
 # trained with no seed at all, so it was not reproducible: retraining the same code on the same
@@ -15,7 +13,9 @@ from thoipapy.artefacts import ArtefactPaths
 RANDOM_STATE = 0
 
 
-def train_machine_learning_model(paths: ArtefactPaths, bind_column: str, min_n_homol_training: int, bootstrap: bool, logging):
+def train_machine_learning_model(
+    paths: ArtefactPaths, bind_column: str, min_n_homol_training: int, bootstrap: bool, logging
+):
     """Train the machine learning model for a particular set.
 
     Parameters
@@ -31,7 +31,7 @@ def train_machine_learning_model(paths: ArtefactPaths, bind_column: str, min_n_h
         Pickle containing the trained machine learning model.
 
     """
-    logging.info('starting train_machine_learning_model')
+    logging.info("starting train_machine_learning_model")
 
     # inputs
     train_data_after_first_feature_seln_csv = paths.train_data_after_first_feature_seln_csv()
@@ -53,19 +53,23 @@ def train_machine_learning_model(paths: ArtefactPaths, bind_column: str, min_n_h
     if 1 not in y.tolist():
         raise ValueError("None of the residues are marked 1 for an interface residue!")
 
-    n_features = X.shape[1]
+    X.shape[1]
 
-    cls: ExtraTreesClassifier = return_classifier_with_loaded_ensemble_parameters(tuned_ensemble_parameters_csv, bootstrap)
+    cls: ExtraTreesClassifier = return_classifier_with_loaded_ensemble_parameters(
+        tuned_ensemble_parameters_csv, bootstrap
+    )
     fit = cls.fit(X, y)
     joblib.dump(fit, model_pkl)
 
     tree_depths = np.array([estimator.tree_.max_depth for estimator in cls.estimators_])
-    logging.info("tree depth mean = {} ({})".format(tree_depths.mean(), tree_depths))
+    logging.info(f"tree depth mean = {tree_depths.mean()} ({tree_depths})")
 
-    logging.info('finished training machine learning algorithm ({})'.format(model_pkl))
+    logging.info(f"finished training machine learning algorithm ({model_pkl})")
 
 
-def return_classifier_with_loaded_ensemble_parameters(tuned_ensemble_parameters_csv, bootstrap: bool, totally_randomized_trees=False, n_jobs=-1, random_state=RANDOM_STATE) -> ExtraTreesClassifier:
+def return_classifier_with_loaded_ensemble_parameters(
+    tuned_ensemble_parameters_csv, bootstrap: bool, totally_randomized_trees=False, n_jobs=-1, random_state=RANDOM_STATE
+) -> ExtraTreesClassifier:
     df_tuned_ensemble_parameters: pd.DataFrame = pd.read_csv(tuned_ensemble_parameters_csv, index_col=0)
     ensemble_parameters_ser: pd.Series = df_tuned_ensemble_parameters["GridSearchSlowMethod"]
 
@@ -101,6 +105,6 @@ def return_classifier_with_loaded_ensemble_parameters(tuned_ensemble_parameters_
         oob_score=oob_score,
         bootstrap=bootstrap,
         max_features=max_features,
-        random_state=random_state
+        random_state=random_state,
     )
     return cls

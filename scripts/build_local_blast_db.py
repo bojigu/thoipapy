@@ -80,9 +80,20 @@ def build_blast_database(fasta: Path, db_name: str, title: str) -> None:
     """Run makeblastdb over a fasta file."""
     print(f"  running makeblastdb -> {db_name}")
     result = subprocess.run(
-        ["makeblastdb", "-in", str(fasta), "-dbtype", "prot",
-         "-out", str(BLAST_DB_DIR / db_name), "-title", title, "-parse_seqids"],
-        capture_output=True, text=True,
+        [
+            "makeblastdb",
+            "-in",
+            str(fasta),
+            "-dbtype",
+            "prot",
+            "-out",
+            str(BLAST_DB_DIR / db_name),
+            "-title",
+            title,
+            "-parse_seqids",
+        ],
+        capture_output=True,
+        text=True,
     )
     if result.returncode != 0:
         raise RuntimeError(f"makeblastdb failed: {result.stderr.strip()}")
