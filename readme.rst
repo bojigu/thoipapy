@@ -29,14 +29,38 @@ How does thoipapy work?
 
 Installation
 ------------
-.. code::
 
-    pip install thoipapy
+THOIPA is on PyPI, but read this before installing it.
 
-THOIPA has only been tested on Linux, due to reliance on external dependencies such as
-FreeContact, CD-HIT and rate4site. For predictions only, a dockerised version is available that
-runs on Windows or MacOS. Please see the `THOIPA webserver <http://www.thoipa.org>`_ for the
-latest information.
+.. code:: bash
+
+    pip install "thoipapy>=2.1"
+
+**Ask for 2.1 or newer.** Releases up to 1.2.0 were published between 2018 and 2021 and no longer
+work: the model they ship is a scikit-learn 0.23 pickle, which no current scikit-learn can load,
+so they install without error and then fail on the first prediction.
+
+**Install it into a new, empty environment.** Every dependency is pinned to an exact version
+(``numpy==2.5.2``, ``pandas==3.0.5``, and so on), so pip will almost certainly refuse to install
+it alongside packages you already have. That is intended, not a defect: THOIPA is not actively
+maintained, and exact pins are what stop an unattended install from silently resolving to a
+different numerical result years from now.
+
+The same pinning means that on a future python, where those exact versions have no wheel, the
+install will fail outright rather than succeed and misbehave. If that happens, use the conda
+environment below, which also pins the interpreter.
+
+.. code:: bash
+
+    conda env create -f environment.yml
+    conda activate thoipapy
+    pip install -e .
+
+This is the supported path, and the only one that pins python itself along with the external
+command-line tools.
+
+THOIPA has only been tested on Linux, because of its reliance on external programs such as
+FreeContact, CD-HIT and rate4site.
 
 
 Dependencies
@@ -242,8 +266,8 @@ database yields a different homologue set, a different alignment, and therefore 
 conservation, coevolution and polarity features. The scores move.
 
 In exchange, a full prediction goes **from hours to a few minutes** -- seconds, on a small
-database -- and it runs offline, deterministically, with no queue and no third-party dependency.
-For a webserver that has to answer a user while they wait, that trade is not close.
+database -- and it runs offline and deterministically, with no queue and no third-party service in
+the path.
 
 Setting up UniRef90
 ~~~~~~~~~~~~~~~~~~~
@@ -324,13 +348,13 @@ and several ineffective filters and dead assertions were repaired.
 Usage as a standalone predictor
 -------------------------------
 
-* first check if your needs are met by the `THOIPA webserver <http://www.thoipa.org>`_ or the latest version of dockerised software
-* for local predictions on linux, first install NCBI_BLAST, biopython, freecontact, CD-HIT, and rate4site
-* please see `thoipapy/test/functional/test_standalone_prediction.py <https://github.com/bojigu/thoipapy/tree/develop/thoipapy/test/functional/test_standalone_prediction.py>`_ for the latest run syntax, typically
+* for local predictions on linux, first install NCBI_BLAST, biopython, freecontact, CD-HIT and rate4site
+* see ``test/functional/test_standalone_prediction.py`` for the current run syntax, typically
 
 .. code:: python
 
-    from thoipapy.thoipa import get_md5_checksum, run_THOIPA_prediction
+    from thoipapy import run_THOIPA_prediction
+    from thoipapy.predict import get_md5_checksum
     from thoipapy.utils import make_sure_path_exists
 
     protein_name = "ERBB3"
