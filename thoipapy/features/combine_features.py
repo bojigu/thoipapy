@@ -7,26 +7,26 @@ import pandas as pd
 
 import thoipapy
 from thoipapy import utils as utils
-from thoipapy.features.phobius import return_num_tmd
 from thoipapy.features.normalise_features import normalise_features
 
 import matplotlib as mpl
 # set matplotlib backend to Agg when run on a server
 from thoipapy.utils import make_sure_path_exists
+from thoipapy.artefacts import ArtefactPaths
 
 if os.environ.get('DISPLAY', '') == '':
     sys.stdout.write('no display found. Using non-interactive Agg backend')
     mpl.use('Agg')
 
 
-def combine_all_features(s, full_seq, acc, database, TMD_seq, TMD_start, feature_combined_file, entropy_file, rate4site_csv, pssm_csv, lipo_csv, freecontact_parsed_csv, relative_position_file, LIPS_parsed_csv, motifs_file,
-                         alignment_summary_csv, full_seq_fasta_file, phobius_outfile, logging):
+def combine_all_features(full_seq, acc, database, TMD_seq, TMD_start, feature_combined_file, entropy_file, rate4site_csv, pssm_csv, lipo_csv, freecontact_parsed_csv, relative_position_file, LIPS_parsed_csv, motifs_file,
+                         alignment_summary_csv, full_seq_fasta_file, logging):
     """Combine all the training features for a particular protein.
 
     Parameters
     ----------
-    s : dict
-        Settings dictionary
+    paths : ArtefactPaths
+        Locations of the pipeline's input and output files.
     full_seq : str
         Full protein sequence
     acc : str
@@ -122,15 +122,13 @@ def combine_all_features(s, full_seq, acc, database, TMD_seq, TMD_start, feature
 
     single_prot_aln_result_ser = utils.open_csv_as_series(alignment_summary_csv)
 
-    # n_homologues and n_TMDs are TMD-properties, not a residue properties, and are therefore the same for all residues)
+    # n_homologues is a TMD property, not a residue property, and is therefore the same for all residues
 
     # add the cube root of the number of homologues
     n_homologues_orig = single_prot_aln_result_ser["n_uniq_TMD_seqs_for_PSSM_FREECONTACT"]
     n_homologues = np.cbrt(n_homologues_orig)
     df_features_single_protein["n_homologues"] = n_homologues
 
-    # add number of TMDs in protein predicted by phobius
-    df_features_single_protein["n_TMDs"] = return_num_tmd(s, acc, full_seq, full_seq_fasta_file, phobius_outfile, logging)
 
     # add the residue number in the full protein sequence
     # this assumes that the index is a range, starting from 0 to x,
@@ -143,13 +141,13 @@ def combine_all_features(s, full_seq, acc, database, TMD_seq, TMD_start, feature
     logging.info("{} combine_all_features_mult_prot finished ({})".format(acc, feature_combined_file))
 
 
-def combine_all_features_mult_prot(s, df_set, logging):
+def combine_all_features_mult_prot(paths: ArtefactPaths, df_set, lipophilicity_scale: str, surres: str, logging):
     """Run combine_all_features for all proteins in a list.
 
     Parameters
     ----------
-    s : dict
-        Settings dictionary
+    paths : ArtefactPaths
+        Locations of the pipeline's input and output files.
     df_set : pd.DataFrame
         Dataframe containing the list of proteins to process, including their TMD sequences and full-length sequences
         index : range(0, ..)
@@ -165,33 +163,30 @@ def combine_all_features_mult_prot(s, df_set, logging):
         TMD_seq = df_set.loc[i, "TMD_seq"]
         TMD_start = df_set.loc[i, "TMD_start"]
         full_seq = df_set.loc[i, "full_seq"]
-        scalename = s["lipophilicity_scale"]
-        lipo_csv = os.path.join(s["data_dir"], "features", "lipophilicity", database, "{}_{}_lipo.csv".format(acc, scalename))
-        relative_position_file = os.path.join(s["data_dir"], "features", "relative_position", database, "%s.relative_position%s.csv") % (acc, s["surres"])
-        LIPS_parsed_csv = os.path.join(s["data_dir"], "features", "lips_score", database, "{}.surr{}.LIPS_score_parsed.csv".format(acc, s["num_of_sur_residues"]))
-        pssm_csv = os.path.join(s["data_dir"], "features", "pssm", database, "{}.surr{}.gaps{}.pssm.csv".format(acc, s["num_of_sur_residues"], s["max_n_gaps_in_TMD_subject_seq"]))
-        entropy_file = os.path.join(s["data_dir"], "features", "entropy", database, "{}.surr{}.gaps{}.uniq.entropy.csv".format(acc, s["num_of_sur_residues"], s["max_n_gaps_in_TMD_subject_seq"]))
-        rate4site_csv: Path = Path(s["data_dir"]).joinpath("features", "rate4site", database, f"{acc}_rate4site.csv")
-        freecontact_parsed_csv = os.path.join(s["data_dir"], "features", "coevolution", database, "{}.surr{}.gaps{}.freecontact_parsed.csv".format(acc, s["num_of_sur_residues"], s["max_n_gaps_in_TMD_subject_seq"]))
-        motifs_file = os.path.join(s["data_dir"], "features", "motifs", database, "{}.motifs.csv".format(acc))
-        feature_combined_file = os.path.join(s["data_dir"], "features", "combined", database, "{}.surr{}.gaps{}.combined_features.csv".format(acc, s["num_of_sur_residues"], s["max_n_gaps_in_TMD_subject_seq"]))
-        alignments_dir = os.path.join(s["data_dir"], "homologues", "alignments", database)
-        alignment_summary_csv = os.path.join(alignments_dir, "{}.surr{}.gaps{}.alignment_summary.csv".format(acc, s["num_of_sur_residues"], s["max_n_gaps_in_TMD_subject_seq"]))
-        full_seq_fasta_file = os.path.join(s["data_dir"], "Proteins", database, "{}.fasta".format(acc))
-        phobius_outfile = os.path.join(s["data_dir"], "Proteins", database, "{}.phobius".format(acc))
-        combine_all_features(s, full_seq, acc, database, TMD_seq, TMD_start, feature_combined_file, entropy_file, rate4site_csv, pssm_csv, lipo_csv, freecontact_parsed_csv, relative_position_file, LIPS_parsed_csv, motifs_file,
-                             alignment_summary_csv, full_seq_fasta_file, phobius_outfile, logging)
+        lipo_csv = paths.lipo_csv(database, acc, lipophilicity_scale)
+        relative_position_file = paths.relative_position_csv(database, acc, surres)
+        LIPS_parsed_csv = paths.lips_score_parsed_csv(database, acc)
+        pssm_csv = paths.pssm_csv(database, acc)
+        entropy_file = paths.entropy_csv(database, acc)
+        rate4site_csv: Path = paths.rate4site_csv(database, acc)
+        freecontact_parsed_csv = paths.freecontact_parsed_csv(database, acc)
+        motifs_file = paths.motifs_csv(database, acc)
+        feature_combined_file = paths.combined_features_csv(database, acc)
+        alignment_summary_csv = paths.alignment_summary_csv(database, acc)
+        full_seq_fasta_file = paths.full_seq_fasta(database, acc)
+        combine_all_features(full_seq, acc, database, TMD_seq, TMD_start, feature_combined_file, entropy_file, rate4site_csv, pssm_csv, lipo_csv, freecontact_parsed_csv, relative_position_file, LIPS_parsed_csv, motifs_file,
+                             alignment_summary_csv, full_seq_fasta_file, logging)
 
 
-def combine_all_train_data_for_machine_learning(s, df_set, logging):
+def combine_all_train_data_for_machine_learning(paths: ArtefactPaths, df_set, remove_crystal_hetero: bool, logging):
     """Combine training (or test) data for multiple proteins
 
     Effectively stacks the CSVs on top of each other.
 
     Parameters
     ----------
-    s : dict
-        Settings dictionary
+    paths : ArtefactPaths
+        Locations of the pipeline's input and output files.
     df_set : pd.DataFrame
         Dataframe containing the list of proteins to process, including their TMD sequences and full-length sequences
         index : range(0, ..)
@@ -208,7 +203,7 @@ def combine_all_train_data_for_machine_learning(s, df_set, logging):
     """
     logging.info('creating train or test data for machine learning')
 
-    train_data_csv = Path(s["data_dir"]) / f"results/{s['setname']}/train_data/01_train_data_orig.csv"
+    train_data_csv = paths.train_data_orig_csv()
     make_sure_path_exists(train_data_csv, isfile=True)
 
     df_set_nonred = thoipapy.utils.drop_redundant_proteins_from_list(df_set, logging)
@@ -218,17 +213,9 @@ def combine_all_train_data_for_machine_learning(s, df_set, logging):
     for i in df_set_nonred.index:
         acc = df_set_nonred.loc[i, "acc"]
         database = df_set_nonred.loc[i, "database"]
-        if s["remove_crystal_hetero"]:
-            if database == "crystal":
-                feature_combined_file = os.path.join(s["data_dir"], "features", "combined", database,
-                                                     "{}.nohetero.surr{}.gaps{}.combined_features.csv".format(acc, s[
-                                                         "num_of_sur_residues"], s["max_n_gaps_in_TMD_subject_seq"]))
-            else:
-                feature_combined_file = os.path.join(s["data_dir"], "features", "combined", database, "{}.surr{}.gaps{}.combined_features.csv".format(acc, s["num_of_sur_residues"], s["max_n_gaps_in_TMD_subject_seq"]))
-        else:
-            feature_combined_file = os.path.join(s["data_dir"], "features", "combined", database,
-                                                 "{}.surr{}.gaps{}.combined_features.csv".format(acc, s[
-                                                     "num_of_sur_residues"], s["max_n_gaps_in_TMD_subject_seq"]))
+        # crystal structures have a variant file with hetero-contact residues already removed
+        use_nohetero = remove_crystal_hetero and database == "crystal"
+        feature_combined_file = paths.combined_features_csv(database, acc, nohetero=use_nohetero)
         df_features_new_protein = pd.read_csv(feature_combined_file, index_col=0)
         df_features_new_protein["acc_db"] = "{}-{}".format(acc, database)
         #
