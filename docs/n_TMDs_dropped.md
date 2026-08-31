@@ -1,4 +1,4 @@
-# The n_TMDs feature was dropped in 2.1.0
+# The n_TMDs feature was dropped in 2.0.0
 
 `n_TMDs`, the number of transmembrane domains in the protein, was one of the model's 27 features.
 It is no longer computed, no longer part of the feature set, and has been removed from the
@@ -48,7 +48,7 @@ but it is consistent with the numbers above.
 
 ## Consequences
 
-Predictions from 2.1.0 differ from 2.0.0. Stored output should be regenerated. The THOIPA
+Predictions from 2.0.0 differ from 1.2.0. Stored output should be regenerated. The THOIPA
 webserver caches results by sequence hash with no model version in the key, so that cache must be
 cleared when upgrading.
 

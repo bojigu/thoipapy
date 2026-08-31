@@ -2,13 +2,17 @@
 THOIPApy releases
 =================
 
-2.1.0
+2.0.0
 -----
-* **the ``n_TMDs`` feature is removed and the model is retrained on 26 features. Predictions differ
-  from 2.0.0 and stored output should be regenerated.** Computing ``n_TMDs`` required Phobius, which
-  is licensed academic software that was never actually installed, and the feature was silently
-  constant on every prediction ever made. Removing it costs no accuracy. See
-  ``docs/n_TMDs_dropped.md``.
+The first release since 1.2.0. It was developed as two internal milestones, neither of which was
+published, so their notes are combined here.
+
+* **the shipped model is retrained on 26 features, and the ``n_TMDs`` feature is removed.
+  Predictions differ from 1.2.0 and stored output should be regenerated.** The 2020 scikit-learn
+  0.23 pickle cannot be loaded by any current version, so retraining was unavoidable. Computing
+  ``n_TMDs`` required Phobius, which is licensed academic software that was never actually
+  installed, and the feature was silently constant on every prediction ever made. Removing it costs
+  no accuracy. See ``docs/n_TMDs_dropped.md``.
 * BLAST can search a local database instead of querying NCBI. Set ``THOIPA_LOCAL_BLAST_DB``; unset,
   the NCBI path is unchanged. ``THOIPA_NCBI_CONTACT_EMAIL`` is now required for NCBI queries, as
   their usage policy demands. ``scripts/build_local_blast_db.py`` builds the database.
@@ -22,12 +26,7 @@ THOIPApy releases
 * ``utils.Command`` records the subprocess return code and whether it timed out, and callers now
   check it. Previously an external tool that was missing or that failed was indistinguishable from
   one that succeeded.
-
-2.0.0
------
 * python 3.12-3.13, numpy 2, pandas 3, scikit-learn 1.9. Drops python 3.8 and Django.
-* the shipped model was retrained: the 2020 scikit-learn 0.23 pickle cannot be loaded by any
-  current version. Predictions are statistically indistinguishable from the published model.
 * bugfix: feature selection was not reproducible. Column order came from a python set, so it
   varied with the interpreter hash seed and the selected feature set differed between runs.
   Model training and hyperparameter tuning are now seeded.

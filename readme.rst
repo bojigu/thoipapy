@@ -108,7 +108,7 @@ or without, into the active conda environment:
     ./scripts/install_freecontact.sh
 
 Phobius is no longer required. It was needed only for the ``n_TMDs`` feature, which was removed
-in 2.1.0. See ``docs/n_TMDs_dropped.md``.
+in 2.0.0. See ``docs/n_TMDs_dropped.md``.
 
 Getting the data (training sets, models, test data)
 ---------------------------------------------------
