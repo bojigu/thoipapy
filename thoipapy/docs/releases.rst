@@ -2,6 +2,12 @@
 THOIPApy releases
 =================
 
+2.1.0
+-----
+* the example heatmap in the readme is served from the ``develop`` branch rather than from
+  ``master``. The two branches hold the same commit, and ``master`` is being retired, which would
+  have left the image unresolvable. No code changed.
+
 2.0.0
 -----
 The first release since 1.2.0. It was developed as two internal milestones, neither of which was

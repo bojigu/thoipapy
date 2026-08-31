@@ -379,7 +379,7 @@ Usage as a standalone predictor
 * the output includes a csv showing the THOIPA prediction for each residue, as well as a heatmap figure as a summary
 * below is a heatmap showing the THOIPA prediction, and underlying conservation, relative polarity, and coevolution
 
-.. image:: https://raw.githubusercontent.com/bojigu/thoipapy/master/thoipapy/docs/standalone_heatmap_example.png
+.. image:: https://raw.githubusercontent.com/bojigu/thoipapy/develop/thoipapy/docs/standalone_heatmap_example.png
 
 
 Create your own machine learning predictor
