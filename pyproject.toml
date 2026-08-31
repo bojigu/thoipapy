@@ -78,6 +78,7 @@ LinkedIn = "https://www.linkedin.com/in/markteese/"
 
 [[project.authors]]
 name = "Bo Zeng"
+email = "bojigu@users.noreply.github.com"
 
 [[project.authors]]
 name = "Mark Teese"
@@ -86,9 +87,11 @@ email = "teese@users.noreply.github.com"
 # Bo Zeng stays credited as an author of the original package. Active development is now solely
 # Mark Teese's, which is what the maintainer field records.
 #
-# The address is a GitHub noreply alias, which does not receive mail. It is here because it
-# identifies the maintainer's GitHub account without publishing a mailbox to every scraper that
-# reads PyPI. Contact goes through the issue tracker or LinkedIn, both linked below.
+# Both addresses are GitHub noreply aliases, which do not receive mail. They are here because they
+# identify the authors' GitHub accounts without publishing a mailbox to every scraper that reads
+# PyPI, and because an author carrying no address at all is written to the legacy Author field
+# rather than Author-email, which PyPI then renders as one author's name beside the other's
+# address. Contact goes through the issue tracker or LinkedIn, both linked below.
 [[project.maintainers]]
 name = "Mark Teese"
 email = "teese@users.noreply.github.com"
