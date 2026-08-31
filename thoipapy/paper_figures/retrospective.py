@@ -4,11 +4,10 @@ import sys
 import numpy as np
 import pandas as pd
 from matplotlib import pyplot as plt
-from pytoxr.mathfunctions import residuals, sine_perfect_helix
 from scipy.optimize import leastsq
 from scipy.stats import ttest_ind
 
-from thoipapy.utils import create_colour_lists, make_sure_path_exists
+from thoipapy.utils import create_colour_lists, make_sure_path_exists, residuals, sine_perfect_helix
 
 
 def get_pivot_table_coev_data(s, i, XI, df_set):

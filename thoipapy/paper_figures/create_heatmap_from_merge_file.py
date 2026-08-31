@@ -2,7 +2,6 @@ import os
 import sys
 from pathlib import Path
 
-# import eccpy
 import numpy as np
 import pandas as pd
 import seaborn as sns
@@ -12,7 +11,6 @@ import thoipapy
 sns.set()
 from matplotlib import pyplot as plt
 
-# from eccpy.tools import normalise_between_2_values
 from thoipapy.utils import (
     get_test_and_train_set_lists,
     get_testsetname_trainsetname_from_run_settings,

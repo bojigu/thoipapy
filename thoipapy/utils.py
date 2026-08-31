@@ -4,6 +4,7 @@ Utilities file containing useful functions.
 More recent functions are at the top.
 Many of these are taken from he korbinian python package by Mark Teese. This is allowed under the permissive MIT license.
 """
+
 import ctypes
 import logging
 import os
@@ -79,6 +80,69 @@ class Command:
     def succeeded(self) -> bool:
         """True only if the command ran to completion with a zero exit status."""
         return self.returncode == 0 and not self.timed_out
+
+
+def residuals(constants, function, x, y):
+    """Cost function (Kostenfunktion) used to optimise the fit of a curve to data.
+
+    Returns the distance between the y-values of the real data and the y-values produced by the
+    fitted function (sigmoid, sine, etc.). This is the quantity that scipy.optimize.leastsq
+    minimises.
+
+    Copied from pytoxr.mathfunctions (https://github.com/teese/pytoxr) by Mark Teese, so that
+    thoipapy does not take a dependency on pytoxr for two short functions. This is allowed under
+    the permissive MIT license.
+
+    Parameters
+    ----------
+    constants : arraylike
+        The parameters of `function` that are being optimised.
+    function : callable
+        A function of the form f(constants, x), whose fit to the data is being optimised.
+    x : np.ndarray
+        x-values of the real data.
+    y : arraylike
+        y-values of the real data.
+
+    Returns
+    -------
+    residuals : np.ndarray
+        Element-wise difference between the real and the fitted y-values.
+    """
+    return y - function(constants, x)
+
+
+def sine_perfect_helix(sine_constants_cd, x):
+    """Sine equation constrained to alpha-helical periodicity, 3.6 residues per turn.
+
+    f(x) = a * sin(b * x + c) + d, where a and b are fixed and only c and d are fitted.
+
+    Why is a fixed to 0.2?
+        This is arbitrary, resulting in a curve that is 0.4 in height.
+    Why is b fixed to 1.745?
+        Since periodicity = 2 * np.pi / b, for a perfect alpha helix b = 2 * np.pi / 3.6 = 1.745.
+
+    Copied from pytoxr.mathfunctions (https://github.com/teese/pytoxr) by Mark Teese, so that
+    thoipapy does not take a dependency on pytoxr for two short functions. This is allowed under
+    the permissive MIT license.
+
+    Parameters
+    ----------
+    sine_constants_cd : arraylike
+        The two fitted constants: c, the phase shift, and d, the vertical offset.
+    x : np.ndarray
+        x-values, in residue numbers.
+
+    Returns
+    -------
+    y : np.ndarray
+        y-values of the constrained sine curve at each position in `x`.
+    """
+    a = 0.2
+    b = 1.745
+    c, d = sine_constants_cd
+    y = a * np.sin(b * x + c) + d
+    return y
 
 
 def make_sure_path_exists(input_path: Path | str, isfile: bool = False):
@@ -494,7 +558,7 @@ def denormalise_0_1(value_or_array, array_min, array_max):
 
     Usage
     -----
-    from eccpy.tools import normalise_0_1, denormalise_0_1
+    from thoipapy.utils import normalise_0_1, denormalise_0_1
     import numpy as np
     original_array = np.linspace(10,130,10)
     original_array[2], original_array[4] = 3, 140
@@ -557,7 +621,7 @@ def normalise_between_2_values(arraylike, min_value, max_value, invert=False):
 
     Usage
     -----
-    from eccpy.tools import normalise_between_2_values
+    from thoipapy.utils import normalise_between_2_values
     # for array
     orig_array = np.array(range(0, 15))
     norm_array = normalise_between_2_values(orig_array, 3, 10)
