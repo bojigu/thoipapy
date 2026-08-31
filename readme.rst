@@ -388,7 +388,7 @@ Create your own machine learning predictor
 * THOIPA can be retrained to any dataset of your choice
 * the original set of training sequences and other resources are published via the `Open Science Foundation <https://osf.io/txjev/>`_, and are also what ``dvc pull`` fetches into ``data/``
 * the THOIPA feature extraction, feature selection, and training pipeline is fully automated
-* contact us for an introduction to the THOIPA software pipeline and settings
+* `open an issue <https://github.com/bojigu/thoipapy/issues>`__ for an introduction to the THOIPA software pipeline and settings
 
 The data, sets and base directories are resolved from the repository itself (see
 ``thoipapy/paths.py``); they are no longer read from the settings spreadsheet. Protein sets are
@@ -446,22 +446,16 @@ Contribute
 -------------
 
 * Contributors are welcome.
-* For feedback or troubleshooting, please email us directly and initiate an issue in Github.
+* For bug reports, questions and feature requests, please `open an issue <https://github.com/bojigu/thoipapy/issues>`__.
 
 
 Contact
 -------
 
-* Mark Teese, `22DataCatalysis GmbH <https://www.datacatalysis.com>`_, formerly of the `Langosch Lab <http://cbp.wzw.tum.de/index.php?id=10>`_ at the `Technical University of Munich <https://www.tum.de/en/>`_
-* `Bo Zeng <http://frishman.wzw.tum.de/index.php?id=50>`_, `Chinese Academy of Sciences, Beijing <http://english.cas.cn/>`_ formerly of the `Frishman Lab <http://frishman.wzw.tum.de/index.php?id=2>`_ at the `Technical University of Munich <https://www.tum.de/en/>`_
+THOIPA is maintained by Mark Teese. To make contact, `open an issue <https://github.com/bojigu/thoipapy/issues>`__ or use `LinkedIn <https://www.linkedin.com/in/markteese/>`_.
 
-.. image:: https://raw.githubusercontent.com/bojigu/thoipapy/develop/thoipapy/docs/signac_seine_bei_samois_mt.png
-   :height: 150px
-   :width: 250px
-
-.. image:: https://raw.githubusercontent.com/bojigu/thoipapy/develop/thoipapy/docs/signac_notredame_bz.png
-   :height: 120px
-   :width: 250px
+* Mark Teese, `22DataCatalysis GmbH <https://www.datacatalysis.com>`_, formerly of the Langosch Lab at the `Technical University of Munich <https://www.tum.de/en/>`_
+* Bo Zeng, `Chinese Academy of Sciences, Beijing <http://english.cas.cn/>`_, formerly of the Frishman Lab at the `Technical University of Munich <https://www.tum.de/en/>`_
 
 
 Citation

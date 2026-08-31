@@ -76,14 +76,27 @@ test = ["pytest==9.1.1"]
 
 [project.urls]
 Homepage = "https://github.com/bojigu/thoipapy"
-BoZeng = "http://frishman.wzw.tum.de/index.php?id=50"
-FrishmanLab = "http://frishman.wzw.tum.de/index.php?id=2"
-LangoschLab = "http://cbp.wzw.tum.de/index.php?id=10"
+Issues = "https://github.com/bojigu/thoipapy/issues"
 TU_Munich = "https://www.tum.de"
+DataCatalysis = "https://www.datacatalysis.com"
+LinkedIn = "https://www.linkedin.com/in/markteese/"
 
 [[project.authors]]
 name = "Bo Zeng"
-email = "zeng@checkmytumhomepage.de"
+
+[[project.authors]]
+name = "Mark Teese"
+email = "teese@users.noreply.github.com"
+
+# Bo Zeng stays credited as an author of the original package. Active development is now solely
+# Mark Teese's, which is what the maintainer field records.
+#
+# The address is a GitHub noreply alias, which does not receive mail. It is here because it
+# identifies the maintainer's GitHub account without publishing a mailbox to every scraper that
+# reads PyPI. Contact goes through the issue tracker or LinkedIn, both linked below.
+[[project.maintainers]]
+name = "Mark Teese"
+email = "teese@users.noreply.github.com"
 
 [tool.setuptools.packages.find]
 include = ["thoipapy*"]
