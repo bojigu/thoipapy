@@ -27,7 +27,7 @@ psutil==7.2.2
 scikit-learn==1.9.0
 scipy==1.18.0
 seaborn==0.13.2
-weighslide==0.2.5
+weighslide==0.3.0
 
 # --- transitive dependencies, pinned so the resolved environment is fully determined ---
 contourpy==1.3.3
@@ -42,11 +42,3 @@ pyparsing==3.3.2
 python-dateutil==2.9.0.post0
 six==1.17.0
 threadpoolctl==3.6.0
-
-# --- pytest is a RUNTIME dependency here, not a test one ---
-# weighslide declares pytest in install_requires, so pip installs it (and its own dependencies)
-# on a plain `pip install thoipapy`. Pinned for the same reason as everything else.
-pytest==9.1.1
-iniconfig==2.3.0
-pluggy==1.6.0
-pygments==2.21.0
