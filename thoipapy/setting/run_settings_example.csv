@@ -1,0 +1,56 @@
+section,parameter,value,type,notes
+run_settings,set_number,8,int,"integer or list separated by commas (e.g. 31, or 31,32,33)"
+run_settings,test_datasets,7,int,
+run_settings,train_datasets,8,int,
+run_settings,create_identity_matrix_from_set_seqs,0,,"create pairwise alignments of all proteins in set, and create identity matrix"
+run_settings,Atom_Close_Dist,0,bool,"if true, calculate the closest distance for each residue in TMP homodimers, and set distance cutoff for interface residues"
+run_settings,Get_Tmd_Homodimers,0,,"if true, get all non-redundant available tmd homodimers"
+run_settings,retrospective_coevolution,0,,"if true, calculate avearage and fraction of coevoltion for crystal"
+run_settings,calc_NMR_closedist,0,,"if true, calcualte the closedist for NMR structures"
+run_settings,download_10_homologues_from_ncbi,0,,
+run_settings,run_retrieve_NCBI_homologues_with_blastp,0,bool,"if true, for each protein in the input file will be sent to NCBI with blastp and homologues will be downloaded as a xml file"
+run_settings,run_parse_homologues_xml_into_csv,0,bool,"if true, for each protein save the homologues information into csv files"
+run_settings,parse_csv_homologues_to_alignment,0,bool,
+run_settings,pssm_calculation,0,bool,"if true, pssm calculation"
+run_settings,entropy_calculation,0,bool,"if true, entropy calculation"
+run_settings,rate4site_calculation,0,,"if true, rate4site calculation (warning, this is slow!)"
+run_settings,coevolution_calculation,0,bool,"if true, cumulative_co-evolution feature calculation"
+run_settings,clac_relative_position,0,bool,"if true, calculate residue relative positions"
+run_settings,calc_lipo_from_pssm,0,bool,"if true, calculate pssm based hessa lipophilicity"
+run_settings,lips_score_calculation,0,bool,"if true, lips score feature calculation"
+run_settings,motifs_from_seq,0,bool,
+run_settings,combine_feature_into_train_data,0,bool,"if true, combine all features into coevolution"
+run_settings,remove_crystal_hetero,TRUE,bool ,"Required to reproduce the published training set (850 residues). With this off the crystal hetero-contact residues are retained, giving 887."
+run_settings,calc_PREDDIMER_TMDOCK_closedist,0,bool,
+run_settings,run_feature_selection,0,bool,
+run_settings,calc_feature_importances,0,bool,
+run_settings,conduct_ttest,0,bool,run calculation of ttest comparing interface/noninterface for variables used in ML model
+run_settings,train_machine_learning_model,1,bool,"if true, run random forest 10-fold cross validation or prediction for test proteins"
+run_settings,run_testset_trainset_validation,0,bool,
+run_settings,run_validation,0,bool,"10F, LOO, ROC AUC, precision-recall AUC, AUBOC, gather data"
+run_settings,create_merged_heatmap_for_trainset_and_testset,0,,create merged heatmap
+run_settings,compare_selected_predictors,0,bool,
+run_settings,plot_coev_vs_res_dist,0,,
+run_settings,use_multiprocessing,1,bool,
+run_settings,multiple_tmp_simultaneous,4,int,number of TMDs processed simultaneously when use_multiprocessing is true
+run_settings,logging_level_console,INFO,str,
+run_settings,logging_level_logfile,INFO,str,
+variables,expect_value,10,,"take care e_value here need to be integer, and default is 10"
+variables,e_value_cutoff,100,,100 completely removes this filter
+variables,hit_list_size,10000,,what maximum homologous hits will be saved into xml file
+variables,rerun_existing_blast_results,0,,"if 1, BLAST will be re-run. If 0, existing files will not be overwritten, and BLAST will be skipped"
+variables,surres,_surr0,,_surr5 and  _surr0 for surround5 and non
+variables,min_identity_of_TMD_seq,0.2,,
+variables,max_n_gaps_in_TMD_query_seq,0,,
+variables,max_n_gaps_in_TMD_subject_seq,5,,
+variables,num_of_sur_residues,20,,number of surrounded residues on both sides of TMDs
+variables,lipophilicity_scale,Engelman(GES),,"KyteDoolittle, Wimley, Hessa, Elazar, Hopp-Woods, Cornette, Eisenberg, Rose, Janin, Engelman(GES)"
+variables,inter_pair_max,6,,"set the maximum interact rr pairs in each homodimer, if bigger, then selected the set number pair of ordered"
+variables,bind_column,interface,,
+variables,min_n_homol_training,0,,"best=0, minimum number of homologues for proteins in training set. "
+variables,cross_validation_number_of_splits,10,,
+variables,max_similarity_duplicate_features,0.6,,Float. A value of 0.8 means that duplicate features with r-value above 0.8 will be removed.
+variables,n_top_features_to_keep,20,,"Int. During feature selection, determines how many features will be kept for training the ML predictor."
+variables,features_to_be_retained_during_selection,"GxxxG,conservation,DImax,relative_polarity,residue_depth,SmxxxSm,branched",,
+variables,n_residues_AUBOC_validation,5,,"“5” would calculate an AUBOC5, the area under BO curve for residues 1-5"
+variables,bootstrap,0,bool,bootstrap sampling in the ExtraTreesClassifier. The published model used FALSE.

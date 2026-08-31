@@ -3,15 +3,15 @@ import platform
 import sys
 import time
 from pathlib import Path
-from typing import Union
 
 import pandas as pd
 
 from thoipapy import utils as utils
+from thoipapy.artefacts import ArtefactPaths
 from thoipapy.utils import SurroundingSequence
 
 
-def rate4site_calculation_mult_prot(s, df_set, logging):
+def rate4site_calculation_mult_prot(paths: ArtefactPaths, df_set, logging):
     """Calculates conservation of positions using rate4site.
 
     install rate4site for linux: sudo apt-get install rate4site
@@ -19,8 +19,8 @@ def rate4site_calculation_mult_prot(s, df_set, logging):
 
     Parameters
     ----------
-    s : dict
-        Settings dictionary
+    paths : ArtefactPaths
+        Locations of the pipeline's input and output files.
     df_set : pd.DataFrame
         Dataframe containing the list of proteins to process, including their TMD sequences and full-length sequences
         index : range(0, ..)
@@ -32,42 +32,56 @@ def rate4site_calculation_mult_prot(s, df_set, logging):
         logging.warning("Aborting rate4site calculation, ao is only implemented on linux.")
         return False
 
-    max_n_gaps_in_TMD_subject_seq = s["max_n_gaps_in_TMD_subject_seq"]
+    max_n_gaps_in_TMD_subject_seq = paths.max_n_gaps_in_TMD_subject_seq
 
     for i in df_set.index:
         acc = df_set.at[i, "acc"]
         database = df_set.at[i, "database"]
         TMD_seq = df_set.at[i, "TMD_seq"]
-        alignments_dir = Path(s["data_dir"]) / f"homologues/alignments/{database}"
+        alignments_dir = paths.alignment_dir(database)
 
         # input
-        fasta_uniq_TMD_seqs_surr5_for_LIPO = alignments_dir / f"{acc}.surr5.gaps{max_n_gaps_in_TMD_subject_seq}.uniq.for_LIPO.fas"
+        fasta_uniq_TMD_seqs_surr5_for_LIPO = (
+            alignments_dir / f"{acc}.surr5.gaps{max_n_gaps_in_TMD_subject_seq}.uniq.for_LIPO.fas"
+        )
 
         # output
-        rate4site_csv: Path = Path(s["data_dir"]).joinpath("features", "rate4site", database, f"{acc}_rate4site.csv")
+        rate4site_csv: Path = paths.rate4site_csv(database, acc)
 
         full_seq_len = len(df_set.at[i, "full_seq"])
         # number of residues surrounding the TMD on the left in alignment
         # (in alignments for lipo and rate4site, this is hard-coded to 5 residues)
         n_residues_surrounding_tmd_in_alignment = 5
-        surrounding_sequence_5 = SurroundingSequence(df_set.at[i, "TMD_start"], df_set.at[i, "TMD_end"], full_seq_len, n_residues_surrounding_tmd_in_alignment)
+        surrounding_sequence_5 = SurroundingSequence(
+            df_set.at[i, "TMD_start"], df_set.at[i, "TMD_end"], full_seq_len, n_residues_surrounding_tmd_in_alignment
+        )
         surrounding_seq_len_n_term_offset = surrounding_sequence_5.n_term_offset
-        rate4site_calculation(TMD_seq, acc, fasta_uniq_TMD_seqs_surr5_for_LIPO, rate4site_csv, surrounding_seq_len_n_term_offset, logging)
+        rate4site_calculation(
+            TMD_seq, acc, fasta_uniq_TMD_seqs_surr5_for_LIPO, rate4site_csv, surrounding_seq_len_n_term_offset, logging
+        )
 
     logging.info("rate4site_calculation finished")
 
 
-def rate4site_calculation(TMD_seq: str, acc: str, fasta_uniq_TMD_seqs_surr5_for_LIPO: Union[Path, str], rate4site_csv: Path, surrounding_seq_len_n_term_offset: int, logging, rerun_rate4site: bool = False):
-    output_dir: Union[Path, str] = rate4site_csv.parent
+def rate4site_calculation(
+    TMD_seq: str,
+    acc: str,
+    fasta_uniq_TMD_seqs_surr5_for_LIPO: Path | str,
+    rate4site_csv: Path,
+    surrounding_seq_len_n_term_offset: int,
+    logging,
+    rerun_rate4site: bool = False,
+):
+    output_dir: Path = rate4site_csv.parent
     if not output_dir.is_dir():
         output_dir.mkdir(parents=True)
     # temp output files
-    rate4site_orig_output: Union[Path, str] = output_dir / f"{acc}.rate4site_orig_output.txt"
-    cons_cdhit_input_fasta: Union[Path, str] = output_dir / f"{acc}.lipo_seqs_cdhit_input.fas"
-    cons_cdhit_output_fasta: Union[Path, str] = output_dir / f"{acc}.lipo_seqs_cdhit_output.fas"
-    rate4site_input: Union[Path, str] = output_dir / f"{acc}.rate4site_input.fas"
+    rate4site_orig_output: Path = output_dir / f"{acc}.rate4site_orig_output.txt"
+    cons_cdhit_input_fasta: Path = output_dir / f"{acc}.lipo_seqs_cdhit_input.fas"
+    cons_cdhit_output_fasta: Path = output_dir / f"{acc}.lipo_seqs_cdhit_output.fas"
+    rate4site_input: Path | str = output_dir / f"{acc}.rate4site_input.fas"
     with open(cons_cdhit_input_fasta, "w") as f_out:
-        with open(fasta_uniq_TMD_seqs_surr5_for_LIPO, "r") as f_in:
+        with open(fasta_uniq_TMD_seqs_surr5_for_LIPO) as f_in:
             for line in f_in:
                 f_out.write(line.replace("-", ""))
     # delete output file if it exists
@@ -101,7 +115,7 @@ def rate4site_calculation(TMD_seq: str, acc: str, fasta_uniq_TMD_seqs_surr5_for_
             if cutoff <= 0.20:
                 to_be_truncated_fasta: str = str(cons_cdhit_output_fasta)[:-4] + "to_be_truncated.fas"
                 os.rename(cons_cdhit_output_fasta, to_be_truncated_fasta)
-                with open(to_be_truncated_fasta, "r") as f_in:
+                with open(to_be_truncated_fasta) as f_in:
                     with open(cons_cdhit_output_fasta, "w") as f_out:
                         for n, line in enumerate(f_in):
                             f_out.write(line)
@@ -112,7 +126,9 @@ def rate4site_calculation(TMD_seq: str, acc: str, fasta_uniq_TMD_seqs_surr5_for_
 
         final_cutoff_used = cutoff + cutoff_decrease_per_round
         sys.stdout.write("\n")
-        logging.info(f"cd-hit for rate4site finished. Final cutoff = {final_cutoff_used:0.2f}. Clusters = {len_cdhit_cluster_reps}. Output = {cons_cdhit_output_fasta}")
+        logging.info(
+            f"cd-hit for rate4site finished. Final cutoff = {final_cutoff_used:0.2f}. Clusters = {len_cdhit_cluster_reps}. Output = {cons_cdhit_output_fasta}"
+        )
 
         # if len(cdhit_cluster_reps) > 200:
         #    cutoff = 0.7
@@ -120,7 +136,7 @@ def rate4site_calculation(TMD_seq: str, acc: str, fasta_uniq_TMD_seqs_surr5_for_
         #    logging.info(f"repeating cd-hit with a stricter cutoff\nafter cd-hit analysis, {cons_cdhit_output_fasta} has {len(cdhit_cluster_reps)} clusters")
 
         copy_sequence = False
-        with open(fasta_uniq_TMD_seqs_surr5_for_LIPO, "r") as f_in:
+        with open(fasta_uniq_TMD_seqs_surr5_for_LIPO) as f_in:
             with open(str(rate4site_input), "w") as f_out:
                 for line in f_in:
                     if line[0] == ">":
@@ -144,6 +160,11 @@ def rate4site_calculation(TMD_seq: str, acc: str, fasta_uniq_TMD_seqs_surr5_for_
             start = time.time()
             command = utils.Command(exect_str)
             command.run(timeout=1200, log_stderr=False)
+            if not command.succeeded():
+                raise RuntimeError(
+                    f"rate4site failed: returncode={command.returncode}, "
+                    f"timed_out={command.timed_out}. Command: {exect_str}"
+                )
             duration = time.time() - start
             logging.info(f"rate4site finished after {duration} seconds")
 
@@ -160,14 +181,24 @@ def rate4site_calculation(TMD_seq: str, acc: str, fasta_uniq_TMD_seqs_surr5_for_
                 rate4site_orig_output.unlink()
                 raise Exception("rate4site output is empty, file has been deleted, please check input file")
 
-            logging.info('{} rate4site finished ({})'.format(acc, rate4site_orig_output))
+            logging.info(f"{acc} rate4site finished ({rate4site_orig_output})")
 
         else:
-            logging.warning("{} rate4site failed. {} input file not found".format(acc, fasta_uniq_TMD_seqs_surr5_for_LIPO))
+            logging.warning(f"{acc} rate4site failed. {fasta_uniq_TMD_seqs_surr5_for_LIPO} input file not found")
     else:
-        logging.info(f"skipping rate4site algo for existing file {rate4site_orig_output}. Set 'rerun_rate4site' to True to rerun calculation.")
+        logging.info(
+            f"skipping rate4site algo for existing file {rate4site_orig_output}. Set 'rerun_rate4site' to True to rerun calculation."
+        )
     # convert text output to standard csv
-    df = pd.read_csv(rate4site_orig_output, skiprows=range(13), index_col=0, header=None, delim_whitespace=True, error_bad_lines=False, comment="#")
+    df = pd.read_csv(
+        rate4site_orig_output,
+        skiprows=range(13),
+        index_col=0,
+        header=None,
+        sep=r"\s+",
+        on_bad_lines="skip",
+        comment="#",
+    )
     df.columns = ["seq", "score", "qq-interval", "std", "msa-data"]
     df.to_csv(str(rate4site_orig_output)[:-4] + ".orig.csv")
     # convert standard csv to csv for thoipa features
@@ -186,13 +217,7 @@ def rate4site_calculation(TMD_seq: str, acc: str, fasta_uniq_TMD_seqs_surr5_for_
 
 
 def get_word_size(cutoff: float):
-    word_size_dict = {
-        0.70: 5,
-        0.60: 4,
-        0.50: 3,
-        0.40: 2,
-        0.00: 1
-    }
+    word_size_dict = {0.70: 5, 0.60: 4, 0.50: 3, 0.40: 2, 0.00: 1}
     for threshold, word_size in word_size_dict.items():
         if cutoff >= threshold:
             return word_size
@@ -200,16 +225,22 @@ def get_word_size(cutoff: float):
     return "error"
 
 
-def run_cdhit(cons_cdhit_input_fasta: Union[Path, str], cons_cdhit_output_fasta: Union[Path, str], cutoff: float) -> list:
+def run_cdhit(cons_cdhit_input_fasta: Path, cons_cdhit_output_fasta: Path, cutoff: float) -> list:
     word_size = get_word_size(cutoff)
     word_size_command = "" if cutoff == 1.0 else f"-n {word_size}"
     exect_str = f"cd-hit -i {cons_cdhit_input_fasta} -o {cons_cdhit_output_fasta} -c {cutoff:0.2f} {word_size_command}"
     command = utils.Command(exect_str)
     command.run(timeout=120, log_stderr=False)
+    if not command.succeeded():
+        raise RuntimeError(
+            f"cd-hit failed: returncode={command.returncode}, " f"timed_out={command.timed_out}. Command: {exect_str}"
+        )
     if not cons_cdhit_output_fasta.is_file():
-        raise Exception(f"cd-hit output not found: input={cons_cdhit_input_fasta}, output={cons_cdhit_output_fasta}, commandstring={exect_str}")
+        raise Exception(
+            f"cd-hit output not found: input={cons_cdhit_input_fasta}, output={cons_cdhit_output_fasta}, commandstring={exect_str}"
+        )
     cdhit_cluster_reps = []
-    with open(str(cons_cdhit_output_fasta), "r") as f:
+    with open(str(cons_cdhit_output_fasta)) as f:
         for line in f:
             if line[0] == ">":
                 cdhit_cluster_reps.append(line[1:])

@@ -1,15 +1,19 @@
 import os
 import tarfile
-
-import thoipapy
 from pathlib import Path
-from shutil import rmtree, copyfile
+from shutil import copyfile, rmtree
+
+import pytest
+import thoipapy
+import thoipapy.common
+import thoipapy.run
+from thoipapy.paths import STANDALONE_SETTINGS_CSV
 
 
+@pytest.mark.requires_tool("rate4site", "freecontact", "cd-hit")
 def test_feature_extraction_and_ml_pipeline_for_small_set_of_proteins():
     here: Path = Path(__file__)
-    settings_path: Path = here.parents[2] / "thoipapy/setting/thoipapy_standalone_run_settings.xlsx"
-    s = thoipapy.common.create_settingdict(settings_path)
+    s = thoipapy.common.create_settingdict(STANDALONE_SETTINGS_CSV)
     assert isinstance(s, dict)
     sets_dir: Path = here.parents[1] / "test_inputs/protein_sets"
     assert sets_dir.is_dir()
@@ -21,9 +25,9 @@ def test_feature_extraction_and_ml_pipeline_for_small_set_of_proteins():
     if not base_dir.is_dir():
         base_dir.mkdir(parents=True)
     s["base_dir"] = base_dir
-    protein_names_xlsx_orig: Path = here.parents[1] / f"test_inputs/protein_sets/protein_names.xlsx"
-    protein_names_xlsx: Path = base_dir / "protein_names.xlsx"
-    copyfile(protein_names_xlsx_orig, protein_names_xlsx)
+    protein_names_csv_orig: Path = here.parents[1] / "test_inputs/protein_sets/protein_names.csv"
+    protein_names_csv: Path = base_dir / "protein_names.csv"
+    copyfile(protein_names_csv_orig, protein_names_csv)
 
     s["create_identity_matrix_from_set_seqs"] = True
     s["run_parse_homologues_xml_into_csv"] = True
@@ -44,7 +48,9 @@ def test_feature_extraction_and_ml_pipeline_for_small_set_of_proteins():
     s["conduct_ttest"] = True
     s["train_machine_learning_model"] = True
     s["run_testset_trainset_validation"] = False
-    s["run_validation"] = False  # currently failing due to divide by zero error, probably due to having only 2 proteins in set
+    s["run_validation"] = (
+        False  # currently failing due to divide by zero error, probably due to having only 2 proteins in set
+    )
 
     database = "crystal"
 
@@ -60,26 +66,30 @@ def test_feature_extraction_and_ml_pipeline_for_small_set_of_proteins():
 
     for acc in acc_list:
         # setup pre-downloaded homologues. Re-use homologues from test_standalone_prediction.py, which requires a rename of internal files.
-        pre_downloaded_homologue_xml_tar_gz: Path = here.parents[1] / f"test_inputs/blast_data_valid/{acc}.surr20.BLAST.xml.tar.gz"
-        xml_dir: Path = here.parents[1] / f"test_outputs/data_dir/homologues/xml/crystal"
+        pre_downloaded_homologue_xml_tar_gz: Path = (
+            here.parents[1] / f"test_inputs/blast_data_valid/{acc}.surr20.BLAST.xml.tar.gz"
+        )
+        xml_dir: Path = here.parents[1] / "test_outputs/data_dir/homologues/xml/crystal"
         target_path: Path = xml_dir / f"{acc}.surr20.BLAST.xml.tar.gz"
         target_path.parent.mkdir(parents=True, exist_ok=True)
         copyfile(pre_downloaded_homologue_xml_tar_gz, target_path)
-        with tarfile.open(target_path, 'r:gz') as tar:
-            tar.extractall(os.path.dirname(target_path))
-        blast_details_path_orig: Path = xml_dir / f"BLAST_details.txt"
+        with tarfile.open(target_path, "r:gz") as tar:
+            tar.extractall(os.path.dirname(target_path), filter="data")
+        blast_details_path_orig: Path = xml_dir / "BLAST_details.txt"
         blast_details_path: Path = xml_dir / f"{acc}.surr20.BLAST_details.txt"
         os.rename(blast_details_path_orig, blast_details_path)
-        blast_xml_path_orig: Path = xml_dir / f"BLAST_results.xml"
+        blast_xml_path_orig: Path = xml_dir / "BLAST_results.xml"
         blast_xml_path: Path = xml_dir / f"{acc}.surr20.BLAST.xml"
         os.rename(blast_xml_path_orig, blast_xml_path)
-        with tarfile.open(target_path, mode='w:gz') as tar:
+        with tarfile.open(target_path, mode="w:gz") as tar:
             # add the files to the compressed tarfile
             tar.add(str(blast_xml_path), arcname=blast_xml_path.name)
             tar.add(str(blast_details_path), arcname=blast_details_path.name)
 
         # setup csv with experimentally determined interface
-        experimentally_determined_interface_csv_orig: Path = here.parents[1] / f"test_inputs/experimental_data/{acc}.6pairmax.bind.closedist.csv"
+        experimentally_determined_interface_csv_orig: Path = (
+            here.parents[1] / f"test_inputs/experimental_data/{acc}.6pairmax.bind.closedist.csv"
+        )
         experimentally_determined_interface_csv: Path = structure_dir / f"{acc}.6pairmax.bind.closedist.csv"
         copyfile(experimentally_determined_interface_csv_orig, experimentally_determined_interface_csv)
 
@@ -94,6 +104,6 @@ def test_feature_extraction_and_ml_pipeline_for_small_set_of_proteins():
     thoipapy.run.run(s)
 
     # cleanup
-    data_dir: Path = here.parents[1] / f"test_outputs/data_dir"
+    data_dir: Path = here.parents[1] / "test_outputs/data_dir"
     rmtree(data_dir)
     rmtree(base_dir)

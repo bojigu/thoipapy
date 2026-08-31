@@ -15,7 +15,9 @@ class TestProtein:
 
     def with_ERBB3(self):
         self.tmd_seq = "MALTVIAGLVVIFMMLGGTFL"
-        self.full_seq = "MVQNECRPCHENCTQGCKGPELQDCLGQTLVLIGKTHLTMALTVIAGLVVIFMMLGGTFLYWRGRRIQNKRAMRRYLERGESIEPLDPSEKANKVLA"
+        self.full_seq = (
+            "MVQNECRPCHENCTQGCKGPELQDCLGQTLVLIGKTHLTMALTVIAGLVVIFMMLGGTFLYWRGRRIQNKRAMRRYLERGESIEPLDPSEKANKVLA"
+        )
         self.protein_name = "P21860_ERBB3"
         self.acc = "P21860"
         self.md5 = get_md5_checksum(self.tmd_seq, self.full_seq)
@@ -80,11 +82,12 @@ class TestProtein:
     def with_4hksA1(self):
         # small 13kB homologue xml tarball
         self.tmd_seq = "SWTSALLSGFAMVAMVE"
-        self.full_seq = "MSQSGEDLHSPTYLSWRKLQLSRAKLKASSWTSALLSGFAMVAMVEVQLDHDTNVPPGMLIAFAICTTLLVAVHMLALMISTCILPNIETVSNLH"
+        self.full_seq = (
+            "MSQSGEDLHSPTYLSWRKLQLSRAKLKASSWTSALLSGFAMVAMVEVQLDHDTNVPPGMLIAFAICTTLLVAVHMLALMISTCILPNIETVSNLH"
+        )
         self.protein_name = "4hksA1_CRCM1"
         self.acc = "4hksA1"
         self.md5 = get_md5_checksum(self.tmd_seq, self.full_seq)
         m = re.search(self.tmd_seq, self.full_seq)
         self.tmd_start = m.start()
         self.tmd_end = m.end()
-

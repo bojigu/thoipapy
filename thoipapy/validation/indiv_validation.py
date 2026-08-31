@@ -1,23 +1,41 @@
+"""Per-protein validation figures and summary statistics.
+
+NOT MAINTAINED. Reachable only from the run_validation pipeline stage, which is switched off in both
+shipped settings files and disabled in the functional test. Last exercised for the 2020
+publication. Not covered by any test, and excluded from the refactoring applied to the maintained
+part of the package.
+"""
+
 import os
 import pickle
 import sys
 from pathlib import Path
-from typing import Union
 
 import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
 from Bio import pairwise2
-from scipy import interp
+from numpy import interp
 from scipy.stats import linregress
-from sklearn.metrics import roc_curve, auc, precision_recall_curve
+from sklearn.metrics import auc, precision_recall_curve, roc_curve
 
 import thoipapy
+import thoipapy.paper_figures.create_BOcurve_files
 import thoipapy.validation.bocurve
+from thoipapy.artefacts import ArtefactPaths
 from thoipapy.utils import make_sure_path_exists
 
 
-def collect_indiv_validation_data(s, df_set, logging, namedict, predictors, THOIPA_predictor_name, subsets):
+def collect_indiv_validation_data(
+    paths: ArtefactPaths,
+    df_set,
+    n_residues_AUBOC_validation: int,
+    logging,
+    namedict,
+    predictors,
+    THOIPA_predictor_name,
+    subsets,
+):
     """
 
     Parameters
@@ -46,8 +64,8 @@ def collect_indiv_validation_data(s, df_set, logging, namedict, predictors, THOI
     roc_auc_mean_list = []
     roc_auc_std_list = []
 
-    # indiv_validation_dir: Path = Path(s["data_dir"]) / f"results/{s['setname']}/crossvalidation/indiv_validation"
-    indiv_validation_data_xlsx = Path(s["data_dir"]) / f"results/{s['setname']}/crossvalidation/indiv_validation/bocurve/indiv_validation_data.xlsx"
+    # indiv_validation_dir: Path = paths.crossvalidation_dir / f"indiv_validation"
+    indiv_validation_data_xlsx = paths.crossvalidation_dir / "indiv_validation/bocurve/indiv_validation_data.xlsx"
 
     thoipapy.utils.make_sure_path_exists(indiv_validation_data_xlsx, isfile=True)
     # if not os.path.isdir(os.path.dirname(BOAUC10_barchart_pdf)):
@@ -62,12 +80,12 @@ def collect_indiv_validation_data(s, df_set, logging, namedict, predictors, THOI
         mean_tpr = 0.0
         mean_fpr = np.linspace(0, 1, 100)
 
-        auc_pkl = Path(s["data_dir"]) / f"results/{s['setname']}/crossvalidation/indiv_validation/roc_auc/{predictor}/ROC_AUC_data.pkl"
-        BO_curve_data_csv = Path(s["data_dir"]) / f"results/{s['setname']}/crossvalidation/indiv_validation/bocurve/data/{predictor}/BO_Curve_data.csv"
-        bocurve_data_xlsx = Path(s["data_dir"]) / f"results/{s['setname']}/crossvalidation/indiv_validation/bocurve/data/{predictor}/bocurve_data.xlsx"
-        BO_linechart_png = Path(s["data_dir"]) / f"results/{s['setname']}/crossvalidation/indiv_validation/bocurve/data/{predictor}/BO_linechart.png"
-        BO_barchart_png = Path(s["data_dir"]) / f"results/{s['setname']}/crossvalidation/indiv_validation/bocurve/data/{predictor}/AUBOC_barchart.png"
-        df_o_minus_r_mean_csv = Path(s["data_dir"]) / f"results/{s['setname']}/crossvalidation/indiv_validation/bocurve/data/{predictor}/df_o_minus_r_mean.csv"
+        auc_pkl = paths.crossvalidation_dir / f"indiv_validation/roc_auc/{predictor}/ROC_AUC_data.pkl"
+        BO_curve_data_csv = paths.crossvalidation_dir / f"indiv_validation/bocurve/data/{predictor}/BO_Curve_data.csv"
+        bocurve_data_xlsx = paths.crossvalidation_dir / f"indiv_validation/bocurve/data/{predictor}/bocurve_data.xlsx"
+        BO_linechart_png = paths.crossvalidation_dir / f"indiv_validation/bocurve/data/{predictor}/BO_linechart.png"
+        BO_barchart_png = paths.crossvalidation_dir / f"indiv_validation/bocurve/data/{predictor}/AUBOC_barchart.png"
+        (paths.crossvalidation_dir / f"indiv_validation/bocurve/data/{predictor}/df_o_minus_r_mean.csv")
         thoipapy.utils.make_sure_path_exists(auc_pkl, isfile=True)
         thoipapy.utils.make_sure_path_exists(BO_curve_data_csv, isfile=True)
 
@@ -78,7 +96,7 @@ def collect_indiv_validation_data(s, df_set, logging, namedict, predictors, THOI
 
             database = df_set.loc[i, "database"]
             acc_db = acc + "-" + database
-            merged_data_csv_path: Union[Path, str] = Path(s["data_dir"]) / f"results/{s['setname']}/predictions/merged/{database}.{acc}.merged.csv"
+            merged_data_csv_path: Path | str = paths.results_dir / f"predictions/merged/{database}.{acc}.merged.csv"
             merged_data_df = pd.read_csv(merged_data_csv_path, engine="python")
 
             # invert some predictors so that a high number always indicates a predicted interface residue
@@ -91,7 +109,9 @@ def collect_indiv_validation_data(s, df_set, logging, namedict, predictors, THOI
                 merged_data_df["interface_score"] = -1 * merged_data_df["interface_score"]
             # toggle whether to use boolean (interface) or continuous data (interface_score). Here we want continuous data
             experiment_col = "interface_score"
-            BO_single_prot_df = thoipapy.validation.bocurve.calc_best_overlap_from_selected_column_in_df(acc_db, merged_data_df, experiment_col, predictor)
+            BO_single_prot_df = thoipapy.validation.bocurve.calc_best_overlap_from_selected_column_in_df(
+                acc_db, merged_data_df, experiment_col, predictor
+            )
             if BO_data_df.empty:
                 BO_data_df = BO_single_prot_df
             else:
@@ -112,7 +132,14 @@ def collect_indiv_validation_data(s, df_set, logging, namedict, predictors, THOI
             mean_tpr += interp(mean_fpr, fpr, tpr)
             mean_tpr[0] = 0.0
 
-            xv_dict[acc_db] = {"fpr": fpr, "tpr": tpr, "roc_auc": roc_auc, "precision": precision, "recall": recall, "pr_auc": pr_auc}
+            xv_dict[acc_db] = {
+                "fpr": fpr,
+                "tpr": tpr,
+                "roc_auc": roc_auc,
+                "precision": precision,
+                "recall": recall,
+                "pr_auc": pr_auc,
+            }
 
         # save dict as pickle
         with open(auc_pkl, "wb") as f:
@@ -121,7 +148,9 @@ def collect_indiv_validation_data(s, df_set, logging, namedict, predictors, THOI
         BO_data_df.to_csv(BO_curve_data_csv)
         # parse BO data csv
         # print out mean values
-        thoipapy.validation.bocurve.parse_BO_data_csv_to_excel(BO_curve_data_csv, bocurve_data_xlsx, s["n_residues_AUBOC_validation"], logging, predictor)
+        thoipapy.validation.bocurve.parse_BO_data_csv_to_excel(
+            BO_curve_data_csv, bocurve_data_xlsx, n_residues_AUBOC_validation, logging, predictor
+        )
 
         # ROC AUC validation
         ROC_AUC_ser = pd.Series(ROC_AUC_dict)
@@ -134,7 +163,9 @@ def collect_indiv_validation_data(s, df_set, logging, namedict, predictors, THOI
         PR_AUC_ser.sort_values(inplace=True, ascending=False)
 
         # BO curve AUBOC validation
-        mean_o_minus_r_by_sample_ser = pd.read_excel(bocurve_data_xlsx, sheet_name="mean_o_minus_r_by_sample", index_col=0)["mean_o_minus_r_by_sample"].copy()
+        mean_o_minus_r_by_sample_ser = pd.read_excel(
+            bocurve_data_xlsx, sheet_name="mean_o_minus_r_by_sample", index_col=0
+        )["mean_o_minus_r_by_sample"].copy()
         df_o_minus_r = pd.read_excel(bocurve_data_xlsx, sheet_name="df_o_minus_r", index_col=0)
         df_o_minus_r.columns = pd.Series(df_o_minus_r.columns).replace(namedict)
         df_o_minus_r_mean = df_o_minus_r.T.mean()
@@ -142,17 +173,25 @@ def collect_indiv_validation_data(s, df_set, logging, namedict, predictors, THOI
         df_o_minus_r_mean_df[predictor] = df_o_minus_r_mean
 
         # apply cutoff (e.g. 5 residues for AUBOC5)
-        auboc_ser = df_o_minus_r_mean.iloc[:s["n_residues_AUBOC_validation"]]
+        auboc_ser = df_o_minus_r_mean.iloc[:n_residues_AUBOC_validation]
 
-        AUBOC = np.trapz(y=auboc_ser, x=auboc_ser.index)
+        AUBOC = np.trapezoid(y=auboc_ser, x=auboc_ser.index)
 
         AUBOC_list.append(AUBOC)
         AUBOC_from_complete_data_ser[predictor] = AUBOC
         linechar_name_list.append(predictor)
-        AUC_AUBOC_name_list.append("{}-AUC".format(predictor))
-        AUC_AUBOC_name_list.append("{}-AUBOC".format(predictor))
-        thoipapy.figs.create_BOcurve_files.save_BO_linegraph_and_barchart(s, bocurve_data_xlsx, BO_linechart_png, BO_barchart_png, namedict,
-                                                                          logging, ROC_AUC_ser)
+        AUC_AUBOC_name_list.append(f"{predictor}-AUC")
+        AUC_AUBOC_name_list.append(f"{predictor}-AUBOC")
+        thoipapy.paper_figures.create_BOcurve_files.save_BO_linegraph_and_barchart(
+            paths,
+            n_residues_AUBOC_validation,
+            bocurve_data_xlsx,
+            BO_linechart_png,
+            BO_barchart_png,
+            namedict,
+            logging,
+            ROC_AUC_ser,
+        )
 
         ROC_AUC_df[predictor] = ROC_AUC_ser
         PR_AUC_df[predictor] = PR_AUC_ser
@@ -179,7 +218,9 @@ def collect_indiv_validation_data(s, df_set, logging, namedict, predictors, THOI
     SEM_df = pd.DataFrame()
     SEM_df["ROC_AUC"] = ROC_AUC_df.std() / np.sqrt(ROC_AUC_df.shape[0])
     SEM_df["PR_AUC"] = PR_AUC_df.std() / np.sqrt(PR_AUC_df.shape[0])
-    SEM_df["mean_o_minus_r_by_sample"] = mean_o_minus_r_by_sample_df.std() / np.sqrt(mean_o_minus_r_by_sample_df.shape[0])
+    SEM_df["mean_o_minus_r_by_sample"] = mean_o_minus_r_by_sample_df.std() / np.sqrt(
+        mean_o_minus_r_by_sample_df.shape[0]
+    )
 
     with pd.ExcelWriter(indiv_validation_data_xlsx) as writer:
 
@@ -198,9 +239,13 @@ def collect_indiv_validation_data(s, df_set, logging, namedict, predictors, THOI
             df_THOIPA_vs_others = pd.DataFrame()
             df_THOIPA_vs_others["THOIPA_better_TMDOCK"] = PR_AUC_df[THOIPA_predictor_name] > PR_AUC_df.TMDOCK
             df_THOIPA_vs_others["THOIPA_better_PREDDIMER"] = PR_AUC_df[THOIPA_predictor_name] > PR_AUC_df.PREDDIMER
-            df_THOIPA_vs_others["THOIPA_better_both"] = df_THOIPA_vs_others[["THOIPA_better_TMDOCK", "THOIPA_better_PREDDIMER"]].sum(axis=1) == 2
+            df_THOIPA_vs_others["THOIPA_better_both"] = (
+                df_THOIPA_vs_others[["THOIPA_better_TMDOCK", "THOIPA_better_PREDDIMER"]].sum(axis=1) == 2
+            )
             n_THOIPA_better_both = df_THOIPA_vs_others["THOIPA_better_both"].sum()
-            logging.info("THOIPA has higher precision-recall AUC than both TMDOCK and PREDDIMER for {}/{} proteins in {}".format(n_THOIPA_better_both, PR_AUC_df.shape[0], s["setname"]))
+            logging.info(
+                f"THOIPA has higher precision-recall AUC than both TMDOCK and PREDDIMER for {n_THOIPA_better_both}/{PR_AUC_df.shape[0]} proteins in {paths.setname}"
+            )
             df_THOIPA_vs_others.to_excel(writer, sheet_name="THOIPA_vs_others")
 
         # #sys.stdout.write(roc_auc_mean_list)
@@ -225,48 +270,68 @@ def collect_indiv_validation_data(s, df_set, logging, namedict, predictors, THOI
         # AUC_4pred_mean_all_indiv_prot_df.to_excel(writer, sheet_name="ROC_AUC_mean_indiv")
 
 
-def create_indiv_validation_figs(s, logging, namedict, predictors, THOIPA_predictor_name, subsets):
-    perc_interf_vs_PR_cutoff_linechart_data_csv = Path(s["data_dir"]) / f"results/{s['setname']}/crossvalidation/indiv_validation/bocurve/perc_interf_vs_PR_cutoff_linechart_data.csv"
-    indiv_validation_data_xlsx = Path(s["data_dir"]) / f"results/{s['setname']}/crossvalidation/indiv_validation/bocurve/indiv_validation_data.xlsx"
+def create_indiv_validation_figs(paths: ArtefactPaths, logging, namedict, predictors, THOIPA_predictor_name, subsets):
+    perc_interf_vs_PR_cutoff_linechart_data_csv = (
+        paths.crossvalidation_dir / "indiv_validation/bocurve/perc_interf_vs_PR_cutoff_linechart_data.csv"
+    )
+    indiv_validation_data_xlsx = paths.crossvalidation_dir / "indiv_validation/bocurve/indiv_validation_data.xlsx"
 
-    indiv_validation_figs_dir: Path = Path(s["data_dir"]) / f"results/{s['setname']}/crossvalidation/indiv_validation/bocurve/figs"
+    indiv_validation_figs_dir: Path = paths.crossvalidation_dir / "indiv_validation/bocurve/figs"
     make_sure_path_exists(indiv_validation_figs_dir)
 
-    indiv_ROC_AUC_barchart_png: Union[Path, str] = indiv_validation_figs_dir / "indiv_ROC_AUC_barchart.png"
-    indiv_PR_AUC_barchart_png: Union[Path, str] = indiv_validation_figs_dir / "indiv_PR_AUC_barchart.png"
-    AUBOC_barchart_png: Union[Path, str] = indiv_validation_figs_dir / "indiv_AUBOC_barchart.png"
-    BOCURVE_linechart_png: Union[Path, str] = indiv_validation_figs_dir / "BOcurve_linechart.png"
-    mean_ROC_AUC_barchart_png: Union[Path, str] = indiv_validation_figs_dir / "mean_ROC_AUC_barchart.png"
-    mean_PR_AUC_barchart_png: Union[Path, str] = indiv_validation_figs_dir / "mean_PR_AUC_barchart.png"
-    ROC_AUC_vs_PR_AUC_scatter_png: Union[Path, str] = indiv_validation_figs_dir / "ROC_AUC_vs_PR_AUC_scatter.png"
-    perc_interf_vs_PR_cutoff_linechart_png: Union[Path, str] = indiv_validation_figs_dir / "perc_interf_vs_PR_cutoff_linechart.png"
+    indiv_ROC_AUC_barchart_png: Path | str = indiv_validation_figs_dir / "indiv_ROC_AUC_barchart.png"
+    indiv_PR_AUC_barchart_png: Path | str = indiv_validation_figs_dir / "indiv_PR_AUC_barchart.png"
+    AUBOC_barchart_png: Path | str = indiv_validation_figs_dir / "indiv_AUBOC_barchart.png"
+    BOCURVE_linechart_png: Path | str = indiv_validation_figs_dir / "BOcurve_linechart.png"
+    mean_ROC_AUC_barchart_png: Path | str = indiv_validation_figs_dir / "mean_ROC_AUC_barchart.png"
+    mean_PR_AUC_barchart_png: Path | str = indiv_validation_figs_dir / "mean_PR_AUC_barchart.png"
+    ROC_AUC_vs_PR_AUC_scatter_png: Path | str = indiv_validation_figs_dir / "ROC_AUC_vs_PR_AUC_scatter.png"
+    perc_interf_vs_PR_cutoff_linechart_png: Path | str = (
+        indiv_validation_figs_dir / "perc_interf_vs_PR_cutoff_linechart.png"
+    )
 
     ROC_AUC_df = pd.read_excel(indiv_validation_data_xlsx, sheet_name="ROC_AUC_indiv", index_col=0)
     PR_AUC_df = pd.read_excel(indiv_validation_data_xlsx, sheet_name="PR_AUC_indiv", index_col=0)
-    mean_o_minus_r_by_sample_df = pd.read_excel(indiv_validation_data_xlsx, sheet_name="mean_o_minus_r_by_sample", index_col=0)
+    mean_o_minus_r_by_sample_df = pd.read_excel(
+        indiv_validation_data_xlsx, sheet_name="mean_o_minus_r_by_sample", index_col=0
+    )
     df_o_minus_r_mean_df = pd.read_excel(indiv_validation_data_xlsx, sheet_name="BO_o_minus_r", index_col=0)
 
     create_ROC_AUC_barchart(ROC_AUC_df, indiv_ROC_AUC_barchart_png, namedict, THOIPA_predictor_name)
     create_PR_AUC_barchart(PR_AUC_df, indiv_PR_AUC_barchart_png, namedict, THOIPA_predictor_name)
-    create_barchart_o_minus_r_bocurve_each_TMD_indiv(mean_o_minus_r_by_sample_df, AUBOC_barchart_png, namedict, THOIPA_predictor_name)
+    create_barchart_o_minus_r_bocurve_each_TMD_indiv(
+        mean_o_minus_r_by_sample_df, AUBOC_barchart_png, namedict, THOIPA_predictor_name
+    )
 
     create_BOcurve_linechart(df_o_minus_r_mean_df, BOCURVE_linechart_png)
 
     create_mean_ROC_AUC_barchart(ROC_AUC_df, mean_ROC_AUC_barchart_png)
     create_mean_PR_AUC_barchart(PR_AUC_df, mean_PR_AUC_barchart_png)
 
-    create_scatter_ROC_AUC_vs_PR_AUC(s, predictors, ROC_AUC_vs_PR_AUC_scatter_png)
+    create_scatter_ROC_AUC_vs_PR_AUC(paths, predictors, ROC_AUC_vs_PR_AUC_scatter_png)
 
     # for the complete list of proteins
-    create_linechart_perc_interf_vs_PR_cutoff(s, predictors, perc_interf_vs_PR_cutoff_linechart_png, perc_interf_vs_PR_cutoff_linechart_data_csv)
+    create_linechart_perc_interf_vs_PR_cutoff(
+        paths, predictors, perc_interf_vs_PR_cutoff_linechart_png, perc_interf_vs_PR_cutoff_linechart_data_csv
+    )
 
     # for each subset(e.g. ETRA) separately. Saved in "by_subset" subfolder
     for subset in subsets:
-        perc_interf_vs_PR_cutoff_linechart_single_database_png: Union[Path, str] = indiv_validation_figs_dir / f"by_subset/{subset}_perc_interf_vs_PR_cutoff_linechart.png"
-        perc_interf_vs_PR_cutoff_linechart_single_database_data_csv: Union[Path, str] = Path(
-            s["data_dir"]) / f"results/{s['setname']}/crossvalidation/indiv_validation/bocurve/{subset}_perc_interf_vs_PR_cutoff_linechart_data.csv"
+        perc_interf_vs_PR_cutoff_linechart_single_database_png: Path | str = (
+            indiv_validation_figs_dir / f"by_subset/{subset}_perc_interf_vs_PR_cutoff_linechart.png"
+        )
+        perc_interf_vs_PR_cutoff_linechart_single_database_data_csv: Path | str = (
+            Path(paths.data_dir)
+            / f"results/{paths.setname}/crossvalidation/indiv_validation/bocurve/{subset}_perc_interf_vs_PR_cutoff_linechart_data.csv"
+        )
 
-        create_linechart_perc_interf_vs_PR_cutoff(s, predictors, perc_interf_vs_PR_cutoff_linechart_single_database_png, perc_interf_vs_PR_cutoff_linechart_single_database_data_csv, subset=subset)
+        create_linechart_perc_interf_vs_PR_cutoff(
+            paths,
+            predictors,
+            perc_interf_vs_PR_cutoff_linechart_single_database_png,
+            perc_interf_vs_PR_cutoff_linechart_single_database_data_csv,
+            subset=subset,
+        )
 
     logging.info("finished run_indiv_validation_THOIPA_PREDDIMER_TMDOCK")
 
@@ -312,10 +377,10 @@ def precision_recall_curve_rises_above_threshold(precision, recall, threshold=0.
     return PR_rises_above_threshold
 
 
-def create_scatter_ROC_AUC_vs_PR_AUC(s, predictors, ROC_AUC_vs_PR_AUC_scatter_png):
+def create_scatter_ROC_AUC_vs_PR_AUC(paths: ArtefactPaths, predictors, ROC_AUC_vs_PR_AUC_scatter_png):
     fig, ax = plt.subplots(figsize=(8, 8))
     for predictor in predictors:
-        auc_pkl = Path(s["data_dir"]) / f"results/{s['setname']}/crossvalidation/indiv_validation/roc_auc/{predictor}/ROC_AUC_data.pkl"
+        auc_pkl = paths.crossvalidation_dir / f"indiv_validation/roc_auc/{predictor}/ROC_AUC_data.pkl"
         with open(auc_pkl, "rb") as f:
             xv_dict = pickle.load(f)
         roc_auc_list = []
@@ -344,11 +409,11 @@ def create_mean_ROC_AUC_barchart(ROC_AUC_df, mean_ROC_AUC_barchart_png):
     # plt.bar(x, roc_auc_mean_list, width=0.6, color = 'rgbk', alpha=0.5)
     # plt.xticks(y_pos, mean_roc_auc_name,fontsize=6)
     # plt.ylabel("performance value\n(mean auc)")
-    # 
+    #
     # #ax.set_ylabel("performance value\n(auc)")
     # ax.set_ylim(0, 0.70)
     # ax.legend()  # (["sample size = 5", "sample size = 10"])
-    # 
+    #
     # fig.tight_layout()
     # ax.grid(False)
     # fig.savefig(mean_ROC_AUC_barchart_png, dpi=240)
@@ -376,7 +441,7 @@ def create_mean_PR_AUC_barchart(PR_AUC_df, mean_PR_AUC_barchart_png):
     # ax.set_ylabel("performance value\n(auc)")
     ax.set_ylim(0, 0.70)
     ax.legend()  # (["sample size = 5", "sample size = 10"])
-    ax.set_facecolor('white')
+    ax.set_facecolor("white")
 
     fig.tight_layout()
     ax.grid(False)
@@ -387,7 +452,6 @@ def create_BOcurve_linechart(df_o_minus_r_mean_df, BOCURVE_linechart_png):
     # BO_linechart_png
     plt.close("all")
     figsize = np.array([3.42, 3.42]) * 2  # DOUBLE the real size, due to problems on Bo computer with fontsizes
-    color_list = 'rgbk'
     fig, ax = plt.subplots(figsize=figsize)
     # for i,column in enumerate(df_o_minus_r_mean_df.columns):
     #     # df_o_minus_r_mean_df.plot(ax=ax, color="#0f7d9b", linestyle="-", label="prediction (AUBOC : {:0.2f}".format(AUBOC))
@@ -400,9 +464,9 @@ def create_BOcurve_linechart(df_o_minus_r_mean_df, BOCURVE_linechart_png):
     ax.grid(False)
     ax.set_ylabel("fraction of correctly predicted residues\n(observed - random)", color="#0f7d9b")
     ax.set_xlabel("number of TMD residues\n(sample size)")
-    ax.tick_params('y', colors="#0f7d9b")
+    ax.tick_params("y", colors="#0f7d9b")
 
-    ax.spines['left'].set_color("#0f7d9b")
+    ax.spines["left"].set_color("#0f7d9b")
     ax.legend()
     fig.tight_layout()
     fig.savefig(BOCURVE_linechart_png, dpi=140)
@@ -461,35 +525,44 @@ def create_PR_AUC_barchart(PR_AUC_df, indiv_PR_AUC_barchart_png, namedict, THOIP
         else:
             raise ValueError("Neither X-ray, NMR, nor ETRA found in protein description within dataframe index.")
 
-    PR_AUC_df.sort_values(['sort_list', THOIPA_predictor_name], ascending=[True, False], inplace=True)
+    PR_AUC_df.sort_values(["sort_list", THOIPA_predictor_name], ascending=[True, False], inplace=True)
 
-    PR_AUC_df.rename(columns=lambda x: x.replace(THOIPA_predictor_name, 'THOIPA'), inplace=True)
-    PR_AUC_df.rename(columns=lambda x: x.replace('LIPS_surface_ranked', 'LIPS'), inplace=True)
+    PR_AUC_df.rename(columns=lambda x: x.replace(THOIPA_predictor_name, "THOIPA"), inplace=True)
+    PR_AUC_df.rename(columns=lambda x: x.replace("LIPS_surface_ranked", "LIPS"), inplace=True)
 
-    PR_AUC_df.drop(['LIPS', "sort_list"], axis=1, inplace=True)
+    PR_AUC_df.drop(["LIPS", "sort_list"], axis=1, inplace=True)
 
     color_list = ["#E95D12", "#0065BD", "k", "#B4B3B3"]
 
     fig, ax = plt.subplots(figsize=(13, 7))
     x = list(range(0, len(PR_AUC_df), 1))
 
-    m = 0
     for i, color in zip(PR_AUC_df.columns, color_list):
         y = PR_AUC_df[i].tolist()
         plt.bar(x, y, width=Width, label=i, color=color)
         x = [i + Width for i in x]
 
     handles, labels = ax.get_legend_handles_labels()
-    lgd = ax.legend(handles, labels, ncol=31, loc=2, fontsize=Fontsize, frameon=True, bbox_to_anchor=(-0.0090, 1.15), facecolor='white', edgecolor="k")
+    lgd = ax.legend(
+        handles,
+        labels,
+        ncol=31,
+        loc=2,
+        fontsize=Fontsize,
+        frameon=True,
+        bbox_to_anchor=(-0.0090, 1.15),
+        facecolor="white",
+        edgecolor="k",
+    )
 
-    plt.rcParams['xtick.labelsize'] = Fontsize
-    plt.rcParams['ytick.labelsize'] = Fontsize
-    ax.tick_params(axis='y', labelsize=Fontsize, pad=2)
-    ax.tick_params(axis='x', labelsize=Fontsize, pad=2)
+    plt.rcParams["xtick.labelsize"] = Fontsize
+    plt.rcParams["ytick.labelsize"] = Fontsize
+    ax.tick_params(axis="y", labelsize=Fontsize, pad=2)
+    ax.tick_params(axis="x", labelsize=Fontsize, pad=2)
     x_label = list(range(0, len(PR_AUC_df), 1))
     x_label = [i + Width for i in x_label]
 
-    ax.set_ylabel('performance (precision-recall AUC)', fontsize=Fontsize, labelpad=1)
+    ax.set_ylabel("performance (precision-recall AUC)", fontsize=Fontsize, labelpad=1)
 
     ax.set_xticks(x_label)
 
@@ -498,12 +571,14 @@ def create_PR_AUC_barchart(PR_AUC_df, indiv_PR_AUC_barchart_png, namedict, THOIP
     fig.tight_layout()
     plt.xlim(-0.5, 54)
 
-    plt.savefig(indiv_PR_AUC_barchart_png, bbox_extra_artists=(lgd,), bbox_inches='tight', dpi=300)
-    plt.savefig(str(indiv_PR_AUC_barchart_png)[:-4] + ".pdf", bbox_extra_artists=(lgd,), bbox_inches='tight', dpi=300)
+    plt.savefig(indiv_PR_AUC_barchart_png, bbox_extra_artists=(lgd,), bbox_inches="tight", dpi=300)
+    plt.savefig(str(indiv_PR_AUC_barchart_png)[:-4] + ".pdf", bbox_extra_artists=(lgd,), bbox_inches="tight", dpi=300)
     plt.close()
 
 
-def create_barchart_o_minus_r_bocurve_each_TMD_indiv(mean_o_minus_r_by_sample_df, AUBOC_barchart_png, namedict, THOIPA_predictor_name):
+def create_barchart_o_minus_r_bocurve_each_TMD_indiv(
+    mean_o_minus_r_by_sample_df, AUBOC_barchart_png, namedict, THOIPA_predictor_name
+):
     # AUC_AUBOC_df = AUBOC_df.T.sort_values(by=[THOIPA_predictor_name], ascending=False)
     # plt.rcParams.update({'font.size': 8})
     # figsize = np.array([3.42, 3.42]) * 2  # DOUBLE the real size, due to problems on Bo computer with fontsizes
@@ -526,7 +601,16 @@ def create_barchart_o_minus_r_bocurve_each_TMD_indiv(mean_o_minus_r_by_sample_df
     # fig.savefig(AUBOC_barchart_png[:-4] + ".pdf")
 
 
-def merge_4_files_alignment_method_deprecated(acc, full_seq, train_data_file, THOIPA_prediction_file, PREDDIMER_prediction_file, TMDOCK_prediction_file, merged_data_xlsx_path, columns_kept_in_combined_file):
+def merge_4_files_alignment_method_deprecated(
+    acc,
+    full_seq,
+    train_data_file,
+    THOIPA_prediction_file,
+    PREDDIMER_prediction_file,
+    TMDOCK_prediction_file,
+    merged_data_xlsx_path,
+    columns_kept_in_combined_file,
+):
     """Deprecated method to merge predictions, with lots of checks to ensure sequences are the same.
 
     Parameters
@@ -548,10 +632,10 @@ def merge_4_files_alignment_method_deprecated(acc, full_seq, train_data_file, TH
     for path in [train_data_file, THOIPA_prediction_file, PREDDIMER_prediction_file, TMDOCK_prediction_file]:
         if not os.path.isfile(path):
             all_files_exist = False
-            sys.stdout.write("{} does not exist".format(path))
+            sys.stdout.write(f"{path} does not exist")
             break
     if not all_files_exist:
-        sys.stdout.write("\n{} skipped. Input file missing.".format(acc))
+        sys.stdout.write(f"\n{acc} skipped. Input file missing.")
         sys.stdout.flush()
         # skip this protein
         return None, None, None
@@ -573,8 +657,10 @@ def merge_4_files_alignment_method_deprecated(acc, full_seq, train_data_file, TH
     seqlist = [df_train_seq, df_thoipa_seq, df_preddimer_seq, df_tmdock_seq]
     for seq in seqlist:
         if seq not in full_seq:
-            sys.stdout.write("Sequence in residue_name column of dataframe is not found in the original df_set sequence."
-                             "acc : {}\nTMD_seq : {}\nfull seq in df_set : {}\nall TM sequences in list : {}".format(acc, seq, full_seq, seqlist))
+            sys.stdout.write(
+                "Sequence in residue_name column of dataframe is not found in the original df_set sequence."
+                f"acc : {acc}\nTMD_seq : {seq}\nfull seq in df_set : {full_seq}\nall TM sequences in list : {seqlist}"
+            )
             return None, None, None
 
     df_train = thoipapy.utils.add_res_num_full_seq_to_df(acc, df_train, df_train_seq, full_seq)
@@ -610,7 +696,9 @@ def merge_4_files_alignment_method_deprecated(acc, full_seq, train_data_file, TH
     elif unique_seq_list.shape[0] > 2:
         # skip protein if there are more than 3 sequences
         # a multiple sequence alignment would be necessary
-        sys.stdout.write("4 sequences has more than 2 unique sequences, alignment not possible. protein {} skipped.".format(acc))
+        sys.stdout.write(
+            f"4 sequences has more than 2 unique sequences, alignment not possible. protein {acc} skipped."
+        )
         # skip protein
         return None, None, None
 
@@ -625,8 +713,9 @@ def merge_4_files_alignment_method_deprecated(acc, full_seq, train_data_file, TH
         dfs["unique_num"] = dfs["unique_num"].astype(int)
 
         # Align the two unique sequences(adding gaps at start or end)
-        aligned_seq1, aligned_seq2, _, _, _ = \
-            pairwise2.align.globalxx(unique_seq_list[0], unique_seq_list[1], one_alignment_only=True)[0]
+        aligned_seq1, aligned_seq2, _, _, _ = pairwise2.align.globalxx(
+            unique_seq_list[0], unique_seq_list[1], one_alignment_only=True
+        )[0]
         seq1 = aligned_seq1.strip("-")
         seq2 = aligned_seq2.strip("-")
         seq1 = aligned_seq1.replace("-", "")
@@ -637,10 +726,11 @@ def merge_4_files_alignment_method_deprecated(acc, full_seq, train_data_file, TH
 
         sys.stdout.write("Check the 4 aligned sequences.")
         for seq in dfs.aligned_seq.tolist():
-            sys.stdout.write("\n{}".format(seq))
+            sys.stdout.write(f"\n{seq}")
         # simply count the gaps at the start and the end, for each seq
         dfs["n_of_gaps_at_start_and_end_of_seq"] = dfs.aligned_seq.apply(
-            thoipapy.utils.get_n_of_gaps_at_start_and_end_of_seq)
+            thoipapy.utils.get_n_of_gaps_at_start_and_end_of_seq
+        )
         # number of gaps at the start
         df_train_n_at_start = dfs.loc["df_train", "n_of_gaps_at_start_and_end_of_seq"][0]
         df_thoipa_n_at_start = dfs.loc["df_thoipa", "n_of_gaps_at_start_and_end_of_seq"][0]
@@ -694,12 +784,18 @@ def merge_4_files_alignment_method_deprecated(acc, full_seq, train_data_file, TH
         df_tmdock.to_excel(writer, sheet_name="df_tmdock")
         dfm.to_excel(writer, sheet_name="dfm")
 
-    sys.stdout.write("\n{} finished. Merged data saved to {}".format(acc, merged_data_xlsx_path))
+    sys.stdout.write(f"\n{acc} finished. Merged data saved to {merged_data_xlsx_path}")
     sys.stdout.flush()
 
 
-def create_linechart_perc_interf_vs_PR_cutoff(s, predictors, perc_interf_vs_PR_cutoff_linechart_png, perc_interf_vs_PR_cutoff_linechart_data_csv, subset="all"):
-    """ Create linechart (and barchart) showing percentage of interface residues correctly predicted, according
+def create_linechart_perc_interf_vs_PR_cutoff(
+    paths: ArtefactPaths,
+    predictors,
+    perc_interf_vs_PR_cutoff_linechart_png,
+    perc_interf_vs_PR_cutoff_linechart_data_csv,
+    subset="all",
+):
+    """Create linechart (and barchart) showing percentage of interface residues correctly predicted, according
     to precision-recall cutoffs.
 
     Parameters
@@ -738,13 +834,13 @@ def create_linechart_perc_interf_vs_PR_cutoff(s, predictors, perc_interf_vs_PR_c
 
         result_dict = {}
 
-        auc_pkl = Path(s["data_dir"]) / f"results/{s['setname']}/crossvalidation/indiv_validation/roc_auc/{predictor}/ROC_AUC_data.pkl"
+        auc_pkl = paths.crossvalidation_dir / f"indiv_validation/roc_auc/{predictor}/ROC_AUC_data.pkl"
 
         with open(auc_pkl, "rb") as f:
             xv_dict = pickle.load(f)
 
         for acc_db in xv_dict:
-            if subset is not "all":
+            if subset != "all":
                 if subset not in acc_db:
                     # skip the TMDs that are not in the right database
                     continue
@@ -753,7 +849,9 @@ def create_linechart_perc_interf_vs_PR_cutoff(s, predictors, perc_interf_vs_PR_c
             recall = xv_dict[acc_db]["recall"]
             result_list = []
             for cutoff in cutoff_list:
-                PR_rises_above_threshold = precision_recall_curve_rises_above_threshold(precision, recall, threshold=cutoff)
+                PR_rises_above_threshold = precision_recall_curve_rises_above_threshold(
+                    precision, recall, threshold=cutoff
+                )
                 result_list.append(PR_rises_above_threshold)
             result_dict[acc_db] = result_list
 
@@ -777,7 +875,7 @@ def create_linechart_perc_interf_vs_PR_cutoff(s, predictors, perc_interf_vs_PR_c
     fontsize = 8
     linewidth = 0.7
     #
-    cols = ['THOIPA', 'TMDOCK', 'PREDDIMER', 'random']
+    cols = ["THOIPA", "TMDOCK", "PREDDIMER", "random"]
     # df_PR_cutoff_all = df_PR_cutoff_all.reindex(columns = cols)
     # df_PR_cutoff_all.plot(ax=ax, color=colour_list, linestyle=linestyle_list)
     for col in cols:
@@ -787,11 +885,18 @@ def create_linechart_perc_interf_vs_PR_cutoff(s, predictors, perc_interf_vs_PR_c
         else:
             linestyle = "-"
 
-        ax.plot(df_PR_cutoff_all.index, df_PR_cutoff_all[col], linestyle=linestyle, color=colour_dict[col], linewidth=linewidth, label=col)
+        ax.plot(
+            df_PR_cutoff_all.index,
+            df_PR_cutoff_all[col],
+            linestyle=linestyle,
+            color=colour_dict[col],
+            linewidth=linewidth,
+            label=col,
+        )
 
     # general properties
     ax.grid(False)
-    ax.set_facecolor('white')
+    ax.set_facecolor("white")
     plt.rcParams["axes.edgecolor"] = "k"
     plt.rcParams["axes.linewidth"] = 0.4
     fig.patch.set_visible(True)
@@ -803,9 +908,9 @@ def create_linechart_perc_interf_vs_PR_cutoff(s, predictors, perc_interf_vs_PR_c
 
     # tick properties
     ax.set_xticks([0, 0.25, 0.5, 0.75, 1.0])
-    ax.tick_params(direction='out', length=0, width=1, colors='k')
-    ax.tick_params(axis='y', labelsize=fontsize, pad=2)
-    ax.tick_params(axis='x', labelsize=fontsize, pad=2)
+    ax.tick_params(direction="out", length=0, width=1, colors="k")
+    ax.tick_params(axis="y", labelsize=fontsize, pad=2)
+    ax.tick_params(axis="x", labelsize=fontsize, pad=2)
 
     ax.set_xlabel("recall and precision cut-off", fontsize=fontsize)
     ax.set_ylabel("fraction of interfaces that meets the cut-off", fontsize=fontsize, labelpad=1)
@@ -823,7 +928,7 @@ def create_linechart_perc_interf_vs_PR_cutoff(s, predictors, perc_interf_vs_PR_c
     #######################################################################################################
     # bar positions and labels
     x = [0.05, 1.05, 2, 3]
-    labels = ['THOIPA', 'TMDOCK', 'PREDDIMER', 'random']
+    labels = ["THOIPA", "TMDOCK", "PREDDIMER", "random"]
 
     df = df_PR_cutoff_all.reindex(columns=labels)
 
@@ -846,16 +951,16 @@ def create_linechart_perc_interf_vs_PR_cutoff(s, predictors, perc_interf_vs_PR_c
     # tick properties
     ax.set_xticks(x)
     ax.set_xticklabels("")
-    ax.tick_params(axis='y', labelsize=fontsize, pad=2)
-    ax.tick_params(direction='in', length=0, width=0, colors='k')
+    ax.tick_params(axis="y", labelsize=fontsize, pad=2)
+    ax.tick_params(direction="in", length=0, width=0, colors="k")
 
     # ax.set_ylim(0,0.55)
 
-    ax.set_ylabel('fraction correct interfaces (at 0.5 cutoff)   ', fontsize=fontsize, labelpad=1)
+    ax.set_ylabel("fraction correct interfaces (at 0.5 cutoff)   ", fontsize=fontsize, labelpad=1)
 
     # text annotations in bars
     for i, txt in enumerate(labels):
-        ax.annotate(txt, (x[i], 0.005), size=fontsize, color=colour_list_anno[i], ha='center', rotation=90, va="bottom")
+        ax.annotate(txt, (x[i], 0.005), size=fontsize, color=colour_list_anno[i], ha="center", rotation=90, va="bottom")
 
     fig.tight_layout()
     bar_png = os.path.join(str(perc_interf_vs_PR_cutoff_linechart_png)[:-13] + "barchart.png")

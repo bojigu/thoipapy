@@ -1,31 +1,40 @@
 import sys
+from ast import literal_eval as make_tuple
+from pathlib import Path
 
 import numpy as np
 import pandas as pd
-from Bio import pairwise2
-from Bio.pairwise2 import format_alignment
+from Bio import SeqIO, pairwise2
 from Bio.Align import substitution_matrices
-from Bio import SeqIO
-from ast import literal_eval as make_tuple
-from pathlib import Path
-from typing import List, Set, Union
+from Bio.pairwise2 import format_alignment
+
+from thoipapy.artefacts import ArtefactPaths
 
 
-def create_identity_matrix_from_protein_set(s, logging):
-    setname = s["setname"]
-    protein_set_full_seq_fasta = Path(s["data_dir"]) / f"results/{s['setname']}/clusters/{setname}_full_seqs.fas"
-    output_align = Path(s["data_dir"]) / f"results/{s['setname']}/clusters/{setname}_sim_matrix_alignments.txt"
-    sim_matrix_xlsx = Path(s["data_dir"]) / f"results/{s['setname']}/clusters/{setname}_sim_matrix.xlsx"
+def create_identity_matrix_from_protein_set(paths: ArtefactPaths, logging):
+    protein_set_full_seq_fasta = paths.protein_set_full_seq_fasta()
+    output_align = paths.sim_matrix_alignments_txt()
+    sim_matrix_xlsx = paths.sim_matrix_xlsx()
     if not sim_matrix_xlsx.parent.is_dir():
         sim_matrix_xlsx.parent.mkdir(parents=True)
     gap_open = -40.0
     gap_extend = -0.5
     aln_cutoff = 15
-    create_identity_matrix_using_pairwise_alignments(protein_set_full_seq_fasta, output_align, sim_matrix_xlsx, gap_open, gap_extend, logging, aln_cutoff=aln_cutoff)
+    create_identity_matrix_using_pairwise_alignments(
+        protein_set_full_seq_fasta, output_align, sim_matrix_xlsx, gap_open, gap_extend, logging, aln_cutoff=aln_cutoff
+    )
 
 
-def create_identity_matrix_using_pairwise_alignments(protein_set_full_seq_fasta: Union[Path, str], output_align: Union[Path, str], ident_matrix_xlsx: Union[Path, str], gap_open: float, gap_extend: float, logging, matrix: str = "BLOSUM62",
-                                                     aln_cutoff: float = 15.0):
+def create_identity_matrix_using_pairwise_alignments(
+    protein_set_full_seq_fasta: Path | str,
+    output_align: Path | str,
+    ident_matrix_xlsx: Path | str,
+    gap_open: float,
+    gap_extend: float,
+    logging,
+    matrix: str = "BLOSUM62",
+    aln_cutoff: float = 15.0,
+):
     """Create identity matrix using pairwise alignments.
 
     This is a clustering method used to complement cd-hit, which is not designed for clustering at very low levels of identity.
@@ -38,8 +47,10 @@ def create_identity_matrix_using_pairwise_alignments(protein_set_full_seq_fasta:
     For example, in cluster of three proteins [a,b,c], the pairwise alignments of a-b and b-c might
     have identity above the threshold, even if the alignment of a-c does not.
     """
-    logging.info('~~~~~~~~~~~~                 starting create_identity_matrix_using_pairwise_alignments              ~~~~~~~~~~~~')
-    all_subst_matrices: List[str] = substitution_matrices.load()
+    logging.info(
+        "~~~~~~~~~~~~                 starting create_identity_matrix_using_pairwise_alignments              ~~~~~~~~~~~~"
+    )
+    all_subst_matrices: list[str] = substitution_matrices.load()
     assert matrix in all_subst_matrices
     subst_mat: np.ndarray = substitution_matrices.load(matrix)
     acc_pairs_analysed = []
@@ -56,7 +67,10 @@ def create_identity_matrix_using_pairwise_alignments(protein_set_full_seq_fasta:
                     df_ident.at[acc, target_acc] = 0
                     continue
                 if (acc, target_acc) not in acc_pairs_analysed and (target_acc, acc) not in acc_pairs_analysed:
-                    alignments = pairwise2.align.globalds(query, target_seq, subst_mat, gap_open, gap_extend)
+                    # globalds exists at runtime; it is missing from the shipped Biopython stubs.
+                    alignments = pairwise2.align.globalds(  # type: ignore[attr-defined]
+                        query, target_seq, subst_mat, gap_open, gap_extend
+                    )
                     a = alignments[0]
                     q = np.array(list(a[0]))
                     m = np.array(list(a[1]))
@@ -69,9 +83,11 @@ def create_identity_matrix_using_pairwise_alignments(protein_set_full_seq_fasta:
 
                     if ident > aln_cutoff:
                         acc_pairs_above_cutoff.append((acc, target_acc))
-                        description = "acc={}, target_acc={}, ident={:0.2f}, n_alignments={}".format(acc, target_acc, ident, len(alignments))
+                        description = (
+                            f"acc={acc}, target_acc={target_acc}, ident={ident:0.2f}, n_alignments={len(alignments)}"
+                        )
                         alignment = format_alignment(*alignments[0])
-                        result = "{}, alignment=\n{}\n".format(description, alignment)
+                        result = f"{description}, alignment=\n{alignment}\n"
                         f.write(result)
                         f.write("\n------------------------------------\n")
                         sys.stdout.write(".")
@@ -115,15 +131,17 @@ def create_identity_matrix_using_pairwise_alignments(protein_set_full_seq_fasta:
         cluster_TMD_dict[TMD_name] = cluster
 
     """ cluster_TMD_dict looks like this
-    {'0-P20963-NMR': ['0-P20963-NMR'], 
+    {'0-P20963-NMR': ['0-P20963-NMR'],
     '1-P21709-NMR': ['1-P21709-NMR', '4-P09619-NMR', '5-P22607-NMR']...
     """
 
     df_clusters = pd.DataFrame()
     for TMD_name, cluster in cluster_TMD_dict.items():
         df_clusters.at[TMD_name, "cluster"] = str(tuple(cluster))
-    all_clusters = df_clusters.cluster.unique()
-    all_clusters = [make_tuple(t) for t in all_clusters]
+    cluster_strings = df_clusters.cluster.unique()
+    # Starts as tuples parsed from the cluster column and becomes sets after each reduction
+    # round; both are only ever iterated and flattened, so the element type is deliberately open.
+    all_clusters: list = [make_tuple(t) for t in cluster_strings]
     flattened_names_in_all_clusters = [item for sublist in all_clusters for item in sublist]
     # confirm that all TMDs are represented in the list of clusters
     assert set(TMD_names) == set(flattened_names_in_all_clusters)
@@ -149,23 +167,26 @@ def create_identity_matrix_using_pairwise_alignments(protein_set_full_seq_fasta:
     df_settings = pd.DataFrame()
     df_settings.at["input_fasta", "value"] = protein_set_full_seq_fasta
     df_settings.at["alignment_file", "value"] = output_align
-    df_settings.at["sim_matrix_csv", "value"] = ident_matrix_xlsx
+    df_settings.at["sim_matrix_xlsx", "value"] = ident_matrix_xlsx
     df_settings.at["matrix", "value"] = matrix
     df_settings.at["gap_open", "value"] = gap_open
     df_settings.at["gap_extend", "value"] = gap_extend
     df_settings.at["acc_pairs_analysed", "value"] = acc_pairs_analysed
     df_settings.to_excel(writer, sheet_name="settings")
 
-    writer.save()
     writer.close()
 
-    logging.info('~~~~~~~~~~~~                 finished create_identity_matrix_using_pairwise_alignments              ~~~~~~~~~~~~')
+    logging.info(
+        "~~~~~~~~~~~~                 finished create_identity_matrix_using_pairwise_alignments              ~~~~~~~~~~~~"
+    )
 
 
-def reduce_clusters_based_on_common_elements(all_clusters: List[List], TMD_name_list: list):
+# all_clusters arrives as a list of tuples and is replaced by a list of sets on each reduction
+# round, so the element type is deliberately open.
+def reduce_clusters_based_on_common_elements(all_clusters: list, TMD_name_list: list):
     n_iterations = 0
     n_clusters_is_constant = False
-    output_list: List[Set] = []
+    output_list: list[set] = []
     while not n_clusters_is_constant:
         output_list = conduct_one_round_of_cluster_reduction(all_clusters)
         if len(output_list) == len(all_clusters):
@@ -183,8 +204,8 @@ def reduce_clusters_based_on_common_elements(all_clusters: List[List], TMD_name_
 
 
 def conduct_one_round_of_cluster_reduction(input_clusters):
-    output_list: List[Set] = []
-    cluster_indices_already_examined: List[int] = []
+    output_list: list[set] = []
+    cluster_indices_already_examined: list[int] = []
     for n, outer_cluster in enumerate(input_clusters):
         joined = False
         if n in cluster_indices_already_examined:
@@ -206,7 +227,7 @@ def conduct_one_round_of_cluster_reduction(input_clusters):
                 joined = True
                 break
         # if none of the elements in outer_set are found in the other sets, then simply append the original outer_set to output file
-        if joined == False:
+        if not joined:
             output_list.append(outer_cluster_set)
 
     return output_list

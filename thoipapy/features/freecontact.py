@@ -7,16 +7,17 @@ import pandas as pd
 
 import thoipapy
 from thoipapy import utils as utils
+from thoipapy.artefacts import ArtefactPaths
 from thoipapy.utils import normalise_0_1
 
 
-def coevolution_calculation_with_freecontact_mult_prot(s, df_set, logging):
+def coevolution_calculation_with_freecontact_mult_prot(paths: ArtefactPaths, df_set, logging):
     """Runs coevolution_calculation_with_freecontact for a set of protein sequences.
 
     Parameters
     ----------
-    s : dict
-        Settings dictionary
+    paths : ArtefactPaths
+        Locations of the pipeline's input and output files.
     df_set : pd.DataFrame
         Dataframe containing the list of proteins to process, including their TMD sequences and full-length sequences
         index : range(0, ..)
@@ -24,14 +25,13 @@ def coevolution_calculation_with_freecontact_mult_prot(s, df_set, logging):
     logging : logging.Logger
         Python object with settings for logging to console and file.
     """
-    logging.info('start coevolution calculation using freecontact')
+    logging.info("start coevolution calculation using freecontact")
 
     for i in df_set.index:
         acc = df_set.loc[i, "acc"]
         database = df_set.loc[i, "database"]
-        alignments_dir = alignments_dir = os.path.join(s["data_dir"], "homologues", "alignments", database)
-        path_uniq_TMD_seqs_for_PSSM_FREECONTACT = os.path.join(alignments_dir, "{}.surr{}.gaps{}.uniq.for_PSSM_FREECONTACT.txt".format(acc, s["num_of_sur_residues"], s["max_n_gaps_in_TMD_subject_seq"]))
-        freecontact_file = os.path.join(s["data_dir"], "features", "coevolution", database, "{}.surr{}.gaps{}.freecontact.csv".format(acc, s["num_of_sur_residues"], s["max_n_gaps_in_TMD_subject_seq"]))
+        path_uniq_TMD_seqs_for_PSSM_FREECONTACT = paths.uniq_tmd_seqs_for_pssm_freecontact_txt(database, acc)
+        freecontact_file = paths.freecontact_csv(database, acc)
         coevolution_calculation_with_freecontact(path_uniq_TMD_seqs_for_PSSM_FREECONTACT, freecontact_file, logging)
 
 
@@ -50,26 +50,36 @@ def coevolution_calculation_with_freecontact(path_uniq_TMD_seqs_for_PSSM_FREECON
     if os.path.isfile(path_uniq_TMD_seqs_for_PSSM_FREECONTACT):
         try:
             thoipapy.utils.make_sure_path_exists(freecontact_file, isfile=True)
-            exect_str = "grep -v '^>' {aln_file} |sed 's/[a-z]//g'|freecontact >{freecontact_output_file}".format(
-                aln_file=path_uniq_TMD_seqs_for_PSSM_FREECONTACT, freecontact_output_file=freecontact_file)
+            exect_str = f"grep -v '^>' {path_uniq_TMD_seqs_for_PSSM_FREECONTACT} |sed 's/[a-z]//g'|freecontact >{freecontact_file}"
 
             command = utils.Command(exect_str)
             command.run(timeout=400, log_stderr=False)
+            if not command.succeeded():
+                raise RuntimeError(
+                    f"freecontact failed on {path_uniq_TMD_seqs_for_PSSM_FREECONTACT}: "
+                    f"returncode={command.returncode}, "
+                    f"timed_out={command.timed_out}. Command: {exect_str}"
+                )
 
             logging.info(f"coevolution_calculation_with_freecontact finished ({freecontact_file})")
-        except:
-            logging.warning("freecontact gives an error")
+        except Exception:
+            # Was a bare `except` logging a fixed string, so a missing binary, a timeout and a
+            # malformed alignment were indistinguishable, and the traceback was discarded.
+            logging.exception(
+                f"coevolution_calculation_with_freecontact failed on {path_uniq_TMD_seqs_for_PSSM_FREECONTACT}"
+            )
+            raise
     else:
-        logging.warning("{} does not exist".format(path_uniq_TMD_seqs_for_PSSM_FREECONTACT))
+        logging.warning(f"{path_uniq_TMD_seqs_for_PSSM_FREECONTACT} does not exist")
 
 
-def parse_freecontact_coevolution_mult_prot(s, df_set, logging):
+def parse_freecontact_coevolution_mult_prot(paths: ArtefactPaths, df_set, logging):
     """Runs parse_freecontact_coevolution on a set of proteins.
 
     Parameters
     ----------
-    s : dict
-        Settings dictionary
+    paths : ArtefactPaths
+        Locations of the pipeline's input and output files.
     df_set : pd.DataFrame
         Dataframe containing the list of proteins to process, including their TMD sequences and full-length sequences
         index : range(0, ..)
@@ -77,7 +87,7 @@ def parse_freecontact_coevolution_mult_prot(s, df_set, logging):
     logging : logging.Logger
         Python object with settings for logging to console and file.
     """
-    logging.info('starting parse_freecontact_coevolution_mult_prot')
+    logging.info("starting parse_freecontact_coevolution_mult_prot")
 
     for i in df_set.index:
         sys.stdout.write(".")
@@ -86,12 +96,12 @@ def parse_freecontact_coevolution_mult_prot(s, df_set, logging):
         database = df_set.loc[i, "database"]
         TMD_start = int(df_set.loc[i, "TMD_start"])
         TMD_end = int(df_set.loc[i, "TMD_end"])
-        freecontact_file = os.path.join(s["data_dir"], "features", "coevolution", database, "{}.surr{}.gaps{}.freecontact.csv".format(acc, s["num_of_sur_residues"], s["max_n_gaps_in_TMD_subject_seq"]))
-        freecontact_parsed_csv = os.path.join(s["data_dir"], "features", "coevolution", database, "{}.surr{}.gaps{}.freecontact_parsed.csv".format(acc, s["num_of_sur_residues"], s["max_n_gaps_in_TMD_subject_seq"]))
+        freecontact_file = paths.freecontact_csv(database, acc)
+        freecontact_parsed_csv = paths.freecontact_parsed_csv(database, acc)
 
         parse_freecontact_coevolution(acc, freecontact_file, freecontact_parsed_csv, TMD_start, TMD_end, logging)
     sys.stdout.write("\n")
-    logging.info('finished parse_freecontact_coevolution_mult_prot')
+    logging.info("finished parse_freecontact_coevolution_mult_prot")
 
 
 def parse_freecontact_coevolution(acc, freecontact_file, freecontact_parsed_csv, TMD_start, TMD_end, logging):
@@ -119,18 +129,20 @@ def parse_freecontact_coevolution(acc, freecontact_file, freecontact_parsed_csv,
     #######################################################################################################
 
     if not os.path.isfile(freecontact_file):
-        logging.warning("{} parse_freecontact_coevolution failed, {} not found.".format(acc, freecontact_file))
-        raise FileNotFoundError("{} parse_freecontact_coevolution failed, {} not found.".format(acc, freecontact_file))
+        logging.warning(f"{acc} parse_freecontact_coevolution failed, {freecontact_file} not found.")
+        raise FileNotFoundError(f"{acc} parse_freecontact_coevolution failed, {freecontact_file} not found.")
 
     dict_di = {}
     dict_mi = {}
     dict_di_list = {}
     dict_mi_list = {}
     s = "-"
-    freecontact_parsed_csv_handle = open(freecontact_parsed_csv, 'w')
-    freecontact_file_handle = open(freecontact_file, 'r')
+    freecontact_parsed_csv_handle = open(freecontact_parsed_csv, "w")
+    freecontact_file_handle = open(freecontact_file)
     dict_residuenum_residuename = {}
-    for row in freecontact_file_handle:  # get the last line of the *.freecontact file which contains the tmd length infor
+    for (
+        row
+    ) in freecontact_file_handle:  # get the last line of the *.freecontact file which contains the tmd length infor
         residue_pairs = row.strip().split()
         """ residue_pairs
         ['1', 'I', '2', 'T', '0.243618', '0.454792']
@@ -141,22 +153,22 @@ def parse_freecontact_coevolution(acc, freecontact_file, freecontact_parsed_csv,
         dict_di[s.join([residue_pairs[0], residue_pairs[2]])] = residue_pairs[5]
         dict_residuenum_residuename[int(residue_pairs[0])] = residue_pairs[1]
         dict_residuenum_residuename[int(residue_pairs[2])] = residue_pairs[3]
-        if not residue_pairs[0] in dict_di_list:
+        if residue_pairs[0] not in dict_di_list:
             dict_di_list[residue_pairs[0]] = []
             dict_di_list[residue_pairs[0]].append(residue_pairs[5])
         else:
             dict_di_list[residue_pairs[0]].append(residue_pairs[5])
-        if not residue_pairs[2] in dict_di_list:
+        if residue_pairs[2] not in dict_di_list:
             dict_di_list[residue_pairs[2]] = []
             dict_di_list[residue_pairs[2]].append(residue_pairs[5])
         else:
             dict_di_list[residue_pairs[2]].append(residue_pairs[5])
-        if not residue_pairs[0] in dict_mi_list:
+        if residue_pairs[0] not in dict_mi_list:
             dict_mi_list[residue_pairs[0]] = []
             dict_mi_list[residue_pairs[0]].append(residue_pairs[4])
         else:
             dict_mi_list[residue_pairs[0]].append(residue_pairs[4])
-        if not residue_pairs[2] in dict_mi_list:
+        if residue_pairs[2] not in dict_mi_list:
             dict_mi_list[residue_pairs[2]] = []
             dict_mi_list[residue_pairs[2]].append(residue_pairs[4])
         else:
@@ -165,8 +177,8 @@ def parse_freecontact_coevolution(acc, freecontact_file, freecontact_parsed_csv,
     """
     dict_di = {'1-2': '0.243618', '1-3': '0.40476', '1-4': '0.0177035', '1-5': '0.106223', '1-6': '0.244482',
     dict_di_list:
-    {'1': ['0.454792', '0.44558', '-1.06626', '-0.731704', '-0.252246', '-0.0125942', '-0.0222937', '1.59152', '-0.129083', '1.1289', '-0.242027', '-0.853413', '-1.64731', '-0.745289', '-1.35698', '3.11027', '-1.72332', '-1.01224', '0.598161', '0.603701', '2.23205', '-0.340545'], 
-    '2': ['0.454792', '-1.34186', '2.22772', '-0.764966', '0.648499', '-0.844334', '1.09294', '1.74287', '2.06549', '-1.04338', '1.05392', '-2.15485', '-0.468028', '-0.97496', '-0.24502', '-1.48226', '0.550665', '0.913346', '-0.651264', '-2.15379', '0.665787', '0.163698'], 
+    {'1': ['0.454792', '0.44558', '-1.06626', '-0.731704', '-0.252246', '-0.0125942', '-0.0222937', '1.59152', '-0.129083', '1.1289', '-0.242027', '-0.853413', '-1.64731', '-0.745289', '-1.35698', '3.11027', '-1.72332', '-1.01224', '0.598161', '0.603701', '2.23205', '-0.340545'],
+    '2': ['0.454792', '-1.34186', '2.22772', '-0.764966', '0.648499', '-0.844334', '1.09294', '1.74287', '2.06549', '-1.04338', '1.05392', '-2.15485', '-0.468028', '-0.97496', '-0.24502', '-1.48226', '0.550665', '0.913346', '-0.651264', '-2.15379', '0.665787', '0.163698'],
     '3': ['0.44558', '-1.34186', '-0.972858', '-0.0938075', '-0.319951', '1.78156', '-1.04316', '0.015566', '0.0821186', '0.460809', '-1.37461', '-0.981004', '0.268589', '0.650184', '0.13531', '0.240688', '-0.39947', '2.78247', '1.4023', '-0.697562', '1.62713', '-0.590952'],
     """
 
@@ -190,28 +202,55 @@ def parse_freecontact_coevolution(acc, freecontact_file, freecontact_parsed_csv,
         MImax_1[int(key) - 1] = sorted(dict_mi_list[key], reverse=True)[0]
         # sys.stdout.write(str(key)+"corresponding to"+str(dict_di_list[key]))
     dict_di_value_sort = sorted(dict_di.items(), key=lambda x: x[1], reverse=True)[0:tmd_length]
-    dict_mi_value_sort = sorted(dict_mi.items(), key=lambda x: x[1], reverse=True)[0:tmd_length]
+    sorted(dict_mi.items(), key=lambda x: x[1], reverse=True)[0:tmd_length]
 
     for i in range(0, 4):
-        res0 = int(dict_di_value_sort[i][0].strip().split('-')[0]) - 1
-        res1 = int(dict_di_value_sort[i][0].strip().split('-')[1]) - 1
+        res0 = int(dict_di_value_sort[i][0].strip().split("-")[0]) - 1
+        res1 = int(dict_di_value_sort[i][0].strip().split("-")[1]) - 1
         DI4cum[res0] = DI4cum[res0] + float(dict_di_value_sort[i][1])
         DI4cum[res1] = DI4cum[res1] + float(dict_di_value_sort[i][1])
 
     for i in range(0, 8):
-        res0 = int(dict_di_value_sort[i][0].strip().split('-')[0]) - 1
-        res1 = int(dict_di_value_sort[i][0].strip().split('-')[1]) - 1
+        res0 = int(dict_di_value_sort[i][0].strip().split("-")[0]) - 1
+        res1 = int(dict_di_value_sort[i][0].strip().split("-")[1]) - 1
         DI8cum[res0] = DI8cum[res0] + float(dict_di_value_sort[i][1])
         DI8cum[res1] = DI8cum[res1] + float(dict_di_value_sort[i][1])
 
-    writer = csv.writer(freecontact_parsed_csv_handle, delimiter=',', quotechar='"',
-                        lineterminator='\n',
-                        quoting=csv.QUOTE_NONNUMERIC, doublequote=True)
-    writer.writerow(["residue_num", "residue_name", "DImax", "DItop4mean", "DItop8mean", "DI4cum", "DI8cum", "MImax", "MItop4mean", "MItop8mean"])
+    writer = csv.writer(
+        freecontact_parsed_csv_handle,
+        delimiter=",",
+        quotechar='"',
+        lineterminator="\n",
+        quoting=csv.QUOTE_NONNUMERIC,
+        doublequote=True,
+    )
+    writer.writerow(
+        [
+            "residue_num",
+            "residue_name",
+            "DImax",
+            "DItop4mean",
+            "DItop8mean",
+            "DI4cum",
+            "DI8cum",
+            "MImax",
+            "MItop4mean",
+            "MItop8mean",
+        ]
+    )
     for index in range(len(DI8cum)):
-        csv_header_for_cumulative_strength_file = [(index + 1), dict_residuenum_residuename[(index + 1)],
-                                                   DImax_1[index], DItop4mean[index], DItop8mean[index], DI4cum[index], DI8cum[index], MImax_1[index], MItop4mean[index],
-                                                   MItop8mean[index]]
+        csv_header_for_cumulative_strength_file = [
+            (index + 1),
+            dict_residuenum_residuename[(index + 1)],
+            DImax_1[index],
+            DItop4mean[index],
+            DItop8mean[index],
+            DI4cum[index],
+            DI8cum[index],
+            MImax_1[index],
+            MItop4mean[index],
+            MItop8mean[index],
+        ]
         # writer = csv.writer(freecontact_parsed_csv_handle, delimiter=',', quotechar='"', lineterminator='\n',
         # quoting=csv.QUOTE_NONNUMERIC, doublequote=True)
         writer.writerow(csv_header_for_cumulative_strength_file)
@@ -252,11 +291,11 @@ def parse_freecontact_coevolution(acc, freecontact_file, freecontact_parsed_csv,
         dfp = df.pivot_table(index="n1", columns="n2", values=XI)
 
         """ asymmetrical pivoted data
-        
+
         Note the padding of 4 residues at all sides of the data, to allow easy indexing.
-        
+
             n2   231  232  233  234  235       236       237       238       239       240 ...        252       253       254       255       256       257  258  259  260  261
-        n1                                                                             ...                                                                                 
+        n1                                                                             ...
         231  NaN  NaN  NaN  NaN  NaN       NaN       NaN       NaN       NaN       NaN ...        NaN       NaN       NaN       NaN       NaN       NaN  NaN  NaN  NaN  NaN
         232  NaN  NaN  NaN  NaN  NaN       NaN       NaN       NaN       NaN       NaN ...        NaN       NaN       NaN       NaN       NaN       NaN  NaN  NaN  NaN  NaN
         233  NaN  NaN  NaN  NaN  NaN       NaN       NaN       NaN       NaN       NaN ...        NaN       NaN       NaN       NaN       NaN       NaN  NaN  NaN  NaN  NaN
@@ -267,8 +306,6 @@ def parse_freecontact_coevolution(acc, freecontact_file, freecontact_parsed_csv,
         238  NaN  NaN  NaN  NaN  NaN       NaN       NaN       NaN  0.049759  0.044692 ...   0.119658  0.236728  0.080722  0.114663  0.064796  0.096822  NaN  NaN  NaN  NaN
         """
 
-        # get full list of residues
-        position_list_unique = np.array(list(set(dfp.index.tolist() + dfp.columns.tolist())))
         # padding allows -4 and +4 indexing at ends
         padding = 4
         # DEPRECATED min_ method. Get start and end from df_set
@@ -285,9 +322,9 @@ def parse_freecontact_coevolution(acc, freecontact_file, freecontact_parsed_csv,
         # drop rows with only nan
         # dfp.dropna(how="all", inplace=True)
         """ now is symmetrical, with nans in the central positions
-    
+
             n2   231  232  233  234       235       236       237       238       239       240 ...        252       253       254       255       256       257  258  259  260  261
-        n1                                                                                  ...                                                                                 
+        n1                                                                                  ...
         231  NaN  NaN  NaN  NaN       NaN       NaN       NaN       NaN       NaN       NaN ...        NaN       NaN       NaN       NaN       NaN       NaN  NaN  NaN  NaN  NaN
         232  NaN  NaN  NaN  NaN       NaN       NaN       NaN       NaN       NaN       NaN ...        NaN       NaN       NaN       NaN       NaN       NaN  NaN  NaN  NaN  NaN
         233  NaN  NaN  NaN  NaN       NaN       NaN       NaN       NaN       NaN       NaN ...        NaN       NaN       NaN       NaN       NaN       NaN  NaN  NaN  NaN  NaN
@@ -308,7 +345,7 @@ def parse_freecontact_coevolution(acc, freecontact_file, freecontact_parsed_csv,
                 i_plus = pos + n if pos + n in dfp.columns else dfp.columns.max()
                 # select the two datapoints (e.g. i-4 and i+4 relative to i)
                 sel_XI_ser = dfp.loc[pos, [i_minus, i_plus]]
-                df_out.loc[pos, "XI{}mean".format(n)] = sel_XI_ser.mean()
+                df_out.loc[pos, f"XI{n}mean"] = sel_XI_ser.mean()
 
                 if n == 4:
                     # add the direct connection between i-4 and i+4 (excluding i)
@@ -332,7 +369,7 @@ def parse_freecontact_coevolution(acc, freecontact_file, freecontact_parsed_csv,
         for face in range(7):
             # truncate heptad [1,nan...] list to match the length of the TMD
             end = dfp.shape[0] + face
-            hep_list_trunc = hep_list[face: end]
+            hep_list_trunc = hep_list[face:end]
             hep_list_trunc = np.array(hep_list_trunc)
             # get indices of the residues corresponding to that heptad motif
             # e.g. [ 88  91  92  94  95  98  99 101 102 105 106 108 109 112 113 115 116]
@@ -345,8 +382,8 @@ def parse_freecontact_coevolution(acc, freecontact_file, freecontact_parsed_csv,
             XI_of_face is a selection of the full dataframe
             It's still symmetrical. Each pairwise value is there twice.
             The mean shows the average connection between all residues on that face
-            
-                 88   91        92        94        95        98        99        101       102       105       106       108       109       112       113  115  116                                                                                                                                                    
+
+                 88   91        92        94        95        98        99        101       102       105       106       108       109       112       113  115  116
             88   NaN  NaN       NaN       NaN       NaN       NaN       NaN       NaN       NaN       NaN       NaN       NaN       NaN       NaN       NaN  NaN  NaN
             91   NaN  NaN       NaN       NaN       NaN       NaN       NaN       NaN       NaN       NaN       NaN       NaN       NaN       NaN       NaN  NaN  NaN
             92   NaN  NaN       NaN  0.404760  0.017704  0.159686  0.042351  0.240405  0.173562  0.031921  0.185876  0.297854  0.132235  0.360217  0.320984  NaN  NaN
@@ -364,7 +401,7 @@ def parse_freecontact_coevolution(acc, freecontact_file, freecontact_parsed_csv,
             113  NaN  NaN  0.320984  0.538269  0.064796  0.273921  0.108648  0.318819  0.192598  0.111840  0.476921  0.153646  0.438536  0.461507       NaN  NaN  NaN
             115  NaN  NaN       NaN       NaN       NaN       NaN       NaN       NaN       NaN       NaN       NaN       NaN       NaN       NaN       NaN  NaN  NaN
             116  NaN  NaN       NaN       NaN       NaN       NaN       NaN       NaN       NaN       NaN       NaN       NaN       NaN       NaN       NaN  NaN  NaN
-            
+
             """
             XI_of_face_mean = XI_of_face.mean().mean()
             # keep a record of the "best face"
@@ -372,7 +409,8 @@ def parse_freecontact_coevolution(acc, freecontact_file, freecontact_parsed_csv,
                 index_positions_highest_face = hep_cols
 
         # label the best face as 1, and all other residues as 0
-        index_positions_highest_face = set(index_positions_highest_face).intersection(set(df_out.index))
+        # sorted list, not a set: pandas 2.0 stopped accepting a set as an indexer
+        index_positions_highest_face = sorted(set(index_positions_highest_face).intersection(set(df_out.index)))
         df_out.loc[index_positions_highest_face, "XI_highest_face"] = 1
         df_out["XI_highest_face"] = df_out["XI_highest_face"].fillna(0).astype(int)
 
@@ -382,7 +420,7 @@ def parse_freecontact_coevolution(acc, freecontact_file, freecontact_parsed_csv,
 
     # normalise all columns except for residue_num and residue_name
     column_list = ["residue_num", "residue_name"]
-    coev_colname_list = df_out.columns.tolist()[len(column_list):]
+    coev_colname_list = df_out.columns.tolist()[len(column_list) :]
 
     # Specifically overwrite normalised values for Cum metrics. Convert to 0 or 1.
     coev_cum_colname_list = ["DI4cum", "DI8cum"]
@@ -395,7 +433,7 @@ def parse_freecontact_coevolution(acc, freecontact_file, freecontact_parsed_csv,
         already_normalised = "cum" in col or "highest_face" in col
 
         if not already_normalised:
-            df_out["{}_raw".format(col)] = df_out[col]
+            df_out[f"{col}_raw"] = df_out[col]
             df_out[col] = normalise_0_1(df_out[col])[0]
 
     df_out.to_csv(freecontact_parsed_csv)

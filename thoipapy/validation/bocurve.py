@@ -1,7 +1,6 @@
 import numpy as np
 import pandas as pd
 from scipy.special import comb
-from sklearn.metrics import average_precision_score
 
 
 def calc_best_overlap_from_selected_column_in_df(acc_db, df, experiment_col="interface_score", pred_col="THOIPA"):
@@ -21,9 +20,13 @@ def calc_best_overlap_from_selected_column_in_df(acc_db, df, experiment_col="int
     """
 
     if experiment_col not in df.columns:
-        raise IndexError("{} {} is not in the columns.\ntry re-running add_predictions_to_combined_files\ncolumn list = {}".format(acc_db, experiment_col, df.columns))
+        raise IndexError(
+            f"{acc_db} {experiment_col} is not in the columns.\ntry re-running add_predictions_to_combined_files\ncolumn list = {df.columns}"
+        )
     if pred_col not in df.columns:
-        raise IndexError("{} {} is not in the columns.\ntry re-running add_predictions_to_combined_files\ncolumn list = {}".format(acc_db, pred_col, df.columns))
+        raise IndexError(
+            f"{acc_db} {pred_col} is not in the columns.\ntry re-running add_predictions_to_combined_files\ncolumn list = {df.columns}"
+        )
 
     # Give the rank of the values
     # NOTE THAT IT IS NECESSARY TO RUN ARGSORT TWICE TO ACHIEVE THIS
@@ -56,9 +59,9 @@ def calc_best_overlap(acc_db, experiment_data, prediction_data):
     df_sel = df_sel.iloc[:10, :]
     """Dataframe now contains the rank of experiment and prediction data
         Sorted descending by experiment data.
-        
+
         GpA Elazar 2016 example.
-        
+
            residue_name  interface_score  THOIPA  exp_argsort  pred_argsort
         12            T         0.737715   0.515           14            10
         11            G         0.631558   0.495           13             4
@@ -68,7 +71,6 @@ def calc_best_overlap(acc_db, experiment_data, prediction_data):
         """
     odf = pd.DataFrame()
     ind = 0
-    previous_overlap = 0
     for sample_size in range(1, 11):
         # length of residues tested (usually full TMD length, unless some are excluded)
         # tm_len = len(interface_score_arr)
@@ -76,21 +78,21 @@ def calc_best_overlap(acc_db, experiment_data, prediction_data):
 
         """
         get the set of the indices
-        
+
         for the experiental data, this will simply decrease from the length of the TMD
-        {19} 
+        {19}
         {18, 19}
-        {17, 18, 19} 
+        {17, 18, 19}
         {16, 17, 18, 19}
-        
+
         For the prediction, this will show the rank of the positions highest for the experimental data, e.g.
         {0}
         {0, 3}
         {0, 3, 7}
         {0, 17, 3, 7}
-        
+
         The intersection in this case yield empty sets until a sample size of 4, in which 17 was shared.
-        
+
         NOTE THAT IT IS POSSIBLE TO ADD TWO SHARED POSITIONS BETWEEN EXP. AND PRED. EVEN IF SAMPLE SIZE IS INCREASED BY 1
         """
         exp_set = set(df_sel.exp_argsort.iloc[:sample_size])
@@ -98,10 +100,14 @@ def calc_best_overlap(acc_db, experiment_data, prediction_data):
         intersection_result = exp_set.intersection(pred_set)
         observed_overlap = len(intersection_result)
 
-        pval = comb(sample_size, observed_overlap) * comb(non_sample_size, sample_size - observed_overlap) / comb(tm_len, sample_size)
+        pval = (
+            comb(sample_size, observed_overlap)
+            * comb(non_sample_size, sample_size - observed_overlap)
+            / comb(tm_len, sample_size)
+        )
 
         # random_overlap = calc_rand_overlap(tm_len, sample_size)
-        random_overlap = sample_size ** 2 / tm_len
+        random_overlap = sample_size**2 / tm_len
 
         odf.at[ind, acc_db] = observed_overlap
         odf.at[ind, "sample_size"] = "Top" + str(sample_size)
@@ -119,8 +125,10 @@ def calc_best_overlap(acc_db, experiment_data, prediction_data):
     return odf
 
 
-def parse_BO_data_csv_to_excel(bo_data_csv, bocurve_data_xlsx, n_residues_AUBOC_validation, logging, predictor_name="", log_auboc=True):
-    """ Parses the rather clumsy original csv, and generates data for
+def parse_BO_data_csv_to_excel(
+    bo_data_csv, bocurve_data_xlsx, n_residues_AUBOC_validation, logging, predictor_name="", log_auboc=True
+):
+    """Parses the rather clumsy original csv, and generates data for
     AUBOC curve, and also the mean observed-random scores for each sample (TMD).
     """
     dfb = pd.read_csv(bo_data_csv, index_col=0)
@@ -132,7 +140,7 @@ def parse_BO_data_csv_to_excel(bo_data_csv, bocurve_data_xlsx, n_residues_AUBOC_
     p_value_from_obs_overlap = p-value for finding that overlap
 
                                parameters  1orqC4-crystal  1xioA4-crystal  2axtM1-crystal  2h8aA2-crystal  2j58A1-crystal  2wpdJ1-crystal  3dwwA2-crystal  3h9vA2-crystal  3rifA2-crystal     ...       Q12913-ETRA  Q12983-ETRA  Q16827-ETRA  Q16832-ETRA  Q6ZRP7-ETRA  Q7L4S7-ETRA  Q8NI60-ETRA  Q92729-ETRA  Q99IB8-ETRA  Q9Y286-ETRA
-    sample_size                                                                                                                                                                               ...                                                                                                                                       
+    sample_size                                                                                                                                                                               ...
     Top1                 observed_overlap        0.000000            0.00            0.00            1.00            0.00        0.000000        0.000000        0.000000        0.000000     ...              1.00     1.000000         0.00     0.000000     0.000000         0.00     0.000000     0.000000     1.000000         0.00
     Top1                   random_overlap        0.035714            0.05            0.05            0.05            0.05        0.045455        0.043478        0.034483        0.043478     ...              0.05     0.041667         0.04     0.047619     0.047619         0.05     0.047619     0.041667     0.047619         0.05
     Top1         p_value_from_obs_overlap        0.964286            0.95            0.95            0.05            0.95        0.954545        0.956522        0.965517        0.956522     ...              0.05     0.041667         0.96     0.952381     0.952381         0.95     0.952381     0.958333     0.047619         0.95
@@ -145,7 +153,7 @@ def parse_BO_data_csv_to_excel(bo_data_csv, bocurve_data_xlsx, n_residues_AUBOC_
     """NOW INDICES ARE UNIQUE
 
                                              parameters  1orqC4-crystal  1xioA4-crystal  2axtM1-crystal  2h8aA2-crystal  2j58A1-crystal  2wpdJ1-crystal  3dwwA2-crystal  3h9vA2-crystal  3rifA2-crystal     ...       Q12913-ETRA  Q12983-ETRA  Q16827-ETRA  Q16832-ETRA  Q6ZRP7-ETRA  Q7L4S7-ETRA  Q8NI60-ETRA  Q92729-ETRA  Q99IB8-ETRA  Q9Y286-ETRA
-    parameters                                                                                                                                                                                                  ...                                                                                                                                       
+    parameters                                                                                                                                                                                                  ...
     Top1_observed_overlap                  observed_overlap        0.000000            0.00            0.00            1.00            0.00        0.000000        0.000000        0.000000        0.000000     ...              1.00     1.000000         0.00     0.000000     0.000000         0.00     0.000000     0.000000     1.000000         0.00
     Top1_random_overlap                      random_overlap        0.035714            0.05            0.05            0.05            0.05        0.045455        0.043478        0.034483        0.043478     ...              0.05     0.041667         0.04     0.047619     0.047619         0.05     0.047619     0.041667     0.047619         0.05
     Top1_p_value_from_obs_overlap  p_value_from_obs_overlap        0.964286            0.95            0.95            0.05            0.95        0.954545        0.956522        0.965517        0.956522     ...              0.05     0.041667         0.96     0.952381     0.952381         0.95     0.952381     0.958333     0.047619         0.95
@@ -188,10 +196,10 @@ def parse_BO_data_csv_to_excel(bo_data_csv, bocurve_data_xlsx, n_residues_AUBOC_
     3               0           0            1
     4               1           0            1
     5               1           1            2
-    
-    
+
+
     Then the dfobs_frac is simply the same data as a fraction (divided by the index)
-    
+
     ...   3h9vA2-crystal  P05067-NMR  Q12983-ETRA
     1            0.00         0.0     0.000000
     2            0.00         0.0     0.000000
@@ -223,17 +231,17 @@ def parse_BO_data_csv_to_excel(bo_data_csv, bocurve_data_xlsx, n_residues_AUBOC_
     3        3.111111             0.0             0.0        6.666667        2.222222        2.444444            0.00             0.0        2.555556             0.0     ...          6.666667         8.00       0.0000     4.666667         0.00     4.444444     4.666667     2.666667     2.333333     4.444444
     4        1.750000             0.0             0.0        3.750000        1.250000        1.375000            0.00             0.0        4.312500             0.0     ...          3.750000         6.00       1.5625     5.250000         0.00     2.500000     3.937500     3.000000     2.625000     2.500000
     5        1.120000             0.0             0.0        3.200000        1.600000        1.760000            1.84             0.0        3.680000             0.0     ...          2.400000         3.84       1.0000     3.360000         0.84     1.600000     2.520000     2.880000     2.520000     1.600000
-    
+
     NOW df_o_minus_r EXPRESSED AS A FRACTION
     It's negative where the random value got a higher score.
-    
+
         ...   3h9vA2-crystal  P05067-NMR  Q12983-ETRA
     1       -0.034483   -0.043478     0.933333
     2        0.431034   -0.086957     0.366667
     3        0.229885   -0.130435     0.466667
     4        0.362069   -0.173913     0.483333
     5        0.227586    0.182609     0.466667
-    
+
     """
     ##################################################################################
     #          CALCULATE MEAN VALUE AT EACH POSITION FOR ALL TMDS FOR BO-CURVE       #
@@ -243,10 +251,10 @@ def parse_BO_data_csv_to_excel(bo_data_csv, bocurve_data_xlsx, n_residues_AUBOC_
     # apply cutoff (e.g. 5 residues for AUBOC5)
     auboc_ser = mean_o_minus_r_df["mean_o_minus_r"].iloc[:n_residues_AUBOC_validation]
 
-    auboc = np.trapz(auboc_ser, auboc_ser.index)
+    auboc = np.trapezoid(auboc_ser, auboc_ser.index)
 
     if log_auboc:
-        logging.info("---{: >24} mean_AUBOC({:.2f}) n={} ---".format(predictor_name, auboc, df_o_minus_r.shape[1]))
+        logging.info(f"---{predictor_name: >24} mean_AUBOC({auboc:.2f}) n={df_o_minus_r.shape[1]} ---")
 
     #######################################################################################################
     #                     CALCULATE MEAN OBS-RAND FOR EACH SAMPLE(TMD) SEPARATELY                         #

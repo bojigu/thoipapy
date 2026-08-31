@@ -1,89 +1,152 @@
 #!/usr/bin/env python
-# -*- coding: utf-8 -*-
 """
 Utilities file containing useful functions.
 More recent functions are at the top.
 Many of these are taken from he korbinian python package by Mark Teese. This is allowed under the permissive MIT license.
 """
-import csv
-import glob
+
+import ctypes
 import logging
 import os
+import platform
 import re as re
 import subprocess
 import sys
-import tarfile
 import threading
+import unicodedata
 from pathlib import Path
-from typing import Union
 
+import matplotlib.colors as colors
 import numpy as np
 import pandas as pd
-from shutil import copyfile
-from time import strftime
-import platform
-import matplotlib.colors as colors
-import ctypes
-from scipy.special import comb
+
+# Above this fraction of residues lost to NaN, a dropna() is treated as a pipeline failure rather
+# than as data cleaning. See dropna_with_report.
+MAX_FRACTION_ROWS_DROPPED = 0.05
 
 
-class Command(object):
-    '''
+class Command:
+    """
     subprocess for running shell commands in win and linux
     This will run commands from python as if it was a normal windows console or linux terminal.
     taken from http://stackoverflow.com/questions/17257694/running-jar-files-from-python)'
-    '''
+    """
 
     def __init__(self, cmd):
         self.cmd = cmd
         self.process = None
+        self.returncode = None
+        self.timed_out = False
+        self.stderr = ""
 
     def run(self, timeout, log_stderr=True):
+        """Run the command, recording its exit status in self.returncode and self.timed_out.
+
+        The exit status used to be discarded. Every caller here runs an external binary
+        (freecontact, rate4site, cd-hit) through a shell redirect, which creates the output
+        file before the binary is resolved -- so a missing tool left a 0-byte file behind and
+        looked exactly like success. Callers must check succeeded() rather than the mere
+        existence of an output file.
+        """
+
         def target():
-            # logging.info('Thread started')
             self.process = subprocess.Popen(self.cmd, shell=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
-            # self.process.communicate()
-            stdout, stderr = self.process.communicate()  # from http://stackoverflow.com/questions/14366352/how-to-capture-information-from-executable-jar-in-python
-            # Thus far, SIMAP has only ever given java faults, never java output. Don't bother showing.
+            stdout, stderr = self.process.communicate()
+            self.stderr = stderr.decode("utf-8", errors="replace")
             # if the console prints anything longer than 5 characters, log it
-            if len(stderr.decode("utf-8")) > 5:
+            if len(self.stderr) > 5:
                 if log_stderr:
-                    logging.warning('FAULTS: %s' % stderr.decode("utf-8"))
-            # logging.info('Thread finished')
+                    logging.warning(f"FAULTS: {self.stderr}")
 
         thread = threading.Thread(target=target)
         thread.start()
 
         thread.join(timeout)
         if thread.is_alive():
-            logging.info('Terminating process')
+            logging.warning(f"Terminating process after {timeout}s timeout: {self.cmd}")
+            self.timed_out = True
             self.process.terminate()
             thread.join()
-        # simply returns 0 every time it works. Waste of logging space! :)
-        # logging.info(self.process.returncode)
+
+        self.returncode = self.process.returncode if self.process is not None else None
+
+        # A nonzero exit is reported even when log_stderr is False. log_stderr suppresses the
+        # noisy stderr *content* of tools that chatter on success; it must not suppress failure.
+        if not self.succeeded():
+            logging.warning(f"Command failed (returncode={self.returncode}, timed_out={self.timed_out}): {self.cmd}")
+
+        return self.returncode
+
+    def succeeded(self) -> bool:
+        """True only if the command ran to completion with a zero exit status."""
+        return self.returncode == 0 and not self.timed_out
 
 
-def run_command(command):
-    # this stopped working for some reason. Did I mess up a path variable?
-    p = subprocess.Popen(command,
-                         stdout=subprocess.PIPE,
-                         stderr=subprocess.STDOUT)
-    return iter(p.stdout.readline, b'')
+def residuals(constants, function, x, y):
+    """Cost function (Kostenfunktion) used to optimise the fit of a curve to data.
 
+    Returns the distance between the y-values of the real data and the y-values produced by the
+    fitted function (sigmoid, sine, etc.). This is the quantity that scipy.optimize.leastsq
+    minimises.
 
-def aaa(df_or_series):
-    """ Function for use in debugging.
-    Saves pandas Series or Dataframes to a user-defined csv file.
+    Copied from pytoxr.mathfunctions (https://github.com/teese/pytoxr) by Mark Teese, so that
+    thoipapy does not take a dependency on pytoxr for two short functions. This is allowed under
+    the permissive MIT license.
+
+    Parameters
+    ----------
+    constants : arraylike
+        The parameters of `function` that are being optimised.
+    function : callable
+        A function of the form f(constants, x), whose fit to the data is being optimised.
+    x : np.ndarray
+        x-values of the real data.
+    y : arraylike
+        y-values of the real data.
+
+    Returns
+    -------
+    residuals : np.ndarray
+        Element-wise difference between the real and the fitted y-values.
     """
-    # convert any series to dataframe
-    if isinstance(df_or_series, pd.Series):
-        df_or_series = df_or_series.to_frame()
-    csv_out = r"D:\data\000_aaa_temp_df_out.csv"
-    df_or_series.to_csv(csv_out, sep=",", quoting=csv.QUOTE_NONNUMERIC)
+    return y - function(constants, x)
 
 
-def make_sure_path_exists(input_path: Union[Path, str], isfile: bool = False):
-    """ If path to directory or folder doesn't exist, creates the necessary directory.
+def sine_perfect_helix(sine_constants_cd, x):
+    """Sine equation constrained to alpha-helical periodicity, 3.6 residues per turn.
+
+    f(x) = a * sin(b * x + c) + d, where a and b are fixed and only c and d are fitted.
+
+    Why is a fixed to 0.2?
+        This is arbitrary, resulting in a curve that is 0.4 in height.
+    Why is b fixed to 1.745?
+        Since periodicity = 2 * np.pi / b, for a perfect alpha helix b = 2 * np.pi / 3.6 = 1.745.
+
+    Copied from pytoxr.mathfunctions (https://github.com/teese/pytoxr) by Mark Teese, so that
+    thoipapy does not take a dependency on pytoxr for two short functions. This is allowed under
+    the permissive MIT license.
+
+    Parameters
+    ----------
+    sine_constants_cd : arraylike
+        The two fitted constants: c, the phase shift, and d, the vertical offset.
+    x : np.ndarray
+        x-values, in residue numbers.
+
+    Returns
+    -------
+    y : np.ndarray
+        y-values of the constrained sine curve at each position in `x`.
+    """
+    a = 0.2
+    b = 1.745
+    c, d = sine_constants_cd
+    y = a * np.sin(b * x + c) + d
+    return y
+
+
+def make_sure_path_exists(input_path: Path | str, isfile: bool = False):
+    """If path to directory or folder doesn't exist, creates the necessary directory.
     Set isfile=True to indicate a filepath, where the parent directory needs to be created.
     """
     input_path = Path(input_path)
@@ -100,7 +163,7 @@ def make_sure_path_exists(input_path: Union[Path, str], isfile: bool = False):
 
 
 def reorder_dataframe_columns(dataframe, cols, front=True):
-    '''Takes a dataframe and a subsequence of its columns,
+    """Takes a dataframe and a subsequence of its columns,
        returns dataframe with seq as first columns if "front" is True,
        and seq as last columns if "front" is False.
        taken from https://stackoverflow.com/questions/12329853/how-to-rearrange-pandas-column-sequence
@@ -117,7 +180,7 @@ def reorder_dataframe_columns(dataframe, cols, front=True):
     Usage
     -----
     df = reorder_dataframe_columns(df, ["TMD_start", "database", "whatever other col I want first"])
-    '''
+    """
     for col in cols:
         if col not in dataframe.columns:
             cols.remove(col)
@@ -135,49 +198,6 @@ def reorder_dataframe_columns(dataframe, cols, front=True):
     return dataframe[cols_to_place_first]
 
 
-def create_tarballs_from_xml_files_in_folder(xml_dir, download_date="2017.11.02"):
-    """script to create .tar.gz compressed files from a folder of xml files
-
-    COPY SECTIONS INTO JUPYTER NOTEBOOK AND MODIFY AS NEEDED
-
-    to add today's date
-    date = strftime("%Y.%m.%d")
-
-    THIS SCRIPT DOES NOT DELETE THE ORIGINAL XML FILES
-
-    """
-
-    xml_list = glob.glob(os.path.join(xml_dir, "*.xml"))
-
-    for xml in xml_list:
-        xml_renamed = xml[:-4] + ".BLAST.xml"
-        xml_tar_gz = xml[:-4] + ".BLAST.xml.tar.gz"
-        xml_txt = xml[:-4] + "_details.txt"
-        # xml_txt = xml[:-4] + ".BLAST_details.txt"
-
-        if not os.path.isfile(xml_tar_gz):
-            copyfile(xml, xml_renamed)
-            acc = os.path.basename(xml).split(".")[0]
-            sys.stdout.write("{}, ".format(acc))
-            sys.stdout.flush()
-            # create an empty text file with the download date
-            date = strftime("%Y%m%d")
-            with open(xml_txt, "w") as f:
-                f.write("acc\t{}\ndownload_date\t{}\ndatabase\tncbi_nr\ne_value\t1\n".format(acc, download_date))
-
-            with tarfile.open(xml_tar_gz, mode='w:gz') as tar:
-                # add the files to the compressed tarfile
-                tar.add(xml_renamed, arcname=os.path.basename(xml_renamed))
-                tar.add(xml_txt, arcname=os.path.basename(xml_txt))
-
-            # delete the original files
-            try:
-                os.remove(xml_renamed)
-                os.remove(xml_txt)
-            except:
-                sys.stdout.write("{} could not be deleted".format(xml_renamed))
-
-
 def delete_BLAST_xml(blast_xml_file):
     """Small function to remove files that are already compressed in a tarball.
 
@@ -193,18 +213,12 @@ def delete_BLAST_xml(blast_xml_file):
     # delete the original files
     try:
         os.remove(blast_xml_file)
-    except:
-        sys.stdout.write("{} could not be deleted".format(blast_xml_file))
+    except OSError:
+        sys.stdout.write(f"{blast_xml_file} could not be deleted")
     try:
         os.remove(xml_txt)
-    except:
-        sys.stdout.write("{} could not be deleted".format(xml_txt))
-
-
-def setup_biopol_plotly(username, api_key):
-    import plotly
-    plotly.tools.set_config_file(world_readable=False, sharing='private')
-    plotly.tools.set_credentials_file(username=username, api_key=api_key)
+    except OSError:
+        sys.stdout.write(f"{xml_txt} could not be deleted")
 
 
 def get_n_of_gaps_at_start_and_end_of_seq(seq):
@@ -228,14 +242,12 @@ def get_list_residues_in_motif(seq, motif_ss, motif_len):
     match_start_list = []
     match_end_list = [0] * motif_len
     # counter for the matches
-    match_number = 0
-    result_dict = {}
 
     for start in range(len(seq) - motif_len):
         # for a SmallxxxSmall motif, the end is 4 residues later
         end = start + motif_len
         # get the matched segment
-        segment = seq[start:end + 1]
+        segment = seq[start : end + 1]
         # check if the segment contains a motif
         match = re.match(motif_ss, segment)
         if match:
@@ -264,7 +276,7 @@ def get_list_residues_in_motif(seq, motif_ss, motif_len):
 
 def slice_TMD_seq_pl_surr(df_set):
     # note that due to uniprot-like indexing, the start index = start-1
-    return df_set['full_seq'][int(df_set['TMD_start_pl_surr'] - 1):int(df_set['TMD_end_pl_surr'])]
+    return df_set["full_seq"][int(df_set["TMD_start_pl_surr"] - 1) : int(df_set["TMD_end_pl_surr"])]
 
 
 def create_column_with_TMD_plus_surround_seq(df_set, num_of_sur_residues):
@@ -279,15 +291,15 @@ def create_column_with_TMD_plus_surround_seq(df_set, num_of_sur_residues):
     return df_set, TMD_seq_pl_surr_series
 
 
-def create_namedict(names_excel_path, style="shortname [acc-db]"):
-    """ Create protein name dictionary from an excel file with detailed protein info.
+def create_namedict(names_csv_path, style="shortname [acc-db]"):
+    """Create protein name dictionary from the CSV of detailed protein info.
 
     e.g. namedict[P02724-NMR
 
     Parameters
     ----------
-    names_excel_path : str
-        Path to excel file with manually edited protein names
+    names_csv_path : str
+        Path to the CSV of manually edited protein names
     style : str
         Style of protein name in output dictionary. Current options are "shortname [acc-db]" or "shortname [acc]"
         "shortname [acc-db]" = 'Q9Y286-ETRA': 'Siglec7 [Q9Y286-ETRA]'
@@ -299,9 +311,9 @@ def create_namedict(names_excel_path, style="shortname [acc-db]"):
         Dictionary in format namedict[acc_db] = "formatted protein name"
     """
     #################################################################
-    #             EXTRACT NAMES FROM NAMES EXCEL FILE               #
+    #                EXTRACT NAMES FROM THE NAMES CSV               #
     #################################################################
-    df_names = pd.read_excel(names_excel_path, index_col=0)
+    df_names = pd.read_csv(names_csv_path, index_col=0)
     # restrict names dict to only that database
     df_names["acc"] = df_names.index
     df_names["acc_db"] = df_names.acc + "-" + df_names.database
@@ -312,10 +324,10 @@ def create_namedict(names_excel_path, style="shortname [acc-db]"):
 
     # add old names in index "e.g. Q13563-crystal", so that they are replaced with new "X-ray" names in figs
     xray_row_bool_ser = df_names.acc_db.str.contains("X-ray")
-    df_xray = df_names.loc[xray_row_bool_ser == True].copy()
+    df_xray = df_names.loc[xray_row_bool_ser == True].copy()  # noqa: E712  bool mask, not truthiness
     df_xray.index = df_xray["PDB acc"] + "-crystal"
     df_xray["acc_db"] = df_xray["PDB acc"] + "-" + df_xray.database
-    df_names = pd.concat([df_names.loc[xray_row_bool_ser == False], df_xray])
+    df_names = pd.concat([df_names.loc[xray_row_bool_ser == False], df_xray])  # noqa: E712  bool mask
 
     # df_names = df_names.loc[df_names.database == database]
     if style == "shortname [acc-db]":
@@ -367,14 +379,29 @@ def drop_redundant_proteins_from_list(df_set, logging):
     df_set_nonred : pd.DataFrame
         df_set with only non-redundant proteins, based on redundancy settings
     """
-    if "no_cdhit_results" in df_set.cdhit_cluster_rep:
-        logging.warning("No CD-HIT results were used to remove redundant seq,  but model is being trained anyway.")
+    # `"x" in series` tests the INDEX, not the values, so this warning never fired: the index is
+    # a RangeIndex. Use .eq().any() to actually inspect the column.
+    no_cdhit_results = df_set.cdhit_cluster_rep.eq("no_cdhit_results").any()
+    if no_cdhit_results:
+        logging.warning(
+            "No CD-HIT results were found, so no redundancy reduction was applied. All proteins "
+            "are being used to train the model. To apply redundancy reduction, run CD-HIT and "
+            "ensure the .clstr.sorted.txt output is present in results/<setname>/clusters/."
+        )
 
     n_prot_initial = df_set.shape[0]
-    # create model only using CD-HIT cluster representatives
-    df_set_nonred = df_set.loc[df_set.cdhit_cluster_rep != False]
+    # create model only using CD-HIT cluster representatives.
+    # `!= False` was comparing against the string "no_cdhit_results", which is never equal to
+    # False, so nothing was ever dropped even when CD-HIT results were absent. Compare against
+    # the boolean explicitly, and only when there are real results to compare.
+    if no_cdhit_results:
+        df_set_nonred = df_set
+    else:
+        df_set_nonred = df_set.loc[df_set.cdhit_cluster_rep.astype(bool)]
     n_prot_final = df_set_nonred.shape[0]
-    logging.info("CDHIT redundancy reduction : n_prot_initial = {}, n_prot_final = {}, n_prot_dropped = {}".format(n_prot_initial, n_prot_final, n_prot_initial - n_prot_final))
+    logging.info(
+        f"CDHIT redundancy reduction : n_prot_initial = {n_prot_initial}, n_prot_final = {n_prot_final}, n_prot_dropped = {n_prot_initial - n_prot_final}"
+    )
     return df_set_nonred
 
 
@@ -397,61 +424,18 @@ def add_res_num_full_seq_to_df(acc, df, TMD_seq, full_seq, prediction_name, file
     if m:
         # convert from python indexing to unprot indexing
         TMD_start = m.start() + 1
-        TMD_end = m.end()
+        m.end()
         df["res_num_full_seq"] = np.array(range(df.shape[0])) + TMD_start
     else:
-        raise IndexError("TMD seq not found in full_seq.\nacc = {}\nTMD_seq = {}\nfull_seq = {}\n"
-                         "prediction_name={},file={}".format(acc, TMD_seq, full_seq, prediction_name, file))
+        raise IndexError(
+            f"TMD seq not found in full_seq.\nacc = {acc}\nTMD_seq = {TMD_seq}\nfull_seq = {full_seq}\n"
+            f"prediction_name={prediction_name},file={file}"
+        )
     return df
 
 
-def calculate_identity(sequenceA, sequenceB):
-    """
-    Returns the percentage of identical characters between two sequences.
-    Assumes the sequences are aligned.
-    """
-
-    sa, sb, sl = sequenceA, sequenceB, len(sequenceA)
-    matches = [sa[i] == sb[i] for i in range(sl)]
-    seq_id = (100 * sum(matches)) / sl
-
-    gapless_sl = sum([1 for i in range(sl) if (sa[i] != '-' and sb[i] != '-')])
-    gap_num = sum([1 for i in range(sl) if (sa[i] == '-' or sb[i] == '-')])
-    if gapless_sl > 0:
-        gap_id = (100 * sum(matches)) / gapless_sl
-    else:
-        gap_id = 0
-    return (seq_id, gap_id, gap_num)
-
-
-def join_two_algined_seqences(aligned_A, aligned_B):
-    '''
-    combine two aligned sequences, take the non-gap residue for the combined seqence
-    Parameters
-    ----------
-    aligned_A
-    aligned_B
-
-    Returns
-    -------
-
-    '''
-    aligned_AB = ""
-    for j in range(len(aligned_A)):
-        if aligned_A[j] == '-' and aligned_B[j] == '-':
-            sys.stdout.write(
-                "this homo pair should be considered removed:\n check {},{}".format(aligned_A, aligned_B))
-        if aligned_A[j] != '-':
-            aligned_AB = aligned_AB + aligned_A[j]
-            continue
-        if aligned_B[j] != '-':
-            aligned_AB = aligned_AB + aligned_B[j]
-            continue
-    return aligned_AB
-
-
 def shorten(x):
-    '''
+    """
     convert 3-letter amino acid name to 1-letter form
     Parameters
     ----------
@@ -461,41 +445,41 @@ def shorten(x):
     y : str, one-letter aa sequence
     -------
 
-    '''
-    d = {'CYS': 'C', 'ASP': 'D', 'SER': 'S', 'GLN': 'Q', 'LYS': 'K',
-         'ILE': 'I', 'PRO': 'P', 'THR': 'T', 'PHE': 'F', 'ASN': 'N',
-         'GLY': 'G', 'HIS': 'H', 'LEU': 'L', 'ARG': 'R', 'TRP': 'W',
-         'ALA': 'A', 'VAL': 'V', 'GLU': 'E', 'TYR': 'Y', 'MET': 'M',
-         'UNK': 'U'}
+    """
+    d = {
+        "CYS": "C",
+        "ASP": "D",
+        "SER": "S",
+        "GLN": "Q",
+        "LYS": "K",
+        "ILE": "I",
+        "PRO": "P",
+        "THR": "T",
+        "PHE": "F",
+        "ASN": "N",
+        "GLY": "G",
+        "HIS": "H",
+        "LEU": "L",
+        "ARG": "R",
+        "TRP": "W",
+        "ALA": "A",
+        "VAL": "V",
+        "GLU": "E",
+        "TYR": "Y",
+        "MET": "M",
+        "UNK": "U",
+    }
     if len(x) % 3 != 0:
-        raise ValueError('Input length should be a multiple of three')
+        raise ValueError("Input length should be a multiple of three")
 
-    y = ''
+    y = ""
     for i in range(int(len(x) / 3)):
-        y += d[x[3 * i:3 * i + 3]]
+        y += d[x[3 * i : 3 * i + 3]]
     return y
 
 
-def Get_Closedist_between_ChianA_ChainB(hashclosedist):
-    i = 0
-    j = 0
-    hashA = {}
-    hashB = {}
-    closest_dist_arr = []
-
-    jk = ""
-    for k, v in sorted(hashclosedist.items()):
-        if re.search(r'NEN', k) or re.search(r'CEN', k):
-            continue
-        k = k.split(':')
-        k1 = '_'.join(k)
-        k2 = '_'.join([k1, str(v)])
-        jk = '+'.join([jk, k2])
-    return jk
-
-
-def add_mutation_missed_residues_with_na(s, acc, database, df):
-    acc_combind_feature_file = os.path.join(s['features_folder'], "combined", database, "{}.surr{}.gaps{}.combined_features.csv".format(acc, s["num_of_sur_residues"], s["max_n_gaps_in_TMD_subject_seq"]))
+def add_mutation_missed_residues_with_na(combined_features_csv, acc, database, df):
+    acc_combind_feature_file = combined_features_csv
     df_feature = pd.read_csv(acc_combind_feature_file, engine="python", index_col=0)
     not_df_index = [element for element in df_feature["residue_num"].values if element not in df.index.values]
     for element in not_df_index:
@@ -505,7 +489,7 @@ def add_mutation_missed_residues_with_na(s, acc, database, df):
 
 
 def normalise_0_1(arraylike):
-    """ Normalise an array to values between 0 and 1.
+    """Normalise an array to values between 0 and 1.
 
     The following linear formula is used.
     norm_array = (orig_array - array_min)/(array_max - array_min)
@@ -545,7 +529,7 @@ def normalise_0_1(arraylike):
 
 
 def denormalise_0_1(value_or_array, array_min, array_max):
-    """ Denormalise a value or array to orig values.
+    """Denormalise a value or array to orig values.
 
     For use after normalisation between 0 and 1 with the normalise_0_1 function.
 
@@ -574,7 +558,7 @@ def denormalise_0_1(value_or_array, array_min, array_max):
 
     Usage
     -----
-    from eccpy.tools import normalise_0_1, denormalise_0_1
+    from thoipapy.utils import normalise_0_1, denormalise_0_1
     import numpy as np
     original_array = np.linspace(10,130,10)
     original_array[2], original_array[4] = 3, 140
@@ -593,8 +577,9 @@ def denormalise_0_1(value_or_array, array_min, array_max):
     norm_array_mean_denormalised == orig_array_mean
     """
     if isinstance(value_or_array, list):
-        raise ValueError('this function accepts arraylike data, not a list. '
-                         'Please check data or convert list to numpy array')
+        raise ValueError(
+            "this function accepts arraylike data, not a list. " "Please check data or convert list to numpy array"
+        )
     elif isinstance(value_or_array, float):
         denormalised = value_or_array * (array_max - array_min) + array_min
     elif isinstance(value_or_array, np.ndarray):
@@ -602,9 +587,11 @@ def denormalise_0_1(value_or_array, array_min, array_max):
     elif isinstance(value_or_array, pd.Series):
         denormalised = value_or_array * (array_max - array_min) + array_min
     else:
-        sys.stdout.write("Unknown datatype. denormalise_0_1 has been given an input that does not appear to be "
-                         "an int, float, np.ndarray or pandas Series\n"
-                         "Attempting to process as if it is arraylike.....")
+        sys.stdout.write(
+            "Unknown datatype. denormalise_0_1 has been given an input that does not appear to be "
+            "an int, float, np.ndarray or pandas Series\n"
+            "Attempting to process as if it is arraylike....."
+        )
     return denormalised
 
 
@@ -634,7 +621,7 @@ def normalise_between_2_values(arraylike, min_value, max_value, invert=False):
 
     Usage
     -----
-    from eccpy.tools import normalise_between_2_values
+    from thoipapy.utils import normalise_between_2_values
     # for array
     orig_array = np.array(range(0, 15))
     norm_array = normalise_between_2_values(orig_array, 3, 10)
@@ -654,40 +641,40 @@ def normalise_between_2_values(arraylike, min_value, max_value, invert=False):
 
 
 def create_colour_lists():
-    '''
+    """
     Converts several lists of rgb colours to the python format (normalized to between 0 and 1)
     Returns a dictionary that contains dictionaries of palettes with named colours (eg. TUM blues)
     and also lists of unnamed colours (e.g. tableau20)
     (copied from tlabtools 2016.08.08)
-    '''
+    """
     output_dict = {}
 
     matplotlib_150 = list(colors.cnames.values())
-    output_dict['matplotlib_150'] = matplotlib_150
+    output_dict["matplotlib_150"] = matplotlib_150
 
     # define colour dictionaries. TUM colours are based on the style guide.
     colour_dicts = {
-        'TUM_colours': {
-            'TUMBlue': (34, 99, 169),
-            'TUM1': (100, 160, 200),
-            'TUM2': (1, 51, 89),
-            'TUM3': (42, 110, 177),
-            'TUM4': (153, 198, 231),
-            'TUM5': (0, 82, 147)
+        "TUM_colours": {
+            "TUMBlue": (34, 99, 169),
+            "TUM1": (100, 160, 200),
+            "TUM2": (1, 51, 89),
+            "TUM3": (42, 110, 177),
+            "TUM4": (153, 198, 231),
+            "TUM5": (0, 82, 147),
         },
-        'TUM_oranges': {
-            'TUM0': (202, 101, 10),
-            'TUM1': (213, 148, 96),
-            'TUM2': (102, 49, 5),
-            'TUM3': (220, 108, 11),
-            'TUM4': (247, 194, 148),
-            'TUM5': (160, 78, 8)
+        "TUM_oranges": {
+            "TUM0": (202, 101, 10),
+            "TUM1": (213, 148, 96),
+            "TUM2": (102, 49, 5),
+            "TUM3": (220, 108, 11),
+            "TUM4": (247, 194, 148),
+            "TUM5": (160, 78, 8),
         },
-        'TUM_accents': {
-            'green': (162, 183, 0),
-            'orange': (227, 114, 34),
-            'ivory': (218, 215, 203),
-        }
+        "TUM_accents": {
+            "green": (162, 183, 0),
+            "orange": (227, 114, 34),
+            "ivory": (218, 215, 203),
+        },
     }
 
     # convert the nested dicts to python 0 to 1 format
@@ -696,28 +683,50 @@ def create_colour_lists():
             # define r, g, b as ints
             r, g, b = colour_dicts[c_dict][c]
             # normalise r, g, b and add to dict
-            colour_dicts[c_dict][c] = (r / 255., g / 255., b / 255.)
+            colour_dicts[c_dict][c] = (r / 255.0, g / 255.0, b / 255.0)
         # add normalised colours to output dictionary
         output_dict[c_dict] = colour_dicts[c_dict]
 
     # define colour lists
     colour_lists = {
-        'tableau20': [
-            (31, 119, 180), (174, 199, 232), (255, 127, 14), (255, 187, 120),
-            (44, 160, 44), (152, 223, 138), (214, 39, 40), (255, 152, 150),
-            (148, 103, 189), (197, 176, 213), (140, 86, 75), (196, 156, 148),
-            (227, 119, 194), (247, 182, 210), (127, 127, 127), (199, 199, 199),
-            (188, 189, 34), (219, 219, 141), (23, 190, 207), (158, 218, 229)
+        "tableau20": [
+            (31, 119, 180),
+            (174, 199, 232),
+            (255, 127, 14),
+            (255, 187, 120),
+            (44, 160, 44),
+            (152, 223, 138),
+            (214, 39, 40),
+            (255, 152, 150),
+            (148, 103, 189),
+            (197, 176, 213),
+            (140, 86, 75),
+            (196, 156, 148),
+            (227, 119, 194),
+            (247, 182, 210),
+            (127, 127, 127),
+            (199, 199, 199),
+            (188, 189, 34),
+            (219, 219, 141),
+            (23, 190, 207),
+            (158, 218, 229),
         ],
-        'tableau20blind': [
-            (0, 107, 164), (255, 128, 14), (171, 171, 171), (89, 89, 89),
-            (95, 158, 209), (200, 82, 0), (137, 137, 137), (163, 200, 236),
-            (255, 188, 121), (207, 207, 207)
-        ]
+        "tableau20blind": [
+            (0, 107, 164),
+            (255, 128, 14),
+            (171, 171, 171),
+            (89, 89, 89),
+            (95, 158, 209),
+            (200, 82, 0),
+            (137, 137, 137),
+            (163, 200, 236),
+            (255, 188, 121),
+            (207, 207, 207),
+        ],
     }
     # normalise the colours for the colour lists
     for rgb_list in colour_lists:
-        colour_array = np.array(colour_lists[rgb_list]) / 255.
+        colour_array = np.array(colour_lists[rgb_list]) / 255.0
         colour_array_tup = tuple(map(tuple, colour_array))
         colour_lists[rgb_list] = colour_array_tup
         # add normalised colours to output dictionary
@@ -725,26 +734,34 @@ def create_colour_lists():
     # create a mixed blue/grey colour list, with greys in decreasing darkness
     TUM_colours_list_with_greys = []
     grey = 0.7
-    for c in colour_dicts['TUM_colours'].values():
-        TUM_colours_list_with_greys.append('%0.2f' % grey)
+    for c in colour_dicts["TUM_colours"].values():
+        TUM_colours_list_with_greys.append(f"{grey:0.2f}")
         TUM_colours_list_with_greys.append(c)
         grey -= 0.1
-    output_dict['TUM_colours_list_with_greys'] = TUM_colours_list_with_greys
+    output_dict["TUM_colours_list_with_greys"] = TUM_colours_list_with_greys
 
-    output_dict['HTML_list01'] = ['#808080', '#D59460', '#005293', '#A1B11A', '#9ECEEC', '#0076B8', '#454545', "#7b3294", "#c2a5cf", "#008837", "#a6dba0"]
+    output_dict["HTML_list01"] = [
+        "#808080",
+        "#D59460",
+        "#005293",
+        "#A1B11A",
+        "#9ECEEC",
+        "#0076B8",
+        "#454545",
+        "#7b3294",
+        "#c2a5cf",
+        "#008837",
+        "#a6dba0",
+    ]
     return output_dict
 
 
 def get_free_space(folder, format="MB"):
     """
-        Return folder/drive free space
+    Return folder/drive free space
     """
-    fConstants = {"GB": 1073741824,
-                  "MB": 1048576,
-                  "KB": 1024,
-                  "B": 1
-                  }
-    if platform.system() == 'Windows':
+    fConstants = {"GB": 1073741824, "MB": 1048576, "KB": 1024, "B": 1}
+    if platform.system() == "Windows":
         free_bytes = ctypes.c_ulonglong(0)
         ctypes.windll.kernel32.GetDiskFreeSpaceExW(ctypes.c_wchar_p(folder), None, None, ctypes.pointer(free_bytes))
         return (int(free_bytes.value / fConstants[format.upper()]), format)
@@ -753,14 +770,14 @@ def get_free_space(folder, format="MB"):
 
 
 def create_regex_string(inputseq):
-    ''' adds '-*' between each aa or nt/aa in a DNA or protein sequence, so that a particular
+    """adds '-*' between each aa or nt/aa in a DNA or protein sequence, so that a particular
     aligned sequence can be identified via a regex search, even if it contains gaps
     inputseq : 'LQQLWNA'
     output   : 'L-*Q-*Q-*L-*W-*N-*A'
-    '''
-    search_string = ''
+    """
+    search_string = ""
     for letter in inputseq:
-        letter_with_underscore = letter + '-*'
+        letter_with_underscore = letter + "-*"
         search_string += letter_with_underscore
     return search_string[:-2]
 
@@ -793,10 +810,48 @@ def convert_truelike_to_bool(input_item, convert_int=False, convert_float=False,
     # convert a column in a pandas DataFrame
     df["column_name"] = df["column_name"].apply(convert_truelike_to_bool)
     """
-    list_True_items = [True, 'True', "true", "TRUE", "T", "t", 'wahr', 'WAHR', 'prawdziwy', 'verdadeiro', 'sann', 'istinit',
-                       'veritable', 'Pravda', 'sandt', 'vrai', 'igaz', 'veru', 'verdadero', 'sant', 'gwir', 'PRAWDZIWY',
-                       'VERDADEIRO', 'SANN', 'ISTINIT', 'VERITABLE', 'PRAVDA', 'SANDT', 'VRAI', 'IGAZ', 'VERU',
-                       'VERDADERO', 'SANT', 'GWIR', 'bloody oath', 'BLOODY OATH', 'nu', 'NU', 'damn right', 'DAMN RIGHT']
+    list_True_items = [
+        True,
+        "True",
+        "true",
+        "TRUE",
+        "T",
+        "t",
+        "wahr",
+        "WAHR",
+        "prawdziwy",
+        "verdadeiro",
+        "sann",
+        "istinit",
+        "veritable",
+        "Pravda",
+        "sandt",
+        "vrai",
+        "igaz",
+        "veru",
+        "verdadero",
+        "sant",
+        "gwir",
+        "PRAWDZIWY",
+        "VERDADEIRO",
+        "SANN",
+        "ISTINIT",
+        "VERITABLE",
+        "PRAVDA",
+        "SANDT",
+        "VRAI",
+        "IGAZ",
+        "VERU",
+        "VERDADERO",
+        "SANT",
+        "GWIR",
+        "bloody oath",
+        "BLOODY OATH",
+        "nu",
+        "NU",
+        "damn right",
+        "DAMN RIGHT",
+    ]
 
     # if you want to accept 1 or 1.0 as a true value, add it to the list
     if convert_int:
@@ -812,10 +867,10 @@ def convert_truelike_to_bool(input_item, convert_int=False, convert_float=False,
         # otherwise, for strings not in the True list, the original string will be returned
         nontrue_return_value = input_item
     # return True if the input item is in the list. If not, return either False, or the original input_item
-    return_value = input_item_is_true if input_item_is_true == True else nontrue_return_value
+    return_value = input_item_is_true if input_item_is_true else nontrue_return_value
     # special case: decide if 1 as an integer is True or 1
     if input_item == 1:
-        if convert_int == True:
+        if convert_int:
             return_value = True
         else:
             return_value = 1
@@ -847,12 +902,62 @@ def convert_falselike_to_bool(input_item, convert_int=False, convert_float=False
     # convert a column in a pandas DataFrame
     df["column_name"] = df["column_name"].apply(convert_falselike_to_bool)
     """
-    list_False_items = [False, "False", "false", "FALSE", "F", "f", "falsch", "FALSCH", "valse", "lažna", "fals",
-                        "NEPRAVDA", "falsk", "vals", "faux", "pa vre", "tsis tseeb", "hamis", "palsu", "uongo", "ngeb",
-                        "viltus", "klaidinga", "falz", "falso", "USANN", "wartosc false", "falošné", "falskt", "yanlis",
-                        "sai", "ffug", "VALSE", "LAŽNA", "FALS", "FALSK", "VALS", "FAUX", "PA VRE", "TSIS TSEEB",
-                        "HAMIS", "PALSU", "UONGO", "NGEB", "VILTUS", "KLAIDINGA", "FALZ", "FALSO", "WARTOSC FALSE",
-                        "FALOŠNÉ", "FALSKT", "YANLIS", "SAI", "FFUG"]
+    list_False_items = [
+        False,
+        "False",
+        "false",
+        "FALSE",
+        "F",
+        "f",
+        "falsch",
+        "FALSCH",
+        "valse",
+        "lažna",
+        "fals",
+        "NEPRAVDA",
+        "falsk",
+        "vals",
+        "faux",
+        "pa vre",
+        "tsis tseeb",
+        "hamis",
+        "palsu",
+        "uongo",
+        "ngeb",
+        "viltus",
+        "klaidinga",
+        "falz",
+        "falso",
+        "USANN",
+        "wartosc false",
+        "falošné",
+        "falskt",
+        "yanlis",
+        "sai",
+        "ffug",
+        "VALSE",
+        "LAŽNA",
+        "FALS",
+        "FALSK",
+        "VALS",
+        "FAUX",
+        "PA VRE",
+        "TSIS TSEEB",
+        "HAMIS",
+        "PALSU",
+        "UONGO",
+        "NGEB",
+        "VILTUS",
+        "KLAIDINGA",
+        "FALZ",
+        "FALSO",
+        "WARTOSC FALSE",
+        "FALOŠNÉ",
+        "FALSKT",
+        "YANLIS",
+        "SAI",
+        "FFUG",
+    ]
 
     # if you want to accept 0 or 0.0 as a false value, add it to the list
     if convert_int:
@@ -875,89 +980,18 @@ class HardDriveSpaceException(Exception):
         return canonical_string_representation(self.parameter)
 
 
-class LogOnlyToConsole(object):
+class LogOnlyToConsole:
     def __init__(self):
         pass
 
     def info(self, message):
-        sys.stdout.write("\n{}".format(message))
+        sys.stdout.write(f"\n{message}")
 
     def warning(self, message):
-        sys.stdout.write("\n{}".format(message))
+        sys.stdout.write(f"\n{message}")
 
     def critical(self, message):
-        sys.stdout.write("\n{}".format(message))
-
-
-def calc_rand_overlap_DEPRECATED_METHOD(sequence_length, sample_size):
-    """Calculate expected random overlap between two random selections from a sample.
-
-    You have a bowl of 20 balls, either blue or red.
-    sample_size = 1
-     - There is only one red ball. You only pick out one ball.
-     - you do this 1000 times
-     - the average number of red (correct) balls 0.05
-    sample_size = 2
-     - there are 2 red balls. You can pick out 2 balls.
-     - you do this 1000 times
-     - what is the average number of red (correct) balls?
-     [This function calculates the answer, which is 0.2, corresponding to a red ball 10% of the time (0.2/2))
-    sample_size = 10
-     - there are 10 red balls. You can pick out 10 balls.
-     - you do this 1000 times
-     - what is the average number of red (correct) balls?
-     [This function calculates the answer, which is 5, corresponding to a red ball 50% of the time (5/10))
-     The answer depends on the number of balls in the bowl. If there are 24 balls, the average number of red balls is 4.16,
-     corresponding to a red ball 41.6% of the time (4.16/10))
-
-    This is a mathematical question related to sampling without replacement.
-
-    Parameters
-    ----------
-    sequence_length : int
-        Number of samples in total, from which a subset is randomly selected.
-        E.g. a bowl with 20 numbered balls.
-        In our case, TMD_length.
-    sample_size : int
-        Size of the selected sample (e.g. 3, for 3 balls taken from the bowl)
-        In our case, number of interface residues considered.
-
-    Returns
-    -------
-    inter_num_random : float
-        Expected overlap seen by random chance.
-        E.g., when 5 balls from 20 are randomly selected without replacement.
-        The expected overlap between two random selections is 1.25
-
-    Usage
-    -----
-    from thoipapy.utils import calc_rand_overlap
-    # size of bowl (in our case, transmembrane domain length)
-    TMD_length = 22
-    # number of balls withdrawn from bowl (in our case, top 4 residues predicted)
-    sample_size = 4
-    # expected overlap is the number predicted to be correct, simply by random chance
-    expected_overlap = calc_rand_overlap(TMD_length, sample_size)
-    percentage_randomly_correct = expected_overlap / sample_size * 100
-    """
-    # start the [[write description]] at 0
-    inter_num_random = 0
-    # iterate through [[write description]]
-    for random_inter_num_ober in range(1, sample_size + 1):
-        # random_inter_num_ober = j
-
-        # write description
-        random_non_inter_num = sequence_length - sample_size
-        # write description
-        variable_1 = comb(sample_size, random_inter_num_ober)
-        # write description
-        variable_2 = comb(random_non_inter_num, sample_size - random_inter_num_ober)
-        # write description
-        variable_3 = comb(sequence_length, sample_size)
-        inter_num_random = inter_num_random + variable_1 * variable_2 / variable_3 * random_inter_num_ober
-        # inter_num_random = inter_num_random + comb(sample_size, random_inter_num_ober) * comb(random_non_inter_num, sample_size - random_inter_num_ober) / comb(tm_len, sample_size) * random_inter_num_ober
-
-    return inter_num_random
+        sys.stdout.write(f"\n{message}")
 
 
 def open_csv_as_series(input_csv):
@@ -968,41 +1002,41 @@ def open_csv_as_series(input_csv):
     return input_ser
 
 
-def intersect(a, b):
-    return list(set(a) & set(b))
-
-
 def get_testsetname_trainsetname_from_run_settings(s):
     test_set_list, train_set_list = get_test_and_train_set_lists(s)
     assert len(test_set_list) == 1
     assert len(train_set_list) == 1
-    testsetname = "set{:02d}".format(int(test_set_list[0]))
-    trainsetname = "set{:02d}".format(int(train_set_list[0]))
+    testsetname = f"set{int(test_set_list[0]):02d}"
+    trainsetname = f"set{int(train_set_list[0]):02d}"
     return testsetname, trainsetname
 
 
 def get_test_and_train_set_lists(s):
-    if s["test_datasets"] == True:
+    if s["test_datasets"] is True:
         test_set_list = ["1"]
-    elif s["test_datasets"] == False:
+    elif s["test_datasets"] is False:
         test_set_list = ["0"]
     elif isinstance(s["test_datasets"], int):
         test_set_list = [str(s["test_datasets"])]
     elif isinstance(s["test_datasets"], str):
         test_set_list = s["test_datasets"].split(",")
     else:
-        raise ValueError("test_datasets type is not correct {} ({})".format(s["test_datasets"], type(s["test_datasets"])))
+        raise ValueError(
+            "test_datasets type is not correct {} ({})".format(s["test_datasets"], type(s["test_datasets"]))
+        )
 
-    if s["train_datasets"] == True:
+    if s["train_datasets"] is True:
         train_set_list = ["1"]
-    elif s["train_datasets"] == False:
+    elif s["train_datasets"] is False:
         train_set_list = ["0"]
     elif isinstance(s["train_datasets"], int):
         train_set_list = [str(s["train_datasets"])]
     elif isinstance(s["train_datasets"], str):
         train_set_list = s["train_datasets"].split(",")
     else:
-        raise ValueError("train_datasets type is not correct {} ({})".format(s["train_datasets"], type(s["train_datasets"])))
+        raise ValueError(
+            "train_datasets type is not correct {} ({})".format(s["train_datasets"], type(s["train_datasets"]))
+        )
 
     return test_set_list, train_set_list
 
@@ -1029,3 +1063,93 @@ class SurroundingSequence:
         if tmd_start_pl_surr < 1:
             tmd_start_pl_surr = 1
         return tmd_start_pl_surr
+
+
+def slugify(value: str) -> str:
+    """Convert a string to a filesystem- and URL-friendly slug.
+
+    Replaces the previous dependency on django.utils.text.slugify, which pulled the entire
+    Django framework in for this one call. The behaviour is deliberately identical to Django's
+    ASCII slugify, since it sanitises the user-supplied protein name that becomes a directory
+    name in the webserver.
+
+    Normalises unicode to ASCII, lowercases, drops anything that is not alphanumeric,
+    underscore, hyphen or whitespace, then collapses runs of whitespace and hyphens into a
+    single hyphen. Matches the behaviour of the previously pinned Django 3.1.2 exactly.
+
+    Parameters
+    ----------
+    value : str
+        Text to convert, e.g. a user-supplied protein name.
+
+    Returns
+    -------
+    str
+        The slugified text.
+    """
+    value = unicodedata.normalize("NFKD", str(value)).encode("ascii", "ignore").decode("ascii")
+    value = re.sub(r"[^\w\s-]", "", value.lower()).strip()
+    return re.sub(r"[-\s]+", "-", value)
+
+
+def dropna_with_report(df_data: pd.DataFrame, context: str, logging) -> pd.DataFrame:
+    """Drop rows containing NaN, reporting exactly what was lost.
+
+    An untargeted dropna() before training silently removed residues whenever a single feature
+    was missing, with no count and no indication of which feature was responsible. House rule for
+    ML pipelines is to fail on bad data rather than quietly shrink the dataset, so anything beyond
+    a small fraction is an error rather than a warning.
+
+    Parameters
+    ----------
+    df_data : pd.DataFrame
+        Training data, one row per residue.
+    context : str
+        Where this is being called from, used in the log and error messages.
+    logging : logging.Logger
+        Python object with settings for logging to console and file.
+
+    Returns
+    -------
+    pd.DataFrame
+        df_data with NaN-containing rows removed.
+
+    Raises
+    ------
+    ValueError
+        If more than MAX_FRACTION_ROWS_DROPPED of the rows would be discarded, or if every row
+        would be discarded.
+    """
+    n_before = len(df_data)
+    if n_before == 0:
+        raise ValueError(f"{context}: training data is empty before dropping NaN rows.")
+
+    n_nan_per_col = df_data.isna().sum()
+    cleaned = df_data.dropna()
+    n_dropped = n_before - len(cleaned)
+
+    if n_dropped == 0:
+        return cleaned
+
+    worst = n_nan_per_col[n_nan_per_col > 0].sort_values(ascending=False)
+    detail = ", ".join(f"{col}={int(n)}" for col, n in worst.items())
+    fraction = n_dropped / n_before
+
+    if len(cleaned) == 0:
+        raise ValueError(
+            f"{context}: every one of the {n_before} rows contains a NaN, so there is no "
+            f"training data left. NaN counts per feature: {detail}"
+        )
+    if fraction > MAX_FRACTION_ROWS_DROPPED:
+        raise ValueError(
+            f"{context}: dropping NaN rows would discard {n_dropped} of {n_before} residues "
+            f"({fraction:.1%}), above the {MAX_FRACTION_ROWS_DROPPED:.0%} limit. This usually "
+            f"means a feature failed to be calculated for some proteins rather than that the data "
+            f"is genuinely incomplete. NaN counts per feature: {detail}"
+        )
+
+    logging.warning(
+        f"{context}: dropped {n_dropped} of {n_before} residues ({fraction:.1%}) containing NaN. "
+        f"NaN counts per feature: {detail}"
+    )
+    return cleaned

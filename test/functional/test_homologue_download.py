@@ -1,13 +1,16 @@
 from pathlib import Path
 from shutil import rmtree
 
+import pytest
 import thoipapy
-from test.helpers.helpers import TestProtein
 from thoipapy.homologues.NCBI_download import download_homologues_from_ncbi
 from thoipapy.homologues.NCBI_parser import parse_NCBI_xml_to_csv
-from thoipapy.utils import make_sure_path_exists, LogOnlyToConsole
+from thoipapy.utils import LogOnlyToConsole, make_sure_path_exists
+
+from test.helpers.helpers import TestProtein
 
 
+@pytest.mark.network
 def test_download_homologues_from_ncbi():
     tp: TestProtein = TestProtein()
     tp.with_1xioA4()
@@ -20,7 +23,9 @@ def test_download_homologues_from_ncbi():
     hit_list_size = 10
     logging = LogOnlyToConsole()
     db = "pdb"
-    download_homologues_from_ncbi(tp.acc, tp.full_seq, blast_xml_file, xml_txt, xml_tar_gz, expect_value, hit_list_size, logging, db=db)
+    download_homologues_from_ncbi(
+        tp.acc, tp.full_seq, blast_xml_file, xml_txt, xml_tar_gz, expect_value, hit_list_size, logging, db=db
+    )
 
     assert xml_tar_gz.is_file()
 

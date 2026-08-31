@@ -1,12 +1,15 @@
 from pathlib import Path
-from shutil import rmtree, copyfile
+from shutil import copyfile, rmtree
 
+import pytest
 import thoipapy
-from test.helpers.helpers import TestProtein
 from thoipapy import run_THOIPA_prediction
 from thoipapy.utils import make_sure_path_exists
 
+from test.helpers.helpers import TestProtein
 
+
+@pytest.mark.requires_tool("rate4site", "freecontact", "cd-hit")
 def test_standalone_prediction_with_pre_downloaded_homologues_1xioA4():
     # tmd with few homologues, not requiring cd-hit
     tp: TestProtein = TestProtein()
@@ -14,7 +17,9 @@ def test_standalone_prediction_with_pre_downloaded_homologues_1xioA4():
     thoipapy_module_path = Path(thoipapy.__file__).parents[1]
     out_dir = thoipapy_module_path / f"test/test_outputs/pre_downloaded_homologues_{tp.acc}"
     make_sure_path_exists(out_dir / "datafiles")
-    pre_downloaded_homologue_xml_tar_gz: Path = thoipapy_module_path / f"test/test_inputs/blast_data_valid/{tp.acc}.surr20.BLAST.xml.tar.gz"
+    pre_downloaded_homologue_xml_tar_gz: Path = (
+        thoipapy_module_path / f"test/test_inputs/blast_data_valid/{tp.acc}.surr20.BLAST.xml.tar.gz"
+    )
     assert pre_downloaded_homologue_xml_tar_gz.is_file()
     temp_homologue_xml_tar_gz: Path = out_dir / "datafiles/BLAST_results.xml.tar.gz"
     copyfile(pre_downloaded_homologue_xml_tar_gz, temp_homologue_xml_tar_gz)
@@ -27,6 +32,7 @@ def test_standalone_prediction_with_pre_downloaded_homologues_1xioA4():
     rmtree(out_dir)
 
 
+@pytest.mark.requires_tool("rate4site", "freecontact", "cd-hit")
 def test_standalone_prediction_with_pre_downloaded_homologues_4hksA1():
     # tmd with medium number of homologues, requiring cd-hit
     tp: TestProtein = TestProtein()
@@ -34,7 +40,9 @@ def test_standalone_prediction_with_pre_downloaded_homologues_4hksA1():
     thoipapy_module_path = Path(thoipapy.__file__).parents[1]
     out_dir = thoipapy_module_path / f"test/test_outputs/pre_downloaded_homologues_{tp.acc}"
     make_sure_path_exists(out_dir / "datafiles")
-    pre_downloaded_homologue_xml_tar_gz: Path = thoipapy_module_path / f"test/test_inputs/blast_data_valid/{tp.acc}.surr20.BLAST.xml.tar.gz"
+    pre_downloaded_homologue_xml_tar_gz: Path = (
+        thoipapy_module_path / f"test/test_inputs/blast_data_valid/{tp.acc}.surr20.BLAST.xml.tar.gz"
+    )
     assert pre_downloaded_homologue_xml_tar_gz.is_file()
     temp_homologue_xml_tar_gz: Path = out_dir / "datafiles/BLAST_results.xml.tar.gz"
     copyfile(pre_downloaded_homologue_xml_tar_gz, temp_homologue_xml_tar_gz)
@@ -47,6 +55,8 @@ def test_standalone_prediction_with_pre_downloaded_homologues_4hksA1():
     rmtree(out_dir)
 
 
+@pytest.mark.network
+@pytest.mark.requires_tool("rate4site", "freecontact", "cd-hit")
 def test_standalone_prediction_for_tmd_with_few_homologues():
     tp: TestProtein = TestProtein()
     tp.with_1xioA4()
@@ -61,6 +71,8 @@ def test_standalone_prediction_for_tmd_with_few_homologues():
     rmtree(out_dir)
 
 
+@pytest.mark.network
+@pytest.mark.requires_tool("rate4site", "freecontact", "cd-hit")
 def test_standalone_prediction_for_tmd_with_many_homologues():
     # tmds with many homologues will require a functional cd-hit before rate4site
     tp: TestProtein = TestProtein()

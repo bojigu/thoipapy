@@ -1,0 +1,155 @@
+[build-system]
+requires = ["setuptools>=64", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "thoipapy"
+version = "2.0.0"
+description = "Machine-learning prediction of residues driving homotypic transmembrane interactions."
+readme = { file = "readme.rst", content-type = "text/x-rst" }
+license = "MIT"
+license-files = ["license.txt"]
+requires-python = ">=3.12"
+keywords = [
+    "bioinformatics", "protein", "transmembrane", "residue", "conservation", "coevolution",
+    "covariance", "evolutionary couplings", "polarity", "hydrophobicity", "randomforest",
+    "machinelearning", "interface", "LIPS", "evolution",
+]
+classifiers = [
+    "Programming Language :: Python :: 3.12",
+    "Programming Language :: Python :: 3.13",
+    "Intended Audience :: Science/Research",
+    "Topic :: Scientific/Engineering :: Chemistry",
+    "Topic :: Scientific/Engineering :: Physics",
+    "Topic :: Scientific/Engineering :: Bio-Informatics",
+]
+
+# Exact pins, deliberately. This is scientific software that must still install and reproduce
+# its published numbers years from now, on a machine nobody has configured for it. A range that
+# resolves today resolves to something else next year, and the failure shows up as a silently
+# different number rather than an error.
+#
+# requirements.txt mirrors this list, plus the transitive packages, for anyone not reading TOML.
+# Keep the two in step.
+#
+# Verified together on Python 3.13.15. numpy and scipy require >= 3.12, which sets requires-python.
+# To move a pin: change it, run the full test suite including the golden-file regression tests,
+# and only then commit. No guarantee is offered that a different combination resolves or that
+# predictions match.
+dependencies = [
+    "biopython==1.88",
+    "joblib==1.5.3",
+    "matplotlib==3.11.1",
+    "numpy==2.5.2",
+    "openpyxl==3.1.5",      # pandas Excel engine for the multi-sheet outputs under data/results/
+    "pandas==3.0.5",
+    "psutil==7.2.2",
+    "scikit-learn==1.9.0",  # 1.3 dropped max_features="auto"; see ML_model/train_model.py
+    "scipy==1.18.0",
+    "seaborn==0.13.2",
+    "weighslide==0.3.0",
+
+    # Transitive, pinned too. Without these, `pip install .` resolves them freshly on every install
+    # while requirements.txt pins them, so the two documented routes drift apart -- observed on
+    # kiwisolver and narwhals.
+    "contourpy==1.3.3",
+    "cycler==0.12.1",
+    "et-xmlfile==2.0.0",
+    "fonttools==4.63.0",
+    "kiwisolver==1.5.0",
+    "narwhals==2.24.0",
+    "packaging==26.3",
+    "pillow==12.3.0",
+    "pyparsing==3.3.2",
+    "python-dateutil==2.9.0.post0",
+    "six==1.17.0",
+    "threadpoolctl==3.6.0",
+]
+
+[project.optional-dependencies]
+test = ["pytest==9.1.1"]
+
+[project.urls]
+Homepage = "https://github.com/bojigu/thoipapy"
+Issues = "https://github.com/bojigu/thoipapy/issues"
+TU_Munich = "https://www.tum.de"
+DataCatalysis = "https://www.datacatalysis.com"
+LinkedIn = "https://www.linkedin.com/in/markteese/"
+
+[[project.authors]]
+name = "Bo Zeng"
+email = "bojigu@users.noreply.github.com"
+
+[[project.authors]]
+name = "Mark Teese"
+email = "teese@users.noreply.github.com"
+
+# Bo Zeng stays credited as an author of the original package. Active development is now solely
+# Mark Teese's, which is what the maintainer field records.
+#
+# Both addresses are GitHub noreply aliases, which do not receive mail. They are here because they
+# identify the authors' GitHub accounts without publishing a mailbox to every scraper that reads
+# PyPI, and because an author carrying no address at all is written to the legacy Author field
+# rather than Author-email, which PyPI then renders as one author's name beside the other's
+# address. Contact goes through the issue tracker or LinkedIn, both linked below.
+[[project.maintainers]]
+name = "Mark Teese"
+email = "teese@users.noreply.github.com"
+
+[tool.setuptools.packages.find]
+include = ["thoipapy*"]
+
+# Files read at runtime from inside the installed package. The old setup.py combined
+# include_package_data=True with a package_data dict, which meant package_data was ignored in
+# favour of manifest.in -- and manifest.in never listed the standalone settings file, which
+# predict.py loads on every prediction. Listing them explicitly here removes that trap.
+[tool.setuptools.package-data]
+"thoipapy.ML_model" = ["THOIPA_trained_ML_model.lpkl", "model_features.txt"]
+"thoipapy.setting" = ["*.csv", "*.txt"]
+
+[tool.pytest.ini_options]
+testpaths = ["test"]
+# Network tests query NCBI BLAST, are slow, and have been seen to hang indefinitely.
+# Opt in with: pytest -m network
+addopts = "-m 'not network'"
+markers = [
+    "network: requires internet access (NCBI BLAST). Deselected by default.",
+    "requires_tool(*names): needs external command-line programs; skipped if absent.",
+]
+
+[tool.black]
+line-length = 120
+target-version = ["py312"]
+
+[tool.ruff]
+target-version = "py312"
+line-length = 120
+src = ["thoipapy", "scripts", "test"]
+
+[tool.ruff.lint]
+# Matches the DataCatalysis house rule set. T20 (flake8-print) keeps the pipeline on `logging`:
+# a print goes to a terminal nobody keeps, so anything it reported is gone once the run ends.
+select = ["E", "F", "W", "I", "UP", "B", "T20"]
+ignore = ["E501", "B905"]
+
+[tool.ruff.lint.per-file-ignores]
+# Tests report through pytest, and the build script is an interactive tool rather than a
+# recorded pipeline step.
+"test/**" = ["T20"]
+"scripts/**" = ["T20"]
+# These modules run a statement before their imports -- selecting the matplotlib backend, or
+# installing a warnings filter -- which has to happen before the package it applies to is
+# imported. Their imports therefore cannot all sit at the top of the file.
+"thoipapy/predict.py" = ["E402"]
+"thoipapy/features/combine_features.py" = ["E402"]
+"thoipapy/run.py" = ["E402"]
+"thoipapy/paper_figures/create_BOcurve_files.py" = ["E402"]
+"thoipapy/paper_figures/create_heatmap_from_merge_file.py" = ["E402"]
+
+[tool.ruff.lint.isort]
+combine-as-imports = true
+
+[tool.mypy]
+python_version = "3.13"
+ignore_missing_imports = true
+allow_untyped_globals = true

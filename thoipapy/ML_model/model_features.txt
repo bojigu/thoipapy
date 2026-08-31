@@ -6,7 +6,6 @@ SmxxxSm
 relative_polarity
 N
 G
-n_TMDs
 branched
 n_homologues
 LIPS_polarity

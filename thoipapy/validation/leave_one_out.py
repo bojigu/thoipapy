@@ -5,18 +5,21 @@ import time
 from ast import literal_eval
 from multiprocessing import Pool
 from pathlib import Path
-from typing import List, Union
 
 import numpy as np
 import pandas as pd
 from matplotlib import pyplot as plt
 from numpy import interp
-from sklearn.metrics import auc, roc_curve, precision_recall_curve
+from sklearn.metrics import auc, precision_recall_curve, roc_curve
 
-import thoipapy.figs
+import thoipapy.ML_model.train_model
+import thoipapy.paper_figures
+import thoipapy.paper_figures.create_BOcurve_files
 import thoipapy.utils
 import thoipapy.validation
 import thoipapy.validation.bocurve
+import thoipapy.validation.feature_selection
+from thoipapy.artefacts import ArtefactPaths
 from thoipapy.utils import LogOnlyToConsole
 
 
@@ -26,7 +29,6 @@ class LooValidationData:
         self.testdata_combined_file = None
         self.THOIPA_LOO_prediction_csv = None
         self.df_train = None
-        self.settings_path = None
         self.forest = None
         self.pred_colname = None
         self.i = None
@@ -36,7 +38,17 @@ class LooValidationData:
         self.logger = None
 
 
-def run_LOO_validation(s: dict, df_set: pd.DataFrame, logging):
+def run_LOO_validation(
+    paths: ArtefactPaths,
+    df_set: pd.DataFrame,
+    bind_column: str,
+    min_n_homol_training: int,
+    bootstrap: bool,
+    n_residues_AUBOC_validation: int,
+    use_multiprocessing: bool,
+    multiple_tmp_simultaneous: int,
+    logging,
+):
     """Run Leave-One-Out cross-validation for a particular set of TMDs (e.g. set05).
 
     The SAME SET is used for both training and cross-validation.
@@ -77,23 +89,28 @@ def run_LOO_validation(s: dict, df_set: pd.DataFrame, logging):
         excel file with the processed BO-curve data
     """
     logging.info("\n--------------- starting run_LOO_validation ---------------\n")
-    setname = s["setname"]
-    names_excel_path = os.path.join(s["base_dir"], "protein_names.xlsx")
+    setname = paths.setname
 
     # drop redundant proteins according to CD-HIT
     df_set = thoipapy.utils.drop_redundant_proteins_from_list(df_set, logging)
 
     # input
-    train_data_after_first_feature_seln_csv = Path(s["data_dir"]) / f"results/{s['setname']}/train_data/03_train_data_after_first_feature_seln.csv"
-    tuned_ensemble_parameters_csv = Path(s["data_dir"]) / f"results/{s['setname']}/train_data/04_tuned_ensemble_parameters.csv"
+    train_data_after_first_feature_seln_csv = (
+        paths.results_dir / "train_data/03_train_data_after_first_feature_seln.csv"
+    )
+    tuned_ensemble_parameters_csv = paths.results_dir / "train_data/04_tuned_ensemble_parameters.csv"
     # output
-    LOO_crossvalidation_pkl = os.path.join(s["data_dir"], "results", s["setname"], "crossvalidation", "data", "{}_LOO_crossvalidation.pkl".format(s["setname"]))
-    bocurve_data_raw_csv = os.path.join(s["data_dir"], "results", s["setname"], "crossvalidation", "data", "{}_loo_bocurve_data_raw.csv".format(s["setname"]))
-    bocurve_data_xlsx: Union[Path, str] = Path(s["data_dir"]) / f"results/{s['setname']}/crossvalidation/data/{s['setname']}_thoipa_loo_bo_curve_data.xlsx"
-    sim_matrix_xlsx = Path(s["data_dir"]) / f"results/{s['setname']}/clusters/{setname}_sim_matrix.xlsx"
+    LOO_crossvalidation_pkl = os.path.join(
+        paths.crossvalidation_dir, "data", f"{paths.setname}_LOO_crossvalidation.pkl"
+    )
+    bocurve_data_raw_csv = os.path.join(paths.crossvalidation_dir, "data", f"{paths.setname}_loo_bocurve_data_raw.csv")
+    bocurve_data_xlsx: Path | str = paths.crossvalidation_dir / f"data/{paths.setname}_thoipa_loo_bo_curve_data.xlsx"
+    sim_matrix_xlsx = paths.results_dir / f"clusters/{setname}_sim_matrix.xlsx"
 
     if not sim_matrix_xlsx.is_file():
-        raise FileNotFoundError(f"The similarity matrix with clusters of putative homologues could not be found ({sim_matrix_xlsx})")
+        raise FileNotFoundError(
+            f"The similarity matrix with clusters of putative homologues could not be found ({sim_matrix_xlsx})"
+        )
 
     thoipapy.utils.make_sure_path_exists(bocurve_data_xlsx, isfile=True)
 
@@ -103,21 +120,24 @@ def run_LOO_validation(s: dict, df_set: pd.DataFrame, logging):
     # df_data = df_data.dropna()
 
     # drop training data (full protein) that don't have enough homologues
-    if s["min_n_homol_training"] != 0:
-        df_data = df_data.loc[df_data.n_homologues >= s["min_n_homol_training"]]
+    if min_n_homol_training != 0:
+        df_data = df_data.loc[df_data.n_homologues >= min_n_homol_training]
 
     acc_db_ser = pd.Series(df_data.index).apply(lambda x: x.split("_")[0])
     acc_db_list = acc_db_ser.to_list()
     # df_data["acc_db"] = acc_db_ser
     acc_db_unique_list = acc_db_ser.unique()
     logging.info(f"Dataset has {len(acc_db_unique_list)} unique proteins for training.")
-    start = time.clock()
-    pred_colname = "THOIPA_{}_LOO".format(s["set_number"])
+    start = time.perf_counter()
+    pred_colname = f"THOIPA_{paths.set_number}_LOO"
 
-    n_features = thoipapy.validation.feature_selection.drop_cols_not_used_in_ML(logging, df_data, s["settings_path"]).shape[1]
-    forest = thoipapy.ML_model.train_model.return_classifier_with_loaded_ensemble_parameters(s, tuned_ensemble_parameters_csv)
+    # called for the log line it emits about which columns are dropped; the result is unused here
+    thoipapy.validation.feature_selection.drop_cols_not_used_in_ML(logging, df_data)
+    forest = thoipapy.ML_model.train_model.return_classifier_with_loaded_ensemble_parameters(
+        tuned_ensemble_parameters_csv, bootstrap
+    )
 
-    if s["use_multiprocessing"]:
+    if use_multiprocessing:
         # TURN LOGGING OFF BEFORE MULTIPROCESSING
         logger = LogOnlyToConsole()
     else:
@@ -137,10 +157,12 @@ def run_LOO_validation(s: dict, df_set: pd.DataFrame, logging):
         # each protein should only appear once in a single cluster
         clusters_containing_acc_db_of_interest = [c for c in putative_homologue_clusters if acc_db in c]
         if not len(clusters_containing_acc_db_of_interest) == 1:
-            raise ValueError(f"Protein of interest found in 0 or >1 clusters of putative homologues.\nacc_db = '{acc_db}\n'" +
-                             f"clusters_containing_acc_db_of_interest = {clusters_containing_acc_db_of_interest}")
+            raise ValueError(
+                f"Protein of interest found in 0 or >1 clusters of putative homologues.\nacc_db = '{acc_db}\n'"
+                + f"clusters_containing_acc_db_of_interest = {clusters_containing_acc_db_of_interest}"
+            )
 
-        acc_db_putative_homologues: List[str] = clusters_containing_acc_db_of_interest[0]
+        acc_db_putative_homologues: list[str] = clusters_containing_acc_db_of_interest[0]
         row_filter_excluding_putative_homologues = [acc_db not in acc_db_putative_homologues for acc_db in acc_db_list]
         # index_excluding_putative_homologues = df_data.acc_db.apply(lambda x: x not in acc_db_putative_homologues)
 
@@ -150,18 +172,18 @@ def run_LOO_validation(s: dict, df_set: pd.DataFrame, logging):
         assert acc_db not in filtered_index_acc_db
 
         loo_validation_data = LooValidationData()
-        loo_validation_data.acc = acc
         loo_validation_data.acc_db = df_set.loc[i, "acc_db"]
-        loo_validation_data.bind_column = s["bind_column"]
+        loo_validation_data.bind_column = bind_column
         loo_validation_data.database = database
         loo_validation_data.df_train = df_train
-        loo_validation_data.settings_path = s["settings_path"]
         loo_validation_data.forest = forest
         loo_validation_data.i = i
         loo_validation_data.logger = logger
         loo_validation_data.pred_colname = pred_colname
-        loo_validation_data.testdata_combined_file = os.path.join(s["data_dir"], "features", "combined", database, "{}.surr20.gaps5.combined_features.csv".format(acc))
-        loo_validation_data.THOIPA_LOO_prediction_csv = Path(s["data_dir"]) / f"results/{s['setname']}/predictions/THOIPA_LOO/{database}.{acc}.LOO.prediction.csv"
+        loo_validation_data.testdata_combined_file = paths.combined_features_csv(database, acc)
+        loo_validation_data.THOIPA_LOO_prediction_csv = (
+            paths.results_dir / f"predictions/THOIPA_LOO/{database}.{acc}.LOO.prediction.csv"
+        )
 
         thoipapy.utils.make_sure_path_exists(loo_validation_data.THOIPA_LOO_prediction_csv, isfile=True)
 
@@ -172,20 +194,20 @@ def run_LOO_validation(s: dict, df_set: pd.DataFrame, logging):
         #                                                                                                     #
         #######################################################################################################
 
-        if not loo_validation_data.acc_db in acc_db_unique_list:
-            logging.warning("{} is in protein set, but not found in training data".format(loo_validation_data.acc_db))
+        if loo_validation_data.acc_db not in acc_db_unique_list:
+            logging.warning(f"{loo_validation_data.acc_db} is in protein set, but not found in training data")
             # skip protein
             continue
 
-        if s["use_multiprocessing"]:
+        if use_multiprocessing:
             loo_validation_data_list.append(loo_validation_data)
         else:
             auc_dict, BO_df = LOO_single_prot(loo_validation_data)
             val_tuple = (auc_dict, BO_df)
             val_list.append(val_tuple)
 
-    if s["use_multiprocessing"]:
-        with Pool(processes=s["multiple_tmp_simultaneous"]) as pool:
+    if use_multiprocessing:
+        with Pool(processes=multiple_tmp_simultaneous) as pool:
             val_list = pool.map(LOO_single_prot, loo_validation_data_list)
 
     #######################################################################################################
@@ -193,7 +215,7 @@ def run_LOO_validation(s: dict, df_set: pd.DataFrame, logging):
     #                            Get mean AUC etc for all proteins in list                                #
     #                                                                                                     #
     #######################################################################################################
-    duration = time.clock() - start
+    duration = time.perf_counter() - start
     sys.stdout.write("\n")
 
     # copied from original mean_tpr code
@@ -252,14 +274,17 @@ def run_LOO_validation(s: dict, df_set: pd.DataFrame, logging):
     #######################################################################################################
 
     BO_all_df.to_csv(bocurve_data_raw_csv)
-    # names_excel_path = os.path.join(s["base_dir"], "protein_names.xlsx")
+    # names_csv_path = paths.protein_names_csv
 
-    # linechart_mean_obs_and_rand = thoipapy.figs.Create_Bo_Curve_files.analyse_bo_curve_underlying_data(bocurve_data_raw_csv, crossvalidation_folder, names_excel_path)
-    thoipapy.validation.bocurve.parse_BO_data_csv_to_excel(bocurve_data_raw_csv, bocurve_data_xlsx, s["n_residues_AUBOC_validation"], logging)
+    thoipapy.validation.bocurve.parse_BO_data_csv_to_excel(
+        bocurve_data_raw_csv, bocurve_data_xlsx, n_residues_AUBOC_validation, logging
+    )
 
-    logging.info('{} LOO crossvalidation. Time taken = {:.2f}.'.format(s["setname"], duration))
-    logging.info('---ROC_AUC(mean each protein : {:.2f})(from joined data {:.2f})---'.format(mean_roc_auc_all_prot, mean_roc_auc_from_joined_data))
-    logging.info('---PR_AUC(mean each protein : {:.2f})---'.format(mean_pr_auc_all_prot))
+    logging.info(f"{paths.setname} LOO crossvalidation. Time taken = {duration:.2f}.")
+    logging.info(
+        f"---ROC_AUC(mean each protein : {mean_roc_auc_all_prot:.2f})(from joined data {mean_roc_auc_from_joined_data:.2f})---"
+    )
+    logging.info(f"---PR_AUC(mean each protein : {mean_pr_auc_all_prot:.2f})---")
     logging.info("\n--------------- finished run_LOO_validation ---------------\n")
 
 
@@ -267,8 +292,10 @@ def get_clusters_putative_homologues_in_protein_set(sim_matrix_xlsx):
     df_clusters = pd.read_excel(sim_matrix_xlsx, sheet_name="reduced_clusters", index_col=0)
     df_clusters["reduced_clusters"] = df_clusters["reduced_clusters"].apply(lambda x: literal_eval(x))
     # ignore the cd-hit numbering (1-proteinname, 18-proteinname):
-    df_clusters["acc_db_putative_homologues"] = df_clusters["reduced_clusters"].apply(lambda x: ["-".join(y.split("-")[1:]) for y in list(x)])
-    putative_homologue_clusters: List[List[str]] = df_clusters["acc_db_putative_homologues"].to_list()
+    df_clusters["acc_db_putative_homologues"] = df_clusters["reduced_clusters"].apply(
+        lambda x: ["-".join(y.split("-")[1:]) for y in list(x)]
+    )
+    putative_homologue_clusters: list[list[str]] = df_clusters["acc_db_putative_homologues"].to_list()
     return putative_homologue_clusters
 
 
@@ -317,7 +344,7 @@ def LOO_single_prot(d: LooValidationData):
     elif d.bind_column == "interface_score_norm":
         prediction = fitted.predict(X_test)  # [:, 1]
     else:
-        raise ValueError("bind_column in excel settings file is not recognised ({})".format(d.bind_column))
+        raise ValueError(f"bind_column in the settings CSV is not recognised ({d.bind_column})")
     # add the prediction to the combined file
     df_test[d.pred_colname] = prediction
     # save just the prediction alone to csv
@@ -344,17 +371,19 @@ def LOO_single_prot(d: LooValidationData):
         # low closest distance means high importance at interface
         df_test["interface_score"] = -1 * df_test["interface_score"]
 
-    BO_df = thoipapy.validation.bocurve.calc_best_overlap_from_selected_column_in_df(d.acc_db, df_test, experiment_col="interface_score", pred_col=d.pred_colname)
+    BO_df = thoipapy.validation.bocurve.calc_best_overlap_from_selected_column_in_df(
+        d.acc_db, df_test, experiment_col="interface_score", pred_col=d.pred_colname
+    )
 
     if d.i == 0:
         tree_depths = np.array([estimator.tree_.max_depth for estimator in d.forest.estimators_])
-        logger.info("tree depth mean = {} ({})".format(tree_depths.mean(), tree_depths))
-    logger.info("{} AUC : {:.2f}".format(d.acc_db, roc_auc))
+        logger.info(f"tree depth mean = {tree_depths.mean()} ({tree_depths})")
+    logger.info(f"{d.acc_db} AUC : {roc_auc:.2f}")
 
     return auc_dict, BO_df
 
 
-def create_LOO_validation_fig(s, df_set, logging):
+def create_LOO_validation_fig(paths: ArtefactPaths, df_set, n_residues_AUBOC_validation: int, logging):
     """Create Leave-One-Out cross-validation for each TMD in a dataset.
 
     Training dataset = all residues in full dataset, except that being trained.
@@ -383,17 +412,23 @@ def create_LOO_validation_fig(s, df_set, logging):
     df_set = thoipapy.utils.drop_redundant_proteins_from_list(df_set, logging)
 
     # plt.rcParams.update({'font.size': 7})
-    LOO_crossvalidation_pkl = os.path.join(s["data_dir"], "results", s["setname"], "crossvalidation", "data", "{}_LOO_crossvalidation.pkl".format(s["setname"]))
-    LOO_crossvalidation_ROC_png = os.path.join(s["data_dir"], "results", s["setname"], "crossvalidation", "{}_LOO_crossvalidation_ROC.png".format(s["setname"]))
-    LOO_crossvalidation_AUC_bar_png = os.path.join(s["data_dir"], "results", s["setname"], "crossvalidation", "{}_LOO_crossvalidation_AUC_bar.png".format(s["setname"]))
-    AUC_csv = os.path.join(s["data_dir"], "results", s["setname"], "crossvalidation", "data", "{}_LOO_AUC.csv".format(s["setname"]))
-    bocurve_data_xlsx: Union[Path, str] = Path(s["data_dir"]) / f"results/{s['setname']}/crossvalidation/data/{s['setname']}_thoipa_loo_bo_curve_data.xlsx"
-    BO_linechart_png: Union[Path, str] = Path(s["data_dir"]) / f"results/{s['setname']}/crossvalidation/data/{s['setname']}_BO_linechart.png"
-    BO_barchart_png: Union[Path, str] = Path(s["data_dir"]) / f"results/{s['setname']}/crossvalidation/data/{s['setname']}_LOO_AUBOC_barchart.png"
-    other_figs_path: Union[Path, str] = Path(s["data_dir"]) / f"results/{s['setname']}/crossvalidation/other_figs"
+    LOO_crossvalidation_pkl = os.path.join(
+        paths.crossvalidation_dir, "data", f"{paths.setname}_LOO_crossvalidation.pkl"
+    )
+    LOO_crossvalidation_ROC_png = os.path.join(
+        paths.crossvalidation_dir, f"{paths.setname}_LOO_crossvalidation_ROC.png"
+    )
+    LOO_crossvalidation_AUC_bar_png = os.path.join(
+        paths.crossvalidation_dir, f"{paths.setname}_LOO_crossvalidation_AUC_bar.png"
+    )
+    AUC_csv = os.path.join(paths.crossvalidation_dir, "data", f"{paths.setname}_LOO_AUC.csv")
+    bocurve_data_xlsx: Path | str = paths.crossvalidation_dir / f"data/{paths.setname}_thoipa_loo_bo_curve_data.xlsx"
+    BO_linechart_png: Path | str = paths.crossvalidation_dir / f"data/{paths.setname}_BO_linechart.png"
+    BO_barchart_png: Path | str = paths.crossvalidation_dir / f"data/{paths.setname}_LOO_AUBOC_barchart.png"
+    other_figs_path: Path | str = paths.crossvalidation_dir / "other_figs"
 
-    names_excel_path = os.path.join(s["base_dir"], "protein_names.xlsx")
-    namedict = thoipapy.utils.create_namedict(names_excel_path)
+    names_csv_path = paths.protein_names_csv
+    namedict = thoipapy.utils.create_namedict(names_csv_path)
 
     # open pickle file
     with open(LOO_crossvalidation_pkl, "rb") as f:
@@ -408,14 +443,20 @@ def create_LOO_validation_fig(s, df_set, logging):
         if acc_db in xv_dict:
             roc_auc = xv_dict[acc_db]["roc_auc"]
             auc_dict[acc_db] = roc_auc
-            ax.plot(xv_dict[acc_db]["fpr"], xv_dict[acc_db]["tpr"], lw=1, label='{} ({:.2f})'.format(acc_db, roc_auc), alpha=0.8)
+            ax.plot(xv_dict[acc_db]["fpr"], xv_dict[acc_db]["tpr"], lw=1, label=f"{acc_db} ({roc_auc:.2f})", alpha=0.8)
         else:
-            logging.warning("{} not in xv_dict after LOO validation".format(acc_db))
+            logging.warning(f"{acc_db} not in xv_dict after LOO validation")
 
     mean_roc_auc_all_prot = xv_dict["mean_roc_auc_all_prot"]
 
-    ax.plot(xv_dict["false_positive_rate_mean"], xv_dict["true_positive_rate_mean"], color="k", label='mean (area = %0.2f)' % mean_roc_auc_all_prot, lw=1.5)
-    ax.plot([0, 1], [0, 1], '--', color=(0.6, 0.6, 0.6), label='random')
+    ax.plot(
+        xv_dict["false_positive_rate_mean"],
+        xv_dict["true_positive_rate_mean"],
+        color="k",
+        label=f"mean (area = {mean_roc_auc_all_prot:0.2f})",
+        lw=1.5,
+    )
+    ax.plot([0, 1], [0, 1], "--", color=(0.6, 0.6, 0.6), label="random")
     ax.set_xlim([-0.05, 1.05])
     ax.set_ylim([-0.05, 1.05])
     ax.set_xlabel("False positive rate")
@@ -436,12 +477,21 @@ def create_LOO_validation_fig(s, df_set, logging):
     fig.savefig(LOO_crossvalidation_AUC_bar_png, dpi=240)
     # fig.savefig(thoipapy.utils.pdf_subpath(LOO_crossvalidation_AUC_bar_png))
 
-    AUBOC = thoipapy.figs.create_BOcurve_files.save_BO_linegraph_and_barchart(s, bocurve_data_xlsx, BO_linechart_png, BO_barchart_png, namedict, logging, AUC_ser)
+    AUBOC = thoipapy.paper_figures.create_BOcurve_files.save_BO_linegraph_and_barchart(
+        paths,
+        n_residues_AUBOC_validation,
+        bocurve_data_xlsx,
+        BO_linechart_png,
+        BO_barchart_png,
+        namedict,
+        logging,
+        AUC_ser,
+    )
 
     create_other_figs = False
     if create_other_figs:
         thoipapy.utils.make_sure_path_exists(other_figs_path)
-        thoipapy.figs.create_BOcurve_files.save_extra_BO_figs(bocurve_data_xlsx, other_figs_path)
+        thoipapy.paper_figures.create_BOcurve_files.save_extra_BO_figs(bocurve_data_xlsx, other_figs_path)
 
-    logging.info('{} LOO crossvalidation. AUBOC({:.2f}).'.format(s["setname"], AUBOC))
-    logging.info("create_LOO_validation_fig finished ({})".format(LOO_crossvalidation_AUC_bar_png))
+    logging.info(f"{paths.setname} LOO crossvalidation. AUBOC({AUBOC:.2f}).")
+    logging.info(f"create_LOO_validation_fig finished ({LOO_crossvalidation_AUC_bar_png})")

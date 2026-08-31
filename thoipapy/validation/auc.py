@@ -1,7 +1,7 @@
 import sys
 
 import numpy as np
-from sklearn.metrics import precision_recall_curve, auc, roc_curve
+from sklearn.metrics import auc, precision_recall_curve, roc_curve
 from sklearn.model_selection import StratifiedKFold
 
 
@@ -27,7 +27,7 @@ def calc_PRAUC_ROCAUC_using_10F_validation(X, y, forest):
     pr_auc_list = []
     roc_auc_list = []
     for i, (train, test) in enumerate(cv):
-        sys.stdout.write("f{}.".format(i + 1)), sys.stdout.flush()
+        sys.stdout.write(f"f{i + 1}."), sys.stdout.flush()
         probas_ = forest.fit(X.iloc[train], y.iloc[train]).predict_proba(X.iloc[test])
 
         precision, recall, thresholds_PRC = precision_recall_curve(y.iloc[test], probas_[:, 1])

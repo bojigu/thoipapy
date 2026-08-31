@@ -1,0 +1,6 @@
+outs:
+- md5: 85cbbdc642b5a889c0f84f8c2f8b51b7.dir
+  size: 60854287
+  nfiles: 550
+  hash: md5
+  path: homologues

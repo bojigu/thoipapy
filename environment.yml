@@ -1,0 +1,37 @@
+# Development environment for thoipapy.
+#   conda env create -f environment.yml
+#   conda activate thoipapy
+#   pip install -e ".[test]"
+#   dvc pull -j 4                 # fetches data/ from the public data store; see readme.rst
+#
+# Every version here is pinned exactly, for the same reason the Python dependencies are: this is
+# scientific software that has to still install and reproduce its numbers years from now. The
+# external tools matter as much as the Python packages -- a different rate4site or cd-hit changes
+# the conservation and redundancy-reduction results, and therefore the features and the
+# prediction. Pinning them is the difference between a reproducible pipeline and one that drifts.
+#
+# Python packages are declared in pyproject.toml and mirrored in requirements.txt; they are
+# installed by the `pip install -e .` step above rather than listed here, so there is one source
+# of truth for them. This file pins the interpreter and the things pip cannot provide.
+name: thoipapy
+channels:
+  - conda-forge
+  - bioconda      # blast, cd-hit
+  - hcc           # only channel packaging rate4site
+dependencies:
+  - python=3.13.15
+  - pip
+  - blast=2.17.0          # local BLAST search and makeblastdb; see readme.rst
+  - cd-hit=4.8.1          # redundancy reduction before rate4site
+  - rate4site=3.0.0       # conservation scores
+  # DVC fetches data/ (128 MB) from a public store. dvc-http is what the public remote needs;
+  # dvc-s3 is only required by maintainers pushing to the credentialed S3/R2 remote.
+  - dvc=3.67.1
+  - dvc-http=2.32.0
+  - dvc-s3=3.3.0
+#
+# freecontact (coevolution) is not packaged for conda on any channel -- verified against
+# conda-forge and bioconda. Install it with either
+#   sudo apt-get install freecontact
+# or, without root:
+#   ./scripts/install_freecontact.sh
