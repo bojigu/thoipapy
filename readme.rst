@@ -34,11 +34,13 @@ THOIPA is on PyPI, but read this before installing it.
 
 .. code:: bash
 
-    pip install "thoipapy>=2.1"
+    pip install "thoipapy>=3.0"
 
-**Ask for 2.1 or newer.** Releases up to 1.2.0 were published between 2018 and 2021 and no longer
+**Ask for 3.0 or newer.** Releases up to 1.2.0 were published between 2018 and 2021 and no longer
 work: the model they ship is a scikit-learn 0.23 pickle, which no current scikit-learn can load,
-so they install without error and then fail on the first prediction.
+so they install without error and then fail on the first prediction. 2.0.0 and 2.1.0 run, but they
+pass the protein name to a shell and they score the wrong sequence with rate4site whenever that
+name contains a hyphen; see the 3.0.0 entry in ``thoipapy/docs/releases.rst``.
 
 **Install it into a new, empty environment.** Every dependency is pinned to an exact version
 (``numpy==2.5.2``, ``pandas==3.0.5``, and so on), so pip will almost certainly refuse to install

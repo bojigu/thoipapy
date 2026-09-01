@@ -22,12 +22,3 @@ def test_parse_NCBI_xml_to_csv():
     assert blast_csv_tar.is_file()
     if blast_csv_tar.parent.is_dir():
         rmtree(blast_csv_tar.parent)
-
-
-def test_cleanup():
-    # delete any unpacked xml or txt files in test directory
-    test_inputs_dir: Path = Path(__file__).parents[1] / "test_inputs"
-    files_to_delete = list(test_inputs_dir.glob("**/*.xml"))
-    files_to_delete.extend(list(test_inputs_dir.glob("**/*.txt")))
-    for file in files_to_delete:
-        file.unlink()

@@ -72,8 +72,9 @@ def test_residue_numbering_is_one_based(tmp_path):
     tp = TestProtein()
     tp.with_1xioA4()
     df = _run_prediction_with_pre_downloaded_homologues(tp, tmp_path / "numbering")
-    if "res_num_full_seq" not in df.columns:
-        pytest.skip("res_num_full_seq not present in output")
+    # Not a skip. The column is load-bearing: predict.py selects it when building the files the
+    # user downloads, so its absence is a failure, not a reason to stop checking.
+    assert "res_num_full_seq" in df.columns, "the predictor no longer emits res_num_full_seq"
 
     expected_start = tp.full_seq.index(tp.tmd_seq) + 1
     actual_start = int(df["res_num_full_seq"].iloc[0])

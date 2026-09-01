@@ -18,7 +18,6 @@ import glob
 import hashlib
 import os
 import platform
-import re
 import stat
 import sys
 from io import StringIO
@@ -34,7 +33,7 @@ import thoipapy
 from thoipapy.homologues.NCBI_download import download_homologues_from_ncbi
 from thoipapy.homologues.NCBI_parser import extract_filtered_csv_homologues_to_alignments, parse_NCBI_xml_to_csv
 from thoipapy.paths import STANDALONE_SETTINGS_CSV
-from thoipapy.utils import SurroundingSequence, normalise_between_2_values, open_csv_as_series, slugify
+from thoipapy.utils import SurroundingSequence, normalise_between_2_values, open_csv_as_series, safe_filename_component
 
 # set matplotlib backend to Agg when run on a server
 if os.environ.get("DISPLAY", "") == "":
@@ -94,7 +93,7 @@ def run_THOIPA_prediction(
     alignment_summary_csv = datafiles_dir / "homologues.alignment_summary.csv"
     THOIPA_full_out_csv = datafiles_dir / "THOIPA_full_out.csv"
     THOIPA_pretty_out_xlsx = out_dir / "THOIPA_out.xlsx"
-    THOIPA_pretty_out_txt = out_dir / "THOIPA_out.csv"
+    THOIPA_pretty_out_csv = out_dir / "THOIPA_out.csv"
     heatmap_path = out_dir / "heatmap.png"
 
     model_features_txt = thoipapy_module_path / "ML_model/model_features.txt"
@@ -117,18 +116,23 @@ def run_THOIPA_prediction(
     logging.info(f"md5 checksum of TMD and full sequence = {md5}")
 
     full_seq_len = len(full_seq)
-    hitlist = re.findall(TMD_seq, full_seq)
-    if len(hitlist) > 1:
-        logging.warning("TMD sequence is found multiple times in the full sequence.")
-        return
-    elif len(hitlist) == 0:
-        logging.warning("TMD sequence was not found in full protein sequence. Please check input sequences.")
-        return
-        # the following code will only continue if the TMD seq is found ONCE in the full protein seq
-
-    m = re.search(TMD_seq, full_seq)
-    # The findall guard above returns early unless there is exactly one hit, so this cannot be None.
-    assert m is not None
+    # Plain string search, not re.findall(TMD_seq, ...). TMD_seq is sequence data supplied by the
+    # user and was being compiled as a regular expression, so a "*" or "[" in it raised re.error
+    # rather than the input error it actually is.
+    n_occurrences = full_seq.count(TMD_seq)
+    if n_occurrences > 1:
+        # Both of these used to log a warning and return, so run_THOIPA_prediction completed
+        # normally having written no heatmap and no prediction. The webserver could not tell that
+        # apart from success and left the user waiting for a result that was never coming.
+        raise ValueError(
+            f"The TMD sequence occurs {n_occurrences} times in the full sequence. THOIPA cannot "
+            f"tell which copy to predict.\n  TMD_seq  = {TMD_seq}\n  full_seq = {full_seq}"
+        )
+    if n_occurrences == 0:
+        raise ValueError(
+            f"The TMD sequence was not found in the full protein sequence.\n"
+            f"  TMD_seq  = {TMD_seq}\n  full_seq = {full_seq}"
+        )
     # 1-based, UniProt-style, matching thoipapy.common.process_set_protein_seqs. The standalone
     # predictor previously used the raw 0-based python index here while the training pipeline used
     # 1-based, and both feed the same downstream functions (parse_NCBI_xml_to_csv,
@@ -137,8 +141,8 @@ def run_THOIPA_prediction(
     # residue number; the subtler one was that n_term_offset differed by one whenever the TMD
     # starts within num_of_sur_residues of the N-terminus, shifting the rate4site and
     # lipophilicity features relative to how the model was trained.
-    TMD_start = m.start() + 1
-    TMD_end = m.end()
+    TMD_start = full_seq.index(TMD_seq) + 1
+    TMD_end = TMD_start + len(TMD_seq) - 1
     logging.info(f"TMD found in full sequence. start = {TMD_start}, end = {TMD_end}")
 
     ###################################################################################################
@@ -172,8 +176,12 @@ def run_THOIPA_prediction(
     #                                    get BLAST homologues                                         #
     #                                                                                                 #
     ###################################################################################################
-    # most scripts use uniprot accession as the protein name
-    acc = protein_name
+    # The accession is used to build filenames, and every downstream tool is handed those paths.
+    # protein_name is whatever the user put in their FASTA header, so it is reduced to characters
+    # that cannot change the meaning of a path, and capped so that a full UniProt header plus a
+    # thoipapy suffix stays inside NAME_MAX. protein_name itself is kept intact for the log, the
+    # heatmap label and anything a caller displays.
+    acc = safe_filename_component(protein_name)
 
     expect_value = s["expect_value"]
     hit_list_size = s["hit_list_size"]
@@ -316,25 +324,26 @@ def run_THOIPA_prediction(
     #                                                                                                 #
     ###################################################################################################
 
-    df_pretty_out = df_out[["residue_num", "residue_name", "THOIPA"]].copy()
-    df_pretty_out.columns = ["residue number", "residue name", "THOIPA"]
+    # res_num_full_seq was computed, written to THOIPA_full_out.csv, and then dropped from both
+    # files a user actually receives. Users got residue numbers 1..N within the TMD, and every
+    # downstream use -- a mutagenesis primer, a figure label, a PyMOL selection -- needs the
+    # number in the submitted protein, so they had to work it out by hand.
+    df_pretty_out = df_out[["residue_num", "residue_name", "res_num_full_seq", "THOIPA"]].copy()
+    df_pretty_out.columns = ["residue number", "residue name", "residue number in full sequence", "THOIPA"]
 
     df_pretty_out["THOIPA"] = df_pretty_out["THOIPA"].round(3)
     df_pretty_out.to_excel(THOIPA_pretty_out_xlsx, index=False)
 
-    # pad all content with spaces so it lines up with the column name
-    df_pretty_out["residue number"] = df_pretty_out["residue number"].apply(lambda x: f"{x: >14}")
-    df_pretty_out["residue name"] = df_pretty_out["residue name"].apply(lambda x: f"{x: >12}")
-    df_pretty_out["THOIPA"] = df_pretty_out["THOIPA"].apply(lambda x: f"{x:>6.03f}")
-
-    df_pretty_out.set_index("residue number", inplace=True)
-
     df_out.to_csv(THOIPA_full_out_csv)
-    df_pretty_out.to_csv(THOIPA_pretty_out_txt, sep="\t")
+    # A genuine comma-separated CSV. The file was named .csv, written with sep="\t", and padded
+    # with spaces so the values lined up under their headers in a terminal. Anything that guesses
+    # a separator from the extension -- Excel, and every mail client that previews an attachment
+    # -- showed the whole prediction as a single column.
+    df_pretty_out.to_csv(THOIPA_pretty_out_csv, index=False)
 
     # print exactly what the CSV looks like
     out = StringIO()
-    df_pretty_out.to_csv(out, sep="\t")
+    df_pretty_out.to_csv(out, index=False)
     logging.info(f"\n\nTHOIPA homotypic TMD interface prediction:\n\n{out.getvalue()}")
 
     if create_heatmap:
@@ -374,10 +383,14 @@ def run_THOIPA_prediction(
         fig, ax = plt.subplots(figsize=(16, 2))
         # duplicate plot so it's possible to add label at top
         ax2 = ax.twiny()
-        ax.set_xticklabels(df.columns, rotation=0, fontsize=fontsize)
 
         # create heatmap
         sns.heatmap(df, ax=ax, cmap=cmap)
+
+        # After sns.heatmap, not before it. Setting tick labels on an axes seaborn has not drawn
+        # into yet labels an empty axes; seaborn then draws its own labels over the top, and
+        # matplotlib warns that the labels may not match the ticks.
+        ax.set_xticklabels(df.columns, rotation=0, fontsize=fontsize)
 
         # format residue numbering at bottom
         ax.tick_params(axis="x", direction="out", pad=1.5, tick2On=False)
@@ -478,8 +491,8 @@ if __name__ == "__main__":
     for input_csv in infile_list:
         input_ser = open_csv_as_series(input_csv)
 
-        # convert protein_name to file-format-friendly text, without symbols etc, max 20 characters
-        protein_name_cleaned = slugify(input_ser["name"])[0:20]
+        # convert protein_name to file-format-friendly text, without symbols etc
+        protein_name_cleaned = safe_filename_component(input_ser["name"])
         if protein_name_cleaned != input_ser["name"]:
             sys.stdout.write(
                 "\nprotein name modified from {} to directory-folder-friendly {}\n".format(
@@ -487,7 +500,7 @@ if __name__ == "__main__":
                 )
             )
 
-        input_ser["slugified_name"] = protein_name_cleaned
+        input_ser["safe_name"] = protein_name_cleaned
 
         # get checksum
         md5_checksum = get_md5_checksum(input_ser["TMD_seq"], input_ser["full_seq"])

@@ -45,7 +45,7 @@
     suffix : str
         Suffix for figure
         E.g. "" or "_old_method_o_over_r"
-	
+
     THOIPA_pred_csv : csv
         THOIPA result for this testset-trainset combination
         Columns = "residue_num", "residue_name", "THOIPA"
@@ -75,7 +75,7 @@
         Start of TMD in full sequence
     seqlen : int
         Length of full sequence
-		
+
     entropy_file : str
         Path to csv file with entropy (conservation) data
     pssm_csv : str
@@ -91,6 +91,5 @@
     motifs_file : str
         Path to csv containing the features related to sequence motifs
     alignment_summary_csv : str
-		Path to csv file containing the summary of the alignments and homologues 
+		Path to csv file containing the summary of the alignments and homologues
 		(e.g. how many homologues before and after filtering)
-		

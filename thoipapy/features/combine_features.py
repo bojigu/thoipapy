@@ -151,20 +151,47 @@ def combine_all_features(
     # Raise an error if the TMD sequence does not match original seq in settings file
     TMD_seq_in_merged_file = df_features_single_protein.residue_name.str.cat()
     if TMD_seq != TMD_seq_in_merged_file:
-        sys.stdout.write(
-            f"acc = {acc}\nTMD_seq in protein set = {TMD_seq}\nmerged                 = {TMD_seq_in_merged_file}\n"
-        )
+        named_feature_dfs = {
+            "entropy_file_df": entropy_file_df,
+            "rate4site_df": rate4site_df,
+            "pssm_csv_df": pssm_csv_df,
+            "lipophilicity_file_df": lipophilicity_file_df,
+            "freecontact_parsed_csv_df": freecontact_parsed_csv_df,
+            "relative_position_file_df": relative_position_file_df,
+            "LIPS_parsed_csv_df": LIPS_parsed_csv_df,
+            "motifs_df": motifs_df,
+        }
+        # The merge is on ["residue_num", "residue_name"], so a feature that disagrees with the
+        # query about a residue's identity does not raise -- it drops that position, and the only
+        # visible symptom is that the merged sequence is short. This message used to print the
+        # eight sequences and leave the reader to compare them by eye. Name the culprit instead.
+        disagreements = []
+        for name, feature_df in named_feature_dfs.items():
+            feature_seq = feature_df.residue_name.str.cat()
+            if feature_seq == TMD_seq:
+                continue
+            positions = [
+                f"pos {n}: query {query_residue}, {name} {feature_residue}"
+                for n, (query_residue, feature_residue) in enumerate(zip(TMD_seq, feature_seq), start=1)
+                if query_residue != feature_residue
+            ]
+            disagreements.append(f"{name} ({feature_seq}): " + "; ".join(positions or ["length differs"]))
 
         sys.stdout.write(f"\n{acc}, TMD_seq in protein set   = {TMD_seq}")
         sys.stdout.write(f"\n{acc}, TMD_seq_in_merged_file   = {TMD_seq_in_merged_file}")
-        sys.stdout.write(f"\n{acc}, entropy_file_df          = {entropy_file_df.residue_name.str.cat()}")
-        sys.stdout.write(f"\n{acc}, rate4site_df             = {rate4site_df.residue_name.str.cat()}")
-        sys.stdout.write(f"\n{acc}, pssm_csv_df              = {pssm_csv_df.residue_name.str.cat()}")
-        sys.stdout.write(f"\n{acc}, lipophilicity_file_df    = {lipophilicity_file_df.residue_name.str.cat()}")
-        sys.stdout.write(f"\n{acc}, freecontact_parsed_csv_df= {freecontact_parsed_csv_df.residue_name.str.cat()}")
-        sys.stdout.write(f"\n{acc}, relative_position_file_df= {relative_position_file_df.residue_name.str.cat()}")
-        sys.stdout.write(f"\n{acc}, motifs_df                = {motifs_df.residue_name.str.cat()}")
-        raise IndexError("TMD_seq in original settings file and final merged features dataframe does not match.")
+        for name, feature_df in named_feature_dfs.items():
+            sys.stdout.write(f"\n{acc}, {name:25} = {feature_df.residue_name.str.cat()}")
+        sys.stdout.write("\n")
+
+        # ValueError, not IndexError: nothing is being indexed. The features disagree about the
+        # sequence they describe.
+        raise ValueError(
+            f"{acc}: the merged features do not describe the submitted TMD sequence.\n"
+            f"  TMD_seq in protein set = {TMD_seq}\n"
+            f"  merged                 = {TMD_seq_in_merged_file}\n"
+            "  feature files that disagree with the query:\n    "
+            + "\n    ".join(disagreements or ["none individually; the merge itself dropped positions"])
+        )
 
     single_prot_aln_result_ser = utils.open_csv_as_series(alignment_summary_csv)
 

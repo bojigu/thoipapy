@@ -22,7 +22,9 @@ dependencies:
   - python=3.13.15
   - pip
   - blast=2.17.0          # local BLAST search and makeblastdb; see readme.rst
-  - cd-hit=4.8.1          # redundancy reduction before rate4site
+  - cd-hit=4.8.1          # redundancy reduction before rate4site. thoipapy.features.rate4site
+                          # floors its identity threshold at 0.40 because this cd-hit refuses
+                          # anything lower; check that still holds before changing the pin.
   - rate4site=3.0.0       # conservation scores
   # DVC fetches data/ (128 MB) from a public store. dvc-http is what the public remote needs;
   # dvc-s3 is only required by maintainers pushing to the credentialed S3/R2 remote.
