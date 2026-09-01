@@ -1,6 +1,8 @@
 import csv
 import os
+import re
 import sys
+from pathlib import Path
 
 import numpy as np
 import pandas as pd
@@ -50,15 +52,15 @@ def coevolution_calculation_with_freecontact(path_uniq_TMD_seqs_for_PSSM_FREECON
     if os.path.isfile(path_uniq_TMD_seqs_for_PSSM_FREECONTACT):
         try:
             thoipapy.utils.make_sure_path_exists(freecontact_file, isfile=True)
-            exect_str = f"grep -v '^>' {path_uniq_TMD_seqs_for_PSSM_FREECONTACT} |sed 's/[a-z]//g'|freecontact >{freecontact_file}"
+            alignment = alignment_bytes_for_freecontact(path_uniq_TMD_seqs_for_PSSM_FREECONTACT)
 
-            command = utils.Command(exect_str)
+            command = utils.Command(["freecontact"], stdin_bytes=alignment, stdout_path=freecontact_file)
             command.run(timeout=400, log_stderr=False)
             if not command.succeeded():
                 raise RuntimeError(
                     f"freecontact failed on {path_uniq_TMD_seqs_for_PSSM_FREECONTACT}: "
                     f"returncode={command.returncode}, "
-                    f"timed_out={command.timed_out}. Command: {exect_str}"
+                    f"timed_out={command.timed_out}. Command: {command.command_string}\n{command.stderr}"
                 )
 
             logging.info(f"coevolution_calculation_with_freecontact finished ({freecontact_file})")
@@ -71,6 +73,25 @@ def coevolution_calculation_with_freecontact(path_uniq_TMD_seqs_for_PSSM_FREECON
             raise
     else:
         logging.warning(f"{path_uniq_TMD_seqs_for_PSSM_FREECONTACT} does not exist")
+
+
+def alignment_bytes_for_freecontact(path_uniq_TMD_seqs_for_PSSM_FREECONTACT) -> bytes:
+    """Prepare an alignment for freecontact's stdin: drop FASTA headers, delete lowercase residues.
+
+    Replaces the shell pipeline "grep -v '^>' FILE | sed 's/[a-z]//g' | freecontact > OUT", which
+    ran through /bin/sh. Byte-for-byte equivalent to that pipeline, deliberately: lowercase
+    characters are *deleted* rather than uppercased, exactly as sed did, because uppercasing them
+    would add columns to the alignment and move every coevolution score.
+
+    Blank lines are kept for the same reason -- a line that sed emptied is still a line, and
+    dropping it would silently remove a sequence from the alignment.
+
+    The pipeline also had no `pipefail`, so only freecontact's own exit status was ever visible;
+    a failure in grep or sed passed unnoticed. There is nothing left to fail here.
+    """
+    lines = Path(path_uniq_TMD_seqs_for_PSSM_FREECONTACT).read_bytes().split(b"\n")
+    kept = [re.sub(rb"[a-z]", b"", line) for line in lines if not line.startswith(b">")]
+    return b"\n".join(kept)
 
 
 def parse_freecontact_coevolution_mult_prot(paths: ArtefactPaths, df_set, logging):

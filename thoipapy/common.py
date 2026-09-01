@@ -327,6 +327,13 @@ def setup_error_logging(logfile, level_console="DEBUG", level_logfile="DEBUG", p
                 },
             },
             "version": 1,
+            # dictConfig defaults this to True, which sets disabled = True on every logger the
+            # calling application had already created. Any program embedding thoipapy therefore
+            # went silent for the rest of the run: on the THOIPA webserver a prediction could fail
+            # and leave no trace in the container log, the worker's log file, or the job's own
+            # logfile.txt, because the log.exception written specifically to record the failure
+            # wrote nothing.
+            "disable_existing_loggers": False,
             "root": {"handlers": ["console", "file"], "propagate": "no", "level": "DEBUG"},
             "formatters": {
                 "simple": {"format": "format=%(asctime)s - %(name)s - %(levelname)s - %(message)s"},
@@ -352,9 +359,9 @@ def setup_error_logging(logfile, level_console="DEBUG", level_logfile="DEBUG", p
         # creating the file is the point; nothing is written
         pass
 
-    # clear any previous logging handlers that might have been previously run in the console
-    logging.getLogger("").handlers = []
-    # load the logging settings from the modified json string
+    # The root logger's handlers used to be cleared here as well. dictConfig replaces them from
+    # the "root" entry below regardless, so the line did nothing except destroy the caller's root
+    # handlers a moment earlier than they were going to be replaced anyway.
     logging.config.dictConfig(config)
     # collect a number of system settings that could be useful for troubleshooting
     system_settings_dict = {}
@@ -432,8 +439,9 @@ def process_set_protein_seqs(s, setname, df_set, set_path):
         TMD_seq = df_set.loc[i, "TMD_seq"]
         full_seq = df_set.loc[i, "full_seq"]
 
-        # use regex to get indices for start and end of TMD in seq
-        m = re.search(TMD_seq, full_seq)
+        # re.escape: TMD_seq is sequence data, not a pattern. An unescaped "*" or "[" in it
+        # raises re.error from the middle of the pipeline instead of the IndexError below.
+        m = re.search(re.escape(TMD_seq), full_seq)
         if m:
             # convert from python indexing to unprot indexing
             df_set.loc[i, "TMD_start"] = m.start() + 1

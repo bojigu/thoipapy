@@ -34,7 +34,7 @@ THOIPA is on PyPI, but read this before installing it.
 
 .. code:: bash
 
-    pip install "thoipapy>=2.1"
+    pip install "thoipapy>=3.0"
 
 **Ask for 2.1 or newer.** Releases up to 1.2.0 were published between 2018 and 2021 and no longer
 work: the model they ship is a scikit-learn 0.23 pickle, which no current scikit-learn can load,

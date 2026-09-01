@@ -10,10 +10,10 @@ import logging
 import os
 import platform
 import re as re
+import shlex
 import subprocess
 import sys
-import threading
-import unicodedata
+from collections.abc import Sequence
 from pathlib import Path
 
 import matplotlib.colors as colors
@@ -26,54 +26,105 @@ MAX_FRACTION_ROWS_DROPPED = 0.05
 
 
 class Command:
+    """Run an external command-line program and record how it exited.
+
+    The command is a list of arguments, run without a shell. It used to be a single string run
+    with ``shell=True``, which meant every character of an interpolated path reached ``/bin/sh``.
+    Since rate4site's and cd-hit's filenames are built from the protein name, and the protein name
+    is whatever the user put in their FASTA header, an ordinary UniProt header ("sp|Q8WWF3|...")
+    was split into shell commands, and anything else could be injected the same way.
+
+    Every caller runs an external binary (freecontact, rate4site, cd-hit). The exit status used to
+    be discarded, and a shell redirect creates the output file before the binary is resolved -- so
+    a missing tool left a 0-byte file behind and looked exactly like success. Callers must check
+    succeeded() rather than the mere existence of an output file.
+
+    Parameters
+    ----------
+    cmd : sequence of str
+        Program and arguments. A str is rejected: without a shell it would be taken as one
+        enormous program name, and the failure would be reported as a missing file.
+    stdin_bytes : bytes, optional
+        Fed to the program on stdin. Replaces the shell pipelines that used to feed it.
+    stdout_path : Path, optional
+        Where the program's stdout is written. Replaces the shell "> file" redirects.
+    cwd : Path, optional
+        Working directory for the program. rate4site writes r4s.res, r4sOrig.res and TheTree.txt
+        into the current directory whatever the -o argument says, so two predictions running in
+        one directory overwrite each other's temporary files.
     """
-    subprocess for running shell commands in win and linux
-    This will run commands from python as if it was a normal windows console or linux terminal.
-    taken from http://stackoverflow.com/questions/17257694/running-jar-files-from-python)'
-    """
 
-    def __init__(self, cmd):
-        self.cmd = cmd
-        self.process = None
-        self.returncode = None
-        self.timed_out = False
-        self.stderr = ""
+    def __init__(
+        self,
+        cmd: Sequence[str],
+        stdin_bytes: bytes | None = None,
+        stdout_path: Path | str | None = None,
+        cwd: Path | str | None = None,
+    ):
+        if isinstance(cmd, str):
+            raise TypeError(
+                "Command takes a list of arguments and does not use a shell. "
+                f"Pass ['prog', '-i', str(path)] rather than the string {cmd!r}."
+            )
+        self.cmd: list[str] = [str(argument) for argument in cmd]
+        self.stdin_bytes: bytes | None = stdin_bytes
+        self.stdout_path: Path | None = Path(stdout_path) if stdout_path is not None else None
+        self.cwd: Path | None = Path(cwd) if cwd is not None else None
+        self.returncode: int | None = None
+        self.timed_out: bool = False
+        self.stderr: str = ""
 
-    def run(self, timeout, log_stderr=True):
-        """Run the command, recording its exit status in self.returncode and self.timed_out.
+    @property
+    def command_string(self) -> str:
+        """The command as a copy-pasteable shell line, for log and exception messages only."""
+        return shlex.join(self.cmd)
 
-        The exit status used to be discarded. Every caller here runs an external binary
-        (freecontact, rate4site, cd-hit) through a shell redirect, which creates the output
-        file before the binary is resolved -- so a missing tool left a 0-byte file behind and
-        looked exactly like success. Callers must check succeeded() rather than the mere
-        existence of an output file.
-        """
-
-        def target():
-            self.process = subprocess.Popen(self.cmd, shell=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
-            stdout, stderr = self.process.communicate()
-            self.stderr = stderr.decode("utf-8", errors="replace")
-            # if the console prints anything longer than 5 characters, log it
-            if len(self.stderr) > 5:
-                if log_stderr:
-                    logging.warning(f"FAULTS: {self.stderr}")
-
-        thread = threading.Thread(target=target)
-        thread.start()
-
-        thread.join(timeout)
-        if thread.is_alive():
-            logging.warning(f"Terminating process after {timeout}s timeout: {self.cmd}")
+    def run(self, timeout: float, log_stderr: bool = True) -> int | None:
+        """Run the command, recording its exit status in self.returncode and self.timed_out."""
+        stdout_file = open(self.stdout_path, "wb") if self.stdout_path is not None else None
+        try:
+            completed = subprocess.run(
+                self.cmd,
+                input=self.stdin_bytes,
+                stdout=stdout_file if stdout_file is not None else subprocess.PIPE,
+                stderr=subprocess.PIPE,
+                timeout=timeout,
+                cwd=self.cwd,
+                check=False,
+            )
+            self.returncode = completed.returncode
+            self.stderr = completed.stderr.decode("utf-8", errors="replace")
+        except subprocess.TimeoutExpired as e:
+            # subprocess.run kills the child before re-raising, which the previous implementation
+            # did not: it called terminate() and then joined the reader thread with no timeout, so
+            # a child that ignored SIGTERM hung the pipeline forever.
             self.timed_out = True
-            self.process.terminate()
-            thread.join()
+            self.returncode = None
+            self.stderr = e.stderr.decode("utf-8", errors="replace") if e.stderr else ""
+            logging.warning(f"Terminating process after {timeout}s timeout: {self.command_string}")
+        except OSError as e:
+            # Without a shell there is nothing to report "command not found" as an exit status:
+            # the missing binary raises here instead. 127 is what the shell used to return, and a
+            # missing external tool is the most common way this fails on a fresh container, so it
+            # is reported through the same channel as any other failure rather than as a traceback
+            # from inside a utility class.
+            self.returncode = 127
+            self.stderr = f"{type(e).__name__}: {e}"
+        finally:
+            if stdout_file is not None:
+                stdout_file.close()
 
-        self.returncode = self.process.returncode if self.process is not None else None
+        # if the console prints anything longer than 5 characters, log it
+        if len(self.stderr) > 5 and log_stderr:
+            logging.warning(f"FAULTS: {self.stderr}")
 
         # A nonzero exit is reported even when log_stderr is False. log_stderr suppresses the
         # noisy stderr *content* of tools that chatter on success; it must not suppress failure.
         if not self.succeeded():
-            logging.warning(f"Command failed (returncode={self.returncode}, timed_out={self.timed_out}): {self.cmd}")
+            logging.warning(
+                f"Command failed (returncode={self.returncode}, timed_out={self.timed_out}): "
+                f"{self.command_string}\n{self.stderr}"
+            )
 
         return self.returncode
 
@@ -775,9 +826,11 @@ def create_regex_string(inputseq):
     inputseq : 'LQQLWNA'
     output   : 'L-*Q-*Q-*L-*W-*N-*A'
     """
+    # re.escape each letter. inputseq is a user-supplied sequence, and it is being used here as
+    # a regex pattern: an unvalidated "*" or "[" raises re.error from the middle of the pipeline.
     search_string = ""
     for letter in inputseq:
-        letter_with_underscore = letter + "-*"
+        letter_with_underscore = re.escape(letter) + "-*"
         search_string += letter_with_underscore
     return search_string[:-2]
 
@@ -1043,10 +1096,14 @@ def get_test_and_train_set_lists(s):
 
 class SurroundingSequence:
     def __init__(self, tmd_start: int, tmd_end: int, full_seq_len: int, num_of_sur_residues: int):
-        self.tmd_start: int = tmd_start
-        self.tmd_end: int = tmd_end
-        self.full_seq_len: int = full_seq_len
-        self.num_of_sur_residues: int = num_of_sur_residues
+        # int(): the training pipeline reads these out of a DataFrame column, where they are
+        # numpy floats, and every offset computed from them was a float too. The annotations here
+        # have always said int, and the offsets are used to slice sequences, so a float offset
+        # raises TypeError as soon as anything indexes with it rather than with .iloc.
+        self.tmd_start: int = int(tmd_start)
+        self.tmd_end: int = int(tmd_end)
+        self.full_seq_len: int = int(full_seq_len)
+        self.num_of_sur_residues: int = int(num_of_sur_residues)
         self.tmd_start_pl_surr: int = self.get_tmd_start_pl_surr()
         self.tmd_end_pl_surr: int = self.get_tmd_end_pl_surr()
         self.n_term_offset: int = self.tmd_start - self.tmd_start_pl_surr
@@ -1065,31 +1122,44 @@ class SurroundingSequence:
         return tmd_start_pl_surr
 
 
-def slugify(value: str) -> str:
-    """Convert a string to a filesystem- and URL-friendly slug.
+# Characters kept in a protein name that becomes part of a filename. Deliberately narrow:
+# anything else is replaced, so no name can contain a path separator, a shell metacharacter, or
+# anything else that changes the meaning of a path or a command line.
+SAFE_FILENAME_CHARACTERS = re.compile(r"[^A-Za-z0-9._-]+")
 
-    Replaces the previous dependency on django.utils.text.slugify, which pulled the entire
-    Django framework in for this one call. The behaviour is deliberately identical to Django's
-    ASCII slugify, since it sanitises the user-supplied protein name that becomes a directory
-    name in the webserver.
+# A protein name is a label, not a path component. thoipapy appends suffixes of up to about 40
+# characters to it (".lipo_seqs_cdhit_output.fas" and friends), and NAME_MAX is 255 on Linux and
+# on every filesystem thoipapy is run on, so a name is capped well below that.
+MAX_SAFE_NAME_LEN = 60
 
-    Normalises unicode to ASCII, lowercases, drops anything that is not alphanumeric,
-    underscore, hyphen or whitespace, then collapses runs of whitespace and hyphens into a
-    single hyphen. Matches the behaviour of the previously pinned Django 3.1.2 exactly.
+
+def safe_filename_component(value: str, max_length: int = MAX_SAFE_NAME_LEN) -> str:
+    """Reduce a protein name to something safe to put in a filename.
+
+    Replaces the previous slugify(), which lowercased and dropped dots and underscores, so
+    "P21860_ERBB3" became "p21860_erbb3" and "sp|Q8WWF3|SSMM1_HUMAN" collapsed into one run of
+    letters. Case and the separators users actually rely on are worth keeping; what has to go is
+    anything that could change the meaning of a path.
+
+    The rule is the same one the THOIPA webserver applies at its own boundary, so a name that has
+    already passed through that is unchanged here.
 
     Parameters
     ----------
     value : str
-        Text to convert, e.g. a user-supplied protein name.
+        Text to convert, e.g. a user-supplied protein name or a full FASTA header.
+    max_length : int
+        Maximum length of the result.
 
     Returns
     -------
     str
-        The slugified text.
+        The name reduced to [A-Za-z0-9._-], truncated, and never empty.
     """
-    value = unicodedata.normalize("NFKD", str(value)).encode("ascii", "ignore").decode("ascii")
-    value = re.sub(r"[^\w\s-]", "", value.lower()).strip()
-    return re.sub(r"[-\s]+", "-", value)
+    safe = SAFE_FILENAME_CHARACTERS.sub("_", str(value)).strip("._-")
+    # "protein" rather than "": an empty component would silently produce filenames that begin
+    # with the suffix, and two differently-named proteins would collide.
+    return safe[:max_length] or "protein"
 
 
 def dropna_with_report(df_data: pd.DataFrame, context: str, logging) -> pd.DataFrame:

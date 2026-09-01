@@ -2,6 +2,65 @@
 THOIPApy releases
 =================
 
+3.0.0
+-----
+* **security: external programs are no longer run through a shell.** ``utils.Command`` takes a
+  list of arguments and runs it directly. Every external tool (rate4site, cd-hit, freecontact) was
+  invoked as a single string with ``shell=True``, and rate4site's and cd-hit's filenames are built
+  from the protein name, which for a standalone run or a webserver submission is the user's FASTA
+  header. Every character of it reached ``/bin/sh``. An ordinary UniProt header contains pipes, so
+  it was split into shell commands and the prediction failed; anything else could be injected the
+  same way. The protein name is now also reduced to ``[A-Za-z0-9._-]`` and capped at 60 characters
+  before it becomes part of a filename.
+* **bugfix: rate4site scored the wrong sequence whenever the protein name contained a hyphen, and
+  the conservation feature was then attributed to the wrong residues. Predictions change for any
+  such protein and stored output should be regenerated.** The alignment handed to cd-hit was built
+  by stripping gap characters from every line of the FASTA including the deflines, so the query --
+  the only record whose defline is not a bare integer -- came back under a different name, was
+  dropped from the alignment, and rate4site scored whichever homologue was left at the top.
+  rate4site is now given the query as record zero and told to use it by name (``-a``), the residue
+  identities come from the query rather than from rate4site's echo of its reference, and a
+  disagreement raises instead of being merged away. **The trained model is unchanged**; this is a
+  fix to one input feature, not a new predictor.
+* **bugfix: a protein whose alignment was still too large at 40% identity aborted the prediction.**
+  The redundancy-reduction loop walked the cd-hit threshold down to 0.20, and cd-hit rejects
+  anything below 0.40 with a fatal error. It now stops at 0.40 and truncates the alignment, which
+  is what the unreachable branch below it always intended. Deep alignments became normal when
+  local UniRef90 searches replaced NCBI ``nr``.
+* **bugfix: thoipapy silenced the logging of any application that embedded it.**
+  ``setup_error_logging`` called ``dictConfig`` without ``disable_existing_loggers``, which
+  defaults to ``True``, so every logger the caller had already created was disabled for the rest
+  of the run. A failed prediction could leave no trace anywhere, including in the handler written
+  specifically to record it.
+* ``THOIPA_out.csv`` and ``THOIPA_out.xlsx`` gain a ``residue number in full sequence`` column.
+  The value was already computed and written to ``THOIPA_full_out.csv``, and dropped from both
+  files a user actually receives, so residue numbers ran 1..N within the TMD and had to be
+  converted by hand for any use against the real protein.
+* ``THOIPA_out.csv`` is a genuine comma-separated CSV. It was named ``.csv``, written with tabs,
+  and padded with spaces to line up in a terminal, so Excel and mail-client previews showed the
+  whole prediction as a single column. Code that parsed it with ``sep="\t"`` or ``sep=r"\s+"``
+  must be updated.
+* ``run_THOIPA_prediction`` raises ``ValueError`` when the TMD sequence is absent from the full
+  sequence, or occurs in it more than once. It used to log a warning and return normally, having
+  written no output, which callers could not distinguish from success.
+* ``utils.slugify`` is removed; use ``utils.safe_filename_component``. slugify lowercased and
+  dropped dots and underscores, so ``P21860_ERBB3`` became ``p21860_erbb3``. The CLI's
+  ``input.csv`` records the cleaned name under ``safe_name`` rather than ``slugified_name``.
+* the TMD sequence is no longer used as a regular expression when locating it in the full
+  sequence, so a sequence containing a regex metacharacter reports an input error rather than
+  raising ``re.error`` from inside the pipeline.
+* rate4site runs in its own output directory. It writes ``r4s.res``, ``r4sOrig.res`` and
+  ``TheTree.txt`` into the working directory whatever ``-o`` says, so two predictions running at
+  once overwrote each other's temporary files.
+* the error raised when the combined features do not describe the submitted TMD now names which
+  feature file disagrees and at which position, instead of printing eight sequences to compare by
+  eye.
+* bugfix: ``SurroundingSequence`` returned float offsets when the training pipeline built it from
+  a dataframe column, so any code slicing a sequence with one raised ``TypeError``.
+* bugfix: running the test suite deleted committed test fixtures. A cleanup step globbed every
+  ``.xml`` and ``.txt`` under ``test/test_inputs`` and unlinked them, and because it ran as a test
+  the deletion was reported as a pass.
+
 2.1.0
 -----
 * the example heatmap in the readme is served from the ``develop`` branch rather than from

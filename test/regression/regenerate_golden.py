@@ -8,7 +8,7 @@ against the existing references so the change can be reviewed before it is accep
 Then review the printed diff, and if it is what you intended::
 
     dvc add test/regression_data
-    dvc push
+    dvc push -r r2      # 'r2' is the writable remote; the default 'public' is read-only
     git add test/regression_data.dvc
 
 Commit the updated .dvc file in the same commit as the code change that caused it, so the reason
@@ -109,7 +109,7 @@ def main() -> int:
     print(f"\nWrote {len(produced)} reference files to {GOLDEN_DIR}")
     if any_changed:
         print("\nOutput CHANGED. Review the diff above. If it is intended:")
-        print("  dvc add test/regression_data && dvc push && git add test/regression_data.dvc")
+        print("  dvc add test/regression_data && dvc push -r r2 && git add test/regression_data.dvc")
     else:
         print("\nNo change against the existing references.")
     return 0

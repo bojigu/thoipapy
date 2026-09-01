@@ -9,8 +9,12 @@ output, run::
 
     python test/regression/regenerate_golden.py
 
-review the reported diff, then ``dvc add test/regression_data && dvc push`` and commit the updated
-``.dvc`` file together with the code change that caused it.
+review the reported diff, then ``dvc add test/regression_data && dvc push -r r2`` and commit the
+updated ``.dvc`` file together with the code change that caused it.
+
+The remote has to be named. The default remote, ``public``, is the read-only https store that
+``dvc pull`` reads; pushing to it fails. ``r2`` is the writable one, and it is configured in
+``.dvc/config.local`` so only maintainers have it.
 """
 
 from pathlib import Path
@@ -69,7 +73,7 @@ def assert_frame_matches_golden(
         f"{relative_path}: numeric output changed beyond tolerance {tolerance:g}.\n"
         f"  largest change in column '{worst_col}' at row '{worst_row}': {worst_delta:g}\n"
         f"  If this change is intended, run test/regression/regenerate_golden.py, review the "
-        f"diff, then dvc add + dvc push test/regression_data."
+        f"diff, then dvc add test/regression_data and dvc push -r r2."
     )
 
     for col in expected.columns:
