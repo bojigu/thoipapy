@@ -470,8 +470,9 @@ def add_res_num_full_seq_to_df(acc, df, TMD_seq, full_seq, prediction_name, file
     -------
 
     """
-    # use regex to get indices for start and end of TMD in seq
-    m = re.search(TMD_seq, full_seq)
+    # re.escape: TMD_seq is sequence data, not a pattern. Same defect as in predict.py and
+    # common.py -- an unescaped "*" or "[" raises re.error instead of reporting a bad input.
+    m = re.search(re.escape(TMD_seq), full_seq)
     if m:
         # convert from python indexing to unprot indexing
         TMD_start = m.start() + 1
@@ -1157,9 +1158,12 @@ def safe_filename_component(value: str, max_length: int = MAX_SAFE_NAME_LEN) -> 
         The name reduced to [A-Za-z0-9._-], truncated, and never empty.
     """
     safe = SAFE_FILENAME_CHARACTERS.sub("_", str(value)).strip("._-")
+    # Strip again after truncating: the cut can land mid-separator and leave a trailing "." or
+    # "-", which is legal on Linux but awkward on Windows and SMB shares.
+    safe = safe[:max_length].strip("._-")
     # "protein" rather than "": an empty component would silently produce filenames that begin
     # with the suffix, and two differently-named proteins would collide.
-    return safe[:max_length] or "protein"
+    return safe or "protein"
 
 
 def dropna_with_report(df_data: pd.DataFrame, context: str, logging) -> pd.DataFrame:

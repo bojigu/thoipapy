@@ -61,6 +61,28 @@ THOIPApy releases
   ``.xml`` and ``.txt`` under ``test/test_inputs`` and unlinked them, and because it ran as a test
   the deletion was reported as a pass.
 
+**Exceptions that callers may be catching.** ``combine_all_features`` raises ``ValueError`` where
+it raised ``IndexError``; nothing is being indexed, the features disagree about the sequence they
+describe. ``rate4site_calculation`` raises ``ValueError`` in four new situations, all of which
+previously produced a wrong answer or a misleading error two stages later: the first record of the
+homologue alignment is not the query, that record contains a gap, the TMD is not at the expected
+offset within it, or rate4site produced no score for some TMD residue. A training-set alignment
+built under a different accession from the one passed to ``rate4site_calculation`` now fails here
+rather than silently scoring the wrong sequence.
+
+**Re-running over an existing output tree.** Because the accession is sanitised before it becomes
+part of a filename, a protein whose name contains a character outside ``[A-Za-z0-9._-]`` gets
+different intermediate filenames under ``datafiles/`` than it did in 2.x. The "skip if the output
+already exists" checks will not find the old files, so the intermediates are recomputed under the
+new names beside the old ones. Delete the old output directory rather than reusing it.
+
+**Other API changes.** ``utils.Command`` gains ``stdin_bytes``, ``stdout_path`` and ``cwd``
+parameters, and a ``command_string`` property for log messages; on timeout it now kills the child
+rather than sending SIGTERM and then waiting for it indefinitely. The length of rate4site's output
+banner is measured rather than assumed to be 13 lines. ``get_word_size`` raises instead of
+returning the string ``"error"``, which would previously have been passed to cd-hit as an
+argument.
+
 2.1.0
 -----
 * the example heatmap in the readme is served from the ``develop`` branch rather than from
