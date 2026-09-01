@@ -89,9 +89,16 @@ def alignment_bytes_for_freecontact(path_uniq_TMD_seqs_for_PSSM_FREECONTACT) -> 
     The pipeline also had no `pipefail`, so only freecontact's own exit status was ever visible;
     a failure in grep or sed passed unnoticed. There is nothing left to fail here.
     """
-    lines = Path(path_uniq_TMD_seqs_for_PSSM_FREECONTACT).read_bytes().split(b"\n")
+    raw = Path(path_uniq_TMD_seqs_for_PSSM_FREECONTACT).read_bytes()
+    lines = raw.split(b"\n")
     kept = [re.sub(rb"[a-z]", b"", line) for line in lines if not line.startswith(b">")]
-    return b"\n".join(kept)
+    alignment = b"\n".join(kept)
+    # grep terminates its last line even when the source does not. save_seqs always writes a
+    # trailing newline so the pipeline never met this, but freecontact should not have to guess
+    # whether the final sequence is complete.
+    if raw and not raw.endswith(b"\n") and not alignment.endswith(b"\n"):
+        alignment += b"\n"
+    return alignment
 
 
 def parse_freecontact_coevolution_mult_prot(paths: ArtefactPaths, df_set, logging):

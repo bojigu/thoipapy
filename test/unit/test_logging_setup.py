@@ -20,6 +20,10 @@ def restore_logging():
     dictConfig flips `disabled` on live logger objects and replaces the root handlers. Those are
     process-global and outlive the test that triggered them, so without this every later test that
     captures logs would be affected -- which is a fair demonstration of how far the defect reached.
+
+    Restoration is partial and cannot be otherwise: dictConfig calls logging.shutdown() over every
+    live handler before installing its own, so the objects put back here have already been flushed
+    and closed. What is restored is which handlers are attached, not their ability to write.
     """
     manager = logging.Logger.manager
     before = {name: obj.disabled for name, obj in manager.loggerDict.items() if isinstance(obj, logging.Logger)}

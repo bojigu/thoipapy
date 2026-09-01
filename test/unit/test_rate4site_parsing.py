@@ -13,6 +13,8 @@ from thoipapy.features.rate4site import (
     parse_rate4site_output,
     query_record_from_alignment,
     read_fasta_records,
+    truncate_alignment,
+    write_cdhit_input,
     write_rate4site_input,
 )
 
@@ -143,14 +145,35 @@ def test_the_query_is_not_written_twice_when_cdhit_keeps_it(tmp_path):
 def test_gap_stripping_does_not_touch_the_deflines(tmp_path):
     """The defect itself: a hyphen in the accession was removed from the header as well.
 
-    The query is then the one record whose name no longer matches on the way back from cd-hit.
+    The query is then the one record whose name no longer matches on the way back from cd-hit, so
+    it is dropped from the alignment and rate4site scores a homologue instead.
     """
     hyphenated = "Serine-rich_protein"
-    alignment = write_alignment(
-        tmp_path / "lipo.fas", [(f"{hyphenated}_orig_seq", QUERY_SURR5), ("0", "A" * 10 + "-" * 5 + "A" * 14)]
-    )
-    records = read_fasta_records(alignment)
+    records = [(f"{hyphenated}_orig_seq", QUERY_SURR5), ("0", "A" * 10 + "-" * 5 + "A" * 14)]
+    cdhit_input = tmp_path / "cdhit_input.fas"
 
-    stripped = [(header, seq.replace("-", "")) for header, seq in records]
-    assert stripped[0][0] == f"{hyphenated}_orig_seq", "the defline must keep its hyphens"
-    assert "-" not in stripped[1][1], "gaps must still be stripped from the sequences"
+    write_cdhit_input(records, cdhit_input)
+    written = read_fasta_records(cdhit_input)
+
+    assert written[0][0] == f"{hyphenated}_orig_seq", "the defline must keep its hyphens"
+    assert written[0][1] == QUERY_SURR5, "the query is gap-free and must be unchanged"
+    assert written[1][1] == "A" * 24, "gaps must still be stripped from the sequences"
+
+
+def test_truncating_an_alignment_keeps_whole_records(tmp_path):
+    """Truncation used to cut at a fixed line count, which could leave a defline with no sequence."""
+    alignment = tmp_path / "cdhit_output.fas"
+    records = [(str(n), f"{'ACDEF' * 5}{n % 10}") for n in range(50)]
+    alignment.write_text("".join(f">{header}\n{seq}\n" for header, seq in records))
+
+    kept = truncate_alignment(alignment, max_n_sequences=7)
+
+    assert kept == [str(n) for n in range(7)]
+    written = read_fasta_records(alignment)
+    assert len(written) == 7
+    assert all(seq for _header, seq in written), "every record kept must have its sequence"
+
+
+def test_an_accession_rate4site_would_read_as_an_option_is_refused():
+    with pytest.raises(ValueError, match="command-line option"):
+        query_record_from_alignment([("-a_orig_seq", QUERY_SURR5)], "-a", TMD_SEQ, N_TERM_OFFSET, "alignment.fas")

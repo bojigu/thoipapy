@@ -86,6 +86,35 @@ def read_fasta_records(fasta_path: Path | str) -> list[tuple[str, str]]:
     return [(header, "".join(parts)) for header, parts in records]
 
 
+def write_cdhit_input(alignment_records: list[tuple[str, str]], cons_cdhit_input_fasta: Path) -> None:
+    """Write the alignment for cd-hit, with the gaps stripped from the sequences only.
+
+    This used to run line.replace("-", "") over every line of the file, deflines included. The
+    query record is the only one whose defline is not a bare integer, so an accession containing a
+    hyphen came back from cd-hit under a different name, failed the membership test that rebuilds
+    the alignment, and was dropped. rate4site then scored whichever homologue was left at the top,
+    and every residue where that homologue differed from the query was reported under the wrong
+    letter -- which combine_all_features refused to merge, two stages later.
+    """
+    with open(cons_cdhit_input_fasta, "w") as f_out:
+        for header, seq in alignment_records:
+            f_out.write(f">{header}\n{seq.replace('-', '')}\n")
+
+
+def truncate_alignment(cons_cdhit_output_fasta: Path, max_n_sequences: int) -> list[str]:
+    """Keep the first max_n_sequences records of an alignment, returning the headers kept.
+
+    Reached when cd-hit cannot get below max_n_sequences at the lowest identity threshold it
+    accepts. Truncation is by record: the previous version cut at a fixed line count, which left a
+    dangling defline with no sequence under it whenever the count was even.
+    """
+    records = read_fasta_records(cons_cdhit_output_fasta)[:max_n_sequences]
+    with open(cons_cdhit_output_fasta, "w") as f_out:
+        for header, seq in records:
+            f_out.write(f">{header}\n{seq}\n")
+    return [header for header, _seq in records]
+
+
 def rate4site_calculation(
     TMD_seq: str,
     acc: str,
@@ -101,7 +130,10 @@ def rate4site_calculation(
     query into the alignment as record zero, and keeping it there, is the whole game: everything
     downstream assumes the score at row N belongs to residue N of the query.
     """
-    output_dir: Path = rate4site_csv.parent
+    # resolve(): rate4site runs with cwd=output_dir (it writes r4s.res into the working directory
+    # whatever -o says), so a relative output path would be resolved a second time against that
+    # directory and the run would fail with "unable to open output file for writing".
+    output_dir: Path = rate4site_csv.parent.resolve()
     if not output_dir.is_dir():
         output_dir.mkdir(parents=True)
     # temp output files
@@ -115,69 +147,59 @@ def rate4site_calculation(
         alignment_records, acc, TMD_seq, surrounding_seq_len_n_term_offset, fasta_uniq_TMD_seqs_surr5_for_LIPO
     )
 
-    with open(cons_cdhit_input_fasta, "w") as f_out:
-        for header, seq in alignment_records:
-            # Gaps are stripped from the *sequences* only. This loop used to run
-            # line.replace("-", "") over the whole file, headers included, so the query record --
-            # the only one whose header is not a bare integer -- came back from cd-hit under a
-            # different name, failed the membership test below, and was dropped from the
-            # alignment. rate4site then scored whichever homologue was left at the top, and every
-            # residue where that homologue differed from the query was reported under the wrong
-            # letter, which combine_all_features later refused to merge.
-            f_out.write(f">{header}\n{seq.replace('-', '')}\n")
+    write_cdhit_input(alignment_records, cons_cdhit_input_fasta)
 
     # delete output file if it exists
     if cons_cdhit_output_fasta.is_file():
         cons_cdhit_output_fasta.unlink()
-    len_cdhit_cluster_reps = 1000
-    max_n_sequences_for_rate4site = 200
-    cutoff = 1.0
-    cutoff_decrease_per_round = 0.01
-    rerun = False
     cdhit_cluster_reps: list[str] = []
     if not rate4site_orig_output.is_file() or (rerun_rate4site in [True, 1]):
 
         sys.stdout.write(f"decreasing cdhit cutoff for {acc}: ")
         sys.stdout.flush()
 
+        # Whole percentage points, not repeated subtraction of 0.01 from 1.0. Sixty subtractions
+        # of 0.01 leave 0.39999999999999947, so the loop stopped one usable round early -- at an
+        # identity threshold that formatted as 0.41 -- and get_word_size picked a word size one
+        # step small at each of its boundaries.
+        cutoff_percent = 100
+        final_cutoff_used = 1.0
+        rerun = False
+        len_cdhit_cluster_reps = 1000
+        max_n_sequences_for_rate4site = 200
+
         while len_cdhit_cluster_reps > max_n_sequences_for_rate4site:
+            cutoff = cutoff_percent / 100
             if rerun:
-                temp: Path = Path(str(cons_cdhit_output_fasta)[:-4] + "temp.fas")
-                if Path(temp).is_file():
-                    Path(temp).unlink()
+                temp: Path = cons_cdhit_output_fasta.with_name(cons_cdhit_output_fasta.stem + ".temp.fas")
+                temp.unlink(missing_ok=True)
                 os.rename(cons_cdhit_output_fasta, temp)
                 cdhit_cluster_reps = run_cdhit(temp, cons_cdhit_output_fasta, cutoff)
+                temp.unlink(missing_ok=True)
             else:
                 cdhit_cluster_reps = run_cdhit(cons_cdhit_input_fasta, cons_cdhit_output_fasta, cutoff)
 
             len_cdhit_cluster_reps = len(cdhit_cluster_reps)
+            final_cutoff_used = cutoff
             sys.stdout.write(f"cutoff={cutoff:0.2f}(n_reps={len_cdhit_cluster_reps}), ")
             sys.stdout.flush()
-            cutoff -= cutoff_decrease_per_round
+            cutoff_percent -= 1
             # cd-hit refuses any threshold below 0.40 outright ("Fatal Error", exit 1), so this
             # loop cannot go lower however many representatives are left. It used to walk down to
             # 0.20, which meant a protein with a deep enough alignment aborted the whole
             # prediction with "cd-hit failed" instead of reaching the truncation below. Deep
             # alignments became normal when the webserver moved from NCBI nr to a local UniRef90.
-            if cutoff < MIN_CDHIT_CUTOFF:
-                to_be_truncated_fasta: str = str(cons_cdhit_output_fasta)[:-4] + "to_be_truncated.fas"
-                os.rename(cons_cdhit_output_fasta, to_be_truncated_fasta)
-                with open(to_be_truncated_fasta) as f_in:
-                    with open(cons_cdhit_output_fasta, "w") as f_out:
-                        for n, line in enumerate(f_in):
-                            f_out.write(line)
-                            if n >= 400:
-                                break
-                cdhit_cluster_reps = [header for header, _seq in read_fasta_records(cons_cdhit_output_fasta)]
+            if cutoff_percent < round(MIN_CDHIT_CUTOFF * 100):
+                cdhit_cluster_reps = truncate_alignment(cons_cdhit_output_fasta, max_n_sequences_for_rate4site)
                 logging.warning(
                     f"{acc} still had {len_cdhit_cluster_reps} cd-hit representatives at the "
                     f"lowest cutoff cd-hit accepts ({MIN_CDHIT_CUTOFF:0.2f}). The alignment was "
                     f"truncated to {len(cdhit_cluster_reps)} sequences for rate4site."
                 )
+                len_cdhit_cluster_reps = len(cdhit_cluster_reps)
                 break
             rerun = True
 
-        final_cutoff_used = cutoff + cutoff_decrease_per_round
         sys.stdout.write("\n")
         logging.info(
             f"cd-hit for rate4site finished. Final cutoff = {final_cutoff_used:0.2f}. Clusters = {len_cdhit_cluster_reps}. Output = {cons_cdhit_output_fasta}"
@@ -262,6 +284,11 @@ def query_record_from_alignment(
             f"{acc} rate4site_calculation failed: the first record of {fasta_path} is "
             f"'{query_header}', not the query '{expected_header}'. rate4site scores positions of "
             f"the reference sequence, so scoring anything but the query gives the wrong residues."
+        )
+    if query_header.startswith("-"):
+        raise ValueError(
+            f"{acc} rate4site_calculation failed: the query record is named '{query_header}', "
+            f"which rate4site would read as a command-line option rather than a sequence name."
         )
     if "-" in query_seq:
         raise ValueError(

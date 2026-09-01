@@ -22,25 +22,3 @@ def test_parse_NCBI_xml_to_csv():
     assert blast_csv_tar.is_file()
     if blast_csv_tar.parent.is_dir():
         rmtree(blast_csv_tar.parent)
-
-
-# Only tarballs are committed to these two directories; anything else in them was unpacked beside
-# its archive during a test run.
-DIRECTORIES_HOLDING_ONLY_TARBALLS = ["blast_data_valid", "blast_data_with_malformed_xml"]
-
-
-def test_no_unpacked_archives_are_left_in_the_test_inputs():
-    """Remove the xml and csv files the BLAST parsers unpack next to their tarballs.
-
-    This used to glob "**/*.xml" and "**/*.txt" across the whole of test_inputs and unlink
-    everything it found, so any committed fixture with one of those extensions was deleted by
-    running the test suite -- and, since it ran as a test, the deletion looked like a pass.
-    """
-    test_inputs_dir: Path = Path(__file__).parents[1] / "test_inputs"
-
-    for directory in DIRECTORIES_HOLDING_ONLY_TARBALLS:
-        for unpacked in (test_inputs_dir / directory).iterdir():
-            if unpacked.is_file() and not unpacked.name.endswith(".tar.gz"):
-                unpacked.unlink()
-
-    assert not list(test_inputs_dir.glob("**/BLAST_results.xml"))

@@ -67,12 +67,15 @@ class Command:
                 f"Pass ['prog', '-i', str(path)] rather than the string {cmd!r}."
             )
         self.cmd: list[str] = [str(argument) for argument in cmd]
+        if not self.cmd:
+            raise ValueError("Command needs at least a program name.")
         self.stdin_bytes: bytes | None = stdin_bytes
         self.stdout_path: Path | None = Path(stdout_path) if stdout_path is not None else None
         self.cwd: Path | None = Path(cwd) if cwd is not None else None
         self.returncode: int | None = None
         self.timed_out: bool = False
         self.stderr: str = ""
+        self.stdout: str = ""
 
     @property
     def command_string(self) -> str:
@@ -94,6 +97,10 @@ class Command:
             )
             self.returncode = completed.returncode
             self.stderr = completed.stderr.decode("utf-8", errors="replace")
+            # Some tools report a fatal error on stdout. When it is not being redirected to a
+            # file it would otherwise be captured and thrown away, leaving an unexplained failure.
+            if completed.stdout:
+                self.stdout = completed.stdout.decode("utf-8", errors="replace")
         except subprocess.TimeoutExpired as e:
             # subprocess.run kills the child before re-raising, which the previous implementation
             # did not: it called terminate() and then joined the reader thread with no timeout, so
@@ -123,7 +130,7 @@ class Command:
         if not self.succeeded():
             logging.warning(
                 f"Command failed (returncode={self.returncode}, timed_out={self.timed_out}): "
-                f"{self.command_string}\n{self.stderr}"
+                f"{self.command_string}\n{self.stderr}{self.stdout}"
             )
 
         return self.returncode

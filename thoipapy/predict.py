@@ -93,7 +93,7 @@ def run_THOIPA_prediction(
     alignment_summary_csv = datafiles_dir / "homologues.alignment_summary.csv"
     THOIPA_full_out_csv = datafiles_dir / "THOIPA_full_out.csv"
     THOIPA_pretty_out_xlsx = out_dir / "THOIPA_out.xlsx"
-    THOIPA_pretty_out_txt = out_dir / "THOIPA_out.csv"
+    THOIPA_pretty_out_csv = out_dir / "THOIPA_out.csv"
     heatmap_path = out_dir / "heatmap.png"
 
     model_features_txt = thoipapy_module_path / "ML_model/model_features.txt"
@@ -339,7 +339,7 @@ def run_THOIPA_prediction(
     # with spaces so the values lined up under their headers in a terminal. Anything that guesses
     # a separator from the extension -- Excel, and every mail client that previews an attachment
     # -- showed the whole prediction as a single column.
-    df_pretty_out.to_csv(THOIPA_pretty_out_txt, index=False)
+    df_pretty_out.to_csv(THOIPA_pretty_out_csv, index=False)
 
     # print exactly what the CSV looks like
     out = StringIO()

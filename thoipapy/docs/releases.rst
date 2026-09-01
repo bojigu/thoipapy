@@ -26,7 +26,9 @@ THOIPApy releases
   The redundancy-reduction loop walked the cd-hit threshold down to 0.20, and cd-hit rejects
   anything below 0.40 with a fatal error. It now stops at 0.40 and truncates the alignment, which
   is what the unreachable branch below it always intended. Deep alignments became normal when
-  local UniRef90 searches replaced NCBI ``nr``.
+  local UniRef90 searches replaced NCBI ``nr``. The threshold is stepped in whole percentage
+  points rather than by repeated subtraction of 0.01 from 1.0, which drifted far enough to lose a
+  round and to pick a cd-hit word size one step too small at each of its boundaries.
 * **bugfix: thoipapy silenced the logging of any application that embedded it.**
   ``setup_error_logging`` called ``dictConfig`` without ``disable_existing_loggers``, which
   defaults to ``True``, so every logger the caller had already created was disabled for the rest
