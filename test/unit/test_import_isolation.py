@@ -40,12 +40,10 @@ def run_in_fresh_interpreter(code: str) -> subprocess.CompletedProcess:
 
 def test_public_entry_point_is_importable_in_a_fresh_interpreter():
     """`import thoipapy` alone must expose a usable run_THOIPA_prediction."""
-    result = run_in_fresh_interpreter(
-        """
+    result = run_in_fresh_interpreter("""
         import thoipapy
         assert callable(thoipapy.run_THOIPA_prediction)
-        """
-    )
+        """)
     assert result.returncode == 0, f"`import thoipapy` failed in a clean interpreter:\n{result.stderr}"
 
 
@@ -66,13 +64,11 @@ def test_public_entry_point_is_importable_in_a_fresh_interpreter():
 )
 def test_every_feature_submodule_predict_uses_is_importable(submodule):
     """Every feature submodule predict.py calls must resolve without a side-effect import."""
-    result = run_in_fresh_interpreter(
-        f"""
+    result = run_in_fresh_interpreter(f"""
         import importlib
         import thoipapy
         importlib.import_module("thoipapy.features.{submodule}")
-        """
-    )
+        """)
     assert result.returncode == 0, f"thoipapy.features.{submodule} not importable:\n{result.stderr}"
 
 

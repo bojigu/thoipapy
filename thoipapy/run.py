@@ -6,6 +6,7 @@ Created:  Monday November 20 12:33:08 2017
 Purpose:  Self-interacting single-pass membrane protein interface residues prediction
 
 """
+
 # Avoid warnings due to imported seaborn and statsmodels.stats.api packages, etc. This has to run
 # before those packages are imported, so it sits above every other import in the module.
 import warnings
