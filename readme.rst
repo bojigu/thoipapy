@@ -211,6 +211,56 @@ The pull is slow or stalls
     stopped, so re-running ``dvc pull -j 4`` after an interruption is safe and will not re-download
     what you already have.
 
+How old the alignments are, and what that means
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+**The DVC-tracked homologues were downloaded from NCBI nr in May 2020.** The modernisation updated
+the code, not the data. Every alignment-derived feature in ``data/features/`` -- conservation,
+rate4site, the PSSM columns, coevolution, LIPS, and the polarity features that read from the PSSM
+-- descends from that download, and so does the shipped model.
+
+The provenance is recorded per protein and can be checked:
+
+.. code:: bash
+
+    tar -xzOf data/homologues/xml/crystal/1orqC4.surr20.BLAST.xml.tar.gz --wildcards '*details*'
+    # acc  1orqC4
+    # download_date  20200518
+    # database  ncbi_nr
+
+Regenerating the alignments against current databases is a reasonable thing to want, and the
+pipeline supports it. **It has not been shown to produce a better model, and the one experiment
+that bears on it points mildly the other way.** Rebuilding the whole feature set from a September
+2026 UniRef90 search produced *more* homologues than the 2020 nr archive -- 142% of them, deeper
+for 30 of the 40 training proteins -- and slightly *lower* accuracy:
+
+=========================================  =======  =============  ======
+evaluation                                 2020 nr  2026 UniRef90  change
+=========================================  =======  =============  ======
+set08 leave-one-out, mean per-protein AUC  0.641    0.630          -0.015
+set07 blind test, mean per-protein AUC     0.654    0.639          -0.015
+=========================================  =======  =============  ======
+set08 leave-one-out, mean per-protein AUC  0.641       0.630        -0.015
+set07 blind test, mean per-protein AUC     0.654       0.639        -0.015
+=========================================  ==========  ==========  ========
+
+So more sequences did not help. The features that disagree most between the two alignment sources
+are the coevolution scores (``DImax``, ``DI3mean``, ``DI5mean``; Spearman 0.45 to 0.59 against
+their nr values), and those are among the features the model relies on most. Motif, mass and
+positional features are identical, because they never touch the alignment.
+
+Two consequences worth keeping in mind:
+
+* **Do not assume a refresh is an upgrade.** If you regenerate, re-run the validation and compare,
+  rather than adopting the new model because its alignments are deeper.
+* **Do not mix vintages.** A feature table with some proteins from 2020 nr and others from a
+  current search is not a coherent dataset. Regenerate all of them or none.
+
+``scripts/compare_blast_database_depth.py`` performs the comparison above between any two data
+directories, and is how those numbers were produced. The full write-up, including a negative result
+on protein language model embeddings, is in ``thoipapy/docs/embeddings_and_alignment_depth.rst``.
+
+
 Where the data comes from
 ~~~~~~~~~~~~~~~~~~~~~~~~~
 

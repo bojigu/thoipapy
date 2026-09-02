@@ -2,6 +2,31 @@
 THOIPApy releases
 =================
 
+3.0.1
+-----
+* **bugfix: leave-one-out results were matched back to proteins by position.** The fold loop skips
+  any protein that is in the set but absent from the training data, and a single skip shifted every
+  subsequent AUC onto the wrong protein, with no error and no visible symptom. Results now carry
+  their own accession. The mean ROC curve was also divided by the size of the protein set rather
+  than by the number of folds that ran, which scaled it down whenever a fold was skipped. No
+  protein is skipped on the shipped sets, so the published numbers are unaffected.
+* **bugfix: the homologue search could not write into a directory that did not already exist.**
+  ``download_homologues_from_ncbi`` wrote its BLAST_details.txt two statements before calling
+  ``make_sure_path_exists``. Every directory is present in a data directory restored by ``dvc
+  pull``, which is why this was never seen; regenerating the alignments from a clean checkout
+  stopped at the first protein.
+* **documented how old the DVC-tracked alignments are, and measured what the alternative costs.**
+  The homologues were downloaded from NCBI nr in May 2020; the modernisation updated the code, not
+  the data. A full rebuild of the feature set from a September 2026 UniRef90 search returns 142% of
+  the homologues and scores 0.015 lower mean per-protein AUC, on both leave-one-out and the blind
+  test set. More sequences did not produce a better model, so a refresh should not be assumed to be
+  an upgrade. See ``docs/embeddings_and_alignment_depth.rst`` and
+  ``scripts/compare_blast_database_depth.py``.
+* **recorded a negative result on protein language model embeddings.** Per-residue ESM-C
+  embeddings neither improve prediction nor replace the alignment features, and a per-amino-acid
+  lookup performs as well as the contextual embeddings. Same document. The implementation is
+  archived on a branch and is not part of this release.
+
 3.0.0
 -----
 * **security: external programs are no longer run through a shell.** ``utils.Command`` takes a
