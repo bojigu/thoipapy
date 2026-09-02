@@ -203,12 +203,15 @@ def run_LOO_validation(
             loo_validation_data_list.append(loo_validation_data)
         else:
             auc_dict, BO_df = LOO_single_prot(loo_validation_data)
-            val_tuple = (auc_dict, BO_df)
-            val_list.append(val_tuple)
+            val_list.append((acc_db, auc_dict, BO_df))
 
     if use_multiprocessing:
         with Pool(processes=multiple_tmp_simultaneous) as pool:
-            val_list = pool.map(LOO_single_prot, loo_validation_data_list)
+            pooled = pool.map(LOO_single_prot, loo_validation_data_list)
+        # Pool.map preserves input order, so the nth result belongs to the nth queued protein.
+        val_list = [
+            (d.acc_db, auc_dict, BO_df) for d, (auc_dict, BO_df) in zip(loo_validation_data_list, pooled, strict=True)
+        ]
 
     #######################################################################################################
     #                                                                                                     #
@@ -226,15 +229,15 @@ def run_LOO_validation(
     all_roc_auc = []
     all_pr_auc = []
     xv_dict = {}
-    acc_db_unique_list = df_set.acc_db.tolist()
 
-    # iterate through the output tuple (auc_dict, BO_df)
-    for nn, val_tuple in enumerate(val_list):
-        acc_db = acc_db_unique_list[nn]
-        auc_dict = val_tuple[0]
+    # Each result carries the acc_db of the protein it belongs to. It used to be matched back by
+    # position against df_set.acc_db, while the loop above can skip a protein with `continue`; one
+    # skip shifted every subsequent AUC onto the wrong protein, silently. No protein is skipped on
+    # the shipped sets, so the published numbers are unaffected -- but the labels have to be right
+    # for any comparison between two runs to mean anything.
+    for nn, (acc_db, auc_dict, BO_df) in enumerate(val_list):
         all_roc_auc.append(auc_dict["roc_auc"])
         all_pr_auc.append(auc_dict["pr_auc"])
-        BO_df = val_tuple[1]
         # join the data for all BO curves together
         if nn == 0:
             BO_all_df = BO_df
@@ -245,8 +248,10 @@ def run_LOO_validation(
 
         xv_dict[acc_db] = {"fpr": auc_dict["fpr"], "tpr": auc_dict["tpr"], "roc_auc": auc_dict["roc_auc"]}
 
-    # copied from original mean_tpr code
-    mean_tpr /= df_set.shape[0]
+    # Averaged over the folds that actually ran, not over the size of the protein set. These are
+    # the same number unless a protein was skipped above, in which case dividing by df_set.shape[0]
+    # scaled the mean curve down and depressed the AUC taken from it.
+    mean_tpr /= len(val_list)
     mean_tpr[-1] = 1.0
     mean_roc_auc_from_joined_data = auc(mean_fpr, mean_tpr)
 
