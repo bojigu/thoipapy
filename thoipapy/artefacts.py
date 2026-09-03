@@ -47,12 +47,18 @@ class ArtefactPaths:
         Residues either side of the TMD included in the homologue search. Appears in filenames.
     max_n_gaps_in_TMD_subject_seq : int
         Gap limit used when filtering homologues. Appears in filenames.
+    homologue_source : str
+        Where the homologue alignments came from, and the directory they are filed under:
+        "ncbi" for BLAST, "colabfold" for the ColabFold MSA server. Two sources are never mixed
+        within a run, so keeping them in separate directories is what stops a set built from one
+        source being silently completed with files from the other.
     """
 
     data_dir: Path
     setname: str
     num_of_sur_residues: int
     max_n_gaps_in_TMD_subject_seq: int
+    homologue_source: str = "ncbi"
 
     @classmethod
     def from_settings(cls, s: dict) -> "ArtefactPaths":
@@ -62,6 +68,7 @@ class ArtefactPaths:
             setname=s["setname"],
             num_of_sur_residues=int(s["num_of_sur_residues"]),
             max_n_gaps_in_TMD_subject_seq=int(s["max_n_gaps_in_TMD_subject_seq"]),
+            homologue_source=str(s.get("homologue_source", "ncbi")),
         )
 
     # ------------------------------------------------------------------ suffixes
@@ -125,7 +132,17 @@ class ArtefactPaths:
         return self.data_dir / "homologues" / "xml" / database / f"{acc}.{self.surr_suffix}.BLAST.xml.tar.gz"
 
     def homologue_csv_tar(self, database: str, acc: str) -> Path:
-        return self.data_dir / "homologues" / "ncbi" / database / f"{acc}.{self.surr_suffix}.BLAST.csv.tar.gz"
+        return (
+            self.data_dir
+            / "homologues"
+            / self.homologue_source
+            / database
+            / f"{acc}.{self.surr_suffix}.BLAST.csv.tar.gz"
+        )
+
+    def colabfold_a3m_tar(self, database: str, acc: str) -> Path:
+        """The archive the ColabFold MSA server returned, holding the a3m files and msa.sh."""
+        return self.data_dir / "homologues" / "a3m" / database / f"{acc}.{self.surr_suffix}.a3m.tar.gz"
 
     def alignment_dir(self, database: str) -> Path:
         return self.data_dir / "homologues" / "alignments" / database
