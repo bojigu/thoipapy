@@ -217,6 +217,14 @@ def download_homologues_from_ncbi(
     """
     logging.info(f"{acc} starting download_homologues_from_ncbi")
 
+    # Both files land in the same directory, so create it before writing either. The details file
+    # used to be written first, with make_sure_path_exists two statements later, which meant the
+    # search only ran where the directory already existed. That is invisible against a data
+    # directory restored by `dvc pull`, whose directories are all present, and it stops a rebuild
+    # from a clean checkout at the very first protein.
+    make_sure_path_exists(blast_xml_file, isfile=True)
+    make_sure_path_exists(xml_txt, isfile=True)
+
     # create an empty text file with the download date
     date = strftime("%Y%m%d")
     database_searched = get_local_blast_db() or f"ncbi_{db}"
@@ -224,7 +232,6 @@ def download_homologues_from_ncbi(
         f.write(f"acc\t{acc}\ndownload_date\t{date}\ndatabase\t{database_searched}\nexpect_value\t{expect_value}\n")
 
     query_fasta_string = f">{acc} TMD add surround 20 residues\n{TMD_seq_pl_surr}"
-    make_sure_path_exists(blast_xml_file, isfile=True)
 
     local_db = get_local_blast_db()
 

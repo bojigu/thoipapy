@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "thoipapy"
-version = "3.0.0"
+version = "3.0.1"
 description = "Machine-learning prediction of residues driving homotypic transmembrane interactions."
 readme = { file = "readme.rst", content-type = "text/x-rst" }
 license = "MIT"
