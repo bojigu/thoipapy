@@ -49,6 +49,39 @@ COLABFOLD_CONTACT_EMAIL_ENV_VAR = "THOIPA_COLABFOLD_CONTACT_EMAIL"
 
 DEFAULT_HOST = "https://api.colabfold.com"
 
+# The search modes ColabFold's own client sends. "env" adds the environmental database to the
+# UniRef30 search; the "-nofilter" variants switch off the MMseqs2 diversity filter.
+#
+# The filter is not a detail. It applies --qsc 0.8 and --max-seq-id 0.95 to thin near-identical
+# hits, which is what an alignment for structure prediction wants and not always what a
+# conservation or coevolution feature wants. On set08 it is the reason six proteins came back
+# with a shallower alignment than the tracked 2020 nr search; switching it off recovered most of
+# that (4r0cA7 went from 2740 unique TMD homologues to 6268, against 3144 from nr).
+VALID_MODES = ("env", "all", "env-nofilter", "nofilter")
+
+
+def mode_searches_env_db(mode: str) -> bool:
+    """Whether a mode searches the environmental database as well as UniRef30.
+
+    Both "env" and "env-nofilter" do, so this cannot be a test for equality with "env" -- getting
+    it wrong silently discards every environmental hit at the parsing step, long after the search
+    that paid for them.
+    """
+    validate_mode(mode)
+    return mode.startswith("env")
+
+
+def validate_mode(mode: str) -> None:
+    """Reject an unknown search mode before it reaches the server.
+
+    The server answers an unrecognised mode by quietly falling back to a default, so an unnoticed
+    typo in the settings spreadsheet would produce a whole set of alignments from a search nobody
+    chose.
+    """
+    if mode not in VALID_MODES:
+        raise ValueError(f"colabfold_mode {mode!r} is not one of {VALID_MODES}")
+
+
 # Connect timeouts are set "slightly larger than a multiple of 3", per the requests documentation
 # and ColabFold's own client.
 REQUEST_TIMEOUT_S = 30.02
@@ -217,6 +250,7 @@ def download_homologues_from_colabfold(
     """
     logging.info(f"{acc} starting download_homologues_from_colabfold")
 
+    validate_mode(mode)
     make_sure_path_exists(a3m_tar_gz, isfile=True)
     make_sure_path_exists(details_txt, isfile=True)
 

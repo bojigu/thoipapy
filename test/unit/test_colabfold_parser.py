@@ -12,6 +12,7 @@ from pathlib import Path
 
 import pandas as pd
 import pytest
+from thoipapy.homologues.colabfold_download import mode_searches_env_db, validate_mode
 from thoipapy.homologues.colabfold_parser import (
     pairwise_alignment_from_a3m_record,
     parse_a3m_to_csv,
@@ -253,3 +254,24 @@ def test_parse_a3m_to_csv_rejects_an_archive_without_uniref(tmp_path):
 
     with pytest.raises(FileNotFoundError, match="uniref.a3m"):
         parse_a3m_to_csv("testacc", archive, tmp_path / "out.csv.tar.gz", 100, False, LogOnlyToConsole())
+
+
+def test_env_modes_search_the_environmental_database():
+    """Both env modes do, so this must not be a test for equality with "env".
+
+    Getting it wrong silently discards every environmental hit at the parsing step, after the
+    search has already paid for them.
+    """
+    assert mode_searches_env_db("env") is True
+    assert mode_searches_env_db("env-nofilter") is True
+
+
+def test_uniref_only_modes_do_not_search_the_environmental_database():
+    assert mode_searches_env_db("all") is False
+    assert mode_searches_env_db("nofilter") is False
+
+
+def test_an_unknown_mode_is_rejected():
+    """The server answers an unrecognised mode with a silent fallback to its default."""
+    with pytest.raises(ValueError, match="not one of"):
+        validate_mode("environmental")

@@ -47,7 +47,7 @@ variables,max_n_gaps_in_TMD_query_seq,0,,
 variables,max_n_gaps_in_TMD_subject_seq,5,,
 variables,num_of_sur_residues,20,,number of surrounded residues on both sides of TMDs
 variables,homologue_source,ncbi,,"ncbi or colabfold. Names the directory the homologue csv files are read from and written to, so alignments from the two searches are never mixed"
-variables,colabfold_mode,env,,"env searches UniRef30 plus the environmental database (BFD, MGnify, MetaEuk, SMAG); all searches UniRef30 only"
+variables,colabfold_mode,env,,"env searches UniRef30 plus the environmental database (BFD, MGnify, MetaEuk, SMAG); all searches UniRef30 only. env-nofilter and nofilter are the same two searches with the MMseqs2 diversity filter switched off, which keeps near-identical homologues that env and all discard"
 variables,lipophilicity_scale,Engelman(GES),,"KyteDoolittle, Wimley, Hessa, Elazar, Hopp-Woods, Cornette, Eisenberg, Rose, Janin, Engelman(GES)"
 variables,inter_pair_max,6,,"set the maximum interact rr pairs in each homodimer, if bigger, then selected the set number pair of ordered"
 variables,generate_randomised_interfaces,0,,"for creating combined files ""rand_int"" subfolder"

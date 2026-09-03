@@ -201,7 +201,11 @@ def run_one_set(s: dict, set_number: int):
 
     if stages.run_parse_colabfold_a3m_into_csv:
         thoipapy.homologues.colabfold_parser.parse_a3m_to_csv_mult_prot(
-            paths, df_set, s["e_value_cutoff"], s["colabfold_mode"] == "env", logging
+            paths,
+            df_set,
+            s["e_value_cutoff"],
+            thoipapy.homologues.colabfold_download.mode_searches_env_db(s["colabfold_mode"]),
+            logging,
         )
 
     if stages.parse_csv_homologues_to_alignment:
