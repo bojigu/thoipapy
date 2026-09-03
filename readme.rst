@@ -240,9 +240,6 @@ evaluation                                 2020 nr  2026 UniRef90  change
 set08 leave-one-out, mean per-protein AUC  0.641    0.630          -0.015
 set07 blind test, mean per-protein AUC     0.654    0.639          -0.015
 =========================================  =======  =============  ======
-set08 leave-one-out, mean per-protein AUC  0.641       0.630        -0.015
-set07 blind test, mean per-protein AUC     0.654       0.639        -0.015
-=========================================  ==========  ==========  ========
 
 So more sequences did not help. The features that disagree most between the two alignment sources
 are the coevolution scores (``DImax``, ``DI3mean``, ``DI5mean``; Spearman 0.45 to 0.59 against
