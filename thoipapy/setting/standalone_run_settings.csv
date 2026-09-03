@@ -10,6 +10,8 @@ run_settings,calc_NMR_closedist,0,,"if true, calcualte the closedist for NMR str
 run_settings,download_10_homologues_from_ncbi,0,,
 run_settings,run_retrieve_NCBI_homologues_with_blastp,0,bool,"if true, for each protein in the input file will be sent to NCBI with blastp and homologues will be downloaded as a xml file"
 run_settings,run_parse_homologues_xml_into_csv,1,bool,"if true, for each protein save the homologues information into csv files"
+run_settings,run_retrieve_homologues_from_colabfold,0,bool,"if true, for each protein the TMD plus surrounding residues is sent to the ColabFold MSA server and the alignment is downloaded as an a3m archive. Alternative to run_retrieve_NCBI_homologues_with_blastp, not an addition to it"
+run_settings,run_parse_colabfold_a3m_into_csv,0,bool,"if true, for each protein convert the downloaded a3m into the homologue csv"
 run_settings,parse_csv_homologues_to_alignment,1,bool,
 run_settings,pssm_calculation,1,bool,"if true, pssm calculation"
 run_settings,entropy_calculation,1,bool,"if true, entropy calculation"
@@ -44,6 +46,8 @@ variables,min_identity_of_TMD_seq,0.2,,
 variables,max_n_gaps_in_TMD_query_seq,0,,
 variables,max_n_gaps_in_TMD_subject_seq,5,,
 variables,num_of_sur_residues,20,,number of surrounded residues on both sides of TMDs
+variables,homologue_source,ncbi,,"ncbi or colabfold. Names the directory the homologue csv files are read from and written to, so alignments from the two searches are never mixed"
+variables,colabfold_mode,env,,"env searches UniRef30 plus the environmental database (BFD, MGnify, MetaEuk, SMAG); all searches UniRef30 only"
 variables,lipophilicity_scale,Engelman(GES),,"KyteDoolittle, Wimley, Hessa, Elazar, Hopp-Woods, Cornette, Eisenberg, Rose, Janin, Engelman(GES)"
 variables,inter_pair_max,6,,"set the maximum interact rr pairs in each homodimer, if bigger, then selected the set number pair of ordered"
 variables,generate_randomised_interfaces,0,,"for creating combined files ""rand_int"" subfolder"

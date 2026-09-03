@@ -61,6 +61,11 @@ class RunSettings:
     run_retrieve_NCBI_homologues_with_blastp: bool = False
     download_10_homologues_from_ncbi: bool = False
     run_parse_homologues_xml_into_csv: bool = False
+    # The ColabFold MSA server is an alternative to the two stages above, not an addition to
+    # them: it replaces the blastp search and the xml parsing with a search and an a3m parse.
+    # parse_csv_homologues_to_alignment then runs unchanged on whichever csv files were written.
+    run_retrieve_homologues_from_colabfold: bool = False
+    run_parse_colabfold_a3m_into_csv: bool = False
     parse_csv_homologues_to_alignment: bool = False
 
     # per-residue features

@@ -44,6 +44,8 @@ import thoipapy.features.preddimer_tmdock
 import thoipapy.features.pssm
 import thoipapy.features.rate4site
 import thoipapy.features.relative_position
+import thoipapy.homologues.colabfold_download
+import thoipapy.homologues.colabfold_parser
 import thoipapy.homologues.NCBI_download
 import thoipapy.homologues.NCBI_parser
 import thoipapy.ML_model.train_model
@@ -190,6 +192,16 @@ def run_one_set(s: dict, set_number: int):
     if stages.run_parse_homologues_xml_into_csv:
         thoipapy.homologues.NCBI_parser.parse_NCBI_xml_to_csv_mult_prot(
             paths, df_set, s["surres"], s["e_value_cutoff"], logging
+        )
+
+    if stages.run_retrieve_homologues_from_colabfold:
+        thoipapy.homologues.colabfold_download.download_homologues_from_colabfold_mult_prot(
+            paths, df_set, s["colabfold_mode"], s["rerun_existing_blast_results"], logging
+        )
+
+    if stages.run_parse_colabfold_a3m_into_csv:
+        thoipapy.homologues.colabfold_parser.parse_a3m_to_csv_mult_prot(
+            paths, df_set, s["e_value_cutoff"], s["colabfold_mode"] == "env", logging
         )
 
     if stages.parse_csv_homologues_to_alignment:
