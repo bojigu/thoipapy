@@ -153,3 +153,17 @@ combine-as-imports = true
 python_version = "3.13"
 ignore_missing_imports = true
 allow_untyped_globals = true
+
+# The pre-commit hook excludes the unmaintained numpy- and matplotlib-heavy modules by filename,
+# which only works while nothing checked imports them. A script that drives the pipeline has to
+# import thoipapy.run, and mypy then follows it into those same modules and reports exactly the
+# findings the exclusion exists to suppress. Skipping them here makes the exclusion a property of
+# the modules rather than of which file happened to be passed to the hook.
+[[tool.mypy.overrides]]
+module = [
+    "thoipapy.run",
+    "thoipapy.validation.*",
+    "thoipapy.feature_importance.*",
+    "thoipapy.paper_figures.*",
+]
+follow_imports = "skip"
