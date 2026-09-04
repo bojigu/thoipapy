@@ -22,13 +22,20 @@ Fair use
 api.colabfold.com is a free academic service, explicitly "a limited shared resource only capable
 of processing a few thousand MSAs per day", and it asks that queries be serial and come from a
 single IP. THOIPA's sets are small -- 40 proteins in set08, 10 in set07 -- so a whole set is three
-orders of magnitude inside that budget. This module submits one protein at a time and never runs
-searches in parallel, which is the behaviour the server asks for and also the behaviour that keeps
-THOIPA off their blacklist. Anything larger belongs on a self-hosted MMseqs2 server, not here.
+orders of magnitude inside that budget, and the webserver has never carried enough traffic to come
+near it either. The public server is therefore a legitimate default for both, and not only for
+one-off local runs.
 
-The server was overwhelmed in August 2025 when a single user submitted a large batch, so a
-pipeline that depends on it must tolerate the queue rather than assume it. Hence the retries and
-the RATELIMIT handling below.
+What makes that acceptable is the access pattern rather than the total: this module submits one
+protein at a time and never searches in parallel, which is what the server asks for and what keeps
+a low-volume client from looking like a batch job. The server was overwhelmed in August 2025 when
+a single user submitted a large batch, so a pipeline that depends on it must tolerate the queue
+rather than assume it, hence the retries and the RATELIMIT handling below.
+
+A deployment that did start seeing steady traffic should host its own MMseqs2 server and point
+THOIPA_COLABFOLD_HOST at it. Nothing else changes: the protocol is the same. Note that this trades
+one cost for another rather than removing it, since the ColabFold databases need roughly as much
+disk as the local UniRef90 BLAST database they would replace.
 """
 
 import os
