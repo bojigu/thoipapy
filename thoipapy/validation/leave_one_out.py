@@ -5,6 +5,7 @@ import time
 from ast import literal_eval
 from multiprocessing import Pool
 from pathlib import Path
+from typing import Any
 
 import numpy as np
 import pandas as pd
@@ -222,13 +223,17 @@ def run_LOO_validation(
     sys.stdout.write("\n")
 
     # copied from original mean_tpr code
-    mean_tpr = 0.0
+    # Starts as a scalar and becomes an ndarray on the first += of an interpolated curve.
+    # Annotated rather than restructured: the rebinding is what the surrounding numeric code
+    # expects, and mypy otherwise reads every later index of it as indexing a float.
+    mean_tpr: Any = 0.0
     mean_fpr = np.linspace(0, 1, 100)
 
     BO_all_df = pd.DataFrame()
     all_roc_auc = []
     all_pr_auc = []
-    xv_dict = {}
+    # Holds per-protein result dicts and, further down, scalar summaries and mean curves.
+    xv_dict: dict[str, Any] = {}
 
     # Each result carries the acc_db of the protein it belongs to. It used to be matched back by
     # position against df_set.acc_db, while the loop above can skip a protein with `continue`; one
@@ -462,8 +467,8 @@ def create_LOO_validation_fig(paths: ArtefactPaths, df_set, n_residues_AUBOC_val
         lw=1.5,
     )
     ax.plot([0, 1], [0, 1], "--", color=(0.6, 0.6, 0.6), label="random")
-    ax.set_xlim([-0.05, 1.05])
-    ax.set_ylim([-0.05, 1.05])
+    ax.set_xlim((-0.05, 1.05))
+    ax.set_ylim((-0.05, 1.05))
     ax.set_xlabel("False positive rate")
     ax.set_ylabel("True positive rate")
     ax.legend(loc="lower right")

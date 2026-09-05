@@ -82,7 +82,7 @@ def merge_predictions(paths: ArtefactPaths, df_set, logging, testsetname: str, t
         # set the unique index, based on the residue number in the full sequence
         dfm.set_index("res_num_full_seq", inplace=True)
         # dfm["entropy"] = -1 * dfm["entropy"]
-        file_list = [THOIPA_LOO_prediction_csv, PREDDIMER_prediction_file, TMDOCK_prediction_file]
+        file_list: list[Path | str] = [THOIPA_LOO_prediction_csv, PREDDIMER_prediction_file, TMDOCK_prediction_file]
         prediction_name_list = [THOIPA_pred_colname, "PREDDIMER", "TMDOCK"]
         if paths.setname == testsetname:
             THOIPA_testset_trainset_csv = (

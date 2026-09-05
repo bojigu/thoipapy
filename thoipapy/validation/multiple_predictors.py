@@ -8,6 +8,7 @@ part of the package.
 
 import pickle
 import re
+from typing import Any
 
 import numpy as np
 import pandas as pd
@@ -141,7 +142,10 @@ def validate_multiple_predictors_and_subsets_auc(paths: ArtefactPaths, df_set, l
         fig, ax = plt.subplots(figsize=figsize)
         for predictor_name in predictors:
             mean_roc_auc = []
-            mean_tpr = 0.0
+            # Starts as a scalar and becomes an ndarray on the first += of an interpolated curve.
+            # Annotated rather than restructured: the rebinding is what the surrounding numeric code
+            # expects, and mypy otherwise reads every later index of it as indexing a float.
+            mean_tpr: Any = 0.0
             big_list_of_tprs = []
             mean_fpr = np.linspace(0, 1, 100)
             n = 0
@@ -171,8 +175,8 @@ def validate_multiple_predictors_and_subsets_auc(paths: ArtefactPaths, df_set, l
             mean_tpr_list.append(mean_tpr)
             ax.plot(mean_fpr, mean_tpr, lw=1, label=f"{predictor_name} (area = {mean_roc_auc:.2f})", alpha=0.8)
         ax.plot([0, 1], [0, 1], "--", color=(0.6, 0.6, 0.6), label="random")
-        ax.set_xlim([-0.05, 1.05])
-        ax.set_ylim([-0.05, 1.05])
+        ax.set_xlim((-0.05, 1.05))
+        ax.set_ylim((-0.05, 1.05))
         ax.set_xlabel("False positive rate")
         ax.set_ylabel("True positive rate")
         ax.legend(loc="lower right")

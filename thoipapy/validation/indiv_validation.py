@@ -872,7 +872,7 @@ def create_linechart_perc_interf_vs_PR_cutoff(
     #######################################################################################################
     colour_dict = {"THOIPA": "#E95D12", "TMDOCK": "#0065BD", "PREDDIMER": "k", "random": "grey"}
     colour_list = ["#E95D12", "#0065BD", "k", "grey"]
-    fontsize = 8
+    fontsize: float = 8
     linewidth = 0.7
     #
     cols = ["THOIPA", "TMDOCK", "PREDDIMER", "random"]

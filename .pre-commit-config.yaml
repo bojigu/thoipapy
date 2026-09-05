@@ -27,9 +27,15 @@ repos:
     hooks:
       - id: mypy
         args: [--ignore-missing-imports, --allow-untyped-globals]
-        # Scoped to the prediction path and the shared modules, which are clean. thoipapy/validation,
-        # thoipapy/feature_importance and thoipapy/paper_figures are excluded: they are numpy- and
-        # matplotlib-heavy, are documented as unmaintained, and their remaining findings are almost
-        # all mypy failing to track ndarray/float or reading stale third-party stubs (it reports
-        # np.trapezoid and Bio.pairwise2.align.globalds as missing when both exist).
-        files: ^(thoipapy/(predict|artefacts|paths|run_settings|common|utils)\.py|thoipapy/(features|homologues|ML_model|clustering|experimental_data)/.*\.py|scripts/.*\.py)$
+        # Covers the whole package. thoipapy/validation, thoipapy/feature_importance and
+        # thoipapy/paper_figures were excluded for years as numpy- and matplotlib-heavy
+        # unmaintained code, but the exclusion only ever held while nothing checked imported them:
+        # a script that drives the pipeline imports thoipapy.run, mypy follows it, and the
+        # findings reappear. Clearing them turned out to be five annotations, so the exclusion is
+        # gone rather than worked around.
+        #
+        # Note when reading findings by hand: this hook installs mypy in its own environment,
+        # without numpy or pandas, so their types resolve to Any here. Running mypy from the conda
+        # environment sees the real stubs and reports far more, most of it mypy failing to track
+        # ndarray/float. The hook is what CI enforces; that larger set is not.
+        files: ^(thoipapy/(predict|artefacts|paths|run_settings|common|utils)\.py|thoipapy/(features|homologues|ML_model|clustering|experimental_data|validation|feature_importance|paper_figures)/.*\.py|scripts/.*\.py)$
