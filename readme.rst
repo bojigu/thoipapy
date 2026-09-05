@@ -20,7 +20,7 @@ Important links:
 How does thoipapy work?
 -----------------------
 
-* downloads protein homologues with BLAST
+* retrieves protein homologues from the ColabFold MSA server, or a local BLAST database
 * extracts residue properties (e.g. residue conservation and polarity)
 * trains a machine learning classifier
 * validates the prediction performance
@@ -229,22 +229,35 @@ The provenance is recorded per protein and can be checked:
     # database  ncbi_nr
 
 Regenerating the alignments against current databases is a reasonable thing to want, and the
-pipeline supports it. **It has not been shown to produce a better model, and the one experiment
-that bears on it points mildly the other way.** Rebuilding the whole feature set from a September
-2026 UniRef90 search produced *more* homologues than the 2020 nr archive -- 142% of them, deeper
-for 30 of the 40 training proteins -- and slightly *lower* accuracy:
+pipeline supports it. **It has not been shown to produce a better model.** Two independent
+rebuilds now bear on this, one from a September 2026 UniRef90 search and one from the ColabFold
+MSA server, and neither improved on the 2020 archive:
 
-=========================================  =======  =============  ======
-evaluation                                 2020 nr  2026 UniRef90  change
-=========================================  =======  =============  ======
-set08 leave-one-out, mean per-protein AUC  0.641    0.630          -0.015
-set07 blind test, mean per-protein AUC     0.654    0.639          -0.015
-=========================================  =======  =============  ======
+=========================================  =======  =============  ==============
+evaluation, mean per-protein ROC AUC       2020 nr  2026 UniRef90  2026 ColabFold
+=========================================  =======  =============  ==============
+set08 leave-one-out                        0.641    0.630          0.636
+set07 blind test                           0.654    0.639          0.685
+=========================================  =======  =============  ==============
 
-So more sequences did not help. The features that disagree most between the two alignment sources
-are the coevolution scores (``DImax``, ``DI3mean``, ``DI5mean``; Spearman 0.45 to 0.59 against
-their nr values), and those are among the features the model relies on most. Motif, mass and
-positional features are identical, because they never touch the alignment.
+Scored properly -- paired over the 34 CD-HIT clusters rather than the 40 proteins, because several
+of them are homologues of each other -- every difference on set08 sits inside its confidence
+interval: UniRef90 minus nr is -0.015 [-0.034, +0.002], ColabFold minus nr is -0.017
+[-0.049, +0.012], and ColabFold minus UniRef90 is -0.002 [-0.024, +0.020]. **The three sources are
+statistically indistinguishable.** UniRef90 is nominally the weakest on both sets, and ColabFold
+leads the blind set07, but neither trend is significant and the set07 comparison is ten proteins
+with no confidence interval.
+
+That result held at two very different depths. ColabFold returns nine times more homologues in
+total than the 2020 archive; searching it with the MMseqs2 diversity filter left on, at a third of
+that depth, moved set08 accuracy by -0.004. More sequences did not help.
+
+The features that disagree most between alignment sources are the coevolution scores, and those
+are among the features the model relies on most. ``DImax`` correlates at Spearman 0.45 between the
+nr and UniRef90 feature sets and 0.26 between nr and ColabFold, against 1.00 for every
+sequence-derived feature. A signal that can be rewritten that far without moving accuracy is
+where the next accuracy work belongs. The full analysis is in
+``docs/homologue_source_comparison.md``.
 
 Two consequences worth keeping in mind:
 
@@ -295,10 +308,11 @@ to ``data/protein_names.csv`` and the ETRA scanning-mutagenesis data in
 where a file genuinely holds several tables; the ones that did not are CSV.
 
 
-Running BLAST locally instead of at NCBI
------------------------------------------
+Where homologues come from
+---------------------------
 
-**Recommended: run THOIPA against a local UniRef90 database rather than querying NCBI.**
+**THOIPA now retrieves homologues from the ColabFold MSA server. Searching NCBI is no longer
+viable, and a local UniRef90 BLAST database is the fallback if the server is unavailable.**
 
 Why this changed
 ~~~~~~~~~~~~~~~~
@@ -310,19 +324,48 @@ automated clients accordingly. A probe of a *three-residue* query in August 2026
 that took minutes when the paper was published can now take hours, or be refused outright if the
 same client queries repeatedly.
 
-That is not a fault in THOIPA and it is not something THOIPA can fix from the client side. The
-only reliable answer is to stop depending on a shared, queued, remote service.
+That is not a fault in THOIPA and it is not something THOIPA can fix from the client side. NCBI
+also does not archive old ``nr`` releases, so the May 2020 snapshot behind the published numbers
+cannot be recovered by anyone. ``nr`` is the historical reference, not an option.
 
-What you gain and what you lose
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+Retrieving homologues from the ColabFold MSA server
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-**This is a breaking change and predictions will not match the published results.** A different
-database yields a different homologue set, a different alignment, and therefore different
-conservation, coevolution and polarity features. The scores move.
+The server runs MMseqs2 with three profile iterations against UniRef30 and an environmental
+database assembled from BFD, MGnify, MetaEuk and SMAG, then expands each matched cluster back to
+its members. A search takes 10 to 70 seconds per protein against hours of NCBI queue, needs no
+local database, and returns an archive containing ``msa.sh`` -- the exact command line and
+database versions behind the alignment. The BLAST path recorded no equivalent.
 
-In exchange, a full prediction goes **from hours to a few minutes** -- seconds, on a small
-database -- and it runs offline and deterministically, with no queue and no third-party service in
-the path.
+.. code:: bash
+
+    export THOIPA_COLABFOLD_CONTACT_EMAIL=you@example.com
+
+Then switch ``homologue_source`` to ``colabfold`` in the settings CSV and enable the
+``run_retrieve_homologues_from_colabfold`` and ``run_parse_colabfold_a3m_into_csv`` stages. They
+replace the blastp search and the XML parse; everything downstream is unchanged, because the
+homologue CSV they write carries the same columns.
+
+``api.colabfold.com`` is a free academic service that processes a few thousand alignments a day
+and asks for serial queries from a single IP. A 40-protein set is three orders of magnitude inside
+that, and this webserver's traffic has never come near it, so the public server is the default
+rather than a stopgap. THOIPA submits one protein at a time and never searches in parallel. A
+deployment with steady traffic should host its own MMseqs2 server and point
+``THOIPA_COLABFOLD_HOST`` at it; nothing else changes. Note that self-hosting trades the disk cost
+back rather than removing it, since the ColabFold databases need roughly as much space as the
+local UniRef90 database they would replace.
+
+Fallback: a local UniRef90 BLAST database
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+Use this if the MSA server is unavailable, or if you need the pipeline to run with no third-party
+service in the path at all. It costs about 96 GB of disk and a rebuild every UniProt release, and
+it is statistically indistinguishable from ColabFold on accuracy (-0.002 ROC AUC, see above), so
+the disk buys availability rather than quality.
+
+**Either way this is a breaking change: predictions will not match the published results.** A
+different database yields a different homologue set, a different alignment, and therefore
+different conservation, coevolution and polarity features. The scores move.
 
 Setting up UniRef90
 ~~~~~~~~~~~~~~~~~~~
@@ -351,9 +394,10 @@ Or by hand::
     gunzip uniref90.fasta.gz
     makeblastdb -in uniref90.fasta -dbtype prot -out uniref90 -title uniref90 -parse_seqids
 
-With ``THOIPA_LOCAL_BLAST_DB`` set, predictions search that database. Unset, they query
-NCBI as before, and ``THOIPA_NCBI_CONTACT_EMAIL`` must be set because NCBI requires
-automated clients to identify themselves.
+With ``THOIPA_LOCAL_BLAST_DB`` set, predictions search that database. Unset, they fall back to
+querying NCBI, which requires ``THOIPA_NCBI_CONTACT_EMAIL`` because NCBI expects automated
+clients to identify themselves. That path is kept for reproducing old runs and is not
+recommended for new ones: see the queueing times above.
 
 A smaller database for tests
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -375,9 +419,11 @@ is taxonomic depth within the query's own family, not enrichment for membrane pr
 on a transmembrane annotation would also silently drop genuine homologues that merely lack the
 annotation, and alignment depth is precisely what must not be lost.
 
-NCBI does not host UniRef90, so the remote path cannot use it. NCBI's BLAST service offers ``nr``,
-``refseq_protein``, ``swissprot``, ``pdb``, ``env_nr``, ``tsa_nr``, ``landmark`` and ``pataa``; of
-those only ``nr`` has comparable depth, which is why the remote default is unchanged.
+NCBI does not host UniRef90, so the remote BLAST path cannot use it. NCBI's BLAST service offers
+``nr``, ``refseq_protein``, ``swissprot``, ``pdb``, ``env_nr``, ``tsa_nr``, ``landmark`` and
+``pataa``; of those only ``nr`` has comparable depth, and it is the one that queues for hours.
+This is why the homologue search moved to the ColabFold MSA server rather than to another NCBI
+database.
 
 
 Reproducing the published results

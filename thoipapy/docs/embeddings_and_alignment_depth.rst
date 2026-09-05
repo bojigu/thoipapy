@@ -14,6 +14,9 @@ both are worth recording because the negative result is the useful part.
 2. What does THOIPA lose by searching UniRef90 instead of NCBI nr? **About 0.015 AUC, and the
    alignments are deeper rather than shallower.**
 
+A third homologue source, the ColabFold MSA server, was tested afterwards and reaches the same
+conclusion from much greater depth. See ``docs/homologue_source_comparison.md``.
+
 Reproducing this needs ``scripts/compare_plm_embedding_configurations.py`` on the
 ``feature/plm-embeddings`` branch (question 1) and ``scripts/compare_blast_database_depth.py``
 (question 2). The embedding work was deliberately not merged; the branch is kept as an archive.
@@ -147,6 +150,13 @@ the direction and magnitude replicate and 0.015 is five times the forest's own s
 it as a real but small penalty.
 
 More homologues yet slightly worse accuracy means depth is not the binding constraint.
+
+This has since been tested much harder. The ColabFold MSA server returns nine times more
+homologues than the 2020 archive, and still does not improve on it: -0.017 AUC
+[-0.049, +0.012] against nr, and -0.002 [-0.024, +0.020] against UniRef90, so the three sources
+are statistically indistinguishable. The finding below, that the coevolution features are the
+least reproducible part of the pipeline, replicates there and is sharper: ``DImax`` falls to
+rho 0.256. See ``docs/homologue_source_comparison.md``.
 
 Which features degrade
 -----------------------
