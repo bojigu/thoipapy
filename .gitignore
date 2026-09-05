@@ -42,3 +42,4 @@ var/
 # tracked copy here can only ever disagree with somebody's machine. Copy .conda-env.example
 # and edit it if your environment is named something else.
 .conda-env
+.envrc
