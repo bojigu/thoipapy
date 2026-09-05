@@ -1072,7 +1072,14 @@ def get_testsetname_trainsetname_from_run_settings(s):
     return testsetname, trainsetname
 
 
-def get_test_and_train_set_lists(s):
+def get_test_and_train_set_lists(s: dict) -> tuple[list[str], list[str]]:
+    """Return the test and train set numbers, each as a list of strings.
+
+    Annotated because the only caller unpacks the result straight into a positional argument
+    list. Without a return type mypy infers Any, cannot tell that the unpack contributes exactly
+    two arguments, and reports the call as having the wrong number of them -- a false positive
+    that looks exactly like a real arity bug in a pipeline stage nobody runs.
+    """
     if s["test_datasets"] is True:
         test_set_list = ["1"]
     elif s["test_datasets"] is False:
