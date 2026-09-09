@@ -65,6 +65,41 @@ THOIPA has only been tested on Linux, because of its reliance on external progra
 FreeContact, CD-HIT and rate4site.
 
 
+Working on the code
+-------------------
+
+Install the git hooks once per clone. They are configured in the repository but do not run
+until installed, so a fresh clone commits with no checks at all.
+
+.. code:: bash
+
+    pre-commit install
+
+The hooks format and lint the code, and refuse a commit that adds a large file, an office
+document, or a dataset or archive outside the test tree. None of them need an account or a
+network connection, so this is all an outside contributor has to do.
+
+**Secret scanning, strongly recommended for anyone with push access.** One more command,
+once per clone:
+
+.. code:: bash
+
+    pre-commit install -c .pre-commit-config-ggshield.yaml --hook-type pre-push
+
+Those are two different git hooks, ``.git/hooks/pre-commit`` and ``.git/hooks/pre-push``, so
+they coexist. The second scans the commits being pushed and refuses the push if it finds a
+credential, which is the last point before it becomes permanent and has to be rotated.
+
+It needs a GitGuardian account, which is free for small teams. Create one, then either export
+``GITGUARDIAN_API_KEY`` or run ``ggshield auth login`` once after ``pipx install ggshield``. It
+is kept out of ``.pre-commit-config.yaml`` on purpose: ggshield fails loudly without an
+account, so a hook there would break the first commit of anyone who clones the repository.
+
+There is no secret-scanning step in CI on this repository, because that needs an API key
+stored as a repository secret and no one on the project currently has the admin rights to add
+one. The pre-push hook above is what covers it in the meantime.
+
+
 Dependencies
 ------------
 

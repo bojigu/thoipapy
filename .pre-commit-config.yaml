@@ -33,3 +33,26 @@ repos:
         # all mypy failing to track ndarray/float or reading stale third-party stubs (it reports
         # np.trapezoid and Bio.pairwise2.align.globalds as missing when both exist).
         files: ^(thoipapy/(predict|artefacts|paths|run_settings|common|utils)\.py|thoipapy/(features|homologues|ML_model|clustering|experimental_data)/.*\.py|scripts/.*\.py)$
+
+  # Documents, datasets and archives are not code, and removing one after the fact does not
+  # remove it from the history. Split in two because the false-positive rates differ: office
+  # documents have no place here at all, while archives are sometimes genuine test fixtures,
+  # so that half excludes the test tree.
+  - repo: local
+    hooks:
+      - id: no-office-documents
+        name: block office documents
+        entry: >-
+          Office documents do not belong in git. Commit code and text, and keep
+          the document with the project's other documents.
+        language: fail
+        files: '(?i)\.(odt|ods|odp|doc|docx|xls|xlsx|xlsm|ppt|pptx)$'
+
+      - id: no-datasets-or-archives
+        name: block datasets and archives
+        entry: >-
+          Datasets and archives do not belong in git. Track them with DVC and
+          commit the .dvc stub instead.
+        language: fail
+        files: '(?i)\.(zip|7z|rar|tar|tgz|gz|parquet|feather|h5|hdf5|pkl|pickle|npy|npz|joblib|sqlite|db)$'
+        exclude: '^(tests?|test_data)/'
