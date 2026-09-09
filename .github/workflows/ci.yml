@@ -28,12 +28,19 @@ jobs:
         environment-file: environment.yml
         cache-environment: true
 
+    # environment.yml pins the runtime and the external command-line tools, not the
+    # development tooling, so pre-commit and pytest are installed here. pytest comes
+    # from the project's own test extra, which already pins it.
+    - name: Install development tooling
+      run: pip install pre-commit==4.6.2
+      shell: micromamba-shell {0}
+
     - name: Run pre-commit hooks
       run: pre-commit run --all-files
       shell: micromamba-shell {0}
 
     - name: Install package
-      run: pip install -e .
+      run: pip install -e ".[test]"
       shell: micromamba-shell {0}
 
     - name: Run unit tests
