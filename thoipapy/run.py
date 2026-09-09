@@ -67,10 +67,7 @@ import thoipapy.validation.testset_trainset
 from thoipapy.artefacts import ArtefactPaths
 from thoipapy.clustering.pairwise_aln_similarity_matrix import create_identity_matrix_from_protein_set
 from thoipapy.paths import RUN_SETTINGS_CSV
-from thoipapy.run_settings import RunSettings
-
-# The homologue searches THOIPA can read and write. Each names a directory under data/homologues.
-VALID_HOMOLOGUE_SOURCES = ("ncbi", "colabfold")
+from thoipapy.run_settings import VALID_HOMOLOGUE_SOURCES, RunSettings
 from thoipapy.utils import get_test_and_train_set_lists, get_testsetname_trainsetname_from_run_settings
 
 
