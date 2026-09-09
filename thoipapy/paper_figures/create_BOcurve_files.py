@@ -92,11 +92,20 @@ def save_BO_linegraph_and_barchart(
     for col in df_valid_indiv.columns:
         df_valid_indiv[col] = normalise_0_1(df_valid_indiv[col])[0] + 0.01
 
-    bocurve_data_xlsx: Path | str = paths.crossvalidation_dir / f"data/{paths.setname}_thoipa_loo_bo_curve_data.xlsx"
+    # Was preceded by a reassignment of bocurve_data_xlsx to the leave-one-out workbook, which
+    # shadowed the argument for the rest of the function. Two of the three callers pass a
+    # different workbook -- testset_trainset.py builds its own path, and indiv_validation.py has
+    # one per predictor -- so the read further down under plot_o_over_r took the leave-one-out
+    # file rather than the caller's. Nothing passes plot_o_over_r=True today, so the defect is
+    # dormant rather than live, and removing the shadow changes nothing for the leave-one-out
+    # caller because it passes exactly the path that was being recomputed here.
     BO_data_valid_indiv_csv: Path | str = (
         paths.crossvalidation_dir / f"data/{paths.setname}_BO_curve_data_valid_indiv.csv"
     )
-    make_sure_path_exists(bocurve_data_xlsx, isfile=True)
+    # Guards the file about to be written, not the workbook that was just read. The previous
+    # target was an input, which by definition already exists; both happened to sit in the same
+    # directory, which is why creating the wrong one never surfaced.
+    make_sure_path_exists(BO_data_valid_indiv_csv, isfile=True)
 
     df_valid_indiv = df_valid_indiv.reindex(columns=["AUBOC", 5, 10, "ROC AUC"])
     df_valid_indiv.columns = ["AUBOC", "sample size 5", "sample size 10", "ROC AUC"]
