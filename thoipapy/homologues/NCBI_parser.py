@@ -295,8 +295,9 @@ def extract_filtered_csv_homologues_to_alignments_mult_prot(
         TMD_len = df_set.loc[i, "TMD_len"]
         query_TMD_seq_surr5 = df_set.loc[i, "TMD_seq_pl_surr5"]
 
-        homo_out_dir: Path = paths.data_dir / "homologues" / "ncbi" / database
-        BLAST_csv_tar: Path = homo_out_dir / f"{acc}.surr{num_of_sur_residues}.BLAST.csv.tar.gz"
+        # Via the helper, so that a run configured for a different homologue source reads that
+        # source's csv files rather than whatever is sitting in the ncbi directory.
+        BLAST_csv_tar: Path = paths.homologue_csv_tar(database, acc)
 
         alignments_dir: Path = paths.alignment_dir(database)
         if not alignments_dir.is_dir():

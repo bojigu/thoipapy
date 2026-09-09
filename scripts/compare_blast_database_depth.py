@@ -89,13 +89,25 @@ def homologue_clusters(data_dir, setname):
 
 
 def forest(tuned_csv, seed):
+    """Build the classifier from a dataset's own tuned parameters.
+
+    ``max_features`` used to be hardcoded to "sqrt" while everything else came from the file,
+    which quietly contradicted the claim that each arm is scored with its own tuning: UniRef90
+    tunes to "log2". The hardcode existed because the published nr parameters record "auto", a
+    value scikit-learn removed in 1.3, so it is translated rather than passed through. Honouring
+    the tuned value moves UniRef90 by +0.002 AUC and leaves the paired differences within 0.003.
+    """
     params = pd.read_csv(tuned_csv, index_col=0)["GridSearchSlowMethod"]
+    max_features = params["max_features"]
+    if max_features == "auto":
+        # scikit-learn's pre-1.3 "auto" meant sqrt(n_features) for a classifier.
+        max_features = "sqrt"
     return ExtraTreesClassifier(
         n_estimators=N_ESTIMATORS,
         criterion=params["criterion"],
         min_samples_leaf=int(params["min_samples_leaf"]),
         max_depth=int(params["max_depth"]),
-        max_features="sqrt",
+        max_features=max_features,
         bootstrap=False,
         n_jobs=-1,
         random_state=seed,

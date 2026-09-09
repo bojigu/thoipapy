@@ -30,6 +30,8 @@ import pandas as pd
 import seaborn as sns
 
 import thoipapy
+from thoipapy.homologues.colabfold_download import download_homologues_from_colabfold, mode_searches_env_db
+from thoipapy.homologues.colabfold_parser import parse_a3m_to_csv
 from thoipapy.homologues.NCBI_download import download_homologues_from_ncbi
 from thoipapy.homologues.NCBI_parser import extract_filtered_csv_homologues_to_alignments, parse_NCBI_xml_to_csv
 from thoipapy.paths import STANDALONE_SETTINGS_CSV
@@ -72,6 +74,10 @@ def run_THOIPA_prediction(
     xml_txt = datafiles_dir / "BLAST_results_details.txt"
     xml_tar_gz = datafiles_dir / "BLAST_results.xml.tar.gz"
     BLAST_csv_tar = datafiles_dir / "BLAST_results.csv.tar.gz"
+    # The ColabFold equivalents of the two BLAST inputs. The csv they produce is the same file
+    # under the same name, so everything downstream of it is shared with the BLAST path.
+    a3m_tar_gz = datafiles_dir / "colabfold_msa.a3m.tar.gz"
+    a3m_txt = datafiles_dir / "colabfold_msa_details.txt"
     fasta_all_TMD_seqs = datafiles_dir / "homologues.redundant.fas"
     path_uniq_TMD_seqs_for_PSSM_FREECONTACT = datafiles_dir / "homologues.uniq.for_PSSM_FREECONTACT.txt"
     path_uniq_TMD_seqs_no_gaps_for_LIPS = datafiles_dir / "homologues.uniq.for_LIPS.txt"
@@ -185,14 +191,36 @@ def run_THOIPA_prediction(
 
     expect_value = s["expect_value"]
     hit_list_size = s["hit_list_size"]
-    if not os.path.isfile(xml_tar_gz) or rerun_blast:
-        download_homologues_from_ncbi(
-            acc, TMD_seq_pl_surr, blast_xml_file, xml_txt, xml_tar_gz, expect_value, hit_list_size, logging
-        )
+    e_value_cutoff = s["e_value_cutoff"]
+    homologue_source = str(s.get("homologue_source", "ncbi"))
 
-    if not os.path.isfile(BLAST_csv_tar) or rerun_blast:
-        e_value_cutoff = s["e_value_cutoff"]
-        parse_NCBI_xml_to_csv(acc, xml_tar_gz, BLAST_csv_tar, TMD_start, TMD_end, e_value_cutoff, logging)
+    if homologue_source == "colabfold":
+        # The recommended path. A remote nr query has been measured queueing for hours, which a
+        # prediction with a time limit cannot survive, and the local BLAST alternative costs 96 GB
+        # of disk on every machine that runs a prediction. The MSA server needs neither.
+        colabfold_mode = str(s["colabfold_mode"])
+        if not os.path.isfile(a3m_tar_gz) or rerun_blast:
+            download_homologues_from_colabfold(acc, TMD_seq_pl_surr, a3m_tar_gz, a3m_txt, colabfold_mode, logging)
+        if not os.path.isfile(BLAST_csv_tar) or rerun_blast:
+            parse_a3m_to_csv(
+                acc,
+                a3m_tar_gz,
+                BLAST_csv_tar,
+                e_value_cutoff,
+                mode_searches_env_db(colabfold_mode),
+                logging,
+                query_seq=TMD_seq_pl_surr,
+            )
+    elif homologue_source == "ncbi":
+        if not os.path.isfile(xml_tar_gz) or rerun_blast:
+            download_homologues_from_ncbi(
+                acc, TMD_seq_pl_surr, blast_xml_file, xml_txt, xml_tar_gz, expect_value, hit_list_size, logging
+            )
+
+        if not os.path.isfile(BLAST_csv_tar) or rerun_blast:
+            parse_NCBI_xml_to_csv(acc, xml_tar_gz, BLAST_csv_tar, TMD_start, TMD_end, e_value_cutoff, logging)
+    else:
+        raise ValueError(f"homologue_source {homologue_source!r} is not one of ('ncbi', 'colabfold')")
 
     ###################################################################################################
     #                                                                                                 #
