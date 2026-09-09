@@ -1,0 +1,51 @@
+name: CI
+
+on:
+  push:
+    branches: [develop]
+  pull_request:
+  workflow_dispatch:
+
+# One run per commit. A branch with an open pull request is already covered by
+# the pull_request trigger, so the push trigger is limited to the default branch
+# to stop every commit building twice.
+concurrency:
+  group: ${{ github.workflow }}-${{ github.head_ref || github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+
+    steps:
+    - name: Checkout repository
+      uses: actions/checkout@v5
+
+    - name: Set up micromamba
+      uses: mamba-org/setup-micromamba@v2
+      with:
+        environment-file: environment.yml
+        cache-environment: true
+
+    # environment.yml pins the runtime and the external command-line tools, not the
+    # development tooling, so pre-commit and pytest are installed here. pytest comes
+    # from the project's own test extra, which already pins it.
+    - name: Install development tooling
+      run: pip install pre-commit==4.6.2
+      shell: micromamba-shell {0}
+
+    - name: Run pre-commit hooks
+      run: pre-commit run --all-files
+      shell: micromamba-shell {0}
+
+    - name: Install package
+      run: pip install -e ".[test]"
+      shell: micromamba-shell {0}
+
+    - name: Run unit tests
+      # Unit tests only. The functional and regression suites need the DVC-tracked
+      # training data and external command-line tools, and the network marker is
+      # deselected by default in pyproject.toml.
+      run: pytest test/unit
+      shell: micromamba-shell {0}

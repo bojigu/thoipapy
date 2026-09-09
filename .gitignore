@@ -37,3 +37,12 @@ var/
 *__pycache__*
 # Working notes: plans, reviews, meta-reviews. Never committed.
 *notrack.md
+
+# Anything starting with .env, not just `.env` itself. The copies that leak are hand-made names
+# such as .env.bak-20260908 or .env-old, which match neither `.env` nor `*.bak`. .env.example is
+# the documented template, carries no secrets, and is committed.
+.env*
+!.env.example
+
+# Added by ggshield
+.cache_ggshield

@@ -1,0 +1,19 @@
+# Secret scanning, opt-in, for anyone with push access.
+#
+# Deliberately kept out of .pre-commit-config.yaml, which everyone who clones the repository
+# runs. ggshield needs a GitGuardian account and fails loudly without one, so a hook there
+# would break the first commit of any outside contributor.
+#
+# Strongly recommended. Install it once per clone, alongside the ordinary hooks:
+#
+#     pre-commit install
+#     pre-commit install -c .pre-commit-config-ggshield.yaml --hook-type pre-push
+#
+# Those are two different git hook files, .git/hooks/pre-commit and .git/hooks/pre-push, so
+# they coexist. Needs GITGUARDIAN_API_KEY in the environment, or a prior `ggshield auth login`.
+repos:
+  - repo: https://github.com/GitGuardian/ggshield
+    rev: v1.54.0
+    hooks:
+      - id: ggshield-push
+        stages: [pre-push]
