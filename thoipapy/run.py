@@ -44,6 +44,8 @@ import thoipapy.features.preddimer_tmdock
 import thoipapy.features.pssm
 import thoipapy.features.rate4site
 import thoipapy.features.relative_position
+import thoipapy.homologues.colabfold_download
+import thoipapy.homologues.colabfold_parser
 import thoipapy.homologues.NCBI_download
 import thoipapy.homologues.NCBI_parser
 import thoipapy.ML_model.train_model
@@ -66,6 +68,9 @@ from thoipapy.artefacts import ArtefactPaths
 from thoipapy.clustering.pairwise_aln_similarity_matrix import create_identity_matrix_from_protein_set
 from thoipapy.paths import RUN_SETTINGS_CSV
 from thoipapy.run_settings import RunSettings
+
+# The homologue searches THOIPA can read and write. Each names a directory under data/homologues.
+VALID_HOMOLOGUE_SOURCES = ("ncbi", "colabfold")
 from thoipapy.utils import get_test_and_train_set_lists, get_testsetname_trainsetname_from_run_settings
 
 
@@ -85,6 +90,45 @@ def run(s: dict):
 
     for set_number in list_protein_sets:
         run_one_set(s, set_number)
+
+
+def check_homologue_source_matches_stages(s: dict, stages: RunSettings) -> None:
+    """Refuse a run whose homologue stages disagree with the homologue source.
+
+    ``homologue_source`` decides the directory the homologue csv files are written to and read
+    from, and nothing else couples it to the stage flags. Enabling the ColabFold stages while
+    leaving the shipped default of "ncbi" therefore writes ColabFold-derived csv files over the
+    DVC-tracked 2020 nr artefacts, under identical filenames, while every path and log line still
+    says ncbi. The alignments and every feature below them are then rebuilt from the wrong source
+    with nothing on disk to record it. ``dvc checkout`` restores them, but only for someone who
+    notices.
+
+    The mirror case is the same mistake in the other direction: the NCBI stages writing BLAST
+    output into the colabfold directory.
+
+    The value is also checked here, because an unrecognised one is not a harmless typo. It silently
+    creates a new empty directory and fails much later with a missing-file error that points at
+    the symptom rather than the cause.
+    """
+    source = str(s.get("homologue_source", "ncbi"))
+    if source not in VALID_HOMOLOGUE_SOURCES:
+        raise ValueError(f"homologue_source {source!r} is not one of {VALID_HOMOLOGUE_SOURCES}")
+
+    colabfold_stages = stages.run_retrieve_homologues_from_colabfold or stages.run_parse_colabfold_a3m_into_csv
+    ncbi_stages = stages.run_retrieve_NCBI_homologues_with_blastp or stages.run_parse_homologues_xml_into_csv
+
+    if colabfold_stages and source != "colabfold":
+        raise ValueError(
+            f"a ColabFold homologue stage is enabled but homologue_source is {source!r}. "
+            f"The ColabFold csv files would be written into the {source!r} directory, overwriting "
+            f"the homologues from that source. Set homologue_source to 'colabfold'."
+        )
+    if ncbi_stages and source != "ncbi":
+        raise ValueError(
+            f"an NCBI homologue stage is enabled but homologue_source is {source!r}. "
+            f"The BLAST csv files would be written into the {source!r} directory, overwriting the "
+            f"homologues from that source. Set homologue_source to 'ncbi'."
+        )
 
 
 def run_one_set(s: dict, set_number: int):
@@ -130,6 +174,10 @@ def run_one_set(s: dict, set_number: int):
     acc_list = df_set.acc.tolist()
     logging.info(f"settings file: {Path(s['settings_path']).name}")
     logging.info(f"stages enabled: {', '.join(stages.enabled_stages())}")
+    # Logged because every homologue path and filename below is namespaced by it, so without this
+    # line a run's own log does not record which search its features came from.
+    logging.info(f"homologue source: {paths.homologue_source}")
+    check_homologue_source_matches_stages(s, stages)
     logging.info(f"protein set {set_number}, {len(acc_list)} proteins: {acc_list}")
 
     dfset = thoipapy.common.process_set_protein_seqs(s, setname, df_set, set_path)
@@ -190,6 +238,16 @@ def run_one_set(s: dict, set_number: int):
     if stages.run_parse_homologues_xml_into_csv:
         thoipapy.homologues.NCBI_parser.parse_NCBI_xml_to_csv_mult_prot(
             paths, df_set, s["surres"], s["e_value_cutoff"], logging
+        )
+
+    if stages.run_retrieve_homologues_from_colabfold:
+        thoipapy.homologues.colabfold_download.download_homologues_from_colabfold_mult_prot(
+            paths, df_set, s["colabfold_mode"], s["rerun_existing_blast_results"], logging
+        )
+
+    if stages.run_parse_colabfold_a3m_into_csv:
+        thoipapy.homologues.colabfold_parser.parse_a3m_to_csv_mult_prot(
+            paths, df_set, s["e_value_cutoff"], s["colabfold_mode"], logging
         )
 
     if stages.parse_csv_homologues_to_alignment:

@@ -126,3 +126,20 @@ def test_is_frozen(paths):
     """A mutable path layer is how two spellings of the same file appeared in the first place."""
     with pytest.raises(FrozenInstanceError):
         paths.setname = "set07"
+
+
+def test_colabfold_a3m_path_encodes_the_search_mode():
+    """env and env-nofilter are different server-side searches; one filename for both meant
+    switching mode silently reparsed the previous mode's alignment."""
+    paths = ArtefactPaths(
+        data_dir=Path("/tmp/x"),
+        setname="set08",
+        num_of_sur_residues=20,
+        max_n_gaps_in_TMD_subject_seq=5,
+        homologue_source="colabfold",
+    )
+    env = paths.colabfold_a3m_tar("crystal", "1xioA4", "env")
+    nofilter = paths.colabfold_a3m_tar("crystal", "1xioA4", "env-nofilter")
+    assert env != nofilter
+    assert env.name == "1xioA4.surr20.env.a3m.tar.gz"
+    assert nofilter.name == "1xioA4.surr20.env-nofilter.a3m.tar.gz"

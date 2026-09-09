@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "thoipapy"
-version = "3.0.1"
+version = "3.1.0"
 description = "Machine-learning prediction of residues driving homotypic transmembrane interactions."
 readme = { file = "readme.rst", content-type = "text/x-rst" }
 license = "MIT"
@@ -44,6 +44,7 @@ dependencies = [
     "openpyxl==3.1.5",      # pandas Excel engine for the multi-sheet outputs under data/results/
     "pandas==3.0.5",
     "psutil==7.2.2",
+    "requests==2.34.2",   # ColabFold MSA server client, homologues/colabfold_download.py
     "scikit-learn==1.9.0",  # 1.3 dropped max_features="auto"; see ML_model/train_model.py
     "scipy==1.18.0",
     "seaborn==0.13.2",
@@ -52,8 +53,12 @@ dependencies = [
     # Transitive, pinned too. Without these, `pip install .` resolves them freshly on every install
     # while requirements.txt pins them, so the two documented routes drift apart -- observed on
     # kiwisolver and narwhals.
+    "certifi==2026.7.22",
+    "charset-normalizer==3.5.1",
     "contourpy==1.3.3",
     "cycler==0.12.1",
+    "idna==3.19",
+    "urllib3==2.7.0",
     "et-xmlfile==2.0.0",
     "fonttools==4.63.0",
     "kiwisolver==1.5.0",
