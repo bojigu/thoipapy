@@ -7,7 +7,6 @@ alignments, so an upgrade must not silently change an existing installation's ou
 """
 
 import pytest
-
 from thoipapy.predict import HOMOLOGUE_SOURCE_ENV_VAR, get_homologue_source
 
 
