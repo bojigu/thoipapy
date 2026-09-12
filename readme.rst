@@ -410,6 +410,19 @@ The standalone predictor uses the same setting: ``run_THOIPA_prediction`` reads
 ``homologue_source`` from ``thoipapy/setting/standalone_run_settings.csv`` and takes the same
 ColabFold path, so a single prediction no longer has to wait on an NCBI queue either.
 
+A deployment selects its source with an environment variable instead of by editing a file inside
+the installed package:
+
+.. code:: bash
+
+    export THOIPA_HOMOLOGUE_SOURCE=colabfold
+    export THOIPA_COLABFOLD_CONTACT_EMAIL=you@example.com
+
+``THOIPA_HOMOLOGUE_SOURCE`` overrides the settings file when set. ``THOIPA_COLABFOLD_CONTACT_EMAIL``
+is required on that path and a prediction refuses to start without it, because the MSA server asks
+automated clients to identify themselves. The shipped default remains ``ncbi``, so an upgrade does
+not change what an existing installation returns.
+
 Licensing and attribution
 ~~~~~~~~~~~~~~~~~~~~~~~~~~
 

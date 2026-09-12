@@ -35,6 +35,7 @@ from thoipapy.homologues.colabfold_parser import parse_a3m_to_csv
 from thoipapy.homologues.NCBI_download import download_homologues_from_ncbi
 from thoipapy.homologues.NCBI_parser import extract_filtered_csv_homologues_to_alignments, parse_NCBI_xml_to_csv
 from thoipapy.paths import STANDALONE_SETTINGS_CSV
+from thoipapy.run_settings import VALID_HOMOLOGUE_SOURCES
 from thoipapy.utils import SurroundingSequence, normalise_between_2_values, open_csv_as_series, safe_filename_component
 
 # set matplotlib backend to Agg when run on a server
@@ -44,6 +45,30 @@ if os.environ.get("DISPLAY", "") == "":
 import matplotlib.pyplot as plt
 
 import thoipapy.common
+
+HOMOLOGUE_SOURCE_ENV_VAR = "THOIPA_HOMOLOGUE_SOURCE"
+
+
+def get_homologue_source(s: dict) -> str:
+    """Which homologue search a prediction uses, from the environment or the settings file.
+
+    The environment wins, because the choice is a property of the deployment rather than of the
+    release. A server that wants its predictions to come from the ColabFold MSA server sets
+    THOIPA_HOMOLOGUE_SOURCE=colabfold next to the other deployment variables, and gets it without
+    editing a file inside the installed package.
+
+    The shipped default stays "ncbi" deliberately. It is what the golden-file tests pin, and what
+    reproduces the alignments the published results were built from; changing it in the package
+    would change the output of every existing installation on upgrade.
+    """
+    from_env = os.environ.get(HOMOLOGUE_SOURCE_ENV_VAR, "").strip()
+    source = from_env or str(s.get("homologue_source", "ncbi"))
+    if source not in VALID_HOMOLOGUE_SOURCES:
+        raise ValueError(
+            f"homologue source {source!r} is not one of {VALID_HOMOLOGUE_SOURCES}. "
+            f"Set {HOMOLOGUE_SOURCE_ENV_VAR}, or homologue_source in the settings file."
+        )
+    return source
 
 
 def run_THOIPA_prediction(
@@ -192,7 +217,7 @@ def run_THOIPA_prediction(
     expect_value = s["expect_value"]
     hit_list_size = s["hit_list_size"]
     e_value_cutoff = s["e_value_cutoff"]
-    homologue_source = str(s.get("homologue_source", "ncbi"))
+    homologue_source = get_homologue_source(s)
 
     if homologue_source == "colabfold":
         # The recommended path. A remote nr query has been measured queueing for hours, which a

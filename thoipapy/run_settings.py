@@ -20,6 +20,10 @@ is ``"FALSE"``, which meant a stage switched off in the spreadsheet could still 
 from dataclasses import dataclass, fields
 from typing import Any
 
+# The homologue searches THOIPA can read and write. Each names a directory under data/homologues,
+# and both the pipeline and the standalone predictor validate against this one list.
+VALID_HOMOLOGUE_SOURCES = ("ncbi", "colabfold")
+
 TRUE_STRINGS = {"true", "t", "yes", "y", "1", "wahr"}
 FALSE_STRINGS = {"false", "f", "no", "n", "0", "falsch"}
 
